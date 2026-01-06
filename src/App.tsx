@@ -1,43 +1,65 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "./App.css";
-import CategoriesPage from "./pages/CategoriesPage";
-import TransactionsPage from "./pages/TransactionsPage";
+import { DashboardPage, TransactionsPage, SettingsPage } from "@/pages";
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'categories' | 'transactions'>('categories');
+  const [currentPage, setCurrentPage] = useState<
+    "dashboard" | "transactions" | "settings"
+  >("dashboard");
 
   return (
-    <main className="container" style={{ fontFamily: 'sans-serif' }}>
-      <nav style={{ marginBottom: '20px', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
-        <button 
-          onClick={() => setCurrentPage('categories')} 
-          style={{ 
-            marginRight: '10px', 
-            padding: '8px 15px', 
-            backgroundColor: currentPage === 'categories' ? '#007bff' : '#f0f0f0', 
-            color: currentPage === 'categories' ? 'white' : 'black', 
-            border: 'none', 
-            borderRadius: '5px' 
+    <main className="container" style={{ fontFamily: "sans-serif" }}>
+      <nav
+        style={{
+          marginBottom: "20px",
+          borderBottom: "1px solid #eee",
+          paddingBottom: "10px",
+        }}
+      >
+        <button
+          onClick={() => setCurrentPage("dashboard")}
+          style={{
+            padding: "8px 15px",
+            backgroundColor:
+              currentPage === "dashboard" ? "#007bff" : "#f0f0f0",
+            color: currentPage === "dashboard" ? "white" : "black",
+            border: "none",
+            borderRadius: "5px",
           }}
         >
-          Categories
+          Dashboard
         </button>
-        <button 
-          onClick={() => setCurrentPage('transactions')} 
-          style={{ 
-            padding: '8px 15px', 
-            backgroundColor: currentPage === 'transactions' ? '#007bff' : '#f0f0f0', 
-            color: currentPage === 'transactions' ? 'white' : 'black', 
-            border: 'none', 
-            borderRadius: '5px' 
+        <button
+          onClick={() => setCurrentPage("transactions")}
+          style={{
+            padding: "8px 15px",
+            backgroundColor:
+              currentPage === "transactions" ? "#007bff" : "#f0f0f0",
+            color: currentPage === "transactions" ? "white" : "black",
+            border: "none",
+            borderRadius: "5px",
           }}
         >
           Transactions
         </button>
+        <button
+          onClick={() => setCurrentPage("settings")}
+          style={{
+            marginRight: "10px",
+            padding: "8px 15px",
+            backgroundColor: currentPage === "settings" ? "#007bff" : "#f0f0f0",
+            color: currentPage === "settings" ? "white" : "black",
+            border: "none",
+            borderRadius: "5px",
+          }}
+        >
+          Settings
+        </button>
       </nav>
 
-      {currentPage === 'categories' && <CategoriesPage />}
-      {currentPage === 'transactions' && <TransactionsPage />}
+      {currentPage === "dashboard" && <DashboardPage />}
+      {currentPage === "transactions" && <TransactionsPage />}
+      {currentPage === "settings" && <SettingsPage />}
     </main>
   );
 }

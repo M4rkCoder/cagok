@@ -18,7 +18,22 @@ pub struct Transaction {
     pub date: String,
     pub r#type: i64,
     pub is_fixed: i64,
+    pub remarks: Option<String>,
     pub category_id: Option<i64>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TransactionWithCategory {
+    pub id: i64,
+    pub description: Option<String>,
+    pub amount: f64,
+    pub date: String,
+    pub r#type: i64,
+    pub is_fixed: i64,
+    pub remarks: Option<String>,
+    pub category_id: Option<i64>,
+    pub category_name: Option<String>,
+    pub category_icon: Option<String>,
 }
 
 pub fn init_db(db_path: &Path) -> Result<Connection> {
@@ -42,6 +57,7 @@ pub fn init_db(db_path: &Path) -> Result<Connection> {
             date          TEXT NOT NULL,
             type          INTEGER NOT NULL, -- 0: Income, 1: Expense
             is_fixed      INTEGER NOT NULL DEFAULT 0, -- 0: Variable, 1: Fixed
+            remarks       TEXT,
             category_id   INTEGER,
             FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
         );
@@ -123,13 +139,14 @@ pub fn create_transaction(
     date: String,
     r#type: i64,
     is_fixed: i64,
+    remarks: Option<String>,
     category_id: Option<i64>,
     db: tauri::State<'_, super::DbConnection>,
 ) -> Result<i64, String> {
     let conn = db.0.lock().unwrap();
     conn.execute(
-        "INSERT INTO transactions (description, amount, date, type, is_fixed, category_id) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        params![description, amount, date, r#type, is_fixed, category_id],
+        "INSERT INTO transactions (description, amount, date, type, is_fixed, remarks, category_id) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        params![description, amount, date, r#type, is_fixed, remarks, category_id],
     )
     .map_err(|e| e.to_string())?;
     Ok(conn.last_insert_rowid())
@@ -140,7 +157,7 @@ pub fn get_transactions(
     db: tauri::State<'_, super::DbConnection>,
 ) -> Result<Vec<Transaction>, String> {
     let conn = db.0.lock().unwrap();
-    let mut stmt = conn.prepare("SELECT id, description, amount, date, type, is_fixed, category_id FROM transactions")
+    let mut stmt = conn.prepare("SELECT id, description, amount, date, type, is_fixed, remarks, category_id FROM transactions")
         .map_err(|e| e.to_string())?;
     let transactions_iter = stmt.query_map([], |row| {
         Ok(Transaction {
@@ -150,13 +167,63 @@ pub fn get_transactions(
             date: row.get(3)?,
             r#type: row.get(4)?,
             is_fixed: row.get(5)?,
-            category_id: row.get(6)?,
+            remarks: row.get(6)?,
+            category_id: row.get(7)?,
         })
     })
     .map_err(|e| e.to_string())?;
 
     let transactions: Result<Vec<Transaction>, rusqlite::Error> = transactions_iter.collect();
     transactions.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_transactions_with_category(
+    db: tauri::State<'_, super::DbConnection>,
+) -> Result<Vec<TransactionWithCategory>, String> {
+    let conn = db.0.lock().unwrap();
+
+    let mut stmt = conn
+    .prepare(
+        "
+        SELECT
+            t.id,
+            t.description,
+            t.amount,
+            t.date,
+            t.type,
+            t.is_fixed,
+            t.remarks,
+            t.category_id,
+            c.name,
+            c.icon
+        FROM transactions t
+        LEFT JOIN categories c
+            ON t.category_id = c.id
+        ORDER BY t.date DESC
+        ",
+    )
+    .map_err(|e| e.to_string())?;
+    
+    let iter = stmt
+        .query_map([], |row| {
+            Ok(TransactionWithCategory {
+                id: row.get(0)?,
+                description: row.get(1)?,
+                amount: row.get(2)?,
+                date: row.get(3)?,
+                r#type: row.get(4)?,
+                is_fixed: row.get(5)?,
+                remarks: row.get(6)?,
+                category_id: row.get(7)?,
+                category_name: row.get(8)?,
+                category_icon: row.get(9)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+    let result: Result<Vec<_>, _> = iter.collect();
+    result.map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -167,13 +234,14 @@ pub fn update_transaction(
     date: String,
     r#type: i64,
     is_fixed: i64,
+    remarks: Option<String>,
     category_id: Option<i64>,
     db: tauri::State<'_, super::DbConnection>,
 ) -> Result<(), String> {
     let conn = db.0.lock().unwrap();
     conn.execute(
-        "UPDATE transactions SET description = ?1, amount = ?2, date = ?3, type = ?4, is_fixed = ?5, category_id = ?6 WHERE id = ?7",
-        params![description, amount, date, r#type, is_fixed, category_id, id],
+        "UPDATE transactions SET description = ?1, amount = ?2, date = ?3, type = ?4, is_fixed = ?5, remarks = ?6 category_id = ?7 WHERE id = ?8",
+        params![description, amount, date, r#type, is_fixed, remarks, category_id, id],
     )
     .map_err(|e| e.to_string())?;
     Ok(())

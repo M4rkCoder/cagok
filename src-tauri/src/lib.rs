@@ -39,6 +39,7 @@ pub fn run() {
             // Transaction handlers
             db::create_transaction,
             db::get_transactions,
+            db::get_transactions_with_category,
             db::update_transaction,
             db::delete_transaction
         ])
