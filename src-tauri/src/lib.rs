@@ -1,6 +1,5 @@
 use std::sync::Mutex;
 use tauri::Manager;
-
 mod db;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
