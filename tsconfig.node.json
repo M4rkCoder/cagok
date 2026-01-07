@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "lib": ["ES2020"],
+    "types": ["node"],
     "composite": true,
     "skipLibCheck": true,
     "module": "ESNext",
