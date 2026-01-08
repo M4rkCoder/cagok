@@ -287,24 +287,28 @@ const TransactionsPage = () => {
       if (editingTransaction) {
         await invoke("update_transaction", {
           id: editingTransaction.id!,
-          description: values.description,
-          amount: values.amount,
-          date: values.date,
-          type: values.type,
-          isFixed: values.is_fixed,
-          remarks: values.remarks ?? null,
-          categoryId:
-            values.category_id !== undefined ? values.category_id : null,
+          transaction: {
+            description: values.description,
+            amount: values.amount,
+            date: values.date,
+            type: values.type,
+            is_fixed: values.is_fixed,
+            remarks: values.remarks ?? null,
+            category_id:
+              values.category_id !== undefined ? values.category_id : null,
+          },
         });
       } else {
         await invoke("create_transaction", {
-          description: values.description,
-          amount: values.amount,
-          date: values.date,
-          type: values.type,
-          isFixed: values.is_fixed,
-          remarks: values.remarks ?? null,
-          categoryId: values.category_id,
+          transaction: {
+            description: values.description,
+            amount: values.amount,
+            date: values.date,
+            type: values.type,
+            is_fixed: values.is_fixed,
+            remarks: values.remarks ?? null,
+            category_id: values.category_id,
+          },
         });
       }
       handleDialogClose();

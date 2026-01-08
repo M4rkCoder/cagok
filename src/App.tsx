@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./App.css";
 import { DashboardPage, TransactionsPage, SettingsPage } from "@/pages";
+import { Button } from "@/components/ui/button";
 
 function App() {
   const [currentPage, setCurrentPage] = useState<
@@ -55,6 +56,14 @@ function App() {
         >
           Settings
         </button>
+        <Button
+          variant="secondary"
+          onClick={async () => {
+            const seed = await import("@/db/seed");
+          }}
+        >
+          더미 데이터 생성
+        </Button>
       </nav>
 
       {currentPage === "dashboard" && <DashboardPage />}

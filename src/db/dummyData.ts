@@ -9,7 +9,7 @@ function randomInt(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function randomDate(year = 2025, month = 1) {
+function randomDate(year = 2026, month = 1) {
   const day = randomInt(1, 28);
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
     2,
@@ -84,7 +84,7 @@ async function getCategoryIds(type: 0 | 1): Promise<number[]> {
 
 export async function insertDummyTransactions(
   count = 100,
-  year = 2025,
+  year = 2026,
   month = 1
 ) {
   const db = await getDB();

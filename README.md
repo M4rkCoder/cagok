@@ -41,7 +41,7 @@
 - 설정(Setting):
   - 카테고리 설정
   - 언어 설정
-  - db 백업, 동기화
+  - db 백업, 동기화, csv다운로드/업로드
   - 고정지출 설정
 
 ## 5. 현재 개발 상황 (Current Status)
@@ -50,14 +50,12 @@
   - Tauri 프로젝트 초기 설정 및 의존성 설치 완료.
   - SQLite 데이터베이스 초기화 및 `categories`, `transactions` 테이블 생성 로직 구현 완료.
   - `categories` 및 `transactions` 테이블에 대한 CRUD (생성, 조회, 수정, 삭제) Tauri 명령 구현 완료.
-  - db(init, repository), commands 구조 분리 완료. 향후 services 추가 예정
+  - db(init, repository), commands 구조 분리 완료. dashboard services 추가
 - **프론트엔드 (React):**
-  - 바닐라 React 기반으로 UI 구현. (Tailwind CSS 및 shadcn/ui 통합 문제로 전환)
-  - `CategoriesPage` 및 `TransactionsPage` 간의 기본 내비게이션 구현.
+  - 바닐라 React 기반으로 UI 구현.
   - `CategoriesPage`: 카테고리 CRUD 기능 및 UI 구현 완료.
   - `TransactionsPage`: 트랜잭션 CRUD 기능 및 UI 구현 완료.
-  - `TransactionsPage`의 트랜잭션 저장 시 `is_fixed` 필드 관련 오류 해결 완료.
-  - `TransactionsPage`의 트랜잭션 저장 시 `category_id` 필드가 `NULL`로 저장되는 문제 발생. 현재 디버깅 중. (해결)
+  - `DashboardPage`: 지출수입요약, 카테고리별 지출, 월별일별지출 기능 구현 완료
 
 ## 6. 향후 개발 계획 (Roadmap)
 
@@ -65,8 +63,10 @@
 2.  **다크모드 구현:** 토글 버튼으로 다크/라이트 모드 변경 기능 구현 (프론트엔드 전환으로 인해 재검토 필요)
 3.  **데이터 동기화:** 구글 인증(OAuth) 연동을 통한 SQLite DB 파일 클라우드 동기화 기능
 4.  **다국어 기능 추가:** 기본 언어 영어로 하고 한글 등 기타 언어 변경 가능하도록 기능 설정 (프론트엔드 전환으로 인해 재검토 필요)
-5.  **자산 관리 모듈:** 자산 관리 전용 DB 테이블 구축 및 전용 관리 페이지 추가
-6.  **예산 관리 모듈:** 예산 관리 전용 DB 테이블 구축 및 전용 관리 페이지 추가
+5.  **DB관리 기능 추가:** db 백업/동기화(구글 연동), csv파일로 내려받기/업로드
+6.  **고정 반복지출 관리 기능추가:** 고정 반복지출 자동 입력 기능/관리 기능
+7.  **자산 관리 모듈:** 자산 관리 전용 DB 테이블 구축 및 전용 관리 페이지 추가
+8.  **예산 관리 모듈:** 예산 관리 전용 DB 테이블 구축 및 전용 관리 페이지 추가
 
 ## 7. 코딩 가이드라인 (Constraints & Style)
 
