@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, Power, PowerOff } from "lucide-react";
+import type { Category } from "@/types";
 
 interface RecurringTransaction {
   id?: number;
@@ -26,15 +27,43 @@ export default function RecurringSettings() {
   const emptyForm: RecurringTransaction = {
     description: "",
     amount: 0,
+    category_id: undefined,
     frequency: "monthly",
     start_date: new Date().toISOString().slice(0, 10),
     is_active: true,
   };
+  const [categories, setCategories] = useState<Category[]>([]);
   const [form, setForm] = useState<RecurringTransaction>(emptyForm);
   const [showForm, setShowForm] = useState(false);
 
+  const fetchCategories = async () => {
+    try {
+      const fetchedCategories = await invoke<Category[]>("get_categories");
+      console.log("Fetched categories:", fetchedCategories);
+      setCategories(fetchedCategories);
+    } catch (error) {
+      console.error(
+        "Failed to fetch categories for transactions:",
+        JSON.stringify(error)
+      );
+    }
+  };
+  const categoryMap = useMemo(() => {
+    const map = new Map<number, Category>();
+    categories.forEach((c) => map.set(c.id, c));
+    return map;
+  }, [categories]);
+
+  const getCategoryIcon = (categoryId?: number | string) => {
+    if (!categoryId || categories.length === 0) return "⏳";
+    console.log("category_id:", categoryId, typeof categoryId);
+    const id = Number(categoryId);
+    return categoryMap.get(id)?.icon ?? "❓";
+  };
+
   useEffect(() => {
     loadRecurringTransactions();
+    fetchCategories();
   }, []);
 
   const loadRecurringTransactions = async () => {
@@ -54,7 +83,8 @@ export default function RecurringSettings() {
 
     setForm((prev) => ({
       ...prev,
-      [name]: name === "amount" ? Number(value) : value,
+      [name]:
+        name === "amount" || name === "category_id" ? Number(value) : value,
     }));
   };
 
@@ -120,7 +150,16 @@ export default function RecurringSettings() {
     }
     return "";
   };
+  console.log("recurringList:", recurringList);
 
+  useEffect(() => {
+    if (categories.length > 0 && !form.category_id) {
+      setForm((prev) => ({
+        ...prev,
+        category_id: categories[0].id,
+      }));
+    }
+  }, [categories]);
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -163,7 +202,21 @@ export default function RecurringSettings() {
                   className="w-full border rounded px-3 py-2"
                 />
               </div>
-
+              <div>
+                <label className="text-sm">카테고리</label>
+                <select
+                  name="category_id"
+                  value={form.category_id}
+                  onChange={handleChange}
+                  className="w-full border rounded px-3 py-2"
+                >
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name} ({cat.icon})
+                    </option>
+                  ))}
+                </select>
+              </div>
               <div>
                 <label className="text-sm">주기</label>
                 <select
@@ -206,6 +259,7 @@ export default function RecurringSettings() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
                     <h3 className="text-lg font-semibold">
+                      {getCategoryIcon(recurring.category_id)}{" "}
                       {recurring.description}
                     </h3>
                     <span

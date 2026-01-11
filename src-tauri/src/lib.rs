@@ -15,6 +15,7 @@ pub fn run() {
         .plugin(tauri_plugin_sql::Builder::default().build())
         .setup(|app| {
             let app_handle = app.handle();
+            app.manage(app_handle.clone());
             let app_dir = app_handle
                 .path()
                 .app_data_dir()

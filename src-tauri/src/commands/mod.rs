@@ -2,6 +2,7 @@ pub mod category;
 pub mod transaction;
 pub mod dashboard;
 pub mod recurring;
+pub mod db;
 
 use tauri::Runtime;
 
@@ -30,5 +31,9 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         recurring::delete_recurring_transaction,
         recurring::toggle_recurring_transaction,
         recurring::process_recurring_transactions,
+        //db
+        db::get_db_path,
+        db::backup_db,
+        db::open_db_folder,
     ])
 }
