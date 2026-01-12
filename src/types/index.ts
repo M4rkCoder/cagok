@@ -10,3 +10,5 @@ export type { Category } from "./category";
 
 //form
 export type { TransactionFormValues } from "./form";
+
+export type { ComparisonMetric, ComparisonType } from "./dashboard";

@@ -280,6 +280,44 @@ impl DashboardRepository {
         
         rows.collect()
     }
+
+    pub fn get_amount_sum_by_range(
+        conn: &Connection,
+        tx_type: i32, // 0: income, 1: expense
+        start: &str,
+        end: &str,
+    ) -> Result<i64, rusqlite::Error>{
+        let query = "
+            SELECT COALESCE(CAST(SUM(amount) AS INTEGER), 0)
+            FROM transactions
+            WHERE type = ?1
+              AND date BETWEEN ?2 AND ?3
+        ";
+
+        conn.query_row(
+            query,
+            params![tx_type, start, end],
+            |row| {row.get(0)}
+        )
+    }
+
+    pub fn get_fixed_expense_sum_by_range(
+        conn: &Connection,
+        start: &str,
+        end: &str,
+    ) -> Result<i64, rusqlite::Error> {
+        let query = "
+            SELECT COALESCE(CAST(SUM(amount) AS INTEGER), 0)
+            FROM transactions
+            WHERE type = 1
+              AND is_fixed = 1
+              AND date BETWEEN ?1 AND ?2
+        ";
+    
+        conn.query_row(query, params![start, end], |row| {
+            row.get(0)
+        })
+    }
 }
 
 pub struct RecurringTransactionRepository;

@@ -30,6 +30,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { getPeriodComparison } from "@/lib/api/dashbaord";
+import { ComparisonMetric, ComparisonType } from "@/types";
+import { ComparisonCardFooter } from "@/components/ComparisonCardFooter";
 
 // 타입 정의
 interface MonthlyOverview {
@@ -79,6 +82,14 @@ export default function Dashboard() {
   const [categories, setCategories] = useState<CategoryExpense[]>([]);
   const [dailyExpenses, setDailyExpenses] = useState<DailyExpense[]>([]);
   const [monthlyExpenses, setMonthlyExpenses] = useState<MonthlyExpense[]>([]);
+  const [comparisons, setComparisons] = useState<
+    Record<ComparisonType, ComparisonMetric | null>
+  >({
+    Expense: null,
+    Income: null,
+    NetIncome: null,
+    FixedRatio: null,
+  });
   const [loading, setLoading] = useState(true);
 
   // 현재 연월 가져오기
@@ -97,27 +108,78 @@ export default function Dashboard() {
     }
   }, [selectedMonth]);
 
+  const getMonthRange = (yearMonth: string) => {
+    const [year, month] = yearMonth.split("-").map(Number);
+    const start = `${yearMonth}-01`;
+    const end = `${yearMonth}-31`;
+
+    const prevMonth = new Date(year, month - 2, 1);
+    const prevYearMonth = `${prevMonth.getFullYear()}-${String(
+      prevMonth.getMonth() + 1
+    ).padStart(2, "0")}`;
+
+    return {
+      current: { start, end },
+      previous: {
+        start: `${prevYearMonth}-01`,
+        end: `${prevYearMonth}-31`,
+      },
+    };
+  };
+
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [overviewData, categoriesData, dailyData, monthlyData] =
-        await Promise.all([
-          invoke<MonthlyOverview>("get_monthly_overview", {
-            yearMonth: selectedMonth,
-          }),
-          invoke<CategoryExpense[]>("get_category_expenses", {
-            yearMonth: selectedMonth,
-          }),
-          invoke<DailyExpense[]>("get_daily_expenses", {
-            yearMonth: selectedMonth,
-          }),
-          invoke<MonthlyExpense[]>("get_monthly_expenses", { months: 6 }),
-        ]);
+
+      const { current, previous } = getMonthRange(selectedMonth);
+
+      const types: ComparisonType[] = [
+        "Income",
+        "Expense",
+        "NetIncome",
+        "FixedRatio",
+      ];
+
+      const [
+        overviewData,
+        categoriesData,
+        dailyData,
+        monthlyData,
+        comparisonData,
+      ] = await Promise.all([
+        invoke<MonthlyOverview>("get_monthly_overview", {
+          yearMonth: selectedMonth,
+        }),
+        invoke<CategoryExpense[]>("get_category_expenses", {
+          yearMonth: selectedMonth,
+        }),
+        invoke<DailyExpense[]>("get_daily_expenses", {
+          yearMonth: selectedMonth,
+        }),
+        invoke<MonthlyExpense[]>("get_monthly_expenses", { months: 6 }),
+        Promise.all(
+          types.map((type) =>
+            getPeriodComparison({
+              comparisonType: type,
+              currentStart: current.start,
+              currentEnd: current.end,
+              previousStart: previous.start,
+              previousEnd: previous.end,
+            }).then((data) => ({ type, data }))
+          )
+        ),
+      ]);
+
+      const comparisonMap = comparisonData.reduce((acc, { type, data }) => {
+        acc[type] = data;
+        return acc;
+      }, {} as Record<ComparisonType, ComparisonMetric>);
 
       setOverview(overviewData);
       setCategories(categoriesData);
       setDailyExpenses(dailyData);
       setMonthlyExpenses(monthlyData);
+      setComparisons(comparisonMap);
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
     } finally {
@@ -179,8 +241,11 @@ export default function Dashboard() {
               {formatCurrency(overview.total_income)}
             </div>
           </CardContent>
+          <ComparisonCardFooter
+            metric={comparisons.Income}
+            isPositiveGood={true}
+          />
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">
@@ -193,8 +258,11 @@ export default function Dashboard() {
               {formatCurrency(overview.total_expense)}
             </div>
           </CardContent>
+          <ComparisonCardFooter
+            metric={comparisons.Expense}
+            isPositiveGood={false}
+          />
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">
@@ -211,6 +279,10 @@ export default function Dashboard() {
               {formatCurrency(overview.net_income)}
             </div>
           </CardContent>
+          <ComparisonCardFooter
+            metric={comparisons.NetIncome}
+            isPositiveGood={true}
+          />
         </Card>
 
         <Card>
@@ -218,13 +290,17 @@ export default function Dashboard() {
             <CardTitle className="text-sm font-medium text-gray-500">
               고정비 비율
             </CardTitle>
-            <PiggyBank className="w-4 h-4 text-purple-500" />
+            <PiggyBank className="w-4 h-4 text-purple-500" />`
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">
               {overview.fixed_expense_ratio.toFixed(1)}%
             </div>
           </CardContent>
+          <ComparisonCardFooter
+            metric={comparisons.FixedRatio}
+            unit="percent"
+          />
         </Card>
       </div>
 

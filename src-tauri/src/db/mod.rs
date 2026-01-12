@@ -3,7 +3,7 @@ pub mod repository;
 
 use serde::{Serialize, Deserialize};
 use std::sync::Mutex;
-use rusqlite::{params, Connection};
+use rusqlite::Connection;
 
 pub struct DbConnection(pub Mutex<Connection>);
 
