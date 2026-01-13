@@ -50,3 +50,28 @@ pub fn delete_transaction(
     TransactionRepository::delete(&conn, id)
         .map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub fn get_transactions_by_date(
+    db: State<'_, DbConnection>,
+    date: String,
+) -> Result<Vec<TransactionWithCategory>, String> {
+    let conn = db.0.lock().unwrap();
+    TransactionRepository::get_by_date_with_category(&conn, &date)
+        .map_err(|e| format!("Failed to get transactions by date: {}", e))
+}
+
+#[tauri::command]
+pub fn get_transactions_by_month_and_category(
+    db: State<'_, DbConnection>,
+    year_month: String,
+    category_id: i64,
+) -> Result<Vec<Transaction>, String> {
+    let conn = db.0.lock().unwrap();
+    TransactionRepository::get_by_month_and_category(
+        &conn,
+        &year_month,
+        category_id,
+    )
+    .map_err(|e| format!("Failed to get transactions: {}", e))
+}

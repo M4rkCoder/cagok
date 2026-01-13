@@ -7,14 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  PiggyBank,
-  Wallet,
-  Calendar,
-} from "lucide-react";
+import { Calendar } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -30,41 +23,10 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { getPeriodComparison } from "@/lib/api/dashbaord";
-import { ComparisonMetric, ComparisonType } from "@/types";
-import { ComparisonCardFooter } from "@/components/ComparisonCardFooter";
-
-// 타입 정의
-interface MonthlyOverview {
-  total_income: number;
-  total_expense: number;
-  net_income: number;
-  fixed_expense_ratio: number;
-}
-
-interface CategoryExpense {
-  category_id: number;
-  category_name: string;
-  category_icon: string;
-  total_amount: number;
-  percentage: number;
-  transaction_count: number;
-  [key: string]: string | number;
-}
-
-interface DailyExpense {
-  date: string;
-  total_amount: number;
-  transaction_count: number;
-  [key: string]: string | number;
-}
-
-interface MonthlyExpense {
-  year_month: string;
-  total_amount: number;
-  transaction_count: number;
-  [key: string]: string | number;
-}
+import { useDashboard } from "@/hooks/useDashboard";
+import { SummaryCards } from "@/components/dashboard/SummaryCards";
+import { TransactionListDialog } from "@/components/dashboard/TransactionListDialog";
+import { TransactionWithCategory } from "@/types";
 
 // 차트 색상
 const COLORS = [
@@ -78,19 +40,20 @@ const COLORS = [
 
 export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState<string>("");
-  const [overview, setOverview] = useState<MonthlyOverview | null>(null);
-  const [categories, setCategories] = useState<CategoryExpense[]>([]);
-  const [dailyExpenses, setDailyExpenses] = useState<DailyExpense[]>([]);
-  const [monthlyExpenses, setMonthlyExpenses] = useState<MonthlyExpense[]>([]);
-  const [comparisons, setComparisons] = useState<
-    Record<ComparisonType, ComparisonMetric | null>
-  >({
-    Expense: null,
-    Income: null,
-    NetIncome: null,
-    FixedRatio: null,
-  });
-  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [dailyTransactions, setDailyTransactions] = useState<
+    TransactionWithCategory[]
+  >([]);
+
+  const {
+    loading,
+    overview,
+    categories,
+    dailyExpenses,
+    monthlyExpenses,
+    comparisons,
+  } = useDashboard(selectedMonth);
 
   // 현재 연월 가져오기
   useEffect(() => {
@@ -101,89 +64,20 @@ export default function Dashboard() {
     setSelectedMonth(yearMonth);
   }, []);
 
-  // 데이터 로드
-  useEffect(() => {
-    if (selectedMonth) {
-      loadDashboardData();
-    }
-  }, [selectedMonth]);
-
-  const getMonthRange = (yearMonth: string) => {
-    const [year, month] = yearMonth.split("-").map(Number);
-    const start = `${yearMonth}-01`;
-    const end = `${yearMonth}-31`;
-
-    const prevMonth = new Date(year, month - 2, 1);
-    const prevYearMonth = `${prevMonth.getFullYear()}-${String(
-      prevMonth.getMonth() + 1
-    ).padStart(2, "0")}`;
-
-    return {
-      current: { start, end },
-      previous: {
-        start: `${prevYearMonth}-01`,
-        end: `${prevYearMonth}-31`,
-      },
-    };
-  };
-
-  const loadDashboardData = async () => {
+  const handleDailyClick = async (date: string) => {
     try {
-      setLoading(true);
+      const transactions = await invoke<TransactionWithCategory[]>(
+        "get_transactions_by_date",
+        { date }
+      );
 
-      const { current, previous } = getMonthRange(selectedMonth);
+      console.log("DAILY TRANSACTIONS:", transactions);
 
-      const types: ComparisonType[] = [
-        "Income",
-        "Expense",
-        "NetIncome",
-        "FixedRatio",
-      ];
-
-      const [
-        overviewData,
-        categoriesData,
-        dailyData,
-        monthlyData,
-        comparisonData,
-      ] = await Promise.all([
-        invoke<MonthlyOverview>("get_monthly_overview", {
-          yearMonth: selectedMonth,
-        }),
-        invoke<CategoryExpense[]>("get_category_expenses", {
-          yearMonth: selectedMonth,
-        }),
-        invoke<DailyExpense[]>("get_daily_expenses", {
-          yearMonth: selectedMonth,
-        }),
-        invoke<MonthlyExpense[]>("get_monthly_expenses", { months: 6 }),
-        Promise.all(
-          types.map((type) =>
-            getPeriodComparison({
-              comparisonType: type,
-              currentStart: current.start,
-              currentEnd: current.end,
-              previousStart: previous.start,
-              previousEnd: previous.end,
-            }).then((data) => ({ type, data }))
-          )
-        ),
-      ]);
-
-      const comparisonMap = comparisonData.reduce((acc, { type, data }) => {
-        acc[type] = data;
-        return acc;
-      }, {} as Record<ComparisonType, ComparisonMetric>);
-
-      setOverview(overviewData);
-      setCategories(categoriesData);
-      setDailyExpenses(dailyData);
-      setMonthlyExpenses(monthlyData);
-      setComparisons(comparisonMap);
-    } catch (error) {
-      console.error("Failed to load dashboard data:", error);
-    } finally {
-      setLoading(false);
+      setSelectedDate(date);
+      setDailyTransactions(transactions);
+      setDialogOpen(true);
+    } catch (e) {
+      console.error("일별 거래 조회 실패:", e);
     }
   };
 
@@ -228,81 +122,7 @@ export default function Dashboard() {
       </div>
 
       {/* 요약 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              총 수입
-            </CardTitle>
-            <TrendingUp className="w-4 h-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(overview.total_income)}
-            </div>
-          </CardContent>
-          <ComparisonCardFooter
-            metric={comparisons.Income}
-            isPositiveGood={true}
-          />
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              총 지출
-            </CardTitle>
-            <TrendingDown className="w-4 h-4 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {formatCurrency(overview.total_expense)}
-            </div>
-          </CardContent>
-          <ComparisonCardFooter
-            metric={comparisons.Expense}
-            isPositiveGood={false}
-          />
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              순수익
-            </CardTitle>
-            <DollarSign className="w-4 h-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl font-bold ${
-                overview.net_income >= 0 ? "text-blue-600" : "text-red-600"
-              }`}
-            >
-              {formatCurrency(overview.net_income)}
-            </div>
-          </CardContent>
-          <ComparisonCardFooter
-            metric={comparisons.NetIncome}
-            isPositiveGood={true}
-          />
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
-              고정비 비율
-            </CardTitle>
-            <PiggyBank className="w-4 h-4 text-purple-500" />`
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
-              {overview.fixed_expense_ratio.toFixed(1)}%
-            </div>
-          </CardContent>
-          <ComparisonCardFooter
-            metric={comparisons.FixedRatio}
-            unit="percent"
-          />
-        </Card>
-      </div>
+      <SummaryCards overview={overview} comparisons={comparisons} />
 
       {/* 차트 섹션 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -386,7 +206,7 @@ export default function Dashboard() {
           <CardContent>
             {dailyExpenses.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={dailyExpenses}>
+                <BarChart data={dailyExpenses}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" tickFormatter={formatDate} />
                   <YAxis />
@@ -394,14 +214,17 @@ export default function Dashboard() {
                     formatter={(value: any) => formatCurrency(Number(value))}
                     labelFormatter={(label) => `날짜: ${label}`}
                   />
-                  <Line
-                    type="monotone"
+                  <Bar
                     dataKey="total_amount"
-                    stroke="#ec4899"
-                    strokeWidth={2}
-                    dot={{ r: 3 }}
+                    fill="#ec4899"
+                    radius={[4, 4, 0, 0]}
+                    className="cursor-pointer"
+                    onClick={(data) => {
+                      console.log("BAR CLICK", data);
+                      handleDailyClick(data.payload.date);
+                    }}
                   />
-                </LineChart>
+                </BarChart>
               </ResponsiveContainer>
             ) : (
               <div className="flex items-center justify-center h-75 text-gray-400">
@@ -489,6 +312,14 @@ export default function Dashboard() {
           )}
         </CardContent>
       </Card>
+
+      <TransactionListDialog
+        open={dialogOpen}
+        title={`${selectedDate} 내역`}
+        transactions={dailyTransactions}
+        showDate={false}
+        onOpenChange={setDialogOpen}
+      />
     </div>
   );
 }

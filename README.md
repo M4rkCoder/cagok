@@ -34,6 +34,24 @@
   |name|TEXT|"UNIQUE, NOT NULL"|카테고리 이름 (예: 식비, 월급)|
   |type|INTEGER|"NOT NULL"|0: 수입, 1:지출|
 
+- **recurring_transactions(고정지출 반복 관리)**
+  | 컬럼명 | 타입 | 필수 | 기본값 | 설명 |
+  | ------------------- | ----------- | -- | ------------- | ----------------------------------------- |
+  | `id` | INTEGER | O | AUTOINCREMENT | 반복 거래 고유 ID |
+  | `description` | TEXT | O | - | 거래 설명 (예: 월세, 넷플릭스 구독) |
+  | `amount` | REAL | O | - | 거래 금액 |
+  | `category_id` | INTEGER | X | NULL | 카테고리 ID (`categories.id` 참조) |
+  | `frequency` | INTEGER | O | - | 반복 주기 (daily / weekly / monthly / yearly) |
+  | `start_date` | TEXT | O | - | 반복 거래 시작일 |
+  | `end_date` | TEXT | X | NULL | 반복 거래 종료일 (NULL이면 무제한) |
+  | `day_of_month` | INTEGER | X | NULL | 매월 반복 시 실행 날짜 (1~31) |
+  | `day_of_week` | INTEGER | X | NULL | 매주 반복 시 요일 (0=일요일 ~ 6=토요일) |
+  | `is_active` | INTEGER | O | 1 | 활성화 여부 (1=활성, 0=비활성) |
+  | `last_created_date` | TEXT | X | NULL | 마지막으로 실제 거래가 생성된 날짜 |
+  | `remarks` | TEXT | X | NULL | 비고 메모 |
+  | `created_at` | TEXT | O | - | 반복 거래 생성일 |
+  | `category_id (FK)` | FOREIGN KEY | - | - | `categories(id)` 참조, 삭제 시 NULL 처리 |
+
 ## 4. 화면 구성
 
 - 홈(Dashboard): 월별 일별 통계 누적 합계 등 표기
@@ -51,20 +69,22 @@
   - SQLite 데이터베이스 초기화 및 `categories`, `transactions` 테이블 생성 로직 구현 완료.
   - `categories` 및 `transactions` 테이블에 대한 CRUD (생성, 조회, 수정, 삭제) Tauri 명령 구현 완료.
   - db(init, repository), commands 구조 분리 완료. dashboard services 추가
+  - 대시보드 통계를 위한 월별 카테고리 지출합계, 일별 지출 합계 등 services 추가
 - **프론트엔드 (React):**
   - 바닐라 React 기반으로 UI 구현.
   - `CategoriesPage`: 카테고리 CRUD 기능 및 UI 구현 완료.
   - `TransactionsPage`: 트랜잭션 CRUD 기능 및 UI 구현 완료.
   - `DashboardPage`: 지출수입요약, 카테고리별 지출, 월별일별지출 기능 구현 완료
+  - `DashboardPage`: 컴포넌트 분리(진행중), 차트 클릭시 일별 지출 내역 Dialog 팝업, 카테고리별 지출내역 팝업(진행중)
 
 ## 6. 향후 개발 계획 (Roadmap)
 
-1.  **UI/UX 개선:** 바닐라 HTML/CSS로 구현된 UI를 개선하고 디자인을 적용. (현재 Tailwind CSS/shadcn/ui 통합 문제로 보류)
+1.  **UI/UX 개선:** Tailwind CSS/shadcn/ui 적용
 2.  **다크모드 구현:** 토글 버튼으로 다크/라이트 모드 변경 기능 구현 (프론트엔드 전환으로 인해 재검토 필요)
 3.  **데이터 동기화:** 구글 인증(OAuth) 연동을 통한 SQLite DB 파일 클라우드 동기화 기능
 4.  **다국어 기능 추가:** 기본 언어 영어로 하고 한글 등 기타 언어 변경 가능하도록 기능 설정 (프론트엔드 전환으로 인해 재검토 필요)
 5.  **DB관리 기능 추가:** db 백업/동기화(구글 연동), csv파일로 내려받기/업로드
-6.  **고정 반복지출 관리 기능추가:** 고정 반복지출 자동 입력 기능/관리 기능
+6.  **고정 반복지출 관리 기능추가:** 고정 반복지출 자동 입력 기능/관리 기능 (완료)
 7.  **자산 관리 모듈:** 자산 관리 전용 DB 테이블 구축 및 전용 관리 페이지 추가
 8.  **예산 관리 모듈:** 예산 관리 전용 DB 테이블 구축 및 전용 관리 페이지 추가
 
