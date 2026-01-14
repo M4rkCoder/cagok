@@ -1,6 +1,39 @@
 use rusqlite::{params, Connection, Result};
 use super::{Transaction, TransactionWithCategory, Category, MonthlyOverview, CategoryExpense, DailyExpense, MonthlyExpense, RecurringTransaction, RecurringFrequency};
 
+pub fn get_setting(
+    conn: &Connection,
+    key: &str,
+) -> Result<Option<String>> {
+    let mut stmt = conn.prepare(
+        "SELECT value FROM app_settings WHERE key = ?1"
+    )?;
+
+    let result = stmt.query_row(params![key], |row| row.get(0));
+
+    match result {
+        Ok(value) => Ok(Some(value)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(e),
+    }
+}
+
+pub fn set_setting(
+    conn: &Connection,
+    key: &str,
+    value: &str,
+) -> Result<()> {
+    conn.execute(
+        "
+        INSERT INTO app_settings (key, value)
+        VALUES (?1, ?2)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value
+        ",
+        params![key, value],
+    )?;
+    Ok(())
+}
+
 pub struct TransactionRepository;
 
 impl TransactionRepository {
@@ -113,33 +146,46 @@ impl TransactionRepository {
         conn: &Connection,
         year_month: &str,
         category_id: i64,
-    ) -> Result<Vec<Transaction>> {
+    ) -> Result<Vec<TransactionWithCategory>, rusqlite::Error> {
         let start_date = format!("{}-01", year_month);
         let end_date = format!("{}-31", year_month);
 
         let query = "
             SELECT 
-                id, description, amount, date, type,
-                is_fixed, remarks, category_id
-            FROM transactions
-            WHERE category_id = ?1
-              AND date BETWEEN ?2 AND ?3
-            ORDER BY date DESC
+                t.id,
+                t.description,
+                t.amount,
+                t.date,
+                t.type,
+                t.is_fixed,
+                t.remarks,
+                t.category_id,
+                c.name,
+                c.icon
+            FROM transactions t
+            LEFT JOIN categories c ON t.category_id = c.id
+            WHERE t.category_id = ?1
+              AND t.date BETWEEN ?2 AND ?3
+            ORDER BY t.date DESC
         ";
 
         let mut stmt = conn.prepare(query)?;
         let rows = stmt.query_map(
             params![category_id, start_date, end_date],
             |row| {
-                Ok(Transaction {
-                    id: row.get(0)?,
-                    description: row.get(1)?,
-                    amount: row.get(2)?,
-                    date: row.get(3)?,
-                    r#type: row.get(4)?,
-                    is_fixed: row.get(5)?,
-                    remarks: row.get(6)?,
-                    category_id: row.get(7)?,
+                Ok(TransactionWithCategory {
+                    transaction: Transaction {
+                        id: row.get(0)?,
+                        description: row.get(1)?,
+                        amount: row.get(2)?,
+                        date: row.get(3)?,
+                        r#type: row.get(4)?,
+                        is_fixed: row.get(5)?,
+                        remarks: row.get(6)?,
+                        category_id: row.get(7)?,
+                    },
+                    category_name: row.get(8)?,
+                    category_icon: row.get(9)?,
                 })
             },
         )?;

@@ -3,23 +3,6 @@ use crate::db::repository::DashboardRepository;
 use super::{ComparisonMetric, ComparisonType};
 use rusqlite::Connection;
 
-//비교생성기 유틸 함수
-fn make_comparison(current: i64, previous: i64) -> ComparisonMetric {
-    let diff = current - previous;
-    let diff_rate = if previous == 0 {
-        0.0
-    } else {
-        (diff as f64 / previous as f64) * 100.0
-    };
-
-    ComparisonMetric {
-        current,
-        previous,
-        diff,
-        diff_rate,
-    }
-}
-
 pub struct DashboardService;
 
 impl DashboardService {

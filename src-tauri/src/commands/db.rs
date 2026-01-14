@@ -1,22 +1,21 @@
-use tauri::{State, AppHandle, Manager};
+use tauri::{Window, Manager, Runtime};
 use tauri_plugin_opener::open_path;
 
+
 #[tauri::command]
-pub fn get_db_path(app: State<'_, AppHandle>) -> Result<String, String> {
+pub fn get_db_path<R: Runtime>(window: Window<R>) -> Result<String, String> {
+    let app = window.app_handle();
     let app_dir = app
         .path()
         .app_data_dir()
         .map_err(|e| e.to_string())?;
 
-    Ok(app_dir
-        .join("finkro.db")
-        .to_string_lossy()
-        .to_string())
+    Ok(app_dir.join("finkro.db").to_string_lossy().to_string())
 }
 
-
 #[tauri::command]
-pub fn backup_db(app: State<'_, AppHandle>) -> Result<String, String> {
+pub fn backup_db<R: Runtime>(window: Window<R>) -> Result<String, String> {
+    let app = window.app_handle();
     let app_dir = app
         .path()
         .app_data_dir()
@@ -39,13 +38,14 @@ pub fn backup_db(app: State<'_, AppHandle>) -> Result<String, String> {
 }
 
 #[tauri::command]
-pub fn open_db_folder(app: State<AppHandle>) -> Result<(), String> {
+pub fn open_db_folder<R: Runtime>(window: Window<R>) -> Result<(), String> {
+    let app = window.app_handle();
     let dir = app
         .path()
         .app_data_dir()
         .map_err(|e| e.to_string())?;
 
     open_path(dir, None::<String>).map_err(|e| e.to_string())?;
-
     Ok(())
 }
+

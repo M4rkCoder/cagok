@@ -51,3 +51,10 @@ export interface TransactionWithCategory {
   category_name: string | null;
   category_icon: string | null;
 }
+
+export type DialogState = {
+  open: boolean;
+  title: string;
+  transactions: TransactionWithCategory[];
+  showDate: boolean;
+};

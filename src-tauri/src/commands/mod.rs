@@ -3,6 +3,8 @@ pub mod transaction;
 pub mod dashboard;
 pub mod recurring;
 pub mod db;
+pub mod app;
+pub mod settings;
 
 use tauri::Runtime;
 
@@ -38,5 +40,11 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         db::get_db_path,
         db::backup_db,
         db::open_db_folder,
+        //app
+        app::is_app_initialized,
+        app::initialize_app,
+        //settings
+        settings::get_setting_command,
+        settings::set_setting_command,
     ])
 }

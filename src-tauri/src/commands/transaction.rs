@@ -66,7 +66,7 @@ pub fn get_transactions_by_month_and_category(
     db: State<'_, DbConnection>,
     year_month: String,
     category_id: i64,
-) -> Result<Vec<Transaction>, String> {
+) -> Result<Vec<TransactionWithCategory>, String> {
     let conn = db.0.lock().unwrap();
     TransactionRepository::get_by_month_and_category(
         &conn,

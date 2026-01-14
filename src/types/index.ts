@@ -19,4 +19,5 @@ export type {
   DailyExpense,
   MonthlyExpense,
   TransactionWithCategory,
+  DialogState,
 } from "./dashboard";

@@ -47,12 +47,13 @@ export function TransactionListDialog({
                     <div className="font-medium">{item.description}</div>
 
                     <div className="text-xs text-gray-500 flex gap-2">
-                      <span>{item.category_name ?? "미분류"}</span>
+                      {!showDate && (
+                        <span>{item.category_name ?? "미분류"}</span>
+                      )}
 
                       {/* ⭐ 날짜 조건부 표시 */}
                       {showDate && (
                         <>
-                          <span>·</span>
                           <span>{item.date}</span>
                         </>
                       )}

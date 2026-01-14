@@ -8,6 +8,11 @@ pub fn init_db(db_path: &Path) -> Result<Connection> {
         "
         PRAGMA foreign_keys = ON;
 
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS categories (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             name        TEXT NOT NULL UNIQUE,

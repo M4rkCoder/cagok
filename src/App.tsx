@@ -1,76 +1,35 @@
-import { useState } from "react";
 import "./App.css";
-import { DashboardPage, TransactionsPage, SettingsPage } from "@/pages";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import SplashScreen from "./pages/SplashScreen";
+import Onboarding from "./pages/Onboarding";
+import Home from "./pages/Home";
+
+type AppStage = "splash" | "onboarding" | "home";
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<
-    "dashboard" | "transactions" | "settings"
-  >("dashboard");
+  const [stage, setStage] = useState<AppStage>("splash");
 
-  return (
-    <main className="container" style={{ fontFamily: "sans-serif" }}>
-      <nav
-        style={{
-          marginBottom: "20px",
-          borderBottom: "1px solid #eee",
-          paddingBottom: "10px",
-        }}
-      >
-        <button
-          onClick={() => setCurrentPage("dashboard")}
-          style={{
-            padding: "8px 15px",
-            backgroundColor:
-              currentPage === "dashboard" ? "#007bff" : "#f0f0f0",
-            color: currentPage === "dashboard" ? "white" : "black",
-            border: "none",
-            borderRadius: "5px",
-          }}
-        >
-          Dashboard
-        </button>
-        <button
-          onClick={() => setCurrentPage("transactions")}
-          style={{
-            padding: "8px 15px",
-            backgroundColor:
-              currentPage === "transactions" ? "#007bff" : "#f0f0f0",
-            color: currentPage === "transactions" ? "white" : "black",
-            border: "none",
-            borderRadius: "5px",
-          }}
-        >
-          Transactions
-        </button>
-        <button
-          onClick={() => setCurrentPage("settings")}
-          style={{
-            marginRight: "10px",
-            padding: "8px 15px",
-            backgroundColor: currentPage === "settings" ? "#007bff" : "#f0f0f0",
-            color: currentPage === "settings" ? "white" : "black",
-            border: "none",
-            borderRadius: "5px",
-          }}
-        >
-          Settings
-        </button>
-        <Button
-          variant="secondary"
-          onClick={async () => {
-            const seed = await import("@/db/seed");
-          }}
-        >
-          더미 데이터 생성
-        </Button>
-      </nav>
+  useEffect(() => {
+    const checkInitialization = async () => {
+      try {
+        const initialized = await invoke<boolean>("is_app_initialized");
 
-      {currentPage === "dashboard" && <DashboardPage />}
-      {currentPage === "transactions" && <TransactionsPage />}
-      {currentPage === "settings" && <SettingsPage />}
-    </main>
-  );
+        setTimeout(() => {
+          setStage(initialized ? "home" : "onboarding");
+        }, 1000);
+      } catch (e) {
+        console.error(e);
+        setStage("onboarding");
+      }
+    };
+    checkInitialization();
+  }, []);
+
+  if (stage === "splash") return <SplashScreen />;
+  if (stage === "onboarding") return <Onboarding />;
+
+  return <Home />;
 }
 
 export default App;

@@ -26,7 +26,7 @@ import {
 import { useDashboard } from "@/hooks/useDashboard";
 import { SummaryCards } from "@/components/dashboard/SummaryCards";
 import { TransactionListDialog } from "@/components/dashboard/TransactionListDialog";
-import { TransactionWithCategory } from "@/types";
+import { DialogState, TransactionWithCategory } from "@/types";
 
 // 차트 색상
 const COLORS = [
@@ -40,7 +40,12 @@ const COLORS = [
 
 export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState<string>("");
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogState, setDialogState] = useState<DialogState>({
+    open: false,
+    title: "",
+    transactions: [],
+    showDate: false,
+  });
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [dailyTransactions, setDailyTransactions] = useState<
     TransactionWithCategory[]
@@ -73,9 +78,15 @@ export default function Dashboard() {
 
       console.log("DAILY TRANSACTIONS:", transactions);
 
-      setSelectedDate(date);
-      setDailyTransactions(transactions);
-      setDialogOpen(true);
+      // setSelectedDate(date);
+      // setDailyTransactions(transactions);
+      // setDialogOpen(true);
+      setDialogState({
+        open: true,
+        title: `${date} 내역`,
+        transactions,
+        showDate: false,
+      });
     } catch (e) {
       console.error("일별 거래 조회 실패:", e);
     }
@@ -101,6 +112,36 @@ export default function Dashboard() {
       </div>
     );
   }
+
+  const handleCategoryMonthlyClick = async (
+    categoryId: number,
+    categoryName: string
+  ) => {
+    try {
+      const transactions = await invoke<TransactionWithCategory[]>(
+        "get_transactions_by_month_and_category",
+        {
+          categoryId,
+          yearMonth: selectedMonth,
+        }
+      );
+
+      console.log("CATEGORY MONTHLY TRANSACTIONS:", transactions);
+      // setDialogTitle(`${categoryName} 내역`);
+      // setDailyTransactions(transactions);
+      // setShowDateInDialog(true); // ⭐ 날짜 표시
+      // setDialogOpen(true);
+
+      setDialogState({
+        open: true,
+        title: `${categoryName} 내역`,
+        transactions,
+        showDate: true,
+      });
+    } catch (e) {
+      console.error("카테고리별 거래 조회 실패:", e);
+    }
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -275,6 +316,12 @@ export default function Dashboard() {
                 <div
                   key={category.category_id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                  onClick={() =>
+                    handleCategoryMonthlyClick(
+                      category.category_id,
+                      category.category_name
+                    )
+                  }
                 >
                   <div className="flex items-center gap-4">
                     <div
@@ -314,11 +361,22 @@ export default function Dashboard() {
       </Card>
 
       <TransactionListDialog
-        open={dialogOpen}
-        title={`${selectedDate} 내역`}
-        transactions={dailyTransactions}
-        showDate={false}
-        onOpenChange={setDialogOpen}
+        open={dialogState.open}
+        title={dialogState.title}
+        transactions={dialogState.transactions}
+        showDate={dialogState.showDate}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setDialogState({
+              open: false,
+              title: "",
+              transactions: [],
+              showDate: false,
+            });
+          } else {
+            setDialogState((prev) => ({ ...prev, open: isOpen }));
+          }
+        }}
       />
     </div>
   );
