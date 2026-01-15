@@ -46,11 +46,6 @@ export default function Dashboard() {
     transactions: [],
     showDate: false,
   });
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [dailyTransactions, setDailyTransactions] = useState<
-    TransactionWithCategory[]
-  >([]);
-
   const {
     loading,
     overview,
@@ -75,12 +70,7 @@ export default function Dashboard() {
         "get_transactions_by_date",
         { date }
       );
-
       console.log("DAILY TRANSACTIONS:", transactions);
-
-      // setSelectedDate(date);
-      // setDailyTransactions(transactions);
-      // setDialogOpen(true);
       setDialogState({
         open: true,
         title: `${date} 내역`,
@@ -125,13 +115,7 @@ export default function Dashboard() {
           yearMonth: selectedMonth,
         }
       );
-
       console.log("CATEGORY MONTHLY TRANSACTIONS:", transactions);
-      // setDialogTitle(`${categoryName} 내역`);
-      // setDailyTransactions(transactions);
-      // setShowDateInDialog(true); // ⭐ 날짜 표시
-      // setDialogOpen(true);
-
       setDialogState({
         open: true,
         title: `${categoryName} 내역`,

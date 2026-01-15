@@ -3,7 +3,7 @@
 ## 1. 기술 스택 (Tech Stack)
 
 - **Framework:** Tauri (Backend: Rust)
-- **Frontend:** React (Vanilla HTML/CSS) -> tailwind css & shad/cn ui 적용 예정
+- **Frontend:** React (tailwind css & shad/cn ui)
 - **Database:** SQLite (로컬 저장소)
 
 ## 2. 프로젝트 목표 및 핵심 기능
@@ -75,7 +75,9 @@
   - `CategoriesPage`: 카테고리 CRUD 기능 및 UI 구현 완료.
   - `TransactionsPage`: 트랜잭션 CRUD 기능 및 UI 구현 완료.
   - `DashboardPage`: 지출수입요약, 카테고리별 지출, 월별일별지출 기능 구현 완료
-  - `DashboardPage`: 컴포넌트 분리(진행중), 차트 클릭시 일별 지출 내역 Dialog 팝업, 카테고리별 지출내역 팝업(진행중)
+  - `DashboardPage`: 컴포넌트 분리, 차트 클릭시 일별 지출 내역 Dialog 팝업, 카테고리별 지출내역 팝업 구현 완료
+  - `SplashPage` 및 처음 등록시 가계부 이름, 사용언어 입력받는 `OnboardingPage` 구현 완료, 타이틀바 구현 완료
+  -
 
 ## 6. 향후 개발 계획 (Roadmap)
 

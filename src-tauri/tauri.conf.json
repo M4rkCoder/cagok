@@ -17,8 +17,12 @@
     "windows": [
       {
         "title": "FINKRO",
-        "width": 1400,
-        "height": 800,
+        "width": 600,
+        "height": 500,
+        "visible": false,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
         "decorations": false
       }
     ],

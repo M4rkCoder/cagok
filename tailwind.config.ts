@@ -5,7 +5,10 @@ const config = {
   content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   theme: {
     extend: {
-      // ... (기존 설정과 동일)
+      fontFamily: {
+        pretendard: ["Pretendard", "sans-serif"],
+        intertab: ["InterTab", "monospace"],
+      },
     },
   },
   plugins: [tailwindcssAnimate],

@@ -120,5 +120,36 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "Pretendard", "InterTab", sans-serif;
   }
+}
+
+/* Pretendard 기본 글꼴 */
+body {
+  font-family: "Pretendard", sans-serif;
+}
+
+/* 숫자만 Inter Tabular Numbers로 */
+body {
+  /* tabular numbers 활성화 */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Pretendard (한/영) */
+@font-face {
+  font-family: "Pretendard";
+  src: url("./assets/fonts/Pretendard-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Inter Tabular Numbers (숫자) */
+@font-face {
+  font-family: "InterTab";
+  src: url("./assets/fonts/Inter-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  font-feature-settings: "tnum"; /* 탭형 숫자 사용 */
 }
