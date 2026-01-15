@@ -442,6 +442,40 @@ impl DashboardRepository {
 pub struct RecurringTransactionRepository;
 
 impl RecurringTransactionRepository {
+    pub fn get_by_id(conn: &Connection, id: i32) -> Result<Option<RecurringTransaction>, String> {
+        let mut stmt = conn.prepare(
+            "SELECT 
+                id, description, amount, category_id, frequency,
+                start_date, end_date, day_of_month, day_of_week,
+                is_active, last_created_date, remarks
+            FROM recurring_transactions
+            WHERE id = ?1"
+        ).map_err(|e| e.to_string())?;
+
+        let result = stmt.query_row(params![id], |row| {
+            Ok(RecurringTransaction {
+                id: Some(row.get(0)?),
+                description: row.get(1)?,
+                amount: row.get(2)?,
+                category_id: row.get(3)?,
+                frequency: RecurringFrequency::from(row.get::<_, i32>(4)?),
+                start_date: row.get(5)?,
+                end_date: row.get(6)?,
+                day_of_month: row.get(7)?,
+                day_of_week: row.get(8)?,
+                is_active: row.get::<_, i32>(9)? == 1,
+                last_created_date: row.get(10)?,
+                remarks: row.get(11)?,
+            })
+        });
+
+        match result {
+            Ok(recurring) => Ok(Some(recurring)),
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+            Err(e) => Err(e.to_string()),
+        }
+    }
+
     // 반복 지출 목록 조회
     pub fn get_all(conn: &Connection) -> Result<Vec<RecurringTransaction>> {
         let query = "

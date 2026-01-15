@@ -26,7 +26,7 @@ export default function Onboarding() {
       appName,
       language,
     });
-    window.location.reload(); // 가장 단순하고 안전
+    window.location.reload();
   };
 
   return (

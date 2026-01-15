@@ -60,3 +60,12 @@ pub fn process_recurring_transactions(
     let conn = db.0.lock().unwrap();
     RecurringService::process_recurring_transactions(&conn)
 }
+
+#[tauri::command]
+pub fn process_single_recurring_transaction(
+    db: State<'_, DbConnection>,
+    recurring_id: i32,
+) -> Result<i32, String> {
+    let conn = db.0.lock().unwrap();
+    RecurringService::process_single_recurring_transaction(&conn, recurring_id)
+}

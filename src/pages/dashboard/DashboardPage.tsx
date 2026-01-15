@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Calendar } from "lucide-react";
+// import { Calendar } from "lucide-react"; // Replaced by DailyExpenseCalendar
 import {
   LineChart,
   Line,
@@ -27,6 +27,8 @@ import { useDashboard } from "@/hooks/useDashboard";
 import { SummaryCards } from "@/components/dashboard/SummaryCards";
 import { TransactionListDialog } from "@/components/dashboard/TransactionListDialog";
 import { DialogState, TransactionWithCategory } from "@/types";
+import DailyExpenseCalendar from "@/components/DailyExpenseCalendar"; // New import
+import DailyTransactionsDialog from "@/components/DailyTransactionsDialog"; // New import
 
 // 차트 색상
 const COLORS = [
@@ -46,11 +48,16 @@ export default function Dashboard() {
     transactions: [],
     showDate: false,
   });
+  const [showDailyTransactionsDialog, setShowDailyTransactionsDialog] =
+    useState(false); // New state for daily dialog
+  const [selectedDateForDialog, setSelectedDateForDialog] = useState<
+    string | null
+  >(null); // New state for selected date
   const {
     loading,
     overview,
     categories,
-    dailyExpenses,
+    dailyExpenses, // Keep for now if other parts of dashboard use it. Calendar component will fetch its own.
     monthlyExpenses,
     comparisons,
   } = useDashboard(selectedMonth);
@@ -64,22 +71,9 @@ export default function Dashboard() {
     setSelectedMonth(yearMonth);
   }, []);
 
-  const handleDailyClick = async (date: string) => {
-    try {
-      const transactions = await invoke<TransactionWithCategory[]>(
-        "get_transactions_by_date",
-        { date }
-      );
-      console.log("DAILY TRANSACTIONS:", transactions);
-      setDialogState({
-        open: true,
-        title: `${date} 내역`,
-        transactions,
-        showDate: false,
-      });
-    } catch (e) {
-      console.error("일별 거래 조회 실패:", e);
-    }
+  const handleDateClick = (date: string) => {
+    setSelectedDateForDialog(date);
+    setShowDailyTransactionsDialog(true);
   };
 
   const formatCurrency = (amount: number) => {
@@ -136,7 +130,8 @@ export default function Dashboard() {
           <p className="text-gray-500 mt-1">가계부 통계 및 분석</p>
         </div>
         <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-gray-500" />
+          {/* Calendar icon and month input can be removed if not needed elsewhere */}
+          {/* <Calendar className="w-5 h-5 text-gray-500" /> */}
           <input
             type="month"
             value={selectedMonth}
@@ -222,42 +217,8 @@ export default function Dashboard() {
 
       {/* 일별/월별 추이 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 일별 지출 추이 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>일별 지출 추이</CardTitle>
-            <CardDescription>이번 달 일별 지출 내역</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {dailyExpenses.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={dailyExpenses}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" tickFormatter={formatDate} />
-                  <YAxis />
-                  <Tooltip
-                    formatter={(value: any) => formatCurrency(Number(value))}
-                    labelFormatter={(label) => `날짜: ${label}`}
-                  />
-                  <Bar
-                    dataKey="total_amount"
-                    fill="#ec4899"
-                    radius={[4, 4, 0, 0]}
-                    className="cursor-pointer"
-                    onClick={(data) => {
-                      console.log("BAR CLICK", data);
-                      handleDailyClick(data.payload.date);
-                    }}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-75 text-gray-400">
-                데이터가 없습니다
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* 일별 지출 캘린더 (DailyExpenseCalendar로 대체) */}
+        <DailyExpenseCalendar onDateClick={handleDateClick} />
 
         {/* 월별 지출 추이 */}
         <Card>
@@ -361,6 +322,12 @@ export default function Dashboard() {
             setDialogState((prev) => ({ ...prev, open: isOpen }));
           }
         }}
+      />
+      {/* New DailyTransactionsDialog */}
+      <DailyTransactionsDialog
+        date={selectedDateForDialog}
+        isOpen={showDailyTransactionsDialog}
+        onClose={() => setShowDailyTransactionsDialog(false)}
       />
     </div>
   );

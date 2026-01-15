@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import type { Transaction, Category, TransactionFormValues } from "@/types";
 import { TransactionWithCategory } from "@/types/transaction";
+import DailyExpenseCalendar from "@/components/DailyExpenseCalendar";
 
 // Simple modal component (copied from CategoriesPage.tsx)
 const Modal: React.FC<{

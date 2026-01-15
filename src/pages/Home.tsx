@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { DashboardPage, TransactionsPage, SettingsPage } from "@/pages";
 import { Button } from "@/components/ui/button";
 import TitleBar from "@/TitleBar";
+import { Toaster } from "@/components/ui/sonner";
 
 function Home() {
   const [currentPage, setCurrentPage] = useState<
@@ -10,6 +11,7 @@ function Home() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
+      <Toaster />
       <div className="h-12 shrink-0">
         <TitleBar />
       </div>
