@@ -21,12 +21,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { CsvImportCard } from "./CsvImportCard";
 
 export default function DbSettings() {
   const [dbPath, setDbPath] = useState("");
+  const [exportPath, setExportPath] = useState("");
   const [appName, setAppName] = useState("");
   const [language, setLanguage] = useState("");
   const [backups, setBackups] = useState<string[]>([]);
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
+  const [restoreConfirmOpen, setRestoreConfirmOpen] = useState(false);
+  const [selectedBackup, setSelectedBackup] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const fetchBackups = async () => {
     try {
@@ -40,6 +47,8 @@ export default function DbSettings() {
 
   useEffect(() => {
     invoke<string>("get_db_path").then(setDbPath);
+
+    invoke<string>("get_export_path").then(setExportPath);
 
     invoke<string | null>("get_setting_command", { key: "app_name" }).then(
       (v) => setAppName(v || "Finkro")
@@ -63,21 +72,8 @@ export default function DbSettings() {
   };
 
   const handleRestore = async (filename: string) => {
-    if (
-      !window.confirm(
-        `'${filename}' 백업으로 복원하시겠습니까? 현재 데이터는 덮어씌워집니다.`
-      )
-    ) {
-      return;
-    }
-    try {
-      await invoke("restore_backup", { filename });
-      toast.success(
-        "복원이 완료되었습니다. 앱을 다시 시작하여 변경사항을 확인하세요."
-      );
-    } catch (e) {
-      toast.error(`복원 실패: ${e}`);
-    }
+    setSelectedBackup(filename);
+    setRestoreConfirmOpen(true);
   };
 
   const openDbFolder = async () => {
@@ -173,8 +169,32 @@ export default function DbSettings() {
         <Button variant="secondary" onClick={handleBackup}>
           DB 백업 생성
         </Button>
+        <br />
+        csv저장위치: {exportPath}
+        <Button
+          variant="secondary"
+          onClick={async () => {
+            try {
+              const path = await invoke("export_transactions_csv");
+              toast.success(`다운로드 완료!\n${path}`);
+              await invoke("open_export_folder");
+            } catch (e) {
+              toast.error(`다운로드 실패: ${e}`);
+            }
+          }}
+        >
+          csv 다운로드
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={async () => {
+            await invoke("open_export_folder");
+          }}
+        >
+          다운로드 폴더 열기
+        </Button>
       </Card>
-
+      <CsvImportCard />
       {/* 백업 관리 */}
       <Card className="p-6 space-y-4">
         <div className="flex items-center gap-2 text-lg font-semibold">
@@ -201,6 +221,17 @@ export default function DbSettings() {
                     >
                       복원
                     </Button>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedBackup(backup);
+                        setDeleteConfirmOpen(true);
+                      }}
+                    >
+                      삭제
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -214,6 +245,83 @@ export default function DbSettings() {
           </TableBody>
         </Table>
       </Card>
+      <ConfirmDialog
+        open={restoreConfirmOpen}
+        onOpenChange={setRestoreConfirmOpen}
+        title="백업 복원"
+        description={
+          selectedBackup && (
+            <>
+              <p>
+                '{parseBackupName(selectedBackup)}' 백업으로 복원하시겠습니까?
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                현재 데이터는 덮어씌워집니다.
+              </p>
+            </>
+          )
+        }
+        confirmText="복원"
+        cancelText="취소"
+        onConfirm={async () => {
+          if (!selectedBackup) return;
+
+          try {
+            await invoke("restore_backup", { filename: selectedBackup });
+            setRestoreConfirmOpen(false);
+            setRestoreDialogOpen(true);
+          } catch (e) {
+            toast.error(`복원 실패: ${e}`);
+          }
+        }}
+      />
+      <ConfirmDialog
+        open={restoreDialogOpen}
+        onOpenChange={setRestoreDialogOpen}
+        title="복원 완료"
+        description={
+          <>
+            <p>"변경 사항을 적용하려면 앱을 다시 시작해야 합니다.</p>
+            <p>지금 재시작 하시겠습니까?"</p>
+          </>
+        }
+        confirmText="재시작"
+        cancelText="나중에"
+        onConfirm={async () => {
+          await invoke("restart_app");
+        }}
+      />
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="백업 삭제"
+        description={
+          selectedBackup && (
+            <>
+              <p>
+                '{parseBackupName(selectedBackup)}' 백업을 삭제하시겠습니까?
+              </p>
+              <p className="mt-2 text-sm text-destructive">
+                삭제된 백업은 복구할 수 없습니다.
+              </p>
+            </>
+          )
+        }
+        confirmText="삭제"
+        cancelText="취소"
+        onConfirm={async () => {
+          if (!selectedBackup) return;
+          try {
+            await invoke("delete_backup", { filename: selectedBackup });
+            toast.success("백업이 삭제되었습니다.");
+            setDeleteConfirmOpen(false);
+            setSelectedBackup(null);
+            fetchBackups(); // ⭐ 즉시 UI 갱신
+          } catch (e) {
+            toast.error(`삭제 실패: ${e}`);
+          }
+        }}
+      />
     </div>
   );
 }

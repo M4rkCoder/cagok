@@ -8,7 +8,8 @@
     },
     "jsx": "react-jsx",
     "esModuleInterop": true,
-    "types": ["node"]
+    "types": ["node", "@tauri-apps/api"],
+    "moduleResolution": "node"
   },
   "include": ["src"]
 }

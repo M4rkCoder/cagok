@@ -1,9 +1,9 @@
 pub mod init;
 pub mod repository;
 
-use serde::{Serialize, Deserialize};
-use std::sync::Mutex;
 use rusqlite::Connection;
+use serde::{Deserialize, Serialize};
+use std::sync::Mutex;
 
 pub struct DbConnection(pub Mutex<Connection>);
 
@@ -77,10 +77,10 @@ pub struct MonthlyExpense {
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum RecurringFrequency {
-    Daily = 0,          // 매일
-    Weekly = 1,         // 매주
-    Monthly = 2,        // 매월
-    Yearly = 3,         // 매년
+    Daily = 0,   // 매일
+    Weekly = 1,  // 매주
+    Monthly = 2, // 매월
+    Yearly = 3,  // 매년
 }
 
 impl From<i32> for RecurringFrequency {
@@ -108,7 +108,7 @@ pub struct RecurringTransaction {
     pub amount: f64,
     pub category_id: Option<i32>,
     pub frequency: RecurringFrequency,
-    pub start_date: String,       // "2024-01-15"
+    pub start_date: String, // "2024-01-15"
     pub end_date: Option<String>,
     pub day_of_month: Option<i32>, // 1-31
     pub day_of_week: Option<i32>,  // 0-6 (0=일요일)

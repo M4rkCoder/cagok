@@ -1,10 +1,10 @@
-pub mod category;
-pub mod transaction;
-pub mod dashboard;
-pub mod recurring;
-pub mod db;
 pub mod app;
+pub mod category;
+pub mod dashboard;
+pub mod db;
+pub mod recurring;
 pub mod settings;
+pub mod transaction;
 
 use tauri::Runtime;
 
@@ -43,9 +43,15 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         db::open_db_folder,
         db::list_backups,
         db::restore_backup,
+        db::delete_backup,
+        db::export_transactions_csv,
+        db::get_export_path,
+        db::open_export_folder,
+        db::import_transactions_csv,
         //app
         app::is_app_initialized,
         app::initialize_app,
+        app::restart_app,
         //settings
         settings::get_setting_command,
         settings::set_setting_command,

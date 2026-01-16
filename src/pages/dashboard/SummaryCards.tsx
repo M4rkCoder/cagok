@@ -1,6 +1,11 @@
-import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "../../components/ui/card";
 import { TrendingUp, TrendingDown, DollarSign, PiggyBank } from "lucide-react";
-import { ComparisonCardFooter } from "../ComparisonCardFooter";
+import { ComparisonCardFooter } from "./ComparisonCardFooter";
 import { ComparisonMetric, ComparisonType, MonthlyOverview } from "@/types";
 
 interface Props {
@@ -80,7 +85,7 @@ export function SummaryCards({ overview, comparisons }: Props) {
           <CardTitle className="text-sm font-medium text-gray-500">
             고정비 비율
           </CardTitle>
-          <PiggyBank className="w-4 h-4 text-purple-500" />`
+          <PiggyBank className="w-4 h-4 text-purple-500" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-purple-600">

@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 use tauri::Manager;
-mod db;
 mod commands;
+mod db;
 mod services;
 
 use db::init::init_db;
@@ -11,7 +11,9 @@ use services::RecurringService;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_sql::Builder::default().build())
         .setup(|app| {
             let app_handle = app.handle();
@@ -33,10 +35,7 @@ pub fn run() {
 
                 match RecurringService::process_recurring_transactions(&conn) {
                     Ok(count) => {
-                        println!(
-                            "[Recurring] Created {} recurring transactions",
-                            count
-                        );
+                        println!("[Recurring] Created {} recurring transactions", count);
                     }
                     Err(e) => {
                         eprintln!(
@@ -48,7 +47,7 @@ pub fn run() {
             }
             Ok(())
         });
-        commands::register_handler(builder)
-            .run(tauri::generate_context!())
-            .expect("error while running tauri application");
+    commands::register_handler(builder)
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }

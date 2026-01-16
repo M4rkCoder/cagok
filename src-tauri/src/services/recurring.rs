@@ -1,7 +1,7 @@
-use rusqlite::{Connection, params};
-use chrono::{NaiveDate, Datelike, Duration};
-use crate::db::{RecurringTransaction, RecurringFrequency};
 use crate::db::repository::RecurringTransactionRepository;
+use crate::db::{RecurringFrequency, RecurringTransaction};
+use chrono::{Datelike, Duration, NaiveDate};
+use rusqlite::{params, Connection};
 
 pub struct RecurringService;
 
@@ -10,18 +10,21 @@ impl RecurringService {
     pub fn process_recurring_transactions(conn: &Connection) -> Result<i32, String> {
         let recurring_list = RecurringTransactionRepository::get_active(conn)
             .map_err(|e| format!("Failed to get recurring transactions: {}", e))?;
-    
+
         let mut created_count = 0;
-    
+
         for recurring in recurring_list {
             created_count += Self::process_single_transaction_logic(conn, recurring)?;
         }
-    
+
         Ok(created_count)
     }
 
     // 단일 반복 거래 처리 로직 (재사용을 위해 분리)
-    fn process_single_transaction_logic(conn: &Connection, recurring: RecurringTransaction) -> Result<i32, String> {
+    fn process_single_transaction_logic(
+        conn: &Connection,
+        recurring: RecurringTransaction,
+    ) -> Result<i32, String> {
         let today = chrono::Local::now().date_naive();
         let mut created_for_this_recurring = 0;
 
@@ -49,26 +52,33 @@ impl RecurringService {
         if created_for_this_recurring > 0 {
             RecurringTransactionRepository::update_last_created_date(
                 conn,
-                recurring.id.ok_or("Recurring transaction ID is missing for update".to_string())?,
+                recurring
+                    .id
+                    .ok_or("Recurring transaction ID is missing for update".to_string())?,
                 &today.format("%Y-%m-%d").to_string(),
-            ).map_err(|e| format!("Failed to update last created date: {}", e))?;
+            )
+            .map_err(|e| format!("Failed to update last created date: {}", e))?;
         }
 
         Ok(created_for_this_recurring)
     }
 
     // 단일 반복 거래 처리 (Tauri Command에서 호출될 예정)
-    pub fn process_single_recurring_transaction(conn: &Connection, recurring_id: i32) -> Result<i32, String> {
-        let recurring = RecurringTransactionRepository::get_by_id(conn, recurring_id)?
-            .ok_or(format!("Recurring transaction with ID {} not found", recurring_id))?;
-        
+    pub fn process_single_recurring_transaction(
+        conn: &Connection,
+        recurring_id: i32,
+    ) -> Result<i32, String> {
+        let recurring = RecurringTransactionRepository::get_by_id(conn, recurring_id)?.ok_or(
+            format!("Recurring transaction with ID {} not found", recurring_id),
+        )?;
+
         if !recurring.is_active {
             return Ok(0); // 비활성 거래는 처리하지 않음
         }
 
         Self::process_single_transaction_logic(conn, recurring)
     }
-    
+
     fn should_create_on(
         recurring: &RecurringTransaction,
         date: &NaiveDate,
@@ -76,11 +86,11 @@ impl RecurringService {
         // 시작일
         let start_date = NaiveDate::parse_from_str(&recurring.start_date, "%Y-%m-%d")
             .map_err(|e| format!("Invalid start date: {}", e))?;
-    
+
         if date < &start_date {
             return Ok(false);
         }
-    
+
         // 종료일
         if let Some(end_date_str) = &recurring.end_date {
             let end_date = NaiveDate::parse_from_str(end_date_str, "%Y-%m-%d")
@@ -89,10 +99,10 @@ impl RecurringService {
                 return Ok(false);
             }
         }
-    
+
         match recurring.frequency {
             RecurringFrequency::Daily => Ok(true),
-    
+
             RecurringFrequency::Weekly => {
                 if let Some(day_of_week) = recurring.day_of_week {
                     Ok(date.weekday().num_days_from_sunday() == day_of_week as u32)
@@ -100,7 +110,7 @@ impl RecurringService {
                     Ok(false)
                 }
             }
-    
+
             RecurringFrequency::Monthly => {
                 if let Some(day_of_month) = recurring.day_of_month {
                     Ok(date.day() == day_of_month as u32)
@@ -108,7 +118,7 @@ impl RecurringService {
                     Ok(false)
                 }
             }
-    
+
             RecurringFrequency::Yearly => {
                 let start_date_month = NaiveDate::parse_from_str(&recurring.start_date, "%Y-%m-%d")
                     .map_err(|e| format!("Invalid start date for yearly check: {}", e))?
@@ -121,7 +131,7 @@ impl RecurringService {
             }
         }
     }
-    
+
     // 반복 지출로부터 실제 거래 생성
     fn create_transaction_from_recurring(
         conn: &Connection,
@@ -139,7 +149,7 @@ impl RecurringService {
                 recurring.remarks,
             ],
         ).map_err(|e| format!("Failed to create transaction: {}", e))?;
-        
+
         Ok(())
     }
 }

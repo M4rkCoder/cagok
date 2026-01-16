@@ -1,7 +1,7 @@
-use tauri::State;
-use crate::db::{DbConnection, RecurringTransaction};
 use crate::db::repository::RecurringTransactionRepository;
+use crate::db::{DbConnection, RecurringTransaction};
 use crate::services::RecurringService;
+use tauri::State;
 
 #[tauri::command]
 pub fn get_recurring_transactions(
@@ -34,29 +34,21 @@ pub fn update_recurring_transaction(
 }
 
 #[tauri::command]
-pub fn delete_recurring_transaction(
-    db: State<'_, DbConnection>,
-    id: i32,
-) -> Result<(), String> {
+pub fn delete_recurring_transaction(db: State<'_, DbConnection>, id: i32) -> Result<(), String> {
     let conn = db.0.lock().unwrap();
     RecurringTransactionRepository::delete(&conn, id)
         .map_err(|e| format!("Failed to delete recurring transaction: {}", e))
 }
 
 #[tauri::command]
-pub fn toggle_recurring_transaction(
-    db: State<'_, DbConnection>,
-    id: i32,
-) -> Result<(), String> {
+pub fn toggle_recurring_transaction(db: State<'_, DbConnection>, id: i32) -> Result<(), String> {
     let conn = db.0.lock().unwrap();
     RecurringTransactionRepository::toggle_active(&conn, id)
         .map_err(|e| format!("Failed to toggle recurring transaction: {}", e))
 }
 
 #[tauri::command]
-pub fn process_recurring_transactions(
-    db: State<'_, DbConnection>,
-) -> Result<i32, String> {
+pub fn process_recurring_transactions(db: State<'_, DbConnection>) -> Result<i32, String> {
     let conn = db.0.lock().unwrap();
     RecurringService::process_recurring_transactions(&conn)
 }

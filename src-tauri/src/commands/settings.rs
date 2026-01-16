@@ -1,6 +1,6 @@
-use tauri::State;
-use crate::db::DbConnection;
 use crate::db::repository::{get_setting, set_setting};
+use crate::db::DbConnection;
+use tauri::State;
 
 #[tauri::command]
 pub fn get_setting_command(

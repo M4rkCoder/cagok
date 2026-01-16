@@ -1,7 +1,7 @@
-use tauri::State;
-use crate::db::{MonthlyOverview, CategoryExpense, DailyExpense, MonthlyExpense, DbConnection};
+use crate::db::{CategoryExpense, DailyExpense, DbConnection, MonthlyExpense, MonthlyOverview};
 use crate::services::dashboard::DashboardService;
 use crate::services::{ComparisonMetric, ComparisonType};
+use tauri::State;
 
 #[tauri::command]
 pub fn get_monthly_overview(
@@ -38,7 +38,6 @@ pub fn get_monthly_expenses(
     let conn = db.0.lock().unwrap();
     DashboardService::get_monthly_expenses(&conn, months)
 }
-
 
 #[tauri::command]
 pub fn compare_dashboard(

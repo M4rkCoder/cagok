@@ -1,6 +1,6 @@
-use crate::db::{MonthlyOverview, CategoryExpense, DailyExpense, MonthlyExpense};
-use crate::db::repository::DashboardRepository;
 use super::{ComparisonMetric, ComparisonType};
+use crate::db::repository::DashboardRepository;
+use crate::db::{CategoryExpense, DailyExpense, MonthlyExpense, MonthlyOverview};
 use rusqlite::Connection;
 
 pub struct DashboardService;
@@ -13,7 +13,7 @@ impl DashboardService {
         DashboardRepository::get_monthly_overview(conn, year_month)
             .map_err(|e| format!("Failed to get monthly overview: {}", e))
     }
-    
+
     pub fn get_category_expenses(
         conn: &Connection,
         year_month: &str,
@@ -21,7 +21,7 @@ impl DashboardService {
         DashboardRepository::get_category_expenses(conn, year_month)
             .map_err(|e| format!("Failed to get category expenses: {}", e))
     }
-    
+
     pub fn get_daily_expenses(
         conn: &Connection,
         year_month: &str,
@@ -29,7 +29,7 @@ impl DashboardService {
         DashboardRepository::get_daily_expenses(conn, year_month)
             .map_err(|e| format!("Failed to get daily expenses: {}", e))
     }
-    
+
     pub fn get_monthly_expenses(
         conn: &Connection,
         months: i32,
@@ -49,12 +49,20 @@ impl DashboardService {
             // 🔹 총 지출 비교
             ComparisonType::Expense => {
                 let current = DashboardRepository::get_amount_sum_by_range(
-                    conn, 1, current_start, current_end,
-                ).map_err(|e| e.to_string())?;
+                    conn,
+                    1,
+                    current_start,
+                    current_end,
+                )
+                .map_err(|e| e.to_string())?;
 
                 let previous = DashboardRepository::get_amount_sum_by_range(
-                    conn, 1, previous_start, previous_end,
-                ).map_err(|e| e.to_string())?;
+                    conn,
+                    1,
+                    previous_start,
+                    previous_end,
+                )
+                .map_err(|e| e.to_string())?;
 
                 Ok(ComparisonMetric::new(current, previous))
             }
@@ -62,12 +70,20 @@ impl DashboardService {
             // 🔹 총 수입 비교
             ComparisonType::Income => {
                 let current = DashboardRepository::get_amount_sum_by_range(
-                    conn, 0, current_start, current_end,
-                ).map_err(|e| e.to_string())?;
+                    conn,
+                    0,
+                    current_start,
+                    current_end,
+                )
+                .map_err(|e| e.to_string())?;
 
                 let previous = DashboardRepository::get_amount_sum_by_range(
-                    conn, 0, previous_start, previous_end,
-                ).map_err(|e| e.to_string())?;
+                    conn,
+                    0,
+                    previous_start,
+                    previous_end,
+                )
+                .map_err(|e| e.to_string())?;
 
                 Ok(ComparisonMetric::new(current, previous))
             }
@@ -75,20 +91,36 @@ impl DashboardService {
             // 🔹 순수입 비교 (수입 - 지출)
             ComparisonType::NetIncome => {
                 let current_income = DashboardRepository::get_amount_sum_by_range(
-                    conn, 0, current_start, current_end,
-                ).map_err(|e| e.to_string())?;
+                    conn,
+                    0,
+                    current_start,
+                    current_end,
+                )
+                .map_err(|e| e.to_string())?;
 
                 let current_expense = DashboardRepository::get_amount_sum_by_range(
-                    conn, 1, current_start, current_end,
-                ).map_err(|e| e.to_string())?;
+                    conn,
+                    1,
+                    current_start,
+                    current_end,
+                )
+                .map_err(|e| e.to_string())?;
 
                 let previous_income = DashboardRepository::get_amount_sum_by_range(
-                    conn, 0, previous_start, previous_end,
-                ).map_err(|e| e.to_string())?;
+                    conn,
+                    0,
+                    previous_start,
+                    previous_end,
+                )
+                .map_err(|e| e.to_string())?;
 
                 let previous_expense = DashboardRepository::get_amount_sum_by_range(
-                    conn, 1, previous_start, previous_end,
-                ).map_err(|e| e.to_string())?;
+                    conn,
+                    1,
+                    previous_start,
+                    previous_end,
+                )
+                .map_err(|e| e.to_string())?;
 
                 Ok(ComparisonMetric::new(
                     current_income - current_expense,
@@ -99,25 +131,45 @@ impl DashboardService {
             // 🔹 고정비율 비교
             ComparisonType::FixedRatio => {
                 let current_fixed = DashboardRepository::get_fixed_expense_sum_by_range(
-                    conn, current_start, current_end,
-                ).map_err(|e| e.to_string())?;
+                    conn,
+                    current_start,
+                    current_end,
+                )
+                .map_err(|e| e.to_string())?;
 
                 let current_total = DashboardRepository::get_amount_sum_by_range(
-                    conn, 1, current_start, current_end,
-                ).map_err(|e| e.to_string())?;
+                    conn,
+                    1,
+                    current_start,
+                    current_end,
+                )
+                .map_err(|e| e.to_string())?;
 
                 let previous_fixed = DashboardRepository::get_fixed_expense_sum_by_range(
-                    conn, previous_start, previous_end,
-                ).map_err(|e| e.to_string())?;
+                    conn,
+                    previous_start,
+                    previous_end,
+                )
+                .map_err(|e| e.to_string())?;
 
                 let previous_total = DashboardRepository::get_amount_sum_by_range(
-                    conn, 1, previous_start, previous_end,
-                ).map_err(|e| e.to_string())?;
+                    conn,
+                    1,
+                    previous_start,
+                    previous_end,
+                )
+                .map_err(|e| e.to_string())?;
 
-                let current_ratio =
-                    if current_total == 0 { 0 } else { current_fixed * 100 / current_total };
-                let previous_ratio =
-                    if previous_total == 0 { 0 } else { previous_fixed * 100 / previous_total };
+                let current_ratio = if current_total == 0 {
+                    0
+                } else {
+                    current_fixed * 100 / current_total
+                };
+                let previous_ratio = if previous_total == 0 {
+                    0
+                } else {
+                    previous_fixed * 100 / previous_total
+                };
 
                 Ok(ComparisonMetric::new(current_ratio, previous_ratio))
             }

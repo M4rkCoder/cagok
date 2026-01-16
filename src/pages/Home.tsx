@@ -16,7 +16,7 @@ function Home() {
         <TitleBar />
       </div>
       <main
-        className="flex-1 overflow-auto"
+        className="flex-1 overflow-y-scroll custom-scroll"
         style={{ fontFamily: "sans-serif" }}
       >
         <nav

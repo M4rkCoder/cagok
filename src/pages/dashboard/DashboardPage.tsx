@@ -24,7 +24,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useDashboard } from "@/hooks/useDashboard";
-import { SummaryCards } from "@/components/dashboard/SummaryCards";
+import { SummaryCards } from "./SummaryCards";
 import { TransactionListDialog } from "@/components/dashboard/TransactionListDialog";
 import { DialogState, TransactionWithCategory } from "@/types";
 import DailyExpenseCalendar from "@/components/DailyExpenseCalendar"; // New import
