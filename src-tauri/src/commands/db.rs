@@ -248,11 +248,11 @@ struct TransactionCsvRow {
 
 #[tauri::command]
 pub fn import_transactions_csv(
-    file_path: String,
+    path: String,
     conn: State<DbConnection>,
 ) -> Result<u32, String> {
     let mut conn = conn.0.lock().unwrap();
-    let file = File::open(&file_path).map_err(|e| e.to_string())?;
+    let file = File::open(&path).map_err(|e| e.to_string())?;
 
     let mut reader = ReaderBuilder::new().has_headers(true).from_reader(file);
 

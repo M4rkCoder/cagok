@@ -74,7 +74,7 @@ export function CsvImportCard() {
     try {
       setLoading(true);
       const insertedCount = await invoke("import_transactions_csv", {
-        file_path: filePath,
+        path: filePath,
       });
 
       toast.success(`거래 ${insertedCount}건을 가져왔습니다.`);
