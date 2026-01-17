@@ -11,8 +11,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
-interface ConfirmDialogProps
-  extends React.ComponentPropsWithoutRef<typeof AlertDialogContent> {
+interface ConfirmDialogProps extends React.ComponentPropsWithoutRef<
+  typeof AlertDialogContent
+> {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 
@@ -25,7 +26,7 @@ interface ConfirmDialogProps
   onConfirm: () => void | Promise<void>;
 }
 
-export function ConfirmDialog({
+export default function ConfirmDialog({
   open,
   onOpenChange,
   title,

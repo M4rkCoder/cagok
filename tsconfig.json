@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ESNext",
+    "downlevelIteration": true,
     "useDefineForClassFields": true,
 
     "module": "ESNext",

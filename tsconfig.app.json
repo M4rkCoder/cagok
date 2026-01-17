@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "target": "ESNext",
+    "downlevelIteration": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "composite": true,
     "baseUrl": ".",

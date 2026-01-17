@@ -1,238 +1,64 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import type { Transaction, Category, TransactionFormValues } from "@/types";
-import { TransactionWithCategory } from "@/types/transaction";
-import DailyExpenseCalendar from "@/components/DailyExpenseCalendar";
+import { useTranslation } from "react-i18next";
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  useReactTable,
+  getPaginationRowModel,
+  getFilteredRowModel,
+} from "@tanstack/react-table";
+import {
+  Transaction,
+  Category,
+  TransactionFormValues,
+  TransactionWithCategory,
+} from "@/types";
 
-// Simple modal component (copied from CategoriesPage.tsx)
-const Modal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  children: React.ReactNode;
-}> = ({ isOpen, onClose, title, children }) => {
-  if (!isOpen) return null;
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0,0,0,0.5)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 1000,
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: "white",
-          padding: "20px",
-          borderRadius: "8px",
-          minWidth: "300px",
-          boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-        }}
-      >
-        <h2>{title}</h2>
-        {children}
-        <button onClick={onClose} style={{ marginTop: "10px" }}>
-          Close
-        </button>
-      </div>
-    </div>
-  );
-};
+import TransactionFilters from "./TransactionFilters";
+import TransactionTableContent from "./TransactionTableContent";
+import TransactionPagination from "./TransactionPagination";
+import TransactionDialogs from "./TransactionDialogs";
 
-// Rewritten TransactionForm (similar to CategoryForm)
-interface TransactionFormProps {
-  onSubmit: (values: TransactionFormValues) => void;
-  onCancel: () => void;
-  defaultValues?: Transaction;
-  categories: Category[]; // Pass categories to link transaction to a category
-}
-
-const TransactionForm: React.FC<TransactionFormProps> = ({
-  onSubmit,
-  onCancel,
-  defaultValues,
-  categories,
-}) => {
-  const [description, setDescription] = useState(
-    defaultValues?.description || ""
-  );
-  const [amount, setAmount] = useState(defaultValues?.amount || 0);
-  const [date, setDate] = useState(
-    defaultValues?.date || new Date().toISOString().split("T")[0]
-  ); // YYYY-MM-DD
-  const [type, setType] = useState<0 | 1>(defaultValues?.type ?? 1); // Default to Expense
-  const [isFixed, setIsFixed] = useState<0 | 1>(defaultValues?.is_fixed ?? 0); // Default to Variable
-  const [remarks, setRemarks] = useState(defaultValues?.remarks || "");
-  const [categoryId, setCategoryId] = useState(defaultValues?.category_id);
-
-  useEffect(() => {
-    console.log("TransactionForm: categories prop updated:", categories);
-  }, [categories]);
-
-  useEffect(() => {
-    console.log("TransactionForm: categoryId state updated:", categoryId);
-  }, [categoryId]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({
-      description: description || undefined,
-      amount: Number(amount),
-      date,
-      type: type,
-      is_fixed: isFixed,
-      remarks: remarks ?? undefined,
-      category_id: categoryId ?? undefined,
-    });
-  };
-
-  return (
-    <form
-      onSubmit={handleSubmit}
-      style={{ display: "flex", flexDirection: "column", gap: "10px" }}
-    >
-      <div>
-        <label htmlFor="description">Description:</label>
-        <input
-          id="description"
-          type="text"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          style={{ width: "100%", padding: "8px" }}
-        />
-      </div>
-      <div>
-        <label htmlFor="amount">Amount:</label>
-        <input
-          id="amount"
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(parseFloat(e.target.value))}
-          required
-          style={{ width: "100%", padding: "8px" }}
-        />
-      </div>
-      <div>
-        <label htmlFor="date">Date:</label>
-        <input
-          id="date"
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          required
-          style={{ width: "100%", padding: "8px" }}
-        />
-      </div>
-      <div>
-        <label htmlFor="type">Type:</label>
-        <select
-          id="type"
-          value={type}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            if (value === 0 || value === 1) {
-              setType(value);
-            }
-          }}
-          style={{ width: "100%", padding: "8px" }}
-        >
-          <option value="0">Income</option>
-          <option value="1">Expense</option>
-        </select>
-      </div>
-      <div>
-        <label htmlFor="isFixed">Fixed/Variable:</label>
-        <select
-          id="isFixed"
-          value={isFixed}
-          onChange={(e) => {
-            const value = Number(e.target.value);
-            if (value === 0 || value === 1) {
-              setIsFixed(value);
-            }
-          }}
-          style={{ width: "100%", padding: "8px" }}
-        >
-          <option value="0">Variable</option>
-          <option value="1">Fixed</option>
-        </select>
-      </div>
-      <div>
-        <label htmlFor="remarks">Remarks:</label>
-        <textarea
-          id="remarks"
-          value={remarks}
-          onChange={(e) => setRemarks(e.target.value)}
-          rows={3}
-          style={{ width: "100%", padding: "8px" }}
-          placeholder="Optional memo or note"
-        />
-      </div>
-      <div>
-        <label htmlFor="category_id">Category:</label>
-        <select
-          id="category_id"
-          value={categoryId || ""}
-          onChange={(e) =>
-            setCategoryId(
-              e.target.value !== "" ? parseInt(e.target.value, 10) : undefined
-            )
-          }
-          style={{ width: "100%", padding: "8px" }}
-        >
-          <option value="">No Category</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name} ({cat.icon})
-            </option>
-          ))}
-        </select>
-      </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "10px",
-          marginTop: "10px",
-        }}
-      >
-        <button type="button" onClick={onCancel}>
-          Cancel
-        </button>
-        <button type="submit">Save</button>
-      </div>
-    </form>
-  );
-};
-
-const TransactionsPage = () => {
+const TransactionsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [transactions, setTransactions] = useState<TransactionWithCategory[]>(
-    []
+    [],
   );
-  const [categories, setCategories] = useState<Category[]>([]); // To display category name in table
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [transactionToDeleteId, setTransactionToDeleteId] = useState<
+    number | null
+  >(null);
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 50,
+  });
+  const [filterType, setFilterType] = useState<string | null>(null); // 0: Income, 1: Expense
+  const [filterCategory, setFilterCategory] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchTriggerQuery, setSearchTriggerQuery] = useState<string>("");
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   const fetchTransactions = async () => {
     setLoading(true);
     try {
-      const fetchedTransactions = await invoke<Transaction[]>(
-        "get_transactions_with_category"
+      const fetchedTransactions = await invoke<TransactionWithCategory[]>(
+        "get_transactions_with_category",
       );
-      console.log("Fetched transactions:", fetchedTransactions);
       setTransactions(fetchedTransactions);
     } catch (error) {
       console.error("Failed to fetch transactions:", JSON.stringify(error));
+      toast.error(t("failed_to_fetch_transactions"));
     } finally {
       setLoading(false);
     }
@@ -241,19 +67,16 @@ const TransactionsPage = () => {
   const fetchCategories = async () => {
     try {
       const fetchedCategories = await invoke<Category[]>("get_categories");
-      console.log("Fetched categories:", fetchedCategories);
       setCategories(fetchedCategories);
     } catch (error) {
-      console.error(
-        "Failed to fetch categories for transactions:",
-        JSON.stringify(error)
-      );
+      console.error("Failed to fetch categories:", JSON.stringify(error));
+      toast.error(t("failed_to_fetch_categories"));
     }
   };
 
   useEffect(() => {
     fetchTransactions();
-    fetchCategories(); // Fetch categories to link to transactions
+    fetchCategories();
   }, []);
 
   const handleDialogClose = () => {
@@ -271,19 +94,33 @@ const TransactionsPage = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm("Are you sure you want to delete this transaction?")) {
+  const handleDeleteClick = (id: number) => {
+    console.log("handleDeleteClick called with id:", id);
+    setTransactionToDeleteId(id);
+    setIsConfirmDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    console.log(
+      "handleConfirmDelete called. transactionToDeleteId:",
+      transactionToDeleteId,
+    );
+    if (transactionToDeleteId !== null) {
       try {
-        await invoke("delete_transaction", { id });
-        fetchTransactions(); // Refetch after deleting
+        await invoke("delete_transaction", { id: transactionToDeleteId });
+        toast.success(t("transaction_deleted_successfully"));
+        fetchTransactions();
       } catch (error) {
         console.error("Failed to delete transaction:", JSON.stringify(error));
+        toast.error(t("failed_to_delete_transaction"));
+      } finally {
+        setIsConfirmDialogOpen(false);
+        setTransactionToDeleteId(null);
       }
     }
   };
 
   const handleFormSubmit = async (values: TransactionFormValues) => {
-    console.log("handleFormSubmit: values before invoke:", values);
     try {
       if (editingTransaction) {
         await invoke("update_transaction", {
@@ -299,6 +136,7 @@ const TransactionsPage = () => {
               values.category_id !== undefined ? values.category_id : null,
           },
         });
+        toast.success(t("transaction_updated_successfully"));
       } else {
         await invoke("create_transaction", {
           transaction: {
@@ -311,200 +149,182 @@ const TransactionsPage = () => {
             category_id: values.category_id,
           },
         });
+        toast.success(t("transaction_created_successfully"));
       }
       handleDialogClose();
-      fetchTransactions(); // Refetch after creating/updating
+      fetchTransactions();
     } catch (error) {
       console.error("Failed to save transaction:", JSON.stringify(error));
+      toast.error(t("failed_to_save_transaction"));
     }
   };
 
-  return (
-    <div
-      style={{
-        maxWidth: "1000px",
-        margin: "20px auto",
-        padding: "20px",
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px",
-        }}
-      >
-        <h1 style={{ fontSize: "24px", margin: 0 }}>Transactions</h1>
-        <button
-          onClick={handleNew}
-          style={{
-            padding: "8px 15px",
-            backgroundColor: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-          }}
-        >
-          New Transaction
-        </button>
-      </div>
-
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            marginTop: "20px",
-          }}
-        >
-          <thead>
-            <tr style={{ backgroundColor: "#f2f2f2" }}>
-              <th
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "left",
-                }}
-              >
-                Description
-              </th>
-              <th
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "left",
-                }}
-              >
-                Amount
-              </th>
-              <th
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "left",
-                }}
-              >
-                Date
-              </th>
-              <th
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "left",
-                }}
-              >
-                Type
-              </th>
-              <th
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "left",
-                }}
-              >
-                Fixed/Variable
-              </th>
-              <th
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "left",
-                }}
-              >
-                Category
-              </th>
-              <th
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "left",
-                }}
-              >
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={7}
-                  style={{
-                    border: "1px solid #ddd",
-                    padding: "8px",
-                    textAlign: "center",
-                  }}
-                >
-                  No transactions found.
-                </td>
-              </tr>
-            ) : (
-              transactions.map((transaction) => (
-                <tr key={transaction.id}>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    {transaction.description}
-                  </td>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    {transaction.amount}
-                  </td>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    {transaction.date}
-                  </td>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    {transaction.type === 0 ? "Income" : "Expense"}
-                  </td>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    {transaction.is_fixed === 0 ? "Variable" : "Fixed"}
-                  </td>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    {transaction.category_icon} {transaction.category_name}
-                  </td>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    <button
-                      onClick={() => handleEdit(transaction)}
-                      style={{ marginRight: "10px", padding: "5px 10px" }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(transaction.id!)}
-                      style={{
-                        padding: "5px 10px",
-                        backgroundColor: "#dc3545",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "5px",
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
+  const columns: ColumnDef<TransactionWithCategory>[] = useMemo(
+    () => [
+      {
+        accessorKey: "date",
+        header: t("date"),
+        cell: ({ row }) => row.original.date,
+      },
+      {
+        accessorKey: "type",
+        header: t("type"),
+        cell: ({ row }) =>
+          row.original.type === 0 ? t("income") : t("expense"),
+      },
+      {
+        accessorKey: "category",
+        header: t("category"),
+        cell: ({ row }) => (
+          <div className="flex items-center space-x-2">
+            <span>{row.original.category_icon}</span>
+            <span>{row.original.category_name || t("no_category")}</span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "description",
+        header: t("description"),
+        cell: ({ row }) => row.original.description,
+      },
+      {
+        accessorKey: "amount",
+        header: t("amount"),
+        cell: ({ row }) => (
+          <div className="flex items-center space-x-2">
+            <span>{row.original.amount.toLocaleString()}</span>
+            {row.original.is_fixed === 1 && (
+              <Badge variant="secondary">{t("fixed")}</Badge>
             )}
-          </tbody>
-        </table>
-      )}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "remarks",
+        header: t("remarks"),
+        cell: ({ row }) => row.original.remarks,
+      },
+      {
+        id: "actions",
+        header: t("actions"),
+        cell: ({ row }) => (
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleEdit(row.original)}
+            >
+              {t("edit")}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => handleDeleteClick(row.original.id!)}
+            >
+              {t("delete")}
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [t],
+  );
 
-      <Modal
-        isOpen={dialogOpen}
-        onClose={handleDialogClose}
-        title={
-          editingTransaction ? "Edit Transaction" : "Create New Transaction"
-        }
-      >
-        <TransactionForm
-          onSubmit={handleFormSubmit}
-          onCancel={handleDialogClose}
-          defaultValues={editingTransaction || undefined}
+  const filteredTransactions = useMemo(() => {
+    let filtered = transactions;
+
+    if (filterType !== null) {
+      filtered = filtered.filter((t) => t.type === parseInt(filterType));
+    }
+
+    if (filterCategory !== null) {
+      filtered = filtered.filter(
+        (t) => t.category_id === parseInt(filterCategory),
+      );
+    }
+
+    if (searchTriggerQuery) {
+      const lowerCaseSearchQuery = searchTriggerQuery.toLowerCase();
+      filtered = filtered.filter(
+        (t) =>
+          (t.description &&
+            t.description.toLowerCase().includes(lowerCaseSearchQuery)) ||
+          (t.remarks && t.remarks.toLowerCase().includes(lowerCaseSearchQuery)),
+      );
+    }
+
+    if (startDate) {
+      filtered = filtered.filter((t) => new Date(t.date) >= startDate);
+    }
+
+    if (endDate) {
+      filtered = filtered.filter((t) => new Date(t.date) <= endDate);
+    }
+
+    return filtered;
+  }, [
+    transactions,
+    filterType,
+    filterCategory,
+    searchTriggerQuery,
+    startDate,
+    endDate,
+  ]);
+
+  const table = useReactTable({
+    data: filteredTransactions,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    state: {
+      pagination,
+    },
+    onPaginationChange: setPagination,
+  });
+
+  return (
+    <div className="container mx-auto py-8">
+      {/* Title section */}
+      <h1 className="text-3xl font-bold mb-6">{t("transactions")}</h1>
+
+      {/* Filters and New Transaction Button section */}
+      <div className="flex items-center justify-between space-x-4 mb-6">
+        <TransactionFilters
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          setSearchTriggerQuery={setSearchTriggerQuery}
+          filterType={filterType}
+          setFilterType={setFilterType}
+          filterCategory={filterCategory}
+          setFilterCategory={setFilterCategory}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
           categories={categories}
         />
-      </Modal>
+        <Button onClick={handleNew}>{t("new_transaction")}</Button>
+      </div>
+
+      {/* Table Content */}
+      <TransactionTableContent table={table} loading={loading} />
+
+      {/* Pagination */}
+      <TransactionPagination table={table} />
+
+      {/* Dialogs (hidden by default, appear on trigger) */}
+      <TransactionDialogs
+        dialogOpen={dialogOpen}
+        setDialogOpen={setDialogOpen}
+        editingTransaction={editingTransaction}
+        handleFormSubmit={handleFormSubmit}
+        handleDialogClose={handleDialogClose}
+        categories={categories}
+        isConfirmDialogOpen={isConfirmDialogOpen}
+        setIsConfirmDialogOpen={setIsConfirmDialogOpen}
+        handleConfirmDelete={handleConfirmDelete}
+      />
     </div>
   );
 };

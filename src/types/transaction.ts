@@ -4,9 +4,9 @@ export interface Transaction {
   description?: string;
   amount: number;
   date: string;
-  type: 0 | 1; // 0: income, 1: expense
+  type: number; // 0: income, 1: expense
   remarks: string;
-  is_fixed: 0 | 1; // 0: variable, 1: fixed
+  is_fixed: number; // 0: variable, 1: fixed
   category_id?: number;
 }
 

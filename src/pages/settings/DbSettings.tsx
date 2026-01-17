@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { CsvImportCard } from "./CsvImportCard";
 
 export default function DbSettings() {
@@ -51,11 +51,11 @@ export default function DbSettings() {
     invoke<string>("get_export_path").then(setExportPath);
 
     invoke<string | null>("get_setting_command", { key: "app_name" }).then(
-      (v) => setAppName(v || "Finkro")
+      (v) => setAppName(v || "Finkro"),
     );
 
     invoke<string | null>("get_setting_command", { key: "language" }).then(
-      (v) => setLanguage(v || "ko")
+      (v) => setLanguage(v || "ko"),
     );
 
     fetchBackups();
@@ -89,10 +89,10 @@ export default function DbSettings() {
     await invoke("set_setting_command", { key: "language", value: language });
     toast.success("설정이 저장되었습니다.");
     invoke<string | null>("get_setting_command", { key: "app_name" }).then(
-      (v) => setAppName(v || "Finkro")
+      (v) => setAppName(v || "Finkro"),
     );
     invoke<string | null>("get_setting_command", { key: "language" }).then(
-      (v) => setLanguage(v || "ko")
+      (v) => setLanguage(v || "ko"),
     );
   };
 
@@ -101,11 +101,11 @@ export default function DbSettings() {
     if (!match) return name;
     const date = `${match[1].slice(0, 4)}-${match[1].slice(
       4,
-      6
+      6,
     )}-${match[1].slice(6, 8)}`;
     const time = `${match[2].slice(0, 2)}:${match[2].slice(
       2,
-      4
+      4,
     )}:${match[2].slice(4, 6)}`;
     return `${date} ${time}`;
   };
