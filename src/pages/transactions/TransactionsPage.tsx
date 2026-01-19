@@ -18,16 +18,23 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import TransactionFilters from "./TransactionFilters";
 import TransactionTableContent from "./TransactionTableContent";
 import TransactionPagination from "./TransactionPagination";
 import TransactionDialogs from "./TransactionDialogs";
+import { Pin, SquarePen, Trash2 } from "lucide-react";
+import { ExpenseBadge, IncomeBadge } from "./TransactionBadge";
 
 const TransactionsPage: React.FC = () => {
   const { t } = useTranslation();
   const [transactions, setTransactions] = useState<TransactionWithCategory[]>(
-    [],
+    []
   );
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +47,7 @@ const TransactionsPage: React.FC = () => {
   >(null);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
-    pageSize: 50,
+    pageSize: 30,
   });
   const [filterType, setFilterType] = useState<string | null>(null); // 0: Income, 1: Expense
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
@@ -53,7 +60,7 @@ const TransactionsPage: React.FC = () => {
     setLoading(true);
     try {
       const fetchedTransactions = await invoke<TransactionWithCategory[]>(
-        "get_transactions_with_category",
+        "get_transactions_with_category"
       );
       setTransactions(fetchedTransactions);
     } catch (error) {
@@ -103,7 +110,7 @@ const TransactionsPage: React.FC = () => {
   const handleConfirmDelete = async () => {
     console.log(
       "handleConfirmDelete called. transactionToDeleteId:",
-      transactionToDeleteId,
+      transactionToDeleteId
     );
     if (transactionToDeleteId !== null) {
       try {
@@ -170,7 +177,7 @@ const TransactionsPage: React.FC = () => {
         accessorKey: "type",
         header: t("type"),
         cell: ({ row }) =>
-          row.original.type === 0 ? t("income") : t("expense"),
+          row.original.type === 0 ? <IncomeBadge /> : <ExpenseBadge />,
       },
       {
         accessorKey: "category",
@@ -185,19 +192,24 @@ const TransactionsPage: React.FC = () => {
       {
         accessorKey: "description",
         header: t("description"),
-        cell: ({ row }) => row.original.description,
+        cell: ({ row }) => (
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium">
+              {row.original.description}
+            </span>
+            {row.original.is_fixed === 1 && (
+              <Badge className="h-5 px-1.5 py-0 bg-slate-400 hover:bg-slate-400 text-[10px] font-bold gap-0.5 flex items-center justify-center border-none">
+                <span className="text-[10px]">📌</span>
+                {t("fixed")}
+              </Badge>
+            )}
+          </div>
+        ),
       },
       {
         accessorKey: "amount",
         header: t("amount"),
-        cell: ({ row }) => (
-          <div className="flex items-center space-x-2">
-            <span>{row.original.amount.toLocaleString()}</span>
-            {row.original.is_fixed === 1 && (
-              <Badge variant="secondary">{t("fixed")}</Badge>
-            )}
-          </div>
-        ),
+        cell: ({ row }) => row.original.amount.toLocaleString(),
       },
       {
         accessorKey: "remarks",
@@ -209,37 +221,54 @@ const TransactionsPage: React.FC = () => {
         header: t("actions"),
         cell: ({ row }) => (
           <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleEdit(row.original)}
-            >
-              {t("edit")}
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => handleDeleteClick(row.original.id!)}
-            >
-              {t("delete")}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEdit(row.original)}
+                >
+                  <SquarePen />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <span>{t("edit")}</span>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDeleteClick(row.original.id!)}
+                >
+                  <Trash2 />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <span>{t("delete")}</span>
+              </TooltipContent>
+            </Tooltip>
           </div>
         ),
       },
     ],
-    [t],
+    [t]
   );
 
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
 
-    if (filterType !== null) {
+    if (filterType === "fixed_expense") {
+      // fixed_expense: type = 1, is_fixed=1
+      filtered = filtered.filter((t) => t.type === 1 && t.is_fixed === 1);
+    } else if (filterType !== null) {
       filtered = filtered.filter((t) => t.type === parseInt(filterType));
     }
 
     if (filterCategory !== null) {
       filtered = filtered.filter(
-        (t) => t.category_id === parseInt(filterCategory),
+        (t) => t.category_id === parseInt(filterCategory)
       );
     }
 
@@ -249,7 +278,7 @@ const TransactionsPage: React.FC = () => {
         (t) =>
           (t.description &&
             t.description.toLowerCase().includes(lowerCaseSearchQuery)) ||
-          (t.remarks && t.remarks.toLowerCase().includes(lowerCaseSearchQuery)),
+          (t.remarks && t.remarks.toLowerCase().includes(lowerCaseSearchQuery))
       );
     }
 

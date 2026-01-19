@@ -4,7 +4,6 @@
     "downlevelIteration": true,
     "useDefineForClassFields": true,
 
-    "module": "ESNext",
     "skipLibCheck": true,
     "esModuleInterop": true,
 

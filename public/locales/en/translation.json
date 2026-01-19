@@ -10,6 +10,7 @@
   "select_type": "Select Type",
   "income": "Income",
   "expense": "Expense",
+  "fixed_expesne": "fixed expense",
   "transaction_type": "Transaction Type",
   "select_transaction_type": "Select Transaction Type",
   "variable": "Variable",
