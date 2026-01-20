@@ -43,7 +43,7 @@ const TransactionSheet: React.FC<TransactionSheetProps> = ({
       </SheetTrigger>
       <SheetContent
         data-tauri-drag-region={false}
-        className="top-11 h-[calc(100vh-theme(spacing.11))]"
+        className="top-12 h-[calc(100vh-theme(spacing.12))]"
       >
         <SheetHeader>
           <SheetTitle>
