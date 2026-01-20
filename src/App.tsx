@@ -1,6 +1,7 @@
 import "./App.css";
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import SplashScreen from "./pages/SplashScreen";
 import Onboarding from "./pages/Onboarding";
 import Home from "./pages/Home";
@@ -10,6 +11,9 @@ import {
   windowShow,
   setMinSize,
 } from "./lib/window";
+import { DashboardPage, SettingsPage, TransactionsPage } from "./pages";
+import { TooltipProvider } from "./components/ui/tooltip";
+import { Toaster } from "./components/ui/sonner";
 
 type AppStage = "splash" | "onboarding" | "home";
 
@@ -74,13 +78,20 @@ function App() {
     );
 
   return (
-    <div
-      className={`transition-opacity duration-500 ${
-        stage === "home" ? "opacity-100" : "opacity-0"
-      }`}
-    >
-      <Home />
-    </div>
+    <TooltipProvider delayDuration={0}>
+      <Toaster richColors position="bottom-right" />
+      <HashRouter>
+        {/* Home 컴포넌트가 Sidebar와 TitleBar 레이아웃을 제공합니다 */}
+        <Home>
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+            <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Home>
+      </HashRouter>
+    </TooltipProvider>
   );
 }
 

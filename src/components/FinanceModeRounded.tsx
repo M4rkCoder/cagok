@@ -1,6 +1,12 @@
 import { SVGProps } from "react";
+import { cn } from "@/lib/utils";
 
-export default function FinanceModeRounded(props: SVGProps<SVGSVGElement>) {
+type FinanceModeRoundedProps = SVGProps<SVGSVGElement>;
+
+export default function FinanceModeRounded({
+  className,
+  ...props
+}: FinanceModeRoundedProps) {
   return (
     <svg
       {...props}
@@ -8,6 +14,7 @@ export default function FinanceModeRounded(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 24 24"
       aria-hidden="true"
       role="img"
+      className={cn("block", className)}
     >
       <path
         fill="currentColor"

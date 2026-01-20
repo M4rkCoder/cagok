@@ -62,7 +62,7 @@ export default function TitleBar() {
   return (
     <div
       data-tauri-drag-region
-      className="h-11 flex items-center justify-between bg-blue-600 text-white px-4"
+      className="h-full flex items-center justify-between bg-blue-600 text-white px-4"
     >
       {/* 로고 + 제목 */}
       <div

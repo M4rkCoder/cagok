@@ -40,10 +40,12 @@ const TransactionDialogs: React.FC<TransactionDialogsProps> = ({
   return (
     <>
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-106.25">
           <DialogHeader>
             <DialogTitle>
-              {editingTransaction ? t("edit_transaction") : t("create_new_transaction")}
+              {editingTransaction
+                ? t("edit_transaction")
+                : t("create_new_transaction")}
             </DialogTitle>
           </DialogHeader>
           <TransactionForm

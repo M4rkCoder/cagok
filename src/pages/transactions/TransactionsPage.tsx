@@ -27,9 +27,10 @@ import {
 import TransactionFilters from "./TransactionFilters";
 import TransactionTableContent from "./TransactionTableContent";
 import TransactionPagination from "./TransactionPagination";
-import TransactionDialogs from "./TransactionDialogs";
 import { Pin, SquarePen, Trash2 } from "lucide-react";
 import { ExpenseBadge, IncomeBadge } from "./TransactionBadge";
+import TransactionSheet from "./TrasactionSheet";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const TransactionsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -38,7 +39,7 @@ const TransactionsPage: React.FC = () => {
   );
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
@@ -86,19 +87,19 @@ const TransactionsPage: React.FC = () => {
     fetchCategories();
   }, []);
 
-  const handleDialogClose = () => {
-    setDialogOpen(false);
+  const handleSheetClose = () => {
+    setSheetOpen(false);
     setEditingTransaction(null);
   };
 
   const handleNew = () => {
     setEditingTransaction(null);
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
 
   const handleDeleteClick = (id: number) => {
@@ -158,7 +159,7 @@ const TransactionsPage: React.FC = () => {
         });
         toast.success(t("transaction_created_successfully"));
       }
-      handleDialogClose();
+      handleSheetClose();
       fetchTransactions();
     } catch (error) {
       console.error("Failed to save transaction:", JSON.stringify(error));
@@ -333,7 +334,16 @@ const TransactionsPage: React.FC = () => {
           setEndDate={setEndDate}
           categories={categories}
         />
-        <Button onClick={handleNew}>{t("new_transaction")}</Button>
+
+        <TransactionSheet
+          sheetOpen={sheetOpen}
+          setSheetOpen={setSheetOpen}
+          editingTransaction={editingTransaction}
+          handleFormSubmit={handleFormSubmit}
+          handleSheetClose={handleSheetClose}
+          categories={categories}
+          handleDeleteClick={handleDeleteClick}
+        />
       </div>
 
       {/* Table Content */}
@@ -342,17 +352,12 @@ const TransactionsPage: React.FC = () => {
       {/* Pagination */}
       <TransactionPagination table={table} />
 
-      {/* Dialogs (hidden by default, appear on trigger) */}
-      <TransactionDialogs
-        dialogOpen={dialogOpen}
-        setDialogOpen={setDialogOpen}
-        editingTransaction={editingTransaction}
-        handleFormSubmit={handleFormSubmit}
-        handleDialogClose={handleDialogClose}
-        categories={categories}
-        isConfirmDialogOpen={isConfirmDialogOpen}
-        setIsConfirmDialogOpen={setIsConfirmDialogOpen}
-        handleConfirmDelete={handleConfirmDelete}
+      <ConfirmDialog
+        open={isConfirmDialogOpen}
+        onOpenChange={setIsConfirmDialogOpen}
+        onConfirm={handleConfirmDelete}
+        title={t("confirm_delete")}
+        description={t("confirm_delete_transaction_message")}
       />
     </div>
   );
