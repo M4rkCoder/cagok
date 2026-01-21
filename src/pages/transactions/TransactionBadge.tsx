@@ -7,7 +7,7 @@ export const IncomeBadge: React.FC = () => {
 
   return (
     <Badge className="h-5 px-1.5 py-0 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none font-bold text-[10px] gap-0.5">
-      <span className="text-[10px]">💰</span>
+      <span className="text-[10px] native-emoji">💰</span>
       {t("income")}
     </Badge>
   );
@@ -18,7 +18,7 @@ export const ExpenseBadge: React.FC = () => {
 
   return (
     <Badge className="h-5 px-1.5 py-0 bg-rose-100 text-rose-700 hover:bg-rose-100 border-none font-bold text-[10px] gap-0.5">
-      <span className="text-[10px]">💸</span>
+      <span className="text-[10px] native-emoji">💸</span>
       {t("expense")}
     </Badge>
   );

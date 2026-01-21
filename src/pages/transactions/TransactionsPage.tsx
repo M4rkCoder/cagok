@@ -200,7 +200,7 @@ const TransactionsPage: React.FC = () => {
             </span>
             {row.original.is_fixed === 1 && (
               <Badge className="h-5 px-1.5 py-0 bg-slate-400 hover:bg-slate-400 text-[10px] font-bold gap-0.5 flex items-center justify-center border-none">
-                <span className="text-[10px]">📌</span>
+                <span className="text-[10px] native-emoji">📌</span>
                 {t("fixed")}
               </Badge>
             )}

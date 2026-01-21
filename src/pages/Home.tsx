@@ -2,7 +2,8 @@ import { useState } from "react";
 import TitleBar from "@/TitleBar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
-import { ChevronLeft } from "lucide-react";
+import { DynamicBreadcrumb } from "@/components/DinamicBreadcrumb";
+import { ChevronLeft, PanelLeftClose } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 function Home({ children }: { children: React.ReactNode }) {
@@ -33,13 +34,14 @@ function Home({ children }: { children: React.ReactNode }) {
                   onClick={() => setCollapsed(!collapsed)}
                   className="p-2 rounded hover:bg-muted"
                 >
-                  <ChevronLeft
+                  <PanelLeftClose
                     className={cn(
-                      "h-4 w-4 transition-transform",
+                      "h-5 w-5 transition-transform",
                       collapsed && "rotate-180"
                     )}
                   />
                 </button>
+                <DynamicBreadcrumb />
               </div>
 
               {/* 실제 콘텐츠 */}

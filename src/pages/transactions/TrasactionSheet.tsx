@@ -11,7 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import TransactionForm from "@/components/TransactionForm";
+import TransactionForm from "./TransactionForm";
 import { Transaction, TransactionFormValues, Category } from "@/types";
 import { Trash2 } from "lucide-react";
 

@@ -29,6 +29,7 @@ import { TransactionListDialog } from "@/components/dashboard/TransactionListDia
 import { DialogState, TransactionWithCategory } from "@/types";
 import DailyExpenseCalendar from "@/components/DailyExpenseCalendar"; // New import
 import DailyTransactionsDialog from "@/components/DailyTransactionsDialog"; // New import
+import { CategoryIcon } from "@/components/CategoryIcon";
 
 // 차트 색상
 const COLORS = [
@@ -269,14 +270,11 @@ export default function Dashboard() {
                   }
                 >
                   <div className="flex items-center gap-4">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-2xl"
-                      style={{
-                        backgroundColor: COLORS[index % COLORS.length] + "20",
-                      }}
-                    >
-                      {category.category_icon}
-                    </div>
+                    <CategoryIcon
+                      icon={category.category_icon}
+                      type="1"
+                      size="md"
+                    />
                     <div>
                       <div className="font-semibold">
                         {category.category_name}

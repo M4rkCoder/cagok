@@ -22,8 +22,10 @@ const TransactionPagination: React.FC<TransactionPaginationProps> = ({
       <PaginationContent>
         <PaginationItem>
           <PaginationPrevious
-            href="#"
-            onClick={() => table.previousPage()}
+            onClick={(e) => {
+              e.preventDefault();
+              table.previousPage();
+            }}
             aria-disabled={!table.getCanPreviousPage()}
             tabIndex={!table.getCanPreviousPage() ? -1 : undefined}
             className={
@@ -38,7 +40,10 @@ const TransactionPagination: React.FC<TransactionPaginationProps> = ({
             <PaginationLink
               href="#"
               isActive={table.getState().pagination.pageIndex === page}
-              onClick={() => table.setPageIndex(page)}
+              onClick={(e) => {
+                e.preventDefault();
+                table.setPageIndex(page);
+              }}
             >
               {page + 1}
             </PaginationLink>

@@ -1,131 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import CategoryForm from "./CategoryForm";
 import type { Category } from "@/types";
-
-// Simple modal component
-const Modal: React.FC<{
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  children: React.ReactNode;
-}> = ({ isOpen, onClose, title, children }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0,0,0,0.5)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 1000,
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: "white",
-          padding: "20px",
-          borderRadius: "8px",
-          minWidth: "300px",
-          boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-        }}
-      >
-        <h2>{title}</h2>
-        {children}
-        <button onClick={onClose} style={{ marginTop: "10px" }}>
-          Close
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// Rewritten CategoryForm
-interface CategoryFormProps {
-  onSubmit: (values: { name: string; icon: string; type: string }) => void;
-  onCancel: () => void;
-  defaultValues?: Category;
-}
-
-const CategoryForm: React.FC<CategoryFormProps> = ({
-  onSubmit,
-  onCancel,
-  defaultValues,
-}) => {
-  const [name, setName] = useState(defaultValues?.name || "");
-  const [icon, setIcon] = useState(defaultValues?.icon || "");
-  const [type, setType] = useState(defaultValues?.type?.toString() || "1"); // Default to Expense
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({ name, icon, type });
-  };
-
-  return (
-    <form
-      onSubmit={handleSubmit}
-      style={{ display: "flex", flexDirection: "column", gap: "10px" }}
-    >
-      <div>
-        <label htmlFor="name">Name:</label>
-        <input
-          id="name"
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          style={{ width: "100%", padding: "8px" }}
-        />
-      </div>
-      <div>
-        <label htmlFor="icon">Icon:</label>
-        <input
-          id="icon"
-          type="text"
-          value={icon}
-          onChange={(e) => setIcon(e.target.value)}
-          required
-          style={{ width: "100%", padding: "8px" }}
-        />
-      </div>
-      <div>
-        <label htmlFor="type">Type:</label>
-        <select
-          id="type"
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          style={{ width: "100%", padding: "8px" }}
-        >
-          <option value="0">Income</option>
-          <option value="1">Expense</option>
-        </select>
-      </div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: "10px",
-          marginTop: "10px",
-        }}
-      >
-        <button type="button" onClick={onCancel}>
-          Cancel
-        </button>
-        <button type="submit">Save</button>
-      </div>
-    </form>
-  );
-};
+import { Button } from "@/components/ui/button";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+// Dialog 대신 Sheet 관련 컴포넌트 임포트
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 const CategorySettings = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false); // 이름을 sheetOpen으로 변경
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const fetchCategories = async () => {
@@ -144,26 +44,28 @@ const CategorySettings = () => {
     fetchCategories();
   }, []);
 
-  const handleDialogClose = () => {
-    setDialogOpen(false);
+  const handleSheetClose = () => {
+    setSheetOpen(false);
     setEditingCategory(null);
   };
 
   const handleNew = () => {
     setEditingCategory(null);
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
-    setDialogOpen(true);
+    setSheetOpen(true);
   };
 
   const handleDelete = async (id: number) => {
+    // Tauri/로컬 앱 감성을 위해 브라우저 confirm 대신 나중에 커스텀 AlertDialog를 쓰는 것이 좋지만,
+    // 우선 로직 유지를 위해 남겨둡니다.
     if (window.confirm("Are you sure you want to delete this category?")) {
       try {
         await invoke("delete_category", { id });
-        fetchCategories(); // Refetch after deleting
+        fetchCategories();
       } catch (error) {
         console.error("Failed to delete category:", error);
       }
@@ -184,171 +86,119 @@ const CategorySettings = () => {
       if (editingCategory) {
         await invoke("update_category", {
           id: editingCategory.id!,
-          ...payload,
+          category: payload,
         });
       } else {
-        await invoke("create_category", payload);
+        await invoke("create_category", { category: payload });
       }
-      handleDialogClose();
-      fetchCategories(); // Refetch after creating/updating
+      handleSheetClose();
+      fetchCategories();
     } catch (error) {
       console.error("Failed to save category:", error);
     }
   };
 
   return (
-    <div
-      style={{
-        maxWidth: "800px",
-        margin: "20px auto",
-        padding: "20px",
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px",
-        }}
-      >
-        <h1 style={{ fontSize: "24px", margin: 0 }}>Settings</h1>
-        <button
-          onClick={handleNew}
-          style={{
-            padding: "8px 15px",
-            backgroundColor: "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-          }}
-        >
-          New Category
-        </button>
+    <div className="p-8 max-w-4xl mx-auto">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+          <p className="text-muted-foreground">
+            Manage your transaction categories.
+          </p>
+        </div>
+        <Button onClick={handleNew}>
+          <Plus className="mr-2 h-4 w-4" /> New Category
+        </Button>
       </div>
 
       {loading ? (
-        <p>Loading...</p>
+        <div className="flex justify-center py-10 italic text-muted-foreground">
+          Loading categories...
+        </div>
       ) : (
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            marginTop: "20px",
-          }}
-        >
-          <thead>
-            <tr style={{ backgroundColor: "#f2f2f2" }}>
-              <th
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "left",
-                }}
-              >
-                Icon
-              </th>
-              <th
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "left",
-                }}
-              >
-                Name
-              </th>
-              <th
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "left",
-                }}
-              >
-                Type
-              </th>
-              <th
-                style={{
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  textAlign: "left",
-                }}
-              >
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {categories.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={4}
-                  style={{
-                    border: "1px solid #ddd",
-                    padding: "8px",
-                    textAlign: "center",
-                  }}
-                >
-                  No categories found.
-                </td>
-              </tr>
-            ) : (
-              categories.map((category) => (
-                <tr key={category.id}>
-                  <td
-                    style={{
-                      border: "1px solid #ddd",
-                      padding: "8px",
-                      fontSize: "20px",
-                    }}
+        <div className="border rounded-md shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead className="w-[100px]">Icon</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {categories.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={4}
+                    className="text-center py-10 text-muted-foreground"
                   >
-                    {category.icon}
-                  </td>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    {category.name}
-                  </td>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    {category.type === 0 ? "Income" : "Expense"}
-                  </td>
-                  <td style={{ border: "1px solid #ddd", padding: "8px" }}>
-                    <button
-                      onClick={() => handleEdit(category)}
-                      style={{ marginRight: "10px", padding: "5px 10px" }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(category.id!)}
-                      style={{
-                        padding: "5px 10px",
-                        backgroundColor: "#dc3545",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "5px",
-                      }}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                    No categories found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                categories.map((cat) => (
+                  <TableRow key={cat.id}>
+                    <TableCell className="text-2xl leading-none">
+                      {cat.icon}
+                    </TableCell>
+                    <TableCell className="font-medium">{cat.name}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={cat.type === 0 ? "secondary" : "destructive"}
+                      >
+                        {cat.type === 0 ? "Income" : "Expense"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(cat)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(cat.id!)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
-      <Modal
-        isOpen={dialogOpen}
-        onClose={handleDialogClose}
-        title={editingCategory ? "Edit Category" : "Create New Category"}
-      >
-        <CategoryForm
-          onSubmit={handleFormSubmit}
-          onCancel={handleDialogClose}
-          defaultValues={editingCategory || undefined}
-        />
-      </Modal>
+      {/* Sheet 구현 부분 */}
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen} modal={false}>
+        <SheetContent
+          side="right"
+          data-tauri-drag-region={false}
+          className="top-12 h-[calc(100vh-theme(spacing.12))]"
+        >
+          <SheetHeader className="mb-6">
+            <SheetTitle>
+              {editingCategory ? "Edit Category" : "New Category"}
+            </SheetTitle>
+            <SheetDescription>
+              {editingCategory
+                ? "Update the details for this category."
+                : "Add a new category to organize your transactions."}
+            </SheetDescription>
+          </SheetHeader>
+          <CategoryForm
+            onSubmit={handleFormSubmit}
+            onCancel={handleSheetClose}
+            defaultValues={editingCategory || undefined}
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
