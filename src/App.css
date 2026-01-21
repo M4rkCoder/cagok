@@ -201,3 +201,31 @@
   font-family: "NotoColorEmojiCustom", "Segoe UI Emoji", "Apple Color Emoji",
     sans-serif !important;
 }
+
+/* Styles for column resizing */
+.resizer {
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 5px;
+  background: transparent;
+  cursor: ew-resize;
+  z-index: 1;
+  /* Add these for visual feedback */
+  transition: background-color 0.2s ease;
+}
+
+.resizer:hover {
+  background-color: var(--color-primary); /* Highlight on hover */
+}
+
+.resizer.isResizing {
+  background-color: var(--color-primary); /* Highlight when dragging */
+  opacity: 1;
+}
+
+/* When the resizer is active, ensure it's visible even without hover */
+.resizer[data-state="active"] {
+  opacity: 1;
+}

@@ -27,7 +27,7 @@ import {
 import TransactionFilters from "./TransactionFilters";
 import TransactionTableContent from "./TransactionTableContent";
 import TransactionPagination from "./TransactionPagination";
-import { Pin, SquarePen, Trash2 } from "lucide-react";
+import { Pin, Scroll, SquarePen, StickyNote, Trash2 } from "lucide-react";
 import { ExpenseBadge, IncomeBadge } from "./TransactionBadge";
 import TransactionSheet from "./TrasactionSheet";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -35,7 +35,7 @@ import ConfirmDialog from "@/components/ConfirmDialog";
 const TransactionsPage: React.FC = () => {
   const { t } = useTranslation();
   const [transactions, setTransactions] = useState<TransactionWithCategory[]>(
-    []
+    [],
   );
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +61,7 @@ const TransactionsPage: React.FC = () => {
     setLoading(true);
     try {
       const fetchedTransactions = await invoke<TransactionWithCategory[]>(
-        "get_transactions_with_category"
+        "get_transactions_with_category",
       );
       setTransactions(fetchedTransactions);
     } catch (error) {
@@ -111,7 +111,7 @@ const TransactionsPage: React.FC = () => {
   const handleConfirmDelete = async () => {
     console.log(
       "handleConfirmDelete called. transactionToDeleteId:",
-      transactionToDeleteId
+      transactionToDeleteId,
     );
     if (transactionToDeleteId !== null) {
       try {
@@ -172,56 +172,110 @@ const TransactionsPage: React.FC = () => {
       {
         accessorKey: "date",
         header: t("date"),
-        cell: ({ row }) => row.original.date,
+        cell: ({ row }) => (
+          <div className="flex justify-start items-center h-full">
+            {row.original.date}
+          </div>
+        ),
+        size: 120, // Set initial size for date column
+        minSize: 100,
+        enableResizing: true,
       },
       {
         accessorKey: "type",
         header: t("type"),
-        cell: ({ row }) =>
-          row.original.type === 0 ? <IncomeBadge /> : <ExpenseBadge />,
+        cell: ({ row }) => (
+          <div className="flex justify-start items-center h-full">
+            {row.original.type === 0 ? <IncomeBadge /> : <ExpenseBadge />}
+          </div>
+        ),
+        size: 100, // Set initial size for type column
+        minSize: 80,
+        enableResizing: true,
       },
       {
         accessorKey: "category",
         header: t("category"),
         cell: ({ row }) => (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-start space-x-2 h-full">
             <span>{row.original.category_icon}</span>
             <span>{row.original.category_name || t("no_category")}</span>
           </div>
         ),
+        size: 180, // Set initial size for category column
+        minSize: 150,
+        enableResizing: true,
+      },
+      {
+        accessorKey: "isFixed",
+        header: t("fixed"),
+        cell: ({ row }) => (
+          <div className="flex items-center justify-start h-full">
+            {row.original.is_fixed === 1 && (
+              <Badge className="h-5 px-1.5 py-0 bg-slate-200 hover:bg-slate-400 text-[10px] font-bold gap-0.5 flex items-center justify-center border-none">
+                <span className="text-[10px] native-emoji">📌</span>
+              </Badge>
+            )}
+          </div>
+        ),
+        size: 70, // Reduced size for isFixed column
+        minSize: 50,
+        enableResizing: true,
       },
       {
         accessorKey: "description",
         header: t("description"),
         cell: ({ row }) => (
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center justify-start h-full">
             <span className="text-sm font-medium">
               {row.original.description}
             </span>
-            {row.original.is_fixed === 1 && (
-              <Badge className="h-5 px-1.5 py-0 bg-slate-400 hover:bg-slate-400 text-[10px] font-bold gap-0.5 flex items-center justify-center border-none">
-                <span className="text-[10px] native-emoji">📌</span>
-                {t("fixed")}
-              </Badge>
-            )}
           </div>
         ),
+        size: 260, // Set initial size for description column
+        minSize: 200,
+        enableResizing: true,
       },
       {
         accessorKey: "amount",
         header: t("amount"),
-        cell: ({ row }) => row.original.amount.toLocaleString(),
+        cell: ({ row }) => (
+          <div className="flex justify-start items-center h-full font-extrabold">
+            {row.original.amount.toLocaleString()}
+          </div>
+        ),
+        size: 150, // Increased size for amount column
+        minSize: 120,
+        enableResizing: true,
       },
       {
         accessorKey: "remarks",
         header: t("remarks"),
-        cell: ({ row }) => row.original.remarks,
+        cell: ({ row }) => (
+          <div className="flex items-center justify-start h-full">
+            {row.original.remarks && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <Scroll className="text-slate-500" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span>{row.original.remarks}</span>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        ),
+        size: 100, // Set initial size for remarks column
+        minSize: 80,
+        enableResizing: true,
       },
       {
         id: "actions",
         header: t("actions"),
         cell: ({ row }) => (
-          <div className="flex space-x-2">
+          <div className="flex justify-start space-x-2 h-full">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -252,9 +306,13 @@ const TransactionsPage: React.FC = () => {
             </Tooltip>
           </div>
         ),
+        size: 120, // Reduced size for actions column
+        minSize: 90,
+        maxSize: 150,
+        enableResizing: true,
       },
     ],
-    [t]
+    [t],
   );
 
   const filteredTransactions = useMemo(() => {
@@ -269,7 +327,7 @@ const TransactionsPage: React.FC = () => {
 
     if (filterCategory !== null) {
       filtered = filtered.filter(
-        (t) => t.category_id === parseInt(filterCategory)
+        (t) => t.category_id === parseInt(filterCategory),
       );
     }
 
@@ -279,7 +337,7 @@ const TransactionsPage: React.FC = () => {
         (t) =>
           (t.description &&
             t.description.toLowerCase().includes(lowerCaseSearchQuery)) ||
-          (t.remarks && t.remarks.toLowerCase().includes(lowerCaseSearchQuery))
+          (t.remarks && t.remarks.toLowerCase().includes(lowerCaseSearchQuery)),
       );
     }
 
@@ -304,6 +362,7 @@ const TransactionsPage: React.FC = () => {
   const table = useReactTable({
     data: filteredTransactions,
     columns,
+    columnResizeMode: "onChange",
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
