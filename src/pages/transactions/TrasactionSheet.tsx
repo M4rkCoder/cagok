@@ -12,32 +12,24 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import TransactionForm from "./TransactionForm";
-import { Transaction, TransactionFormValues, Category } from "@/types";
 import { Trash2 } from "lucide-react";
+import { useTransactionStore } from "@/store/useTransactionStore";
 
-interface TransactionSheetProps {
-  sheetOpen: boolean;
-  setSheetOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  editingTransaction: Transaction | null;
-  handleFormSubmit: (values: TransactionFormValues) => Promise<void>;
-  handleSheetClose: () => void;
-  categories: Category[];
-  handleDeleteClick: (id: number) => void;
-}
-
-const TransactionSheet: React.FC<TransactionSheetProps> = ({
-  sheetOpen,
-  setSheetOpen,
-  editingTransaction,
-  handleFormSubmit,
-  handleSheetClose,
-  categories,
-  handleDeleteClick,
-}) => {
+const TransactionSheet = () => {
   const { t } = useTranslation();
+  const { sheetOpen, setSheetOpen, editingTransaction, handleSheetClose } =
+    useTransactionStore();
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      handleSheetClose();
+    } else {
+      setSheetOpen(true);
+    }
+  };
 
   return (
-    <Sheet open={sheetOpen} onOpenChange={setSheetOpen} modal={false}>
+    <Sheet open={sheetOpen} onOpenChange={handleOpenChange} modal={false}>
       <SheetTrigger asChild>
         <Button variant="outline">{t("new_transaction")}</Button>
       </SheetTrigger>
@@ -52,24 +44,7 @@ const TransactionSheet: React.FC<TransactionSheetProps> = ({
               : t("create_new_transaction")}
           </SheetTitle>
         </SheetHeader>
-        <TransactionForm
-          onSubmit={handleFormSubmit}
-          onCancel={handleSheetClose}
-          defaultValues={editingTransaction || undefined}
-          categories={categories}
-        />
-        {editingTransaction && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              if (!editingTransaction?.id) return;
-              handleDeleteClick(editingTransaction.id);
-            }}
-          >
-            <Trash2 />
-          </Button>
-        )}
+        <TransactionForm />
       </SheetContent>
     </Sheet>
   );

@@ -14,10 +14,10 @@ import {
   Settings,
   SquareLibrary,
   ChevronLeft,
+  Pencil,
 } from "lucide-react";
+import { NavMain } from "./main-nav";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { FinkroIcon } from "./FinkroIcon";
 import FinanceModeRounded from "./FinanceModeRounded";
 
 interface AppSidebarProps {
@@ -26,7 +26,12 @@ interface AppSidebarProps {
 const items = [
   { title: "Home", url: "#", icon: Home },
   { title: "Dashboard", url: "#", icon: LayoutDashboard },
-  { title: "Transaction", url: "#/transactions", icon: SquareLibrary },
+  {
+    title: "Transaction",
+    url: "#/transactions",
+    icon: SquareLibrary,
+  },
+  { title: "Write", url: "#/transactions/write", icon: Pencil },
   { title: "Settings", url: "#/settings", icon: Settings },
 ];
 
@@ -80,6 +85,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {/* <NavMain items={items} /> */}
       </SidebarContent>
 
       {/* Footer */}

@@ -46,16 +46,22 @@ import {
   Banknote,
   Scroll,
   Smile,
+  Trash2,
 } from "lucide-react";
+import { useTransactionStore } from "@/store/useTransactionStore";
+import { useAppStore } from "@/store/useAppStore";
 
-const TransactionForm: React.FC<any> = ({
-  onSubmit,
-  onCancel,
-  onAddNewCategory,
-  categories,
-  defaultValues,
-}) => {
+const TransactionForm: React.FC = () => {
   const { t } = useTranslation();
+  const {
+    editingTransaction,
+    submitForm,
+    handleSheetClose,
+    addCategory,
+    deleteTransaction,
+    openDeleteConfirm,
+  } = useTransactionStore();
+  const { categories } = useAppStore();
   const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
   const [isAddingNewCategoryMode, setIsAddingNewCategoryMode] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -64,25 +70,25 @@ const TransactionForm: React.FC<any> = ({
 
   const form = useForm<TransactionFormValues>({
     defaultValues: {
-      type: defaultValues?.type ?? 1,
-      is_fixed: defaultValues?.is_fixed ?? 0,
-      amount: defaultValues?.amount || 0,
-      date: defaultValues?.date || new Date().toISOString().split("T")[0],
-      description: defaultValues?.description || "",
-      remarks: defaultValues?.remarks || "",
-      category_id: defaultValues?.category_id,
+      type: editingTransaction?.type ?? 1,
+      is_fixed: editingTransaction?.is_fixed ?? 0,
+      amount: editingTransaction?.amount || 0,
+      date: editingTransaction?.date || new Date().toISOString().split("T")[0],
+      description: editingTransaction?.description || "",
+      remarks: editingTransaction?.remarks || "",
+      category_id: editingTransaction?.category_id,
     },
   });
 
   const currentType = form.watch("type");
-  const selectedCategory = categories.find(
-    (c: Category) => c.id === form.watch("category_id"),
-  );
+  const selectedCategory =
+    categories.find((c: Category) => c.id === form.watch("category_id")) ||
+    null;
 
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(submitForm)}
         className="flex flex-col h-[700px] px-2 pt-2 pb-2" // top-12에 맞춰 pt-12 적용
       >
         {/* 상단 입력 영역: 가변 높이 및 스크롤 */}
@@ -120,7 +126,7 @@ const TransactionForm: React.FC<any> = ({
                           "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all font-bold text-sm",
                           field.value === item.id
                             ? "bg-white shadow-sm"
-                            : "text-slate-400",
+                            : "text-slate-400"
                         )}
                       >
                         <item.icon
@@ -128,7 +134,7 @@ const TransactionForm: React.FC<any> = ({
                             "w-4 h-4",
                             field.value === item.id
                               ? item.color
-                              : "text-slate-300",
+                              : "text-slate-300"
                           )}
                         />
                         {item.name}
@@ -145,7 +151,7 @@ const TransactionForm: React.FC<any> = ({
                 "transition-all duration-500 ease-in-out flex items-center overflow-hidden",
                 currentType === 1
                   ? "w-[60px] opacity-100 ml-3"
-                  : "w-0 opacity-0 ml-0",
+                  : "w-0 opacity-0 ml-0"
               )}
             >
               <Tooltip>
@@ -155,20 +161,20 @@ const TransactionForm: React.FC<any> = ({
                     onClick={() =>
                       form.setValue(
                         "is_fixed",
-                        form.watch("is_fixed") === 1 ? 0 : 1,
+                        form.watch("is_fixed") === 1 ? 0 : 1
                       )
                     }
                     className={cn(
                       "w-12 h-12 flex items-center justify-center rounded-2xl transition-all border shrink-0 active:scale-95",
                       form.watch("is_fixed") === 1
                         ? "bg-black border-black text-white shadow-md shadow-slate-200"
-                        : "bg-slate-50 border-slate-100 text-slate-300",
+                        : "bg-slate-50 border-slate-100 text-slate-300"
                     )}
                   >
                     <Pin
                       className={cn(
                         "w-4 h-4 transition-transform",
-                        form.watch("is_fixed") === 1 && "fill-white rotate-45",
+                        form.watch("is_fixed") === 1 && "fill-white rotate-45"
                       )}
                     />
                   </button>
@@ -197,7 +203,7 @@ const TransactionForm: React.FC<any> = ({
                   type="button"
                   className={cn(
                     "w-full h-12 px-4 flex items-center justify-between rounded-2xl bg-slate-50 transition-all",
-                    isCategoryPopoverOpen && "ring-1 ring-slate-200 shadow-sm",
+                    isCategoryPopoverOpen && "ring-1 ring-slate-200 shadow-sm"
                   )}
                 >
                   <div className="flex items-center gap-2">
@@ -219,7 +225,7 @@ const TransactionForm: React.FC<any> = ({
                   <ChevronDown
                     className={cn(
                       "w-4 h-4 text-slate-300 transition-transform",
-                      isCategoryPopoverOpen && "rotate-180",
+                      isCategoryPopoverOpen && "rotate-180"
                     )}
                   />
                 </button>
@@ -272,7 +278,7 @@ const TransactionForm: React.FC<any> = ({
                       <Button
                         onClick={() => {
                           if (newCategoryName.trim() && newCategoryIcon) {
-                            onAddNewCategory?.({
+                            addCategory?.({
                               name: newCategoryName,
                               icon: newCategoryIcon,
                             });
@@ -412,7 +418,7 @@ const TransactionForm: React.FC<any> = ({
           <Button
             type="button"
             variant="ghost"
-            onClick={onCancel}
+            onClick={handleSheetClose}
             className="flex-1 h-14 text-slate-400 font-bold hover:bg-slate-50 rounded-2xl transition-colors"
           >
             취소
@@ -423,6 +429,17 @@ const TransactionForm: React.FC<any> = ({
           >
             저장
           </Button>
+          {editingTransaction && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (!editingTransaction?.id) return;
+                openDeleteConfirm(editingTransaction.id);
+              }}
+            >
+              <Trash2 />
+            </Button>
+          )}
         </div>
       </form>
     </Form>

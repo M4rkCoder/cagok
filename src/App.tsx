@@ -14,15 +14,21 @@ import {
 import { DashboardPage, SettingsPage, TransactionsPage } from "./pages";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { Toaster } from "./components/ui/sonner";
+import TransactionForm from "./pages/transactions/TransactionForm";
+import { useAppStore } from "./store/useAppStore";
 
 type AppStage = "splash" | "onboarding" | "home";
 
 function App() {
   const [stage, setStage] = useState<AppStage>("splash");
 
+  const { initApp } = useAppStore();
+
   useEffect(() => {
     const checkInitialization = async () => {
       try {
+        await initApp();
+
         const initialized = await invoke<boolean>("is_app_initialized");
 
         setTimeout(() => {
@@ -34,7 +40,7 @@ function App() {
       }
     };
     checkInitialization();
-  }, []);
+  }, [initApp]);
 
   useEffect(() => {
     const handleStageChange = async () => {
@@ -86,6 +92,7 @@ function App() {
           <Routes>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/transactions/write" element={<TransactionForm />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
