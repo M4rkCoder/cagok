@@ -8,14 +8,18 @@ import {
 } from "@/types";
 import { toast } from "sonner";
 import { useAppStore } from "./useAppStore";
+import { useCategoryStore } from "./useCategoryStore";
+
+type ConfirmType = "transaction" | "category" | null;
 
 interface TransactionState {
   transactions: TransactionWithCategory[];
   loading: boolean;
   sheetOpen: boolean;
   editingTransaction: Transaction | null;
-  isConfirmDialogOpen: boolean;
-  transactionToDeleteId: number | null;
+  isConfirmOpen: boolean;
+  confirmType: ConfirmType;
+  targetId: number | null;
 
   // Actions
   fetchTransactions: () => Promise<void>;
@@ -24,10 +28,10 @@ interface TransactionState {
   handleSheetClose: () => void;
   submitForm: (values: TransactionFormValues) => Promise<void>;
   deleteTransaction: (id: number) => Promise<void>;
-  addCategory: (category: { name: string; icon: string }) => Promise<void>;
-  setConfirmDialogOpen: (open: boolean) => void;
-  openDeleteConfirm: (id: number) => void;
-  confirmDelete: () => Promise<void>;
+  setConfirmOpen: (open: boolean) => void;
+  openConfirm: (type: ConfirmType, id: number) => void;
+  closeConfirm: () => void;
+  handleConfirmAction: () => Promise<void>;
 }
 
 export const useTransactionStore = create<TransactionState>((set, get) => ({
@@ -35,8 +39,9 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   loading: false,
   sheetOpen: false,
   editingTransaction: null,
-  isConfirmDialogOpen: false,
-  transactionToDeleteId: null,
+  isConfirmOpen: false,
+  confirmType: null,
+  targetId: null,
 
   fetchTransactions: async () => {
     set({ loading: true });
@@ -91,40 +96,35 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     }
   },
 
-  addCategory: async (category: { name: string; icon: string }) => {
-    try {
-      await invoke("create_category", {
-        name: category.name,
-        icon: category.icon,
-      });
-      toast.success("카테고리가 추가되었습니다.");
-      await useAppStore.getState().fetchCategories();
-    } catch (error) {
-      toast.error("카테고리 추가 실패");
-    }
-  },
-  setConfirmDialogOpen: (open) => set({ isConfirmDialogOpen: open }),
+  setConfirmOpen: (open) => set({ isConfirmOpen: open }),
 
   // 삭제 다이얼로그를 여는 함수
-  openDeleteConfirm: (id) => {
-    set({ transactionToDeleteId: id, isConfirmDialogOpen: true });
+  openConfirm: (type, id) => {
+    set({ isConfirmOpen: true, confirmType: type, targetId: id });
   },
+  closeConfirm: () =>
+    set({ isConfirmOpen: false, confirmType: null, targetId: null }),
 
-  // 다이얼로그에서 '확인'을 눌렀을 때 실행
-  confirmDelete: async () => {
-    const { transactionToDeleteId, fetchTransactions } = get();
-    if (transactionToDeleteId === null) return;
+  handleConfirmAction: async () => {
+    const { confirmType, targetId } = get();
+    if (!targetId) return;
 
     try {
-      await invoke("delete_transaction", { id: transactionToDeleteId });
-      toast.success("삭제되었습니다.");
-      await fetchTransactions();
+      if (confirmType === "transaction") {
+        await invoke("delete_transaction", { id: targetId });
+        toast.success("삭제되었습니다.");
+        get().fetchTransactions();
+      } else if (confirmType === "category") {
+        await invoke("delete_category", { id: targetId });
+        toast.success("삭제되었습니다.");
+        useCategoryStore.getState().resetCategoryForm();
+        await useAppStore.getState().fetchCategories();
+      }
     } catch (error) {
       console.error(error);
       toast.error("삭제에 실패했습니다.");
     } finally {
-      // 상태 초기화
-      set({ transactionToDeleteId: null, isConfirmDialogOpen: false });
+      get().closeConfirm();
     }
   },
 }));

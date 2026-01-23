@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
 import {
   type ColumnDef,
@@ -8,16 +7,10 @@ import {
   getPaginationRowModel,
   getFilteredRowModel,
 } from "@tanstack/react-table";
-import {
-  Transaction,
-  Category,
-  TransactionFormValues,
-  TransactionWithCategory,
-} from "@/types";
+import { Transaction, TransactionWithCategory } from "@/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import {
   Tooltip,
   TooltipContent,
@@ -27,13 +20,12 @@ import {
 import TransactionFilters from "./TransactionFilters";
 import TransactionTableContent from "./TransactionTableContent";
 import TransactionPagination from "./TransactionPagination";
-import { Pin, Scroll, SquarePen, StickyNote, Trash2 } from "lucide-react";
+import { Scroll, SquarePen, Trash2 } from "lucide-react";
 import { ExpenseBadge, IncomeBadge } from "./TransactionBadge";
 import TransactionSheet from "./TrasactionSheet";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { useAppStore } from "@/store/useAppStore";
-import { confirm } from "@tauri-apps/plugin-dialog";
 
 const TransactionsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -42,10 +34,11 @@ const TransactionsPage: React.FC = () => {
     transactions,
     loading,
     fetchTransactions,
-    openDeleteConfirm,
-    isConfirmDialogOpen,
-    setConfirmDialogOpen,
-    confirmDelete,
+    isConfirmOpen,
+    openConfirm,
+    confirmType,
+    closeConfirm,
+    handleConfirmAction,
     setEditingTransaction,
     setSheetOpen,
   } = useTransactionStore();
@@ -61,6 +54,19 @@ const TransactionsPage: React.FC = () => {
   const [searchTriggerQuery, setSearchTriggerQuery] = useState<string>("");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+
+  const config = {
+    transaction: {
+      title: "가계부 기록 삭제",
+      description:
+        "이 거래 내역을 정말 삭제하시겠습니까? \n 삭제 후에는 복구할 수 없습니다.",
+    },
+    category: {
+      title: "카테고리 삭제",
+      description:
+        "이 카테고리를 정말 삭제하시겠습니까? \n 해당 카테고리로 분류된 내역들은 '미분류'로 변경됩니다.",
+    },
+  }[confirmType || "transaction"];
 
   useEffect(() => {
     fetchTransactions();
@@ -199,7 +205,7 @@ const TransactionsPage: React.FC = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => openDeleteConfirm(row.original.id!)}
+                  onClick={() => openConfirm("transaction", row.original.id!)}
                 >
                   <Trash2 />
                 </Button>
@@ -308,11 +314,11 @@ const TransactionsPage: React.FC = () => {
       <TransactionPagination table={table} />
 
       <ConfirmDialog
-        open={isConfirmDialogOpen}
-        onOpenChange={setConfirmDialogOpen}
-        onConfirm={confirmDelete}
-        title={t("confirm_delete")}
-        description={t("confirm_delete_transaction_message")}
+        open={isConfirmOpen}
+        onOpenChange={closeConfirm}
+        onConfirm={handleConfirmAction}
+        title={config.title}
+        description={config.description}
       />
     </div>
   );

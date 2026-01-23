@@ -113,7 +113,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
                 >
                   <CategoryIcon
                     icon={currentIcon}
-                    type={currentType}
+                    type={Number(currentType)}
                     size="lg"
                   />
                 </button>

@@ -85,7 +85,7 @@ function App() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <Toaster richColors position="bottom-right" />
+      <Toaster position="top-center" offset="60px" />
       <HashRouter>
         {/* Home 컴포넌트가 Sidebar와 TitleBar 레이아웃을 제공합니다 */}
         <Home>

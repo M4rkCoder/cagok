@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 interface CategoryIconProps {
   icon: string;
-  type: "0" | "1";
+  type: number;
   size?: "sm" | "md" | "lg";
   className?: string;
 }
@@ -13,40 +13,43 @@ export const CategoryIcon = ({
   size = "md",
   className,
 }: CategoryIconProps) => {
-  const colors = {
-    "0": { bg: "#ECFDF5", text: "#10B981" },
-    "1": { bg: "#FFF1F2", text: "#F43F5E" },
+  const colors: Record<number, { bg: string; text: string }> = {
+    // 0: 에메랄드 (초록 계열) - 배경은 약간 더 진하게, 글자는 진한 녹색으로
+    0: { bg: "#ECFDF5", text: "#10B981" },
+
+    // 1: 연한 인디고 (Indigo 100 & 800) - 0번과 구분되는 약간 보라빛 블루
+    1: { bg: "#E0E7FF", text: "#3730A3" },
   };
 
-  const selected = colors[type];
+  const selected = colors[type] || colors[1];
 
+  // 각 사이즈별 박스 크기와 이모지 폰트 크기 비율 최적화
   const sizeClasses = {
-    sm: "w-9 h-9 text-xl",
-    md: "w-11 h-11 text-2xl",
-    lg: "w-24 h-24 text-5xl", // 96px 박스에 48px 이모지
+    sm: "w-9 h-9 text-[1.25rem]", // 20px 정도의 이모지
+    md: "w-11 h-11 text-[1.5rem]", // 24px 정도의 이모지
+    lg: "w-24 h-24 text-[3.5rem]", // 56px 정도의 이모지
   };
 
   return (
     <div
       className={cn(
-        "rounded-[32px] flex items-center justify-center shrink-0 transition-all duration-300",
+        // rounded-full로 완전한 원형 구현
+        "rounded-full flex items-center justify-center shrink-0 transition-all duration-300 overflow-hidden",
         sizeClasses[size],
         className
       )}
       style={{ backgroundColor: selected.bg }}
     >
-      {/* 이모지 정렬을 위한 내부 스팬 */}
       <span
-        className={cn(
-          "native-emoji leading-[1] flex items-center justify-center",
-          "-translate-y-[3px]"
-        )}
+        className="inline-flex items-center justify-center leading-none native-emoji"
         style={{
+          // 이모지의 텍스트 박스 자체를 정사각으로 강제하여 치우침 방지
+          width: "1em",
+          height: "1em",
+          // 브라우저별 Baseline 차이를 보정하기 위한 최후의 수단 (선택 사항)
           display: "flex",
-          width: "100%",
-          height: "100%",
-          // 일부 브라우저에서 이모지가 위로 쏠리는 현상 방지
-          paddingTop: "0.1em",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
         {icon}

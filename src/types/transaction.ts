@@ -1,11 +1,11 @@
 // DB에서 조회되는 트랜잭션
 export interface Transaction {
   id: number;
-  description?: string;
+  description: string;
   amount: number;
   date: string;
   type: number; // 0: income, 1: expense
-  remarks: string;
+  remarks?: string;
   is_fixed: number; // 0: variable, 1: fixed
   category_id?: number;
 }

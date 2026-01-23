@@ -1,9 +1,13 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { flexRender, Table as ReactTableType } from "@tanstack/react-table";
-import { Separator } from "@/components/ui/separator";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { TransactionWithCategory } from "@/types";
 
@@ -26,49 +30,55 @@ const TransactionTableContent: React.FC<TransactionTableContentProps> = ({
   return (
     <div className="rounded-md border">
       <Table>
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                                        <TableHead
-                                          key={header.id}
-                                          colSpan={header.colSpan}
-                                          style={{ width: header.getSize(), position: 'relative' }}
-                                          data-size={header.getSize()}
-                                          className="relative h-12 px-4 text-left align-middle font-bold text-foreground [&:has([role=checkbox])]:pr-0 group/table-head bg-muted"
-                                        >                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext(),
-                              )}
-                          <div
-                            {...{
-                              onMouseDown: header.getResizeHandler(),
-                              onTouchStart: header.getResizeHandler(),
-                              className: `resizer ${
-                                header.column.getIsResizing() ? 'isResizing' : ''
-                              }`,
-                              style: {
-                                transform: header.column.getIsResizing()
-                                  ? `translateX(${
-                                      table.getState().columnSizingInfo.deltaOffset
-                                    }px)`
-                                  : '',
-                              },
-                            }}
-                            className="absolute right-0 top-0 h-full w-1 cursor-ew-resize select-none touch-action-none opacity-0 data-[state=active]:opacity-100 group-hover/table-head:opacity-100"
-                            data-state={header.column.getIsResizing() ? 'active' : 'inactive'}
-                          />
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <Separator className="bg-gray-200 dark:bg-gray-700" />
-                <TableBody>          {table.getRowModel().rows?.length ? (
+        <TableHeader>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <TableHead
+                  key={header.id}
+                  colSpan={header.colSpan}
+                  style={{ width: header.getSize(), position: "relative" }}
+                  data-size={header.getSize()}
+                  className="relative h-12 px-4 text-left align-middle font-bold text-foreground [&:has([role=checkbox])]:pr-0 group/table-head bg-muted"
+                >
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                  <div
+                    {...{
+                      onMouseDown: header.getResizeHandler(),
+                      onTouchStart: header.getResizeHandler(),
+                      className: `resizer ${
+                        header.column.getIsResizing() ? "isResizing" : ""
+                      }`,
+                      style: {
+                        transform: header.column.getIsResizing()
+                          ? `translateX(${
+                              table.getState().columnSizingInfo.deltaOffset
+                            }px)`
+                          : "",
+                      },
+                    }}
+                    className="absolute right-0 top-0 h-full w-1 cursor-ew-resize select-none touch-action-none opacity-0 data-[state=active]:opacity-100 group-hover/table-head:opacity-100"
+                    data-state={
+                      header.column.getIsResizing() ? "active" : "inactive"
+                    }
+                  />
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows?.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+              <TableRow
+                key={row.id}
+                data-state={row.getIsSelected() && "selected"}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
