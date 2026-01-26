@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import TransactionForm from "./TransactionForm";
-import { Trash2 } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useTransactionStore } from "@/store/useTransactionStore";
 
 const TransactionSheet = () => {
@@ -36,7 +36,13 @@ const TransactionSheet = () => {
   return (
     <Sheet open={sheetOpen} onOpenChange={handleOpenChange} modal={false}>
       <SheetTrigger asChild>
-        <Button variant="outline">{t("new_transaction")}</Button>
+        <Button
+          variant="default"
+          size="icon"
+          className="fixed bottom-6 right-8 rounded-full size-12 shadow-lg hover:shadow-xl transition-all duration-300 z-50"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
       </SheetTrigger>
       <SheetContent
         data-tauri-drag-region={false}

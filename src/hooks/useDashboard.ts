@@ -87,10 +87,13 @@ export function useDashboard(selectedMonth: string) {
         ),
       ]);
 
-      const comparisonMap = comparisonData.reduce((acc, { type, data }) => {
-        acc[type] = data;
-        return acc;
-      }, {} as Record<ComparisonType, ComparisonMetric>);
+      const comparisonMap = comparisonData.reduce(
+        (acc, { type, data }) => {
+          acc[type] = data;
+          return acc;
+        },
+        {} as Record<ComparisonType, ComparisonMetric>
+      );
 
       setOverview(overviewData);
       setCategories(categoriesData);

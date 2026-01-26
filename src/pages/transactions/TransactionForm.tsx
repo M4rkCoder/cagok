@@ -539,24 +539,24 @@ const TransactionForm: React.FC = () => {
           >
             취소
           </Button>
+          {editingTransaction && (
+            <Button
+              variant="outline"
+              className="flex-1 h-14 rounded-2xl border-slate-100 text-rose-500 hover:bg-rose-50"
+              onClick={() =>
+                editingTransaction?.id &&
+                openConfirm("transaction", editingTransaction.id)
+              }
+            >
+              {t("delete")}
+            </Button>
+          )}
           <Button
             type="submit"
             className="flex-[2] h-14 bg-black hover:bg-slate-800 text-white rounded-2xl font-black text-base transition-all shadow-xl shadow-slate-100 active:scale-[0.98]"
           >
             저장
           </Button>
-          {editingTransaction && (
-            <Button
-              variant="outline"
-              className="h-14 w-14 rounded-2xl border-slate-100 text-rose-500 hover:bg-rose-50"
-              onClick={() =>
-                editingTransaction?.id &&
-                openConfirm("transaction", editingTransaction.id)
-              }
-            >
-              <Trash2 className="w-5 h-5" />
-            </Button>
-          )}
         </div>
       </form>
     </Form>

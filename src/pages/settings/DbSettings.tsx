@@ -27,8 +27,6 @@ import { CsvImportCard } from "./CsvImportCard";
 export default function DbSettings() {
   const [dbPath, setDbPath] = useState("");
   const [exportPath, setExportPath] = useState("");
-  const [appName, setAppName] = useState("");
-  const [language, setLanguage] = useState("");
   const [backups, setBackups] = useState<string[]>([]);
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
   const [restoreConfirmOpen, setRestoreConfirmOpen] = useState(false);
@@ -49,14 +47,6 @@ export default function DbSettings() {
     invoke<string>("get_db_path").then(setDbPath);
 
     invoke<string>("get_export_path").then(setExportPath);
-
-    invoke<string | null>("get_setting_command", { key: "app_name" }).then(
-      (v) => setAppName(v || "Finkro"),
-    );
-
-    invoke<string | null>("get_setting_command", { key: "language" }).then(
-      (v) => setLanguage(v || "ko"),
-    );
 
     fetchBackups();
   }, []);
@@ -84,66 +74,22 @@ export default function DbSettings() {
     }
   };
 
-  const handleSaveSettings = async () => {
-    await invoke("set_setting_command", { key: "app_name", value: appName });
-    await invoke("set_setting_command", { key: "language", value: language });
-    toast.success("설정이 저장되었습니다.");
-    invoke<string | null>("get_setting_command", { key: "app_name" }).then(
-      (v) => setAppName(v || "Finkro"),
-    );
-    invoke<string | null>("get_setting_command", { key: "language" }).then(
-      (v) => setLanguage(v || "ko"),
-    );
-  };
-
   const parseBackupName = (name: string) => {
     const match = name.match(/(\d{8})_(\d{6})/);
     if (!match) return name;
     const date = `${match[1].slice(0, 4)}-${match[1].slice(
       4,
-      6,
+      6
     )}-${match[1].slice(6, 8)}`;
     const time = `${match[2].slice(0, 2)}:${match[2].slice(
       2,
-      4,
+      4
     )}:${match[2].slice(4, 6)}`;
     return `${date} ${time}`;
   };
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      {/* 앱 기본 정보 */}
-      <Card className="p-6 space-y-4">
-        <div className="flex items-center gap-2 text-lg font-semibold">
-          <Settings className="w-5 h-5" />앱 기본 정보
-        </div>
-        <div className="grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="appName">가계부 이름</Label>
-            <Input
-              id="appName"
-              value={appName}
-              onChange={(e) => setAppName(e.target.value)}
-              placeholder="Finkro"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="language">기본 언어</Label>
-            <Select value={language} onValueChange={setLanguage}>
-              <SelectTrigger id="language">
-                <SelectValue placeholder="언어 선택" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ko">한국어</SelectItem>
-                <SelectItem value="en">English</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <Button onClick={handleSaveSettings}>저장</Button>
-      </Card>
-
       {/* DB 정보 */}
       <Card className="p-6 space-y-4">
         <div className="flex items-center gap-2 text-lg font-semibold">

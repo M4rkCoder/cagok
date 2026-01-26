@@ -7,6 +7,7 @@ import {
 import { TrendingUp, TrendingDown, DollarSign, PiggyBank } from "lucide-react";
 import { ComparisonCardFooter } from "./ComparisonCardFooter";
 import { ComparisonMetric, ComparisonType, MonthlyOverview } from "@/types";
+import CountUp from "@/components/CoutUp";
 
 interface Props {
   overview: MonthlyOverview;
@@ -33,7 +34,7 @@ export function SummaryCards({ overview, comparisons }: Props) {
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-green-600">
-            {formatCurrency(overview.total_income)}
+            ₩<CountUp end={overview.total_income} />
           </div>
         </CardContent>
         <ComparisonCardFooter

@@ -20,6 +20,8 @@
     "dialog:allow-save",
     "dialog:default",
     "fs:allow-read-text-file",
-    "fs:allow-open"
+    "fs:allow-open",
+    "sql:default",
+    "sql:allow-execute"
   ]
 }

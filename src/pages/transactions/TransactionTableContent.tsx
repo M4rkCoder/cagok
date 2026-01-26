@@ -78,6 +78,7 @@ const TransactionTableContent: React.FC<TransactionTableContentProps> = ({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && "selected"}
+                className="group"
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell key={cell.id}>

@@ -9,6 +9,7 @@
     "sql:allow-load",
     "sql:default",
     "sql:allow-execute",
+    "sql:allow-select",
     "dialog:default",
     "fs:allow-read-text-file",
     "fs:allow-open"

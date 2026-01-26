@@ -5,7 +5,7 @@ import {
   insertDummyTransactions,
 } from "./dummyData";
 
-async function runSeed() {
+export default async function runSeed() {
   console.log("🚀 더미 데이터 생성 시작");
 
   await resetAllDummyData();
@@ -20,5 +20,3 @@ async function runSeed() {
 
   console.log("✅ 더미 데이터 생성 완료");
 }
-
-runSeed().catch(console.error);

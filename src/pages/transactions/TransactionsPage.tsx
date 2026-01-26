@@ -20,12 +20,11 @@ import {
 import TransactionFilters from "./TransactionFilters";
 import TransactionTableContent from "./TransactionTableContent";
 import TransactionPagination from "./TransactionPagination";
-import { Scroll, SquarePen, Trash2 } from "lucide-react";
+import { SquarePen, Trash2 } from "lucide-react";
 import { ExpenseBadge, IncomeBadge } from "./TransactionBadge";
 import TransactionSheet from "./TrasactionSheet";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useTransactionStore } from "@/store/useTransactionStore";
-import { useAppStore } from "@/store/useAppStore";
 
 const TransactionsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -43,7 +42,6 @@ const TransactionsPage: React.FC = () => {
     setSheetOpen,
   } = useTransactionStore();
 
-  const { categories } = useAppStore();
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 30,
@@ -112,7 +110,7 @@ const TransactionsPage: React.FC = () => {
             <span>{row.original.category_name || t("no_category")}</span>
           </div>
         ),
-        size: 180, // Set initial size for category column
+        size: 160, // Set initial size for category column
         minSize: 150,
         enableResizing: true,
       },
@@ -142,7 +140,7 @@ const TransactionsPage: React.FC = () => {
             </span>
           </div>
         ),
-        size: 260, // Set initial size for description column
+        size: 230, // Set initial size for description column
         minSize: 200,
         enableResizing: true,
       },
@@ -163,18 +161,7 @@ const TransactionsPage: React.FC = () => {
         header: t("remarks"),
         cell: ({ row }) => (
           <div className="flex items-center justify-start h-full">
-            {row.original.remarks && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <Scroll className="text-slate-500" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span>{row.original.remarks}</span>
-                </TooltipContent>
-              </Tooltip>
-            )}
+            {row.original.remarks}
           </div>
         ),
         size: 100, // Set initial size for remarks column
@@ -183,18 +170,15 @@ const TransactionsPage: React.FC = () => {
       },
       {
         id: "actions",
-        header: t("actions"),
+        header: "",
         cell: ({ row }) => (
-          <div className="flex justify-start space-x-2 h-full">
+          <div className="flex justify-center space-x-2 h-full">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
+                <SquarePen
                   onClick={() => handleEdit(row.original)}
-                >
-                  <SquarePen />
-                </Button>
+                  className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-all text-slate-400 hover:text-slate-600"
+                />
               </TooltipTrigger>
               <TooltipContent>
                 <span>{t("edit")}</span>
@@ -202,13 +186,10 @@ const TransactionsPage: React.FC = () => {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
+                <Trash2
                   onClick={() => openConfirm("transaction", row.original.id!)}
-                >
-                  <Trash2 />
-                </Button>
+                  className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-all text-slate-400 hover:text-slate-600"
+                />
               </TooltipTrigger>
               <TooltipContent>
                 <span>{t("delete")}</span>
@@ -216,9 +197,9 @@ const TransactionsPage: React.FC = () => {
             </Tooltip>
           </div>
         ),
-        size: 120, // Reduced size for actions column
+        size: 100, // Reduced size for actions column
         minSize: 90,
-        maxSize: 150,
+        maxSize: 120,
         enableResizing: true,
       },
     ],
@@ -283,7 +264,7 @@ const TransactionsPage: React.FC = () => {
   });
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container p-6 max-w-7xl mx-auto py-8">
       {/* Title section */}
       <h1 className="text-3xl font-bold mb-6">{t("transactions")}</h1>
 
@@ -301,7 +282,6 @@ const TransactionsPage: React.FC = () => {
           setStartDate={setStartDate}
           endDate={endDate}
           setEndDate={setEndDate}
-          categories={categories}
         />
 
         <TransactionSheet />

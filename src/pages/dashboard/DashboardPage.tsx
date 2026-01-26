@@ -30,6 +30,7 @@ import { DialogState, TransactionWithCategory } from "@/types";
 import DailyExpenseCalendar from "@/components/DailyExpenseCalendar"; // New import
 import DailyTransactionsDialog from "@/components/DailyTransactionsDialog"; // New import
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { SummaryCard } from "./SummaryCard";
 
 // 차트 색상
 const COLORS = [
@@ -141,7 +142,7 @@ export default function Dashboard() {
           />
         </div>
       </div>
-
+      <SummaryCard overview={overview} monthlyExpenses={monthlyExpenses} />
       {/* 요약 카드 */}
       <SummaryCards overview={overview} comparisons={comparisons} />
 
@@ -272,7 +273,7 @@ export default function Dashboard() {
                   <div className="flex items-center gap-4">
                     <CategoryIcon
                       icon={category.category_icon}
-                      type="1"
+                      type={1}
                       size="md"
                     />
                     <div>

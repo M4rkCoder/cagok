@@ -11,6 +11,7 @@ interface AppState {
   isLoading: boolean;
 
   // Actions
+  setAppName: (name: string) => void;
   initApp: () => Promise<void>;
   updateSetting: (key: "app_name" | "language", value: string) => Promise<void>;
   fetchCategories: () => Promise<void>;
@@ -21,7 +22,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   language: "ko",
   categories: [],
   isLoading: true,
-
+  setAppName: (name: string) => set({ appName: name }),
   initApp: async () => {
     set({ isLoading: true });
     try {

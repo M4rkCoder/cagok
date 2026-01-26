@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Select,
@@ -23,9 +23,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { format } from "date-fns";
+import { format, subMonths, subYears, startOfDay, endOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Category } from "@/types";
 import {
   Search,
   Calendar as CalendarIcon,
@@ -38,6 +37,12 @@ import {
   ExpenseBadge,
   FixedExpenseBadge,
 } from "./TransactionBadge";
+import { useAppStore } from "@/store/useAppStore";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface TransactionFiltersProps {
   searchQuery: string;
@@ -51,7 +56,6 @@ interface TransactionFiltersProps {
   setStartDate: (date: Date | undefined) => void;
   endDate: Date | undefined;
   setEndDate: (date: Date | undefined) => void;
-  categories: Category[];
 }
 
 const TransactionFilters: React.FC<TransactionFiltersProps> = ({
@@ -66,10 +70,11 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
   setStartDate,
   endDate,
   setEndDate,
-  categories,
 }) => {
   const { t } = useTranslation();
+  const { categories, fetchCategories } = useAppStore();
   const [open, setOpen] = useState(false); // 카테고리 팝오버 상태
+  const [preset, setPreset] = useState<string>("");
 
   // 현재 필터가 하나라도 적용되어 있는지 확인
   const isFiltered =
@@ -79,6 +84,12 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
     startDate !== undefined ||
     endDate !== undefined;
 
+  useEffect(() => {
+    if (categories.length === 0) {
+      fetchCategories();
+    }
+  }, []);
+
   // 모든 필터 초기화 함수
   const handleReset = () => {
     setSearchQuery("");
@@ -87,11 +98,12 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
     setFilterCategory(null);
     setStartDate(undefined);
     setEndDate(undefined);
+    setPreset("");
   };
 
   // 현재 선택된 카테고리 객체 찾기
   const selectedCategory = categories.find(
-    (cat) => cat.id?.toString() === filterCategory
+    (cat) => String(cat.id) === String(filterCategory)
   );
 
   const handleTypeChange = (value: string) => {
@@ -103,6 +115,46 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
       setFilterType(value); // 0: income 1: expense
     }
   };
+
+  const handlePresetChange = (value: string) => {
+    setPreset(value);
+
+    if (value === "all") {
+      setStartDate(undefined);
+      setEndDate(undefined);
+      return;
+    }
+    const now = new Date();
+    const end = endOfDay(now);
+    let start: Date;
+
+    switch (value) {
+      case "1m":
+        start = startOfDay(subMonths(now, 1));
+        break;
+      case "3m":
+        start = startOfDay(subMonths(now, 3));
+        break;
+      case "6m":
+        start = startOfDay(subMonths(now, 6));
+        break;
+      case "1y":
+        start = startOfDay(subYears(now, 1));
+        break;
+      default:
+        return;
+    }
+
+    setStartDate(start);
+    setEndDate(end);
+  };
+
+  useEffect(() => {
+    if (preset !== "" && preset !== "all") {
+      setPreset("");
+    }
+  }, [startDate, endDate]);
+
   return (
     <div className="flex items-center space-x-4">
       {/* 1. 검색창 */}
@@ -127,26 +179,24 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
           <Search className="h-4 w-4" />
         </Button>
       </div>
-
       {/* 2. 유형 필터 (수입/지출) */}
       <Select value={filterType || "all"} onValueChange={handleTypeChange}>
-        <SelectTrigger className="w-45">
+        <SelectTrigger className="w-30">
           <SelectValue placeholder={t("filter_by_type")} />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">{t("all_types")}</SelectItem>
           <SelectItem value="0">
-            <IncomeBadge /> {t("income")}
+            <IncomeBadge />
           </SelectItem>
           <SelectItem value="1">
-            <ExpenseBadge /> {t("expense")}
+            <ExpenseBadge />
           </SelectItem>
           <SelectItem value="fixed_expense">
-            <FixedExpenseBadge /> {t("fixed_expense")}
+            <FixedExpenseBadge />
           </SelectItem>
         </SelectContent>
       </Select>
-
       {/* 3. 분류 필터 */}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
@@ -154,7 +204,7 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
             variant="outline"
             role="combobox"
             aria-expanded={open}
-            className="w-45 justify-between"
+            className="w-30 justify-between"
           >
             <span className="truncate">
               {filterCategory === null
@@ -164,7 +214,7 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-45 p-0">
+        <PopoverContent className="w-40 p-0">
           <Command>
             <CommandInput placeholder={t("search_category")} />
             <CommandList>
@@ -211,17 +261,32 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
         </PopoverContent>
       </Popover>
 
-      {/* 4. 시작 날짜 */}
+      {/* 4. 분류 필터 뒤 혹은 날짜 필터 앞에 추가 */}
+      <Select value={preset} onValueChange={handlePresetChange}>
+        <SelectTrigger className="w-20">
+          <SelectValue placeholder={t("period_preset")} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all" className="text-muted-foreground font-medium">
+            {t("all_time")}
+          </SelectItem>
+          <SelectItem value="1m">{t("1_month")}</SelectItem>
+          <SelectItem value="3m">{t("3_months")}</SelectItem>
+          <SelectItem value="6m">{t("6_months")}</SelectItem>
+          <SelectItem value="1y">{t("1_year")}</SelectItem>
+        </SelectContent>
+      </Select>
+      {/* 5. 시작 날짜 */}
       <Popover>
         <PopoverTrigger asChild>
           <Button
             variant={"outline"}
             className={cn(
-              "w-45 justify-start text-left font-normal",
+              "w-30 justify-start text-left font-normal",
               !startDate && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
+            <CalendarIcon className="h-4 w-4" />
             {startDate ? (
               format(startDate, "yyyy/MM/dd")
             ) : (
@@ -238,18 +303,18 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
           />
         </PopoverContent>
       </Popover>
-
-      {/* 5. 종료 날짜 */}
+      <span>-</span>
+      {/* 6. 종료 날짜 */}
       <Popover>
         <PopoverTrigger asChild>
           <Button
             variant={"outline"}
             className={cn(
-              "w-45 justify-start text-left font-normal",
+              "w-30 justify-start text-left font-normal",
               !endDate && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
+            <CalendarIcon className="h-4 w-4" />
             {endDate ? (
               format(endDate, "yyyy/MM/dd")
             ) : (
@@ -261,17 +326,19 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
           <Calendar mode="single" selected={endDate} onSelect={setEndDate} />
         </PopoverContent>
       </Popover>
-
       {/* 필터 초기화 버튼 */}
-      {isFiltered && (
-        <Button
-          variant="ghost"
-          onClick={handleReset}
-          className="h-8 px-2 lg:px-3"
-        >
-          <RotateCcw className="ml-2 h-4 w-4" />
-        </Button>
-      )}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            className="px-1 lg:px-3"
+          >
+            <RotateCcw className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>필터 초기화</TooltipContent>
+      </Tooltip>
     </div>
   );
 };

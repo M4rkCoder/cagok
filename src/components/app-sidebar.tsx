@@ -14,33 +14,62 @@ import {
   Settings,
   SquareLibrary,
   Pencil,
+  ChartArea,
 } from "lucide-react";
 import { NavMain } from "./main-nav";
 import { Button } from "@/components/ui/button";
 import FinanceModeRounded from "./FinanceModeRounded";
 import { useAppStore } from "@/store/useAppStore";
 import { Link } from "react-router-dom";
+import runSeed from "@/db/seed";
 
 interface AppSidebarProps {
   collapsed: boolean;
 }
-const items = [
-  { title: "Home", url: "#", icon: Home },
-  { title: "Dashboard", url: "#", icon: LayoutDashboard },
-  {
-    title: "Transaction",
-    url: "#/transactions",
-    icon: SquareLibrary,
-  },
-  { title: "Write", url: "#/transactions/write", icon: Pencil },
-  { title: "Settings", url: "#/settings", icon: Settings },
-];
+const items = {
+  MainMenu: [
+    { title: "Dashboard", url: "#", icon: LayoutDashboard },
+    {
+      title: "Transaction",
+      url: "#/transactions",
+      icon: SquareLibrary,
+    },
+    { title: "Analysis", url: "#/", icon: ChartArea },
+  ],
+  Settings: [
+    {
+      title: "Settings",
+      url: "#/settings",
+      icon: Settings,
+      isActive: false,
+      items: [
+        {
+          title: "General",
+          url: "#/settings",
+        },
+        {
+          title: "Category",
+          url: "#/settings/category",
+        },
+        {
+          title: "Database",
+          url: "#/settings/database",
+        },
+        {
+          title: "Recurring",
+          url: "#/settings/recurring",
+        },
+      ],
+    },
+  ],
+};
 
 const SIDEBAR_WIDTH = 180;
 const SIDEBAR_COLLAPSED_WIDTH = 50;
 
 export function AppSidebar({ collapsed }: AppSidebarProps) {
   const { appName } = useAppStore();
+
   return (
     <aside
       className="h-full shrink-0 bg-sidebar transition-[width] duration-300 ease-in-out flex flex-col overflow-hidden border-r"
@@ -76,11 +105,10 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
       {/* Content */}
       <SidebarContent className="flex-1 overflow-x-hidden">
         <SidebarGroup className="px-2">
-          {" "}
           {/* 좌우 여백을 주어 아이콘이 너무 벽에 붙지 않게 함 */}
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {items.MainMenu.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
@@ -96,6 +124,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <NavMain items={items.Settings} />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -103,7 +132,15 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
 
       {/* Footer */}
       <SidebarFooter className="p-2">
-        <Button variant="secondary" className="w-full truncate overflow-hidden">
+        <Button
+          variant="secondary"
+          className="w-full truncate overflow-hidden"
+          onClick={(e) => {
+            e.preventDefault(); // 혹시 모를 기본 동작 방지
+            console.log("버튼을 클릭했습니다!");
+            runSeed();
+          }}
+        >
           {!collapsed ? (
             <span className="transition-opacity duration-200 delay-100 opacity-100">
               더미 데이터 생성

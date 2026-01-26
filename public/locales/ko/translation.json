@@ -47,6 +47,12 @@
   "all_categories": "모든 항목",
   "search_category": "항목 검색",
   "search_transactions": "가계부 검색...",
-  "pick_start_date": "시작 날짜 선택",
-  "pick_end_date": "종료 날짜 선택"
+  "pick_start_date": "시작일 선택",
+  "pick_end_date": "종료일 선택",
+  "period_preset": "기간",
+  "1_month": "1개월",
+  "3_months": "3개월",
+  "6_months": "6개월",
+  "1_year": "1년",
+  "all_time": "전체 기간(해제)"
 }
