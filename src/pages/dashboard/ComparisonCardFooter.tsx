@@ -8,36 +8,14 @@ interface Props {
   unit?: "currency" | "percent";
 }
 
-export function ComparisonCardFooter({
-  metric,
-  isPositiveGood = false,
-  unit = "currency",
-}: Props) {
-  if (!metric) return null;
-
-  const isIncrease = metric.diff > 0;
-  const isSame = metric.diff === 0;
-
-  const isGood =
-    unit === "percent"
-      ? !isIncrease // 고정비율은 감소가 좋음
-      : isPositiveGood
-      ? isIncrease
-      : !isIncrease;
-
-  const color = isSame
-    ? "text-gray-400"
-    : isGood
-    ? "text-green-500"
-    : "text-red-500";
-
-  const Icon = isSame ? Minus : isIncrease ? TrendingUp : TrendingDown;
+export function ComparisonCardFooter({ metric, unit = "currency" }: Props) {
+  const isEmpty = !metric || metric.previous === 0;
 
   const formatValue = () => {
+    if (!metric) return "";
     if (unit === "percent") {
-      return `${metric.diff_rate.toFixed(1)}%`;
+      return `${Math.abs(metric.diff).toFixed(1)}%p`;
     }
-
     return new Intl.NumberFormat("ko-KR", {
       style: "currency",
       currency: "KRW",
@@ -45,16 +23,27 @@ export function ComparisonCardFooter({
     }).format(Math.abs(metric.diff));
   };
 
+  const isIncrease = (metric?.diff ?? 0) > 0;
+  const isSame = metric?.diff === 0;
+
   return (
-    <CardFooter className="pt-2 text-sm">
-      <div className={`flex items-center gap-1 ${color}`}>
-        <Icon className="w-4 h-4" />
-        <span>
-          전월 대비{" "}
-          {isSame
-            ? "변동 없음"
-            : `${formatValue()} (${metric.diff_rate.toFixed(1)}%)`}
-        </span>
+    // min-h-[40px]로 자리 유지, text-muted-foreground로 튀지 않는 색상 설정
+    <CardFooter className="pt-2 text-sm min-h-[40px] text-muted-foreground">
+      <div
+        className={`flex items-center gap-1 ${isEmpty ? "invisible" : "visible"}`}
+      >
+        {!isEmpty && (
+          <span>
+            {isSame ? (
+              "지난 달과 동일함"
+            ) : (
+              <>
+                지난 달보다 {formatValue()} {isIncrease ? "증가" : "감소"}{" "}
+                <span className="text-xs opacity-70"></span>
+              </>
+            )}
+          </span>
+        )}
       </div>
     </CardFooter>
   );

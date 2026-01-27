@@ -1,4 +1,4 @@
-use crate::db::{CategoryExpense, DailyExpense, DbConnection, MonthlyExpense, MonthlyOverview};
+use crate::db::{CategoryExpense, DailyExpense, DbConnection, MonthlyExpense, MonthlyOverview, TransactionWithCategory};
 use crate::services::dashboard::DashboardService;
 use crate::services::{ComparisonMetric, ComparisonType};
 use tauri::State;
@@ -58,4 +58,23 @@ pub fn compare_dashboard(
         &previous_start,
         &previous_end,
     )
+}
+
+#[tauri::command]
+pub fn get_recent_7days_expenses(
+    db: State<'_, DbConnection>,
+    year_month: String,
+) -> Result<Vec<DailyExpense>, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardService::get_recent_7days_expenses(&conn, &year_month)
+}
+
+#[tauri::command]
+pub fn get_recent_transactions(
+    db: State<'_, DbConnection>,
+    year_month: String,
+    limit: i32,
+) -> Result<Vec<TransactionWithCategory>, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardService::get_recent_transactions(&conn, &year_month, limit)
 }

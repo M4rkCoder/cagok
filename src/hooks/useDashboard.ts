@@ -8,12 +8,16 @@ import {
   MonthlyExpense,
   ComparisonType,
   ComparisonMetric,
+  TransactionWithCategory,
 } from "@/types";
 
 export function useDashboard(selectedMonth: string) {
   const [overview, setOverview] = useState<MonthlyOverview | null>(null);
   const [categories, setCategories] = useState<CategoryExpense[]>([]);
   const [dailyExpenses, setDailyExpenses] = useState<DailyExpense[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<
+    TransactionWithCategory[]
+  >([]);
   const [monthlyExpenses, setMonthlyExpenses] = useState<MonthlyExpense[]>([]);
   const [comparisons, setComparisons] = useState<
     Record<ComparisonType, ComparisonMetric | null>
@@ -21,6 +25,7 @@ export function useDashboard(selectedMonth: string) {
     Expense: null,
     Income: null,
     NetIncome: null,
+    Fixed: null,
     FixedRatio: null,
   });
   const [loading, setLoading] = useState(true);
@@ -54,6 +59,7 @@ export function useDashboard(selectedMonth: string) {
         "Income",
         "Expense",
         "NetIncome",
+        "Fixed",
         "FixedRatio",
       ];
 
@@ -61,6 +67,7 @@ export function useDashboard(selectedMonth: string) {
         overviewData,
         categoriesData,
         dailyData,
+        recentData,
         monthlyData,
         comparisonData,
       ] = await Promise.all([
@@ -70,8 +77,12 @@ export function useDashboard(selectedMonth: string) {
         invoke<CategoryExpense[]>("get_category_expenses", {
           yearMonth: selectedMonth,
         }),
-        invoke<DailyExpense[]>("get_daily_expenses", {
+        invoke<DailyExpense[]>("get_recent_7days_expenses", {
           yearMonth: selectedMonth,
+        }),
+        invoke<TransactionWithCategory[]>("get_recent_transactions", {
+          yearMonth: selectedMonth,
+          limit: 5,
         }),
         invoke<MonthlyExpense[]>("get_monthly_expenses", { months: 6 }),
         Promise.all(
@@ -99,6 +110,7 @@ export function useDashboard(selectedMonth: string) {
       setCategories(categoriesData);
       setDailyExpenses(dailyData);
       setMonthlyExpenses(monthlyData);
+      setRecentTransactions(recentData);
       setComparisons(comparisonMap);
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
@@ -116,6 +128,7 @@ export function useDashboard(selectedMonth: string) {
     overview,
     categories,
     dailyExpenses,
+    recentTransactions,
     monthlyExpenses,
     comparisons,
   };

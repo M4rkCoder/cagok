@@ -24,13 +24,13 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useDashboard } from "@/hooks/useDashboard";
-import { MainExpenseCard } from "./MainExpenseCard";
-import { SummaryItemRow } from "./SummaryItemsRow";
+import { SummaryItemsRow } from "../dashboard/SummaryItemsRow";
 import { TransactionListDialog } from "@/components/dashboard/TransactionListDialog";
 import { DialogState, TransactionWithCategory } from "@/types";
 import DailyExpenseCalendar from "@/components/DailyExpenseCalendar"; // New import
 import DailyTransactionsDialog from "@/components/DailyTransactionsDialog"; // New import
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { SummaryCard } from "./SummaryCard";
 
 // 차트 색상
 const COLORS = [
@@ -59,8 +59,7 @@ export default function Dashboard() {
     loading,
     overview,
     categories,
-    dailyExpenses,
-    recentTransactions,
+    dailyExpenses, // Keep for now if other parts of dashboard use it. Calendar component will fetch its own.
     monthlyExpenses,
     comparisons,
   } = useDashboard(selectedMonth);
@@ -125,12 +124,12 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-3">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">대시보드</h1>
-          <p className="text-gray-500 mt-1">가계부 분석</p>
+          <p className="text-gray-500 mt-1">가계부 통계 및 분석</p>
         </div>
         <div className="flex items-center gap-2">
           {/* Calendar icon and month input can be removed if not needed elsewhere */}
@@ -143,17 +142,9 @@ export default function Dashboard() {
           />
         </div>
       </div>
-      {/* 🔹 [분리한 컴포넌트 1] 메인 지출 카드 (지출 요약 + 차트/내역) */}
-      <MainExpenseCard
-        overview={overview}
-        comparison={comparisons.Expense}
-        dailyExpenses={dailyExpenses}
-        recentTransactions={recentTransactions}
-        lang="ko"
-      />
-
-      {/* 🔹 [분리한 컴포넌트 2] 하단 요약 아이템 행 (수입, 순수입, 고정비) */}
-      <SummaryItemRow overview={overview} comparisons={comparisons} lang="ko" />
+      <SummaryCard overview={overview} monthlyExpenses={monthlyExpenses} />
+      {/* 요약 카드 */}
+      <SummaryCards overview={overview} comparisons={comparisons} />
 
       {/* 차트 섹션 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

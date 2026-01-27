@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 interface CategoryIconProps {
   icon: string;
   type: number;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   className?: string;
 }
 
@@ -25,6 +25,7 @@ export const CategoryIcon = ({
 
   // 각 사이즈별 박스 크기와 이모지 폰트 크기 비율 최적화
   const sizeClasses = {
+    xs: "w-5 h-5 text-[11px]",
     sm: "w-9 h-9 text-[1.25rem]", // 20px 정도의 이모지
     md: "w-11 h-11 text-[1.5rem]", // 24px 정도의 이모지
     lg: "w-24 h-24 text-[3.5rem]", // 56px 정도의 이모지

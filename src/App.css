@@ -92,7 +92,8 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  --emoji-font: "NotoColorEmojiCustom", "Segoe UI Emoji", "Apple Color Emoji",
+  --emoji-font:
+    "NotoColorEmojiCustom", "Segoe UI Emoji", "Apple Color Emoji",
     "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", EmojiSymbols;
 }
 
@@ -124,6 +125,11 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.439 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
 }
 
 /* Fonts */
@@ -198,8 +204,8 @@
 .EmojiPickerReact .epr-btn,
 .EmojiPickerReact input,
 .EmojiPickerReact span {
-  font-family: "NotoColorEmojiCustom", "Segoe UI Emoji", "Apple Color Emoji",
-    sans-serif !important;
+  font-family:
+    "NotoColorEmojiCustom", "Segoe UI Emoji", "Apple Color Emoji", sans-serif !important;
 }
 
 /* Styles for column resizing */
@@ -228,4 +234,16 @@
 /* When the resizer is active, ensure it's visible even without hover */
 .resizer[data-state="active"] {
   opacity: 1;
+}
+
+/* 클릭 시 생기는 기본 아웃라인 제거 */
+*:focus {
+  outline: none !important;
+}
+
+/* Recharts 내부의 특정 요소 선택 시 생기는 테두리 방지 */
+.recharts-active-dot,
+.recharts-rectangle:focus,
+.recharts-text:focus {
+  outline: none !important;
 }

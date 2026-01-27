@@ -67,16 +67,14 @@ impl TransactionRepository {
 
         let rows = stmt.query_map([], |row| {
             Ok(TransactionWithCategory {
-                transaction: Transaction {
-                    id: row.get(0)?,
-                    description: row.get(1)?,
-                    amount: row.get(2)?,
-                    date: row.get(3)?,
-                    r#type: row.get(4)?,
-                    is_fixed: row.get(5)?,
-                    remarks: row.get(6)?,
-                    category_id: row.get(7)?,
-                },
+                id: row.get(0)?,
+                description: row.get(1)?,
+                amount: row.get(2)?,
+                date: row.get(3)?,
+                r#type: row.get(4)?,
+                is_fixed: row.get(5)?,
+                remarks: row.get(6)?,
+                category_id: row.get(7)?,
                 category_name: row.get(8)?,
                 category_icon: row.get(9)?,
             })
@@ -117,16 +115,15 @@ impl TransactionRepository {
         let mut stmt = conn.prepare(query)?;
         let rows = stmt.query_map(params![date], |row| {
             Ok(TransactionWithCategory {
-                transaction: Transaction {
-                    id: row.get(0)?,
-                    description: row.get(1)?,
-                    amount: row.get(2)?,
-                    date: row.get(3)?,
-                    r#type: row.get(4)?,
-                    is_fixed: row.get(5)?,
-                    remarks: row.get(6)?,
-                    category_id: row.get(7)?,
-                },
+                id: row.get(0)?,
+                description: row.get(1)?,
+                amount: row.get(2)?,
+                date: row.get(3)?,
+                r#type: row.get(4)?,
+                is_fixed: row.get(5)?,
+                remarks: row.get(6)?,
+                category_id: row.get(7)?,
+
                 category_name: row.get(8)?,
                 category_icon: row.get(9)?,
             })
@@ -165,16 +162,14 @@ impl TransactionRepository {
         let mut stmt = conn.prepare(query)?;
         let rows = stmt.query_map(params![category_id, start_date, end_date], |row| {
             Ok(TransactionWithCategory {
-                transaction: Transaction {
-                    id: row.get(0)?,
-                    description: row.get(1)?,
-                    amount: row.get(2)?,
-                    date: row.get(3)?,
-                    r#type: row.get(4)?,
-                    is_fixed: row.get(5)?,
-                    remarks: row.get(6)?,
-                    category_id: row.get(7)?,
-                },
+                id: row.get(0)?,
+                description: row.get(1)?,
+                amount: row.get(2)?,
+                date: row.get(3)?,
+                r#type: row.get(4)?,
+                is_fixed: row.get(5)?,
+                remarks: row.get(6)?,
+                category_id: row.get(7)?,
                 category_name: row.get(8)?,
                 category_icon: row.get(9)?,
             })
@@ -265,6 +260,7 @@ impl DashboardRepository {
             total_income,
             total_expense,
             net_income: total_income - total_expense,
+            fixed_expense,
             fixed_expense_ratio,
         })
     }
@@ -351,6 +347,87 @@ impl DashboardRepository {
         })?;
 
         rows.collect()
+    }
+
+    pub fn get_daily_expenses_by_range(
+        conn: &Connection,
+        start_date: &str,
+        end_date: &str,
+    ) -> Result<Vec<DailyExpense>> {
+        // Recursive CTE: 시작일부터 종료일까지 빈 날짜 없이 생성 후 LEFT JOIN
+        let query = "
+            WITH RECURSIVE dates(d) AS (
+                VALUES(?)
+                UNION ALL
+                SELECT date(d, '+1 day') FROM dates WHERE d < ?
+            )
+            SELECT 
+                d as date,
+                COALESCE(SUM(t.amount), 0) as total_amount,
+                COUNT(t.id) as transaction_count
+            FROM dates
+            LEFT JOIN transactions t ON d = t.date AND t.type = 1
+            GROUP BY d
+            ORDER BY d ASC;
+        ";
+
+        let mut stmt = conn.prepare(query)?;
+        let rows = stmt.query_map(params![start_date, end_date], |row| {
+            Ok(DailyExpense {
+                date: row.get(0)?,
+                total_amount: row.get(1)?,
+                transaction_count: row.get(2)?,
+            })
+        })?;
+
+        let mut result = Vec::new();
+        for row in rows {
+            result.push(row?);
+        }
+        Ok(result)
+    }
+
+    pub fn get_recent_transactions(
+        conn: &Connection,
+        year_month: &str,
+        limit: i32,
+    ) -> Result<Vec<TransactionWithCategory>> {
+        let start_date = format!("{}-01", year_month);
+        let end_date = format!("{}-31", year_month); // SQLite는 존재하지 않는 날짜(31일)도 범위 끝으로 잘 처리합니다.
+
+        let query = "
+            SELECT 
+                t.id, t.description, t.amount, t.date, t.type, t.is_fixed, t.remarks, t.category_id,
+                c.name as category_name,
+                c.icon as category_icon
+            FROM transactions t
+            LEFT JOIN categories c ON t.category_id = c.id
+            WHERE t.type = 1 AND t.date BETWEEN ?1 AND ?2
+            ORDER BY t.date DESC, t.id DESC
+            LIMIT ?3;
+        ";
+
+        let mut stmt = conn.prepare(query)?;
+        let rows = stmt.query_map(params![start_date, end_date, limit], |row| {
+            Ok(TransactionWithCategory {
+                id: row.get(0)?,
+                description: row.get(1)?,
+                amount: row.get(2)?,
+                date: row.get(3)?,
+                r#type: row.get(4)?,
+                is_fixed: row.get(5)?,
+                remarks: row.get(6)?,
+                category_id: row.get(7)?,
+                category_name: row.get(8)?,
+                category_icon: row.get(9)?,
+            })
+        })?;
+
+        let mut result = Vec::new();
+        for row in rows {
+            result.push(row?);
+        }
+        Ok(result)
     }
 
     // 4. 월별 지출 추이 조회 (최근 N개월)

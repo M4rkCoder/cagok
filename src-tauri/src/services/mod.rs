@@ -39,5 +39,6 @@ pub enum ComparisonType {
     Expense,
     Income,
     NetIncome,
+    Fixed,
     FixedRatio,
 }

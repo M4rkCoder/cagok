@@ -5,13 +5,19 @@ export type ComparisonMetric = {
   diff_rate: number | null;
 };
 
-export type ComparisonType = "Expense" | "Income" | "NetIncome" | "FixedRatio";
+export type ComparisonType =
+  | "Expense"
+  | "Income"
+  | "NetIncome"
+  | "Fixed"
+  | "FixedRatio";
 
 // 타입 정의
 export interface MonthlyOverview {
   total_income: number;
   total_expense: number;
   net_income: number;
+  fixed_expense: number;
   fixed_expense_ratio: number;
 }
 

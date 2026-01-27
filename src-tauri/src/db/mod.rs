@@ -31,8 +31,14 @@ pub struct Transaction {
 
 #[derive(Debug, Serialize, Clone)]
 pub struct TransactionWithCategory {
-    #[serde(flatten)]
-    pub transaction: Transaction,
+    pub id: Option<i64>,
+    pub description: Option<String>,
+    pub amount: f64,
+    pub date: String,
+    pub r#type: i64,
+    pub is_fixed: i64,
+    pub remarks: Option<String>,
+    pub category_id: Option<i64>,
     pub category_name: Option<String>,
     pub category_icon: Option<String>,
 }
@@ -43,6 +49,7 @@ pub struct MonthlyOverview {
     pub total_income: f64,
     pub total_expense: f64,
     pub net_income: f64,
+    pub fixed_expense: f64,
     pub fixed_expense_ratio: f64,
 }
 
