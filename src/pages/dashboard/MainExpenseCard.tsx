@@ -16,7 +16,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
-import { CategoryIcon } from "@/components/CategoryIcon";
 import { cn } from "@/lib/utils";
 
 interface MainExpenseCardProps {
@@ -160,7 +159,7 @@ export function MainExpenseCard({
                           className={cn(
                             "flex items-center justify-between py-1.5 px-2 transition-all duration-200 ease-out",
                             "hover:bg-white hover:scale-[1.03] hover:shadow-sm hover:z-10 hover:rounded-md",
-                            "group cursor-default"
+                            "group cursor-default",
                           )}
                         >
                           {/* 왼쪽: 날짜 + 이모지 + 설명 (gap을 2로 축소) */}

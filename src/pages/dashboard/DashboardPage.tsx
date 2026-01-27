@@ -1,3 +1,8 @@
+import { Button } from "@/components/ui/button";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { format, addMonths, subMonths } from "date-fns";
+import { ko } from "date-fns/locale";
+import { MonthYearPicker } from "@/components/MonthYearPicker";
 import React, { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
@@ -31,6 +36,13 @@ import { DialogState, TransactionWithCategory } from "@/types";
 import DailyExpenseCalendar from "@/components/DailyExpenseCalendar"; // New import
 import DailyTransactionsDialog from "@/components/DailyTransactionsDialog"; // New import
 import { CategoryIcon } from "@/components/CategoryIcon";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+import { cn } from "@/lib/utils";
 
 // 차트 색상
 const COLORS = [
@@ -41,6 +53,20 @@ const COLORS = [
   "#3b82f6",
   "#6366f1",
 ];
+
+const chartConfig = {
+  total_amount: {
+    label: "지출액",
+    color: "#2563eb", // 단일 브랜드 컬러로 통일 (UX 최적화)
+  },
+} satisfies ChartConfig;
+
+const formatDateWithDay = (dateStr: string) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
+  return `${date.getMonth() + 1}.${date.getDate()}(${dayNames[date.getDay()]})`;
+};
 
 export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState<string>("");
@@ -60,6 +86,7 @@ export default function Dashboard() {
     overview,
     categories,
     dailyExpenses,
+    daily7Expenses,
     recentTransactions,
     monthlyExpenses,
     comparisons,
@@ -69,7 +96,7 @@ export default function Dashboard() {
   useEffect(() => {
     const now = new Date();
     const yearMonth = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
+      now.getMonth() + 1,
     ).padStart(2, "0")}`;
     setSelectedMonth(yearMonth);
   }, []);
@@ -79,17 +106,24 @@ export default function Dashboard() {
     setShowDailyTransactionsDialog(true);
   };
 
+  const handlePreviousMonth = () => {
+    const currentMonthDate = new Date(`${selectedMonth}-01`);
+    const previousMonthDate = subMonths(currentMonthDate, 1);
+    setSelectedMonth(format(previousMonthDate, "yyyy-MM"));
+  };
+
+  const handleNextMonth = () => {
+    const currentMonthDate = new Date(`${selectedMonth}-01`);
+    const nextMonthDate = addMonths(currentMonthDate, 1);
+    setSelectedMonth(format(nextMonthDate, "yyyy-MM"));
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("ko-KR", {
       style: "currency",
       currency: "KRW",
       maximumFractionDigits: 0,
     }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return `${date.getMonth() + 1}/${date.getDate()}`;
   };
 
   if (loading || !overview) {
@@ -102,7 +136,7 @@ export default function Dashboard() {
 
   const handleCategoryMonthlyClick = async (
     categoryId: number,
-    categoryName: string
+    categoryName: string,
   ) => {
     try {
       const transactions = await invoke<TransactionWithCategory[]>(
@@ -110,7 +144,7 @@ export default function Dashboard() {
         {
           categoryId,
           yearMonth: selectedMonth,
-        }
+        },
       );
       console.log("CATEGORY MONTHLY TRANSACTIONS:", transactions);
       setDialogState({
@@ -124,6 +158,11 @@ export default function Dashboard() {
     }
   };
 
+  const dailyChartData = (dailyExpenses || []).map((item) => ({
+    ...item,
+    displayDate: formatDateWithDay(item.date),
+  }));
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-3">
       {/* 헤더 */}
@@ -133,27 +172,87 @@ export default function Dashboard() {
           <p className="text-gray-500 mt-1">가계부 분석</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Calendar icon and month input can be removed if not needed elsewhere */}
-          {/* <Calendar className="w-5 h-5 text-gray-500" /> */}
-          <input
-            type="month"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+          <Button variant="outline" size="icon" onClick={handlePreviousMonth}>
+            <ChevronLeftIcon className="h-4 w-4" />
+          </Button>
+          <MonthYearPicker
+            selectedMonth={selectedMonth}
+            onMonthChange={setSelectedMonth}
           />
+          <Button variant="outline" size="icon" onClick={handleNextMonth}>
+            <ChevronRightIcon className="h-4 w-4" />
+          </Button>
         </div>
       </div>
       {/* 🔹 [분리한 컴포넌트 1] 메인 지출 카드 (지출 요약 + 차트/내역) */}
       <MainExpenseCard
         overview={overview}
         comparison={comparisons.Expense}
-        dailyExpenses={dailyExpenses}
+        dailyExpenses={daily7Expenses}
         recentTransactions={recentTransactions}
         lang="ko"
       />
 
       {/* 🔹 [분리한 컴포넌트 2] 하단 요약 아이템 행 (수입, 순수입, 고정비) */}
       <SummaryItemRow overview={overview} comparisons={comparisons} lang="ko" />
+
+      {/* 일별 지출 추이 바 차트 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>일별 지출 추이</CardTitle>
+          <CardDescription>{selectedMonth} 일별 지출 내역</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {dailyChartData.length > 0 ? (
+            <ChartContainer
+              config={chartConfig}
+              className="h-[200px] w-full aspect-none"
+            >
+              <BarChart
+                data={dailyChartData}
+                margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+              >
+                <CartesianGrid
+                  vertical={false}
+                  strokeDasharray="3 3"
+                  stroke="#e2e8f0"
+                />
+                <XAxis
+                  dataKey="displayDate"
+                  tickLine={false}
+                  axisLine={false}
+                  fontSize={10}
+                  tick={{ fill: "#94a3b8", fontWeight: 500 }}
+                />
+                <YAxis hide domain={[0, "auto"]} />
+                {/* Y축 숨김. 필요시 visible로 변경 */}
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent hideIndicator />}
+                />
+                <Bar
+                  dataKey="total_amount"
+                  radius={[4, 4, 0, 0]}
+                  barSize={25}
+                  fill="var(--color-total_amount)"
+                  fillOpacity={0.6}
+                  className="transition-all duration-300 cursor-pointer hover:fill-opacity-100"
+                  activeBar={{
+                    fillOpacity: 1,
+                    stroke: "var(--color-total_amount)",
+                    strokeWidth: 1,
+                  }}
+                  onClick={(data) => handleDateClick(data.date)} // 바 클릭 시 DailyTransactionsDialog 열기
+                />
+              </BarChart>
+            </ChartContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[200px] text-gray-400">
+              데이터가 없습니다.
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* 차트 섹션 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -275,7 +374,7 @@ export default function Dashboard() {
                   onClick={() =>
                     handleCategoryMonthlyClick(
                       category.category_id,
-                      category.category_name
+                      category.category_name,
                     )
                   }
                 >

@@ -15,6 +15,7 @@ export function useDashboard(selectedMonth: string) {
   const [overview, setOverview] = useState<MonthlyOverview | null>(null);
   const [categories, setCategories] = useState<CategoryExpense[]>([]);
   const [dailyExpenses, setDailyExpenses] = useState<DailyExpense[]>([]);
+  const [daily7Expenses, setDaily7Expenses] = useState<DailyExpense[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<
     TransactionWithCategory[]
   >([]);
@@ -37,7 +38,7 @@ export function useDashboard(selectedMonth: string) {
 
     const prevMonth = new Date(year, month - 2, 1);
     const prevYearMonth = `${prevMonth.getFullYear()}-${String(
-      prevMonth.getMonth() + 1
+      prevMonth.getMonth() + 1,
     ).padStart(2, "0")}`;
 
     return {
@@ -67,6 +68,7 @@ export function useDashboard(selectedMonth: string) {
         overviewData,
         categoriesData,
         dailyData,
+        daily7Data,
         recentData,
         monthlyData,
         comparisonData,
@@ -75,6 +77,9 @@ export function useDashboard(selectedMonth: string) {
           yearMonth: selectedMonth,
         }),
         invoke<CategoryExpense[]>("get_category_expenses", {
+          yearMonth: selectedMonth,
+        }),
+        invoke<DailyExpense[]>("get_daily_expenses", {
           yearMonth: selectedMonth,
         }),
         invoke<DailyExpense[]>("get_recent_7days_expenses", {
@@ -93,8 +98,8 @@ export function useDashboard(selectedMonth: string) {
               currentEnd: current.end,
               previousStart: previous.start,
               previousEnd: previous.end,
-            }).then((data) => ({ type, data }))
-          )
+            }).then((data) => ({ type, data })),
+          ),
         ),
       ]);
 
@@ -103,12 +108,13 @@ export function useDashboard(selectedMonth: string) {
           acc[type] = data;
           return acc;
         },
-        {} as Record<ComparisonType, ComparisonMetric>
+        {} as Record<ComparisonType, ComparisonMetric>,
       );
 
       setOverview(overviewData);
       setCategories(categoriesData);
       setDailyExpenses(dailyData);
+      setDaily7Expenses(daily7Data);
       setMonthlyExpenses(monthlyData);
       setRecentTransactions(recentData);
       setComparisons(comparisonMap);
@@ -128,6 +134,7 @@ export function useDashboard(selectedMonth: string) {
     overview,
     categories,
     dailyExpenses,
+    daily7Expenses,
     recentTransactions,
     monthlyExpenses,
     comparisons,

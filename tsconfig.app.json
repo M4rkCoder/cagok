@@ -14,5 +14,5 @@
     "types": ["node", "@tauri-apps/api"],
     "moduleResolution": "node"
   },
-  "include": ["src"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"]
 }
