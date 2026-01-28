@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { format, addMonths, subMonths } from "date-fns";
-import { ko } from "date-fns/locale";
 import { MonthYearPicker } from "@/components/MonthYearPicker";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import {
   Card,
@@ -12,10 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-// import { Calendar } from "lucide-react"; // Replaced by DailyExpenseCalendar
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
   PieChart,
@@ -27,22 +23,20 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LabelList,
 } from "recharts";
+import { ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { useDashboard } from "@/hooks/useDashboard";
 import { MainExpenseCard } from "./MainExpenseCard";
 import { SummaryItemRow } from "./SummaryItemsRow";
 import { TransactionListDialog } from "@/components/dashboard/TransactionListDialog";
-import { DialogState, TransactionWithCategory } from "@/types";
+import { DialogState, TransactionWithCategory, DailyExpense } from "@/types";
 import DailyExpenseCalendar from "@/components/DailyExpenseCalendar"; // New import
 import DailyTransactionsDialog from "@/components/DailyTransactionsDialog"; // New import
 import { CategoryIcon } from "@/components/CategoryIcon";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@/components/ui/chart";
-import { cn } from "@/lib/utils";
+import ChartCard from "./ChartCard";
+import { useHeaderStore } from "@/store/useHeaderStore";
+import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
 
 // 차트 색상
 const COLORS = [
@@ -53,20 +47,18 @@ const COLORS = [
   "#3b82f6",
   "#6366f1",
 ];
-
 const chartConfig = {
   total_amount: {
     label: "지출액",
     color: "#2563eb", // 단일 브랜드 컬러로 통일 (UX 최적화)
   },
+  fixed_expense: {
+    label: "고정비",
+  },
+  variable_expense: {
+    label: "변동비",
+  },
 } satisfies ChartConfig;
-
-const formatDateWithDay = (dateStr: string) => {
-  if (!dateStr) return "";
-  const date = new Date(dateStr);
-  const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
-  return `${date.getMonth() + 1}.${date.getDate()}(${dayNames[date.getDay()]})`;
-};
 
 export default function Dashboard() {
   const [selectedMonth, setSelectedMonth] = useState<string>("");
@@ -81,24 +73,38 @@ export default function Dashboard() {
   const [selectedDateForDialog, setSelectedDateForDialog] = useState<
     string | null
   >(null); // New state for selected date
+  const [isMounted, setIsMounted] = useState(false);
   const {
     loading,
     overview,
     categories,
-    dailyExpenses,
     daily7Expenses,
     recentTransactions,
     monthlyExpenses,
     comparisons,
   } = useDashboard(selectedMonth);
+  const resetHeader = useHeaderStore((state) => state.resetHeader);
+  const setHeader = useHeaderStore((state) => state.setHeader);
+  useEffect(() => {
+    setHeader(
+      "대시보드",
+      <MonthYearPicker
+        selectedMonth={selectedMonth}
+        onMonthChange={setSelectedMonth}
+      />
+    );
+
+    return () => resetHeader();
+  }, [selectedMonth]);
 
   // 현재 연월 가져오기
   useEffect(() => {
     const now = new Date();
     const yearMonth = `${now.getFullYear()}-${String(
-      now.getMonth() + 1,
+      now.getMonth() + 1
     ).padStart(2, "0")}`;
     setSelectedMonth(yearMonth);
+    setIsMounted(true);
   }, []);
 
   const handleDateClick = (date: string) => {
@@ -106,18 +112,49 @@ export default function Dashboard() {
     setShowDailyTransactionsDialog(true);
   };
 
-  const handlePreviousMonth = () => {
-    const currentMonthDate = new Date(`${selectedMonth}-01`);
-    const previousMonthDate = subMonths(currentMonthDate, 1);
-    setSelectedMonth(format(previousMonthDate, "yyyy-MM"));
-  };
+  const innerData = useMemo(() => {
+    return categories.map((cat, index) => {
+      // 카테고리 개수에 따라 명도를 30% ~ 85% 사이로 분할
+      // 개수가 많아져도 서로 다른 밝기를 가짐
+      const lightness = 30 + index * (55 / Math.max(categories.length - 1, 1));
 
-  const handleNextMonth = () => {
-    const currentMonthDate = new Date(`${selectedMonth}-01`);
-    const nextMonthDate = addMonths(currentMonthDate, 1);
-    setSelectedMonth(format(nextMonthDate, "yyyy-MM"));
-  };
+      return {
+        ...cat,
+        name: cat.category_name,
+        value: cat.total_amount,
+        // HSL: 221(메인 블루 색상), 83%(채도), 명도만 가변적 적용
+        fill: `hsl(221, 83%, ${lightness}%)`,
+        percentage: cat.percentage.toFixed(1),
+        type: "category",
+        icon: cat.category_icon,
+      };
+    });
+  }, [categories]);
 
+  const outerData = useMemo(() => {
+    if (!overview) return [];
+    return [
+      {
+        name: "고정비",
+        value: overview.fixed_expense ?? 0,
+        fill: "#1e40af", // 깊은 다크 블루 (Blue-800)
+        percentage: (overview.fixed_expense_ratio ?? 0).toFixed(1),
+        type: "fixed_ratio",
+        icon: "📌",
+      },
+      {
+        name: "변동비",
+        value: Math.max(
+          0,
+          (overview.total_expense ?? 0) - (overview.fixed_expense ?? 0)
+        ),
+        fill: "#dbeafe", // 아주 연한 블루 (Blue-100)
+        percentage: (100 - (overview.fixed_expense_ratio ?? 0)).toFixed(1),
+        type: "fixed_ratio",
+        icon: "💸",
+      },
+    ];
+  }, [overview]);
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("ko-KR", {
       style: "currency",
@@ -136,7 +173,7 @@ export default function Dashboard() {
 
   const handleCategoryMonthlyClick = async (
     categoryId: number,
-    categoryName: string,
+    categoryName: string
   ) => {
     try {
       const transactions = await invoke<TransactionWithCategory[]>(
@@ -144,7 +181,7 @@ export default function Dashboard() {
         {
           categoryId,
           yearMonth: selectedMonth,
-        },
+        }
       );
       console.log("CATEGORY MONTHLY TRANSACTIONS:", transactions);
       setDialogState({
@@ -158,32 +195,8 @@ export default function Dashboard() {
     }
   };
 
-  const dailyChartData = (dailyExpenses || []).map((item) => ({
-    ...item,
-    displayDate: formatDateWithDay(item.date),
-  }));
-
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-3">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">대시보드</h1>
-          <p className="text-gray-500 mt-1">가계부 분석</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={handlePreviousMonth}>
-            <ChevronLeftIcon className="h-4 w-4" />
-          </Button>
-          <MonthYearPicker
-            selectedMonth={selectedMonth}
-            onMonthChange={setSelectedMonth}
-          />
-          <Button variant="outline" size="icon" onClick={handleNextMonth}>
-            <ChevronRightIcon className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
       {/* 🔹 [분리한 컴포넌트 1] 메인 지출 카드 (지출 요약 + 차트/내역) */}
       <MainExpenseCard
         overview={overview}
@@ -196,131 +209,193 @@ export default function Dashboard() {
       {/* 🔹 [분리한 컴포넌트 2] 하단 요약 아이템 행 (수입, 순수입, 고정비) */}
       <SummaryItemRow overview={overview} comparisons={comparisons} lang="ko" />
 
-      {/* 일별 지출 추이 바 차트 */}
-      <Card>
-        <CardHeader>
-          <CardTitle>일별 지출 추이</CardTitle>
-          <CardDescription>{selectedMonth} 일별 지출 내역</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {dailyChartData.length > 0 ? (
-            <ChartContainer
-              config={chartConfig}
-              className="h-[200px] w-full aspect-none"
-            >
-              <BarChart
-                data={dailyChartData}
-                margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
-              >
-                <CartesianGrid
-                  vertical={false}
-                  strokeDasharray="3 3"
-                  stroke="#e2e8f0"
-                />
-                <XAxis
-                  dataKey="displayDate"
-                  tickLine={false}
-                  axisLine={false}
-                  fontSize={10}
-                  tick={{ fill: "#94a3b8", fontWeight: 500 }}
-                />
-                <YAxis hide domain={[0, "auto"]} />
-                {/* Y축 숨김. 필요시 visible로 변경 */}
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent hideIndicator />}
-                />
-                <Bar
-                  dataKey="total_amount"
-                  radius={[4, 4, 0, 0]}
-                  barSize={25}
-                  fill="var(--color-total_amount)"
-                  fillOpacity={0.6}
-                  className="transition-all duration-300 cursor-pointer hover:fill-opacity-100"
-                  activeBar={{
-                    fillOpacity: 1,
-                    stroke: "var(--color-total_amount)",
-                    strokeWidth: 1,
-                  }}
-                  onClick={(data) => handleDateClick(data.date)} // 바 클릭 시 DailyTransactionsDialog 열기
-                />
-              </BarChart>
-            </ChartContainer>
-          ) : (
-            <div className="flex items-center justify-center h-[200px] text-gray-400">
-              데이터가 없습니다.
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* 차트 섹션 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* 카테고리별 지출 (파이 차트) */}
-        <Card>
+      <ChartCard
+        selectedMonth={selectedMonth}
+        handleDateClick={handleDateClick}
+      />
+      <div className="w-full">
+        <Card className="w-full overflow-hidden">
           <CardHeader>
-            <CardTitle>카테고리별 지출</CardTitle>
-            <CardDescription>전체 지출 대비 카테고리별 비율</CardDescription>
+            <CardTitle>지출 분석 상세</CardTitle>
           </CardHeader>
           <CardContent>
-            {categories.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={categories}
-                    dataKey="total_amount"
-                    nameKey="category_name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    label={(entry: any) =>
-                      `${entry.category_name} (${entry.percentage.toFixed(1)}%)`
-                    }
+            {/* ✨ Grid를 사용하여 좌우 배치, lg 미만(모바일)에서는 상하 배치 */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
+              {/* 🔵 왼쪽: 파이 차트 영역 */}
+              <div className="w-full flex flex-col items-center">
+                <div className="text-sm font-semibold mb-4 text-muted-foreground">
+                  지출 상세 구조
+                </div>
+                {isMounted && overview.total_expense > 0 ? (
+                  <ChartContainer
+                    config={chartConfig}
+                    className="h-[300px] w-full max-w-[400px]"
                   >
-                    {categories.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
+                    <PieChart>
+                      <ChartTooltip
+                        cursor={false}
+                        content={
+                          <ChartTooltipContent
+                            formatter={(value, name, item) => (
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="w-2.5 h-2.5 rounded-[2px]"
+                                    style={{
+                                      backgroundColor: item.payload.fill,
+                                    }}
+                                  />
+                                  <span className="text-xs text-muted-foreground">
+                                    {item.payload.icon} {name}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 font-bold text-xs">
+                                  {Number(value).toLocaleString()}원
+                                  <span className="text-[10px] text-blue-600 bg-blue-50 px-1 rounded">
+                                    {item.payload.percentage}%
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          />
+                        }
                       />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: any) => formatCurrency(Number(value))}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-75 text-gray-400">
-                데이터가 없습니다
+                      <Legend
+                        verticalAlign="top"
+                        align="center"
+                        content={() => (
+                          <div className="flex justify-center gap-4 text-[10px] font-medium mb-4">
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full border border-[#8b5cf6]" />{" "}
+                              외부: 고정비
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <div className="w-2 h-2 rounded-full bg-slate-400" />{" "}
+                              내부: 카테고리
+                            </div>
+                          </div>
+                        )}
+                      />
+                      <Pie
+                        data={innerData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={0}
+                        outerRadius={80}
+                        stroke="#fff"
+                        strokeWidth={2}
+                      >
+                        {innerData.map((entry, index) => (
+                          <Cell key={`inner-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Pie
+                        data={outerData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={90}
+                        outerRadius={110}
+                        paddingAngle={2}
+                      >
+                        {outerData.map((entry, index) => (
+                          <Cell key={`outer-${index}`} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ChartContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] text-muted-foreground text-sm">
+                    데이터 없음
+                  </div>
+                )}
               </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* 카테고리별 지출 (막대 차트) */}
-        <Card>
-          <CardHeader>
-            <CardTitle>지출 상위 카테고리</CardTitle>
-            <CardDescription>카테고리별 지출 금액</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {categories.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={categories.slice(0, 5)}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="category_name" />
-                  <YAxis />
-                  <Tooltip
-                    formatter={(value: any) => formatCurrency(Number(value))}
-                  />
-                  <Bar dataKey="total_amount" fill="#8b5cf6" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex items-center justify-center h-75 text-gray-400">
-                데이터가 없습니다
+              {/* 📊 오른쪽: 막대 차트 영역 */}
+              <div className="w-full flex flex-col items-center">
+                <div className="text-sm font-semibold mb-4 text-muted-foreground">
+                  지출 상위 카테고리
+                </div>
+                {isMounted && categories.length > 0 ? (
+                  <ChartContainer
+                    config={chartConfig}
+                    className="h-[300px] w-full max-w-[400px]"
+                  >
+                    <BarChart
+                      data={categories.slice(0, 5)}
+                      margin={{ top: 20, right: 10, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid
+                        vertical={false}
+                        strokeDasharray="3 3"
+                        stroke="#f1f5f9"
+                      />
+                      <XAxis
+                        dataKey="category_name"
+                        axisLine={false}
+                        tickLine={false}
+                        fontSize={11}
+                        tick={{ fill: "#64748b" }}
+                        dy={10}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        fontSize={10}
+                        tick={{ fill: "#94a3b8" }}
+                        tickFormatter={(val) => `${val / 10000}만`}
+                      />
+                      <Tooltip
+                        cursor={{ fill: "#f8fafc" }}
+                        content={
+                          <ChartTooltipContent
+                            formatter={(value, name, item) => (
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-2.5 h-2.5 rounded-[2px]"
+                                  style={{ backgroundColor: item.payload.fill }}
+                                />
+                                <span className="font-bold text-xs">
+                                  {Number(value).toLocaleString()}원
+                                </span>
+                              </div>
+                            )}
+                          />
+                        }
+                      />
+                      <Bar
+                        dataKey="total_amount"
+                        radius={[4, 4, 0, 0]}
+                        barSize={40}
+                      >
+                        {categories.slice(0, 5).map((entry, index) => (
+                          <Cell
+                            key={`bar-${index}`}
+                            fill={`hsl(221, 83%, ${35 + index * 10}%)`}
+                          />
+                        ))}
+                        <LabelList
+                          dataKey="total_amount"
+                          position="top"
+                          fontSize={10}
+                          fill="#94a3b8"
+                          formatter={(val: number) =>
+                            `${(val / 1000).toLocaleString()}k`
+                          }
+                        />
+                      </Bar>
+                    </BarChart>
+                  </ChartContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-[300px] text-muted-foreground text-sm">
+                    데이터 없음
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -337,7 +412,7 @@ export default function Dashboard() {
             <CardDescription>최근 6개월 지출 내역</CardDescription>
           </CardHeader>
           <CardContent>
-            {monthlyExpenses.length > 0 ? (
+            {isMounted && monthlyExpenses.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={monthlyExpenses}>
                   <CartesianGrid strokeDasharray="3 3" />
@@ -374,7 +449,7 @@ export default function Dashboard() {
                   onClick={() =>
                     handleCategoryMonthlyClick(
                       category.category_id,
-                      category.category_name,
+                      category.category_name
                     )
                   }
                 >

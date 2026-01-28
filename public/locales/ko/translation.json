@@ -23,7 +23,7 @@
   "cancel": "취소",
   "save": "저장",
   "transactions": "가계부 내역",
-  "new_transaction": "새 가계부",
+  "new_transaction": "가계부 입력",
   "edit_transaction": "가계부 수정",
   "create_new_transaction": "새 가계부 생성",
   "loading": "로딩 중...",

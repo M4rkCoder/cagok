@@ -21,6 +21,8 @@ import {
   setDefaultOptions,
   addYears,
   subYears,
+  subMonths,
+  addMonths,
 } from "date-fns";
 import { ko } from "date-fns/locale";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
@@ -49,7 +51,6 @@ export const MonthYearPicker: React.FC<MonthYearPickerProps> = ({
     const newYear = parseInt(year, 10);
     const newDate = setYear(pickerDate, newYear);
     setPickerDate(newDate);
-    // onMonthChange(format(newDate, "yyyy-MM")); // Only update on month selection
   };
 
   const handleMonthSelect = (monthIndex: number) => {
@@ -65,6 +66,18 @@ export const MonthYearPicker: React.FC<MonthYearPickerProps> = ({
     // onMonthChange(format(newDate, "yyyy-MM")); // Only update on month selection
   };
 
+  const handlePreviousMonth = () => {
+    const currentMonthDate = new Date(`${selectedMonth}-01`);
+    const previousMonthDate = subMonths(currentMonthDate, 1);
+    onMonthChange(format(previousMonthDate, "yyyy-MM"));
+  };
+
+  const handleNextMonth = () => {
+    const currentMonthDate = new Date(`${selectedMonth}-01`);
+    const nextMonthDate = addMonths(currentMonthDate, 1);
+    onMonthChange(format(nextMonthDate, "yyyy-MM"));
+  };
+
   const handleNextYear = () => {
     const newDate = addYears(pickerDate, 1);
     setPickerDate(newDate);
@@ -72,68 +85,79 @@ export const MonthYearPicker: React.FC<MonthYearPickerProps> = ({
   };
 
   // Generate years for the select dropdown: current year +/- 5 years
-  const years = Array.from({ length: 11 }, (_, i) => getYear(new Date()) - 5 + i); 
+  const years = Array.from(
+    { length: 11 },
+    (_, i) => getYear(new Date()) - 5 + i
+  );
 
   return (
-    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant={"outline"}
-          className="w-[150px] justify-center text-center font-normal"
-        >
-          {selectedMonth ? (
-            format(new Date(`${selectedMonth}-01`), "yyyy년 MM월")
-          ) : (
-            <span>월 선택</span>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-2">
-        <div className="flex flex-col space-y-2">
-          {/* Year Selection */}
-          <div className="flex items-center justify-center gap-1">
-            <Button variant="ghost" size="icon" onClick={handlePreviousYear}>
-              <ChevronLeftIcon className="h-4 w-4" />
-            </Button>
-            <Select
-              value={getYear(pickerDate).toString()}
-              onValueChange={handleYearChange}
-            >
-              <SelectTrigger className="w-[120px]">
-                <SelectValue placeholder="연도" />
-              </SelectTrigger>
-              <SelectContent>
-                {years.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}년
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button variant="ghost" size="icon" onClick={handleNextYear}>
-              <ChevronRightIcon className="h-4 w-4" />
-            </Button>
-          </div>
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="icon" onClick={handlePreviousMonth}>
+        <ChevronLeftIcon className="h-4 w-4" />
+      </Button>
+      <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant={"outline"}
+            className="w-[150px] justify-center text-center font-semibold"
+          >
+            {selectedMonth ? (
+              format(new Date(`${selectedMonth}-01`), "yyyy년 M월")
+            ) : (
+              <span>월 선택</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-2">
+          <div className="flex flex-col space-y-2">
+            {/* Year Selection */}
+            <div className="flex items-center justify-center gap-1">
+              <Button variant="ghost" size="icon" onClick={handlePreviousYear}>
+                <ChevronLeftIcon className="h-4 w-4" />
+              </Button>
+              <Select
+                value={getYear(pickerDate).toString()}
+                onValueChange={handleYearChange}
+              >
+                <SelectTrigger className="w-[120px]">
+                  <SelectValue placeholder="연도" />
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}년
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button variant="ghost" size="icon" onClick={handleNextYear}>
+                <ChevronRightIcon className="h-4 w-4" />
+              </Button>
+            </div>
 
-          {/* Month Selection */}
-          <div className="grid grid-cols-3 gap-1">
-            {Array.from({ length: 12 }, (_, i) => {
-              const monthDate = setMonth(pickerDate, i); // Use pickerDate's year
-              const monthName = format(monthDate, "MMM", { locale: ko });
-              return (
-                <Button
-                  key={i}
-                  variant={getMonth(pickerDate) === i ? "default" : "ghost"}
-                  onClick={() => handleMonthSelect(i)}
-                  className="w-full"
-                >
-                  {monthName}
-                </Button>
-              );
-            })}
+            {/* Month Selection */}
+            <div className="grid grid-cols-3 gap-1">
+              {Array.from({ length: 12 }, (_, i) => {
+                const monthDate = setMonth(pickerDate, i); // Use pickerDate's year
+                const monthName = format(monthDate, "MMM", { locale: ko });
+                return (
+                  <Button
+                    key={i}
+                    variant={getMonth(pickerDate) === i ? "default" : "ghost"}
+                    onClick={() => handleMonthSelect(i)}
+                    className="w-full"
+                  >
+                    {monthName}
+                  </Button>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </PopoverContent>
+      </Popover>
+      <Button variant="outline" size="icon" onClick={handleNextMonth}>
+        <ChevronRightIcon className="h-4 w-4" />
+      </Button>
+    </div>
   );
 };

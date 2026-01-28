@@ -14,6 +14,7 @@ export function SummaryItemRow({
   comparisons,
   lang,
 }: SummaryItemRowProps) {
+  console.log("Summary:", overview);
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* 수입 아이템 */}

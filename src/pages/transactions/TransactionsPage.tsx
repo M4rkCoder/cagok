@@ -25,6 +25,7 @@ import { ExpenseBadge, IncomeBadge } from "./TransactionBadge";
 import TransactionSheet from "./TrasactionSheet";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useTransactionStore } from "@/store/useTransactionStore";
+import { useHeaderStore } from "@/store/useHeaderStore";
 
 const TransactionsPage: React.FC = () => {
   const { t } = useTranslation();
@@ -52,6 +53,13 @@ const TransactionsPage: React.FC = () => {
   const [searchTriggerQuery, setSearchTriggerQuery] = useState<string>("");
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const resetHeader = useHeaderStore((state) => state.resetHeader);
+  const setHeader = useHeaderStore((state) => state.setHeader);
+  useEffect(() => {
+    setHeader(t("transactions"), <TransactionSheet />);
+
+    return () => resetHeader();
+  }, []);
 
   const config = {
     transaction: {
@@ -265,9 +273,6 @@ const TransactionsPage: React.FC = () => {
 
   return (
     <div className="container p-6 max-w-7xl mx-auto py-8">
-      {/* Title section */}
-      <h1 className="text-3xl font-bold mb-6">{t("transactions")}</h1>
-
       {/* Filters and New Transaction Button section */}
       <div className="flex items-center justify-between space-x-4 mb-6">
         <TransactionFilters
@@ -283,8 +288,6 @@ const TransactionsPage: React.FC = () => {
           endDate={endDate}
           setEndDate={setEndDate}
         />
-
-        <TransactionSheet />
       </div>
 
       {/* Table Content */}

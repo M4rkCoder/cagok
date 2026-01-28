@@ -63,7 +63,7 @@ export function MainExpenseCard({
         {/* 1. 지출 요약부 (좌측) */}
         <div className="lg:col-span-4 p-8 flex flex-col justify-between border-r border-slate-50">
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-10">
               <span className="text-sm font-semibold text-slate-400 tracking-widest uppercase">
                 {lang === "ko" ? "이번 달 지출" : "Monthly Expense"}
               </span>
@@ -89,8 +89,8 @@ export function MainExpenseCard({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
             {/* 2-1. 7일 지출 추이 차트 */}
             <div className="space-y-4 flex flex-col">
-              <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                7일 지출 추이
+              <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                일주일 지출
               </h4>
               <div className="flex-1 min-h-[180px] w-full flex items-end">
                 {chartData.length > 0 ? (
@@ -142,13 +142,13 @@ export function MainExpenseCard({
             </div>
             {/* 2-2. 최근 지출 내역 리스트 (초슬림 & 컴팩트 버전) */}
             <div className="flex flex-col h-full">
-              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">
+              <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">
                 최근 지출
               </h4>
 
               <div className="flex-1 min-h-0">
                 {/* max-h를 조절하고 내부 여백을 줄였습니다 */}
-                <div className="divide-y divide-slate-100/50 overflow-y-auto max-h-[200px] custom-scrollbar pr-1">
+                <div className="divide-y divide-slate-100/50 overflow-y-auto max-h-[200px] custom-scrollbar pr-3">
                   {recentTransactions && recentTransactions.length > 0 ? (
                     recentTransactions.map((tx) => {
                       const [_, month, day] = tx.date.split("-");
@@ -159,7 +159,7 @@ export function MainExpenseCard({
                           className={cn(
                             "flex items-center justify-between py-1.5 px-2 transition-all duration-200 ease-out",
                             "hover:bg-white hover:scale-[1.03] hover:shadow-sm hover:z-10 hover:rounded-md",
-                            "group cursor-default",
+                            "group cursor-default"
                           )}
                         >
                           {/* 왼쪽: 날짜 + 이모지 + 설명 (gap을 2로 축소) */}

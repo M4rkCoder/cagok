@@ -21,17 +21,19 @@ const CountUp: React.FC<CountUpProps> = ({
       if (!startTime) startTime = currentTime;
       const progress = Math.min((currentTime - startTime) / duration, 1);
 
-      // EaseOutExpo 효과: 처음엔 빠르고 끝에 느려지는 효과
-      const easeOutExpo = 1 - Math.pow(2, -10 * progress);
+      // 1. progress가 1일 때는 계산하지 않고 바로 end 값을 사용
+      if (progress === 1) {
+        setCount(end);
+        return; // 애니메이션 종료
+      }
 
+      const easeOutExpo = 1 - Math.pow(2, -10 * progress);
       const currentValue = Math.floor(
         easeOutExpo * (end - startValue) + startValue
       );
-      setCount(currentValue);
 
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      }
+      setCount(currentValue);
+      requestAnimationFrame(animate);
     };
 
     requestAnimationFrame(animate);

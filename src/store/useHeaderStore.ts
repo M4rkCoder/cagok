@@ -1,0 +1,16 @@
+import { create } from "zustand";
+import { ReactNode } from "react";
+
+interface HeaderState {
+  title: string;
+  actions: ReactNode | null;
+  setHeader: (title: string, actions?: ReactNode) => void;
+  resetHeader: () => void;
+}
+
+export const useHeaderStore = create<HeaderState>((set) => ({
+  title: "",
+  actions: null,
+  setHeader: (title, actions = null) => set({ title, actions }),
+  resetHeader: () => set({ title: "", actions: null }),
+}));

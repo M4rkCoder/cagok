@@ -3,48 +3,55 @@ import TitleBar from "@/TitleBar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { DynamicBreadcrumb } from "@/components/DinamicBreadcrumb";
-import { ChevronLeft, PanelLeftClose } from "lucide-react";
+import { PanelLeftClose } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useHeaderStore } from "@/store/useHeaderStore";
+import { Separator } from "@/components/ui/separator";
 
 function Home({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
+  const { title, actions } = useHeaderStore();
 
   return (
     <SidebarProvider>
       <div className="h-screen w-screen flex flex-col overflow-hidden bg-sidebar">
-        {/* 1️⃣ TitleBar */}
         <div className="h-12 shrink-0 z-50 bg-background">
           <TitleBar />
         </div>
 
-        {/* 2️⃣ Sidebar + 콘텐츠 영역 */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* 사이드바는 고정 */}
+        <div className="flex flex-1 overflow-y-auto">
           <div className="shrink-0">
             <AppSidebar collapsed={collapsed} />
           </div>
 
-          {/* 콘텐츠 영역 - 스크롤 가능, 배경은 사이드바와 동일 */}
           <div className="flex-1 flex flex-col overflow-y-auto bg-sidebar p-2">
-            {/* 카드형 콘텐츠 */}
-            <div className="flex flex-col rounded-xl bg-background border shadow-sm p-3">
-              {/* 콘텐츠 헤더 */}
-              <div className="shrink-0 border-b pb-1 mb-4 flex items-center">
-                <button
-                  onClick={() => setCollapsed(!collapsed)}
-                  className="p-2 rounded hover:bg-muted"
-                >
-                  <PanelLeftClose
-                    className={cn(
-                      "h-5 w-5 transition-transform",
-                      collapsed && "rotate-180"
-                    )}
-                  />
-                </button>
-                <DynamicBreadcrumb />
+            <div className="flex-none rounded-xl overflow-hiddenbg-background border shadow-sm p-4">
+              {/* ✨ Zustand 기반 유동 헤더 */}
+              <div className="shrink-0 flex items-center justify-between pb-2 border-b">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCollapsed(!collapsed)}
+                    className="p-2 rounded hover:bg-muted"
+                  >
+                    <PanelLeftClose
+                      className={cn(
+                        "h-6 w-6 transition-transform",
+                        collapsed && "rotate-180"
+                      )}
+                    />
+                  </button>
+                  <Separator orientation="vertical" className="h-7 mx-1" />
+                  <div className="flex flex-col">
+                    {/* <DynamicBreadcrumb /> */}
+                    <h2 className="text-2xl font-bold tracking-tight">
+                      {title || ""}
+                    </h2>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">{actions}</div>
               </div>
 
-              {/* 실제 콘텐츠 */}
               <div className="flex-1">{children}</div>
             </div>
           </div>

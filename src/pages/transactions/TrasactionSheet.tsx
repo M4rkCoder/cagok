@@ -36,12 +36,8 @@ const TransactionSheet = () => {
   return (
     <Sheet open={sheetOpen} onOpenChange={handleOpenChange} modal={false}>
       <SheetTrigger asChild>
-        <Button
-          variant="default"
-          size="icon"
-          className="fixed bottom-6 right-8 rounded-full size-12 shadow-lg hover:shadow-xl transition-all duration-300 z-50"
-        >
-          <Plus className="h-6 w-6" />
+        <Button variant="default" className="shadow-lg">
+          <Plus className="h-6 w-6" /> {t("new_transaction")}
         </Button>
       </SheetTrigger>
       <SheetContent
