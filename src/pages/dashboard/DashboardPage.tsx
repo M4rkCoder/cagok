@@ -1,25 +1,9 @@
 import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import { useDashboard } from "@/hooks/useDashboard";
 import { MainExpenseCard } from "./MainExpenseCard";
 import { SummaryItemRow } from "./SummaryItemsRow";
-import { TransactionListDialog } from "@/components/dashboard/TransactionListDialog";
+import { TransactionListDialog } from "@/pages/dashboard/TransactionListDialog";
 import { DialogState } from "@/types";
 import DailyTransactionsDialog from "@/components/DailyTransactionsDialog"; // New import
 import { useHeaderStore } from "@/store/useHeaderStore";
@@ -41,14 +25,8 @@ export default function Dashboard() {
     string | null
   >(null); // New state for selected date
   const [isMounted, setIsMounted] = useState(false);
-  const {
-    loading,
-    overview,
-    daily7Expenses,
-    recentTransactions,
-    monthlyExpenses,
-    comparisons,
-  } = useDashboard(selectedMonth);
+  const { loading, overview, daily7Expenses, recentTransactions, comparisons } =
+    useDashboard(selectedMonth);
   const resetHeader = useHeaderStore((state) => state.resetHeader);
   const setHeader = useHeaderStore((state) => state.setHeader);
   useEffect(() => {
@@ -57,7 +35,7 @@ export default function Dashboard() {
       <MonthYearPicker
         selectedMonth={selectedMonth}
         onMonthChange={setSelectedMonth}
-      />
+      />,
     );
 
     return () => resetHeader();
@@ -67,7 +45,7 @@ export default function Dashboard() {
   useEffect(() => {
     const now = new Date();
     const yearMonth = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
+      now.getMonth() + 1,
     ).padStart(2, "0")}`;
     setSelectedMonth(yearMonth);
     setIsMounted(true);
@@ -76,13 +54,6 @@ export default function Dashboard() {
   const handleDateClick = (date: string) => {
     setSelectedDateForDialog(date);
     setShowDailyTransactionsDialog(true);
-  };
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("ko-KR", {
-      style: "currency",
-      currency: "KRW",
-      maximumFractionDigits: 0,
-    }).format(amount);
   };
 
   if (loading || !overview) {

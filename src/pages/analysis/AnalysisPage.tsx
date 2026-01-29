@@ -25,7 +25,7 @@ import {
 } from "recharts";
 import { useDashboard } from "@/hooks/useDashboard";
 import { SummaryItemsRow } from "../dashboard/SummaryItemsRow";
-import { TransactionListDialog } from "@/components/dashboard/TransactionListDialog";
+import { TransactionListDialog } from "@/pages/dashboard/TransactionListDialog";
 import { DialogState, TransactionWithCategory } from "@/types";
 import DailyExpenseCalendar from "@/components/DailyExpenseCalendar"; // New import
 import DailyTransactionsDialog from "@/components/DailyTransactionsDialog"; // New import
@@ -68,7 +68,7 @@ export default function Dashboard() {
   useEffect(() => {
     const now = new Date();
     const yearMonth = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
+      now.getMonth() + 1,
     ).padStart(2, "0")}`;
     setSelectedMonth(yearMonth);
   }, []);
@@ -101,7 +101,7 @@ export default function Dashboard() {
 
   const handleCategoryMonthlyClick = async (
     categoryId: number,
-    categoryName: string
+    categoryName: string,
   ) => {
     try {
       const transactions = await invoke<TransactionWithCategory[]>(
@@ -109,7 +109,7 @@ export default function Dashboard() {
         {
           categoryId,
           yearMonth: selectedMonth,
-        }
+        },
       );
       console.log("CATEGORY MONTHLY TRANSACTIONS:", transactions);
       setDialogState({
@@ -266,7 +266,7 @@ export default function Dashboard() {
                   onClick={() =>
                     handleCategoryMonthlyClick(
                       category.category_id,
-                      category.category_name
+                      category.category_name,
                     )
                   }
                 >

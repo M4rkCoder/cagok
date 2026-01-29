@@ -5,7 +5,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { PieChart, Legend, Pie, Cell, Label, LabelList } from "recharts";
+import { PieChart, Pie, Cell, Label } from "recharts";
 import { useDashboard } from "@/hooks/useDashboard";
 import { useEffect, useMemo, useState } from "react";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -82,7 +82,7 @@ export default function CategoryExpenseCard({
         name: "변동비",
         value: Math.max(
           0,
-          (overview.total_expense ?? 0) - (overview.fixed_expense ?? 0)
+          (overview.total_expense ?? 0) - (overview.fixed_expense ?? 0),
         ),
         fill: "transparent", // 아주 연한 블루 (Blue-100)
         stroke: "transparent",
@@ -103,7 +103,7 @@ export default function CategoryExpenseCard({
 
   const handleCategoryMonthlyClick = async (
     categoryId: number,
-    categoryName: string
+    categoryName: string,
   ) => {
     try {
       const transactions = await invoke<TransactionWithCategory[]>(
@@ -111,7 +111,7 @@ export default function CategoryExpenseCard({
         {
           categoryId,
           yearMonth: selectedMonth,
-        }
+        },
       );
       console.log("CATEGORY MONTHLY TRANSACTIONS:", transactions);
       setDialogState({
@@ -287,7 +287,7 @@ export default function CategoryExpenseCard({
                   onClick={() =>
                     handleCategoryMonthlyClick(
                       category.category_id,
-                      category.category_name
+                      category.category_name,
                     )
                   }
                 >
