@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { cn } from "@/lib/utils";
+import { useMemo } from "react";
+import { Separator } from "@radix-ui/react-select";
 
 interface MainExpenseCardProps {
   overview: MonthlyOverview;
@@ -57,11 +59,20 @@ export function MainExpenseCard({
     displayDate: formatDateWithDay(item.date),
   }));
 
+  const expenseRate = useMemo(() => {
+    if (!overview) return 0;
+    const rate =
+      overview.total_income > 0
+        ? Math.round((overview.total_expense / overview.total_income) * 100)
+        : null;
+    return rate;
+  }, [overview]);
+
   return (
     <Card className="overflow-hidden border-none shadow-md bg-white">
       <div className="grid grid-cols-1 lg:grid-cols-12">
         {/* 1. 지출 요약부 (좌측) */}
-        <div className="lg:col-span-4 p-8 flex flex-col justify-between border-r border-slate-50">
+        <div className="lg:col-span-4 p-5 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-10">
               <span className="text-sm font-semibold text-slate-400 tracking-widest uppercase">
@@ -80,12 +91,14 @@ export function MainExpenseCard({
             </div>
           </div>
           <div className="mt-5">
-            <ComparisonCardFooter metric={comparison} isPositiveGood={false} />
+            <ComparisonCardFooter
+              metric={comparison}
+              expenseRate={expenseRate}
+            />
           </div>
         </div>
-
         {/* 2. 상세 정보부 (우측) */}
-        <div className="lg:col-span-8 p-6 bg-slate-50/30">
+        <div className="lg:col-span-8 p-5 bg-slate-50/30">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
             {/* 2-1. 7일 지출 추이 차트 */}
             <div className="space-y-4 flex flex-col">

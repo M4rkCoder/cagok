@@ -15,11 +15,12 @@ impl DashboardService {
             .map_err(|e| format!("Failed to get monthly overview: {}", e))
     }
 
-    pub fn get_category_expenses(
+    pub fn get_category_transactions(
         conn: &Connection,
         year_month: &str,
+        tx_type: i32,
     ) -> Result<Vec<CategoryExpense>, String> {
-        DashboardRepository::get_category_expenses(conn, year_month)
+        DashboardRepository::get_category_transactions(conn, year_month, tx_type)
             .map_err(|e| format!("Failed to get category expenses: {}", e))
     }
 
@@ -78,11 +79,12 @@ impl DashboardService {
             .map_err(|e| format!("최근 지출 내역을 가져오는데 실패했습니다: {}", e))
     }
 
-    pub fn get_monthly_expenses(
+    pub fn get_monthly_transactions(
         conn: &Connection,
         months: i32,
+        tx_type: i32,
     ) -> Result<Vec<MonthlyExpense>, String> {
-        DashboardRepository::get_monthly_expenses(conn, months)
+        DashboardRepository::get_monthly_transactions(conn, months, tx_type)
             .map_err(|e| format!("Failed to get monthly expenses: {}", e))
     }
     pub fn compare(

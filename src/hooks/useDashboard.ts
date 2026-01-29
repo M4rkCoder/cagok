@@ -14,6 +14,9 @@ import {
 export function useDashboard(selectedMonth: string) {
   const [overview, setOverview] = useState<MonthlyOverview | null>(null);
   const [categories, setCategories] = useState<CategoryExpense[]>([]);
+  const [categoriesIncome, setCategoriesIncome] = useState<CategoryExpense[]>(
+    []
+  );
   const [dailyExpenses, setDailyExpenses] = useState<DailyExpense[]>([]);
   const [daily7Expenses, setDaily7Expenses] = useState<DailyExpense[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<
@@ -38,7 +41,7 @@ export function useDashboard(selectedMonth: string) {
 
     const prevMonth = new Date(year, month - 2, 1);
     const prevYearMonth = `${prevMonth.getFullYear()}-${String(
-      prevMonth.getMonth() + 1,
+      prevMonth.getMonth() + 1
     ).padStart(2, "0")}`;
 
     return {
@@ -67,6 +70,7 @@ export function useDashboard(selectedMonth: string) {
       const [
         overviewData,
         categoriesData,
+        categoriesIncome,
         dailyData,
         daily7Data,
         recentData,
@@ -76,8 +80,13 @@ export function useDashboard(selectedMonth: string) {
         invoke<MonthlyOverview>("get_monthly_overview", {
           yearMonth: selectedMonth,
         }),
-        invoke<CategoryExpense[]>("get_category_expenses", {
+        invoke<CategoryExpense[]>("get_category_transactions", {
           yearMonth: selectedMonth,
+          txType: 1,
+        }),
+        invoke<CategoryExpense[]>("get_category_transactions", {
+          yearMonth: selectedMonth,
+          txType: 0, //income
         }),
         invoke<DailyExpense[]>("get_daily_expenses", {
           yearMonth: selectedMonth,
@@ -89,7 +98,10 @@ export function useDashboard(selectedMonth: string) {
           yearMonth: selectedMonth,
           limit: 5,
         }),
-        invoke<MonthlyExpense[]>("get_monthly_expenses", { months: 6 }),
+        invoke<MonthlyExpense[]>("get_monthly_transactions", {
+          months: 6,
+          txType: 1,
+        }),
         Promise.all(
           types.map((type) =>
             getPeriodComparison({
@@ -98,8 +110,8 @@ export function useDashboard(selectedMonth: string) {
               currentEnd: current.end,
               previousStart: previous.start,
               previousEnd: previous.end,
-            }).then((data) => ({ type, data })),
-          ),
+            }).then((data) => ({ type, data }))
+          )
         ),
       ]);
 
@@ -108,11 +120,12 @@ export function useDashboard(selectedMonth: string) {
           acc[type] = data;
           return acc;
         },
-        {} as Record<ComparisonType, ComparisonMetric>,
+        {} as Record<ComparisonType, ComparisonMetric>
       );
 
       setOverview(overviewData);
       setCategories(categoriesData);
+      setCategoriesIncome(categoriesIncome);
       setDailyExpenses(dailyData);
       setDaily7Expenses(daily7Data);
       setMonthlyExpenses(monthlyData);
@@ -133,6 +146,7 @@ export function useDashboard(selectedMonth: string) {
     loading,
     overview,
     categories,
+    categoriesIncome,
     dailyExpenses,
     daily7Expenses,
     recentTransactions,

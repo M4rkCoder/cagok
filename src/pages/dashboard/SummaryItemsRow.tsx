@@ -2,6 +2,8 @@ import { DiffBadge } from "./DiffBadge";
 import { CurrencyIcon } from "@/components/ui/CurrencyIcon";
 import CountUp from "@/components/CoutUp";
 import { ComparisonMetric, MonthlyOverview, ComparisonType } from "@/types";
+import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
+import { TooltipTrigger } from "@radix-ui/react-tooltip";
 
 interface SummaryItemRowProps {
   overview: MonthlyOverview;
@@ -14,61 +16,71 @@ export function SummaryItemRow({
   comparisons,
   lang,
 }: SummaryItemRowProps) {
-  console.log("Summary:", overview);
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {/* 수입 아이템 */}
-      <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex flex-col">
-          <span className="text-xs font-bold text-slate-400 mb-1">수입</span>
-          <div className="flex items-baseline gap-1 font-bold text-slate-800">
-            <CurrencyIcon lang={lang} className="w-4 h-4 text-slate-300" />
-            <div className="text-xl">
-              <CountUp end={overview.total_income} />
-            </div>
-          </div>
-        </div>
-        <DiffBadge metric={comparisons.Income} />
-      </div>
-
-      {/* 순수입 아이템 */}
-      <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex flex-col">
-          <span className="text-xs font-bold text-slate-400 mb-1">순수입</span>
-          <div className="flex items-baseline gap-1 font-bold text-slate-800">
-            <CurrencyIcon lang={lang} className="w-4 h-4 text-slate-300" />
-            <div className="text-xl">
-              <CountUp end={overview.net_income} />
-            </div>
-          </div>
-        </div>
-        <DiffBadge metric={comparisons.NetIncome} />
-      </div>
-
-      {/* 고정비 아이템 */}
-      <div className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-        <div className="flex flex-col">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className="text-xs font-bold text-slate-400">고정비</span>
-            <span className="text-[10px] font-medium text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">
-              비율
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      {[
+        {
+          label: "수입",
+          value: overview.total_income,
+          metric: comparisons.Income,
+        },
+        {
+          label: "순수입",
+          value: overview.net_income,
+          metric: comparisons.NetIncome,
+        },
+        {
+          label: "고정비",
+          value: overview.fixed_expense,
+          metric: comparisons.Fixed,
+          ratio: overview.fixed_expense_ratio,
+        },
+      ].map((item, idx) => (
+        <div
+          key={idx}
+          // justify-between으로 왼쪽 컨텐츠와 오른쪽 배지를 양 끝으로 밀어냅니다.
+          className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-100 shadow-sm transition-all hover:shadow-md h-[52px]"
+        >
+          {/* 왼쪽 영역: 제목 + 금액 */}
+          <div className="flex items-center gap-3 overflow-hidden">
+            <span className="text-sm font-bold text-slate-400 whitespace-nowrap min-w-[42px]">
+              {item.label}
             </span>
-          </div>
-          <div className="flex items-baseline gap-1 font-bold text-slate-800">
-            <CurrencyIcon lang={lang} className="w-4 h-4 text-slate-300" />
-            <div className="text-xl flex items-baseline gap-1.5">
-              <CountUp end={overview.fixed_expense} />
-              <span className="text-[11px] font-medium text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded">
-                <CountUp
-                  end={Number(overview.fixed_expense_ratio.toFixed(1))}
-                />
-                %
-              </span>
+
+            <div className="flex items-center gap-1 font-bold">
+              <CurrencyIcon
+                lang={lang}
+                className="w-3.5 h-3.5 text-slate-300"
+              />
+              <div className="text-lg tracking-tight text-slate-800">
+                <CountUp end={item.value} />
+              </div>
+
+              {/* 고정비 비중 (Badge와 겹치지 않게 작게 배치) */}
+              {item.ratio !== undefined && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="ml-0.5 text-[10px] font-medium text-slate-400 bg-slate-50 px-1 py-0.5 rounded border border-slate-100 cursor-help">
+                      {item.ratio.toFixed(0)}%
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    side="top"
+                    className="text-[10px] bg-slate-800"
+                  >
+                    지출액 대비 고정 지출 비중
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
           </div>
+
+          {/* 오른쪽 영역: 배지 (같은 줄 끝 배치) */}
+          <div className="flex-shrink-0 scale-90 origin-right">
+            <DiffBadge metric={item.metric} />
+          </div>
         </div>
-        <DiffBadge metric={comparisons.Fixed} />
-      </div>
+      ))}
     </div>
   );
 }

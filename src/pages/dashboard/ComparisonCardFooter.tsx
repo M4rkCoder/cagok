@@ -1,21 +1,16 @@
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { ComparisonMetric } from "@/types/dashboard";
 import { CardFooter } from "@/components/ui/card";
 
 interface Props {
   metric: ComparisonMetric | null;
-  isPositiveGood?: boolean; // 수입/순수입 = 증가가 좋음
-  unit?: "currency" | "percent";
+  expenseRate: number | null;
 }
 
-export function ComparisonCardFooter({ metric, unit = "currency" }: Props) {
+export function ComparisonCardFooter({ metric, expenseRate }: Props) {
   const isEmpty = !metric || metric.previous === 0;
 
   const formatValue = () => {
     if (!metric) return "";
-    if (unit === "percent") {
-      return `${Math.abs(metric.diff).toFixed(1)}%p`;
-    }
     return new Intl.NumberFormat("ko-KR", {
       style: "currency",
       currency: "KRW",
@@ -25,23 +20,51 @@ export function ComparisonCardFooter({ metric, unit = "currency" }: Props) {
 
   const isIncrease = (metric?.diff ?? 0) > 0;
   const isSame = metric?.diff === 0;
+  const hasExpenseRate =
+    typeof expenseRate === "number" && Number.isFinite(expenseRate);
+
+  const expenseRateColor = () => {
+    if (!Number.isFinite(expenseRate)) return "text-muted-foreground";
+    if (expenseRate >= 100)
+      return "text-red-500 bg-slate-50 px-1 py-0.5 rounded";
+    if (expenseRate >= 80)
+      return "text-orange-500 bg-slate-50 px-1 py-0.5 rounded";
+    return "text-green-500 bg-slate-50 px-1 py-0.5 rounded";
+  };
 
   return (
-    // min-h-[40px]로 자리 유지, text-muted-foreground로 튀지 않는 색상 설정
     <CardFooter className="pt-2 text-sm min-h-[40px] text-muted-foreground">
-      <div
-        className={`flex items-center gap-1 ${isEmpty ? "invisible" : "visible"}`}
-      >
+      <div className="flex flex-col gap-1">
         {!isEmpty && (
-          <span>
+          <span className="whitespace-nowrap overflow-hidden text-ellipsis">
             {isSame ? (
               "지난 달과 동일함"
             ) : (
               <>
-                지난 달보다 {formatValue()} {isIncrease ? "증가" : "감소"}{" "}
-                <span className="text-xs opacity-70"></span>
+                지난 달보다
+                {isIncrease ? (
+                  <>
+                    <span className="text-green-500 bg-slate-50 px-1 py-0.5 rounded">
+                      {formatValue()}
+                    </span>
+                    늘었어요.
+                  </>
+                ) : (
+                  <>
+                    <span className="text-red-500 bg-slate-50 px-1 py-0.5 rounded">
+                      {formatValue()}
+                    </span>
+                    줄었어요.
+                  </>
+                )}
               </>
             )}
+          </span>
+        )}
+        {hasExpenseRate && (
+          <span>
+            수입의 <span className={expenseRateColor()}>{expenseRate}%</span>를
+            썼어요.
           </span>
         )}
       </div>

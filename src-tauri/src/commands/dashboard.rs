@@ -13,12 +13,13 @@ pub fn get_monthly_overview(
 }
 
 #[tauri::command]
-pub fn get_category_expenses(
+pub fn get_category_transactions(
     db: State<'_, DbConnection>,
     year_month: String,
+    tx_type: i32,
 ) -> Result<Vec<CategoryExpense>, String> {
     let conn = db.0.lock().unwrap();
-    DashboardService::get_category_expenses(&conn, &year_month)
+    DashboardService::get_category_transactions(&conn, &year_month, tx_type)
 }
 
 #[tauri::command]
@@ -31,12 +32,13 @@ pub fn get_daily_expenses(
 }
 
 #[tauri::command]
-pub fn get_monthly_expenses(
+pub fn get_monthly_transactions(
     db: State<'_, DbConnection>,
     months: i32,
+    tx_type: i32,
 ) -> Result<Vec<MonthlyExpense>, String> {
     let conn = db.0.lock().unwrap();
-    DashboardService::get_monthly_expenses(&conn, months)
+    DashboardService::get_monthly_transactions(&conn, months, tx_type)
 }
 
 #[tauri::command]

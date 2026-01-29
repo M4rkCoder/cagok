@@ -266,18 +266,19 @@ impl DashboardRepository {
     }
 
     // 2. 카테고리별 지출 조회
-    pub fn get_category_expenses(
+    pub fn get_category_transactions(
         conn: &Connection,
         year_month: &str,
+        tx_type: i32, // 0: income, 1: expense
     ) -> Result<Vec<CategoryExpense>> {
         let start_date = format!("{}-01", year_month);
         let end_date = format!("{}-31", year_month);
 
         // 총 지출 조회
-        let total_expense: f64 = conn.query_row(
+        let total_amount: f64 = conn.query_row(
             "SELECT COALESCE(SUM(amount), 0) FROM transactions 
-             WHERE type = 1 AND date BETWEEN ?1 AND ?2",
-            params![start_date, end_date],
+             WHERE type = ?1 AND date BETWEEN ?2 AND ?3",
+            params![tx_type, start_date, end_date],
             |row| row.get(0),
         )?;
 
@@ -291,19 +292,19 @@ impl DashboardRepository {
                 COUNT(t.id) as count
             FROM categories c
             LEFT JOIN transactions t ON c.id = t.category_id 
-                AND t.type = 1 
-                AND t.date BETWEEN ?1 AND ?2
-            WHERE c.type = 1
+                AND t.type = ?1 
+                AND t.date BETWEEN ?2 AND ?3
+            WHERE c.type = ?1
             GROUP BY c.id, c.name, c.icon
             HAVING total > 0
             ORDER BY total DESC
         ";
 
         let mut stmt = conn.prepare(query)?;
-        let rows = stmt.query_map(params![start_date, end_date], |row| {
-            let total_amount: f64 = row.get(3)?;
-            let percentage = if total_expense > 0.0 {
-                (total_amount / total_expense) * 100.0
+        let rows = stmt.query_map(params![tx_type, start_date, end_date], |row| {
+            let category_total: f64 = row.get(3)?;
+            let percentage = if total_amount > 0.0 {
+                (category_total / total_amount) * 100.0
             } else {
                 0.0
             };
@@ -312,7 +313,7 @@ impl DashboardRepository {
                 category_id: row.get(0)?,
                 category_name: row.get(1)?,
                 category_icon: row.get(2)?,
-                total_amount,
+                total_amount: category_total,
                 percentage,
                 transaction_count: row.get(4)?,
             })
@@ -430,22 +431,22 @@ impl DashboardRepository {
         Ok(result)
     }
 
-    // 4. 월별 지출 추이 조회 (최근 N개월)
-    pub fn get_monthly_expenses(conn: &Connection, months: i32) -> Result<Vec<MonthlyExpense>> {
+    // 4. 월별 수입/지출 추이 조회 (최근 N개월)
+    pub fn get_monthly_transactions(conn: &Connection, months: i32, tx_type: i32) -> Result<Vec<MonthlyExpense>> {
         let query = "
             SELECT 
                 strftime('%Y-%m', date) as month,
                 COALESCE(SUM(amount), 0) as total,
                 COUNT(id) as count
             FROM transactions
-            WHERE type = 1 
-                AND date >= date('now', 'start of month', '-' || ? || ' months')
+            WHERE type = ?1 
+                AND date >= date('now', 'start of month', '-' || ?2 || ' months')
             GROUP BY month
             ORDER BY month ASC
         ";
 
         let mut stmt = conn.prepare(query)?;
-        let rows = stmt.query_map(params![months - 1], |row| {
+        let rows = stmt.query_map(params![tx_type, months - 1], |row| {
             Ok(MonthlyExpense {
                 year_month: row.get(0)?,
                 total_amount: row.get(1)?,
