@@ -6,17 +6,22 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { PieChart, Legend, Pie, Cell, Label, LabelList } from "recharts";
-import { useDashboard } from "@/hooks/useDashboard";
 import { useEffect, useMemo, useState } from "react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { invoke } from "@tauri-apps/api/core";
-import { TransactionWithCategory, DialogState, MonthlyOverview } from "@/types";
+import {
+  TransactionWithCategory,
+  DialogState,
+  MonthlyOverview,
+  CategoryExpense,
+} from "@/types";
 import { Dispatch, SetStateAction } from "react";
 
 interface Props {
   selectedMonth: string;
   overview: MonthlyOverview;
   setDialogState: Dispatch<SetStateAction<DialogState>>;
+  categoriesIncome: CategoryExpense[];
 }
 
 const chartConfig = {
@@ -30,13 +35,12 @@ export default function CategoryIncomeCard({
   selectedMonth,
   overview,
   setDialogState,
+  categoriesIncome: categories,
 }: Props) {
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
-  const { categoriesIncome: categories } = useDashboard(selectedMonth);
 
   const displayCategories = useMemo(() => {
     return [...categories]

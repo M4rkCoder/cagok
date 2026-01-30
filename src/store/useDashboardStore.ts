@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 import { getPeriodComparison } from "@/lib/api/dashbaord";
 import {
@@ -11,51 +11,57 @@ import {
   TransactionWithCategory,
 } from "@/types";
 
-export function useDashboard(selectedMonth: string) {
-  const [overview, setOverview] = useState<MonthlyOverview | null>(null);
-  const [categories, setCategories] = useState<CategoryExpense[]>([]);
-  const [categoriesIncome, setCategoriesIncome] = useState<CategoryExpense[]>(
-    []
-  );
-  const [dailyExpenses, setDailyExpenses] = useState<DailyExpense[]>([]);
-  const [daily7Expenses, setDaily7Expenses] = useState<DailyExpense[]>([]);
-  const [recentTransactions, setRecentTransactions] = useState<
-    TransactionWithCategory[]
-  >([]);
-  const [monthlyExpenses, setMonthlyExpenses] = useState<MonthlyExpense[]>([]);
-  const [comparisons, setComparisons] = useState<
-    Record<ComparisonType, ComparisonMetric | null>
-  >({
+interface DashboardState {
+  overview: MonthlyOverview | null;
+  categories: CategoryExpense[];
+  categoriesIncome: CategoryExpense[];
+  dailyExpenses: DailyExpense[];
+  daily7Expenses: DailyExpense[];
+  recentTransactions: TransactionWithCategory[];
+  monthlyExpenses: MonthlyExpense[];
+  comparisons: Record<ComparisonType, ComparisonMetric | null>;
+  loading: boolean;
+  loadDashboardData: (selectedMonth: string) => Promise<void>;
+}
+
+const getMonthRange = (yearMonth: string) => {
+  const [year, month] = yearMonth.split("-").map(Number);
+  const start = `${yearMonth}-01`;
+  const end = `${yearMonth}-31`;
+
+  const prevMonth = new Date(year, month - 2, 1);
+  const prevYearMonth = `${prevMonth.getFullYear()}-${String(
+    prevMonth.getMonth() + 1
+  ).padStart(2, "0")}`;
+
+  return {
+    current: { start, end },
+    previous: {
+      start: `${prevYearMonth}-01`,
+      end: `${prevYearMonth}-31`,
+    },
+  };
+};
+
+export const useDashboardStore = create<DashboardState>((set) => ({
+  overview: null,
+  categories: [],
+  categoriesIncome: [],
+  dailyExpenses: [],
+  daily7Expenses: [],
+  recentTransactions: [],
+  monthlyExpenses: [],
+  comparisons: {
     Expense: null,
     Income: null,
     NetIncome: null,
     Fixed: null,
     FixedRatio: null,
-  });
-  const [loading, setLoading] = useState(true);
-
-  const getMonthRange = (yearMonth: string) => {
-    const [year, month] = yearMonth.split("-").map(Number);
-    const start = `${yearMonth}-01`;
-    const end = `${yearMonth}-31`;
-
-    const prevMonth = new Date(year, month - 2, 1);
-    const prevYearMonth = `${prevMonth.getFullYear()}-${String(
-      prevMonth.getMonth() + 1
-    ).padStart(2, "0")}`;
-
-    return {
-      current: { start, end },
-      previous: {
-        start: `${prevYearMonth}-01`,
-        end: `${prevYearMonth}-31`,
-      },
-    };
-  };
-
-  const loadDashboardData = async () => {
+  },
+  loading: true,
+  loadDashboardData: async (selectedMonth: string) => {
     try {
-      setLoading(true);
+      set({ loading: true });
 
       const { current, previous } = getMonthRange(selectedMonth);
 
@@ -123,34 +129,20 @@ export function useDashboard(selectedMonth: string) {
         {} as Record<ComparisonType, ComparisonMetric>
       );
 
-      setOverview(overviewData);
-      setCategories(categoriesData);
-      setCategoriesIncome(categoriesIncome);
-      setDailyExpenses(dailyData);
-      setDaily7Expenses(daily7Data);
-      setMonthlyExpenses(monthlyData);
-      setRecentTransactions(recentData);
-      setComparisons(comparisonMap);
+      set({
+        overview: overviewData,
+        categories: categoriesData,
+        categoriesIncome: categoriesIncome,
+        dailyExpenses: dailyData,
+        daily7Expenses: daily7Data,
+        monthlyExpenses: monthlyData,
+        recentTransactions: recentData,
+        comparisons: comparisonMap,
+      });
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
     } finally {
-      setLoading(false);
+      set({ loading: false });
     }
-  };
-
-  useEffect(() => {
-    if (selectedMonth) loadDashboardData();
-  }, [selectedMonth]);
-
-  return {
-    loading,
-    overview,
-    categories,
-    categoriesIncome,
-    dailyExpenses,
-    daily7Expenses,
-    recentTransactions,
-    monthlyExpenses,
-    comparisons,
-  };
-}
+  },
+}));

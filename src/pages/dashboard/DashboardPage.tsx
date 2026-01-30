@@ -1,6 +1,6 @@
 import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { useState, useEffect } from "react";
-import { useDashboard } from "@/hooks/useDashboard";
+import { useDashboardStore } from "@/store/useDashboardStore";
 import { MainExpenseCard } from "./MainExpenseCard";
 import { SummaryItemRow } from "./SummaryItemsRow";
 import { TransactionListDialog } from "@/pages/dashboard/TransactionListDialog";
@@ -12,6 +12,7 @@ import DailyExpenseCard from "./DailyExpenseCard";
 import CategoryIncomeCard from "./CategoryIncomeCard";
 import { DotNavigation } from "../../components/DotNavigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAppStore } from "@/store/useAppStore";
 
 export default function Dashboard() {
   type DashboardSection = "summary" | "category";
@@ -29,18 +30,33 @@ export default function Dashboard() {
   const [selectedDateForDialog, setSelectedDateForDialog] = useState<
     string | null
   >(null); // New state for selected date
-  const [isMounted, setIsMounted] = useState(false);
-  const { loading, overview, daily7Expenses, recentTransactions, comparisons } =
-    useDashboard(selectedMonth);
+  const {
+    loading,
+    overview,
+    categories,
+    categoriesIncome,
+    dailyExpenses,
+    daily7Expenses,
+    recentTransactions,
+    comparisons,
+    loadDashboardData,
+  } = useDashboardStore();
   const resetHeader = useHeaderStore((state) => state.resetHeader);
   const setHeader = useHeaderStore((state) => state.setHeader);
+
+  useEffect(() => {
+    if (selectedMonth) {
+      loadDashboardData(selectedMonth);
+    }
+  }, [selectedMonth, loadDashboardData]);
+
   useEffect(() => {
     setHeader(
       "대시보드",
       <MonthYearPicker
         selectedMonth={selectedMonth}
         onMonthChange={setSelectedMonth}
-      />
+      />,
     );
 
     return () => resetHeader();
@@ -50,10 +66,9 @@ export default function Dashboard() {
   useEffect(() => {
     const now = new Date();
     const yearMonth = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
+      now.getMonth() + 1,
     ).padStart(2, "0")}`;
     setSelectedMonth(yearMonth);
-    setIsMounted(true);
   }, []);
 
   const handleDateClick = (date: string) => {
@@ -114,6 +129,7 @@ export default function Dashboard() {
             <DailyExpenseCard
               selectedMonth={selectedMonth}
               handleDateClick={handleDateClick}
+              dailyExpenses={dailyExpenses}
             />
           </motion.div>
         )}
@@ -131,12 +147,14 @@ export default function Dashboard() {
               selectedMonth={selectedMonth}
               overview={overview}
               setDialogState={setDialogState}
+              categories={categories}
             />
 
             <CategoryIncomeCard
               selectedMonth={selectedMonth}
               overview={overview}
               setDialogState={setDialogState}
+              categoriesIncome={categoriesIncome}
             />
           </motion.div>
         )}

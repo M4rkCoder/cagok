@@ -1,39 +1,38 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import CategoryForm from "./CategoryForm";
 import type { Category } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-// Dialog 대신 Sheet 관련 컴포넌트 임포트
+  Tooltip,
+  TooltipProvider,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { CategoryIcon } from "@/components/CategoryIcon";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import { useHeaderStore } from "@/store/useHeaderStore";
+import { cn } from "@/lib/utils";
 
 const CategorySettings = () => {
-  const resetHeader = useHeaderStore((state) => state.resetHeader);
-  const setHeader = useHeaderStore((state) => state.setHeader);
+  const { setHeader, resetHeader } = useHeaderStore();
   useEffect(() => {
     setHeader("카테고리 설정");
-
     return () => resetHeader();
-  }, []);
+  }, [setHeader, resetHeader]);
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sheetOpen, setSheetOpen] = useState(false); // 이름을 sheetOpen으로 변경
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const fetchCategories = async () => {
@@ -52,13 +51,32 @@ const CategorySettings = () => {
     fetchCategories();
   }, []);
 
+  const { incomeCategories, expenseCategories } = useMemo(() => {
+    return categories.reduce(
+      (acc, category) => {
+        if (category.type === 0) {
+          acc.incomeCategories.push(category);
+        } else {
+          acc.expenseCategories.push(category);
+        }
+        return acc;
+      },
+      { incomeCategories: [] as Category[], expenseCategories: [] as Category[] }
+    );
+  }, [categories]);
+
   const handleSheetClose = () => {
     setSheetOpen(false);
     setEditingCategory(null);
   };
 
-  const handleNew = () => {
-    setEditingCategory(null);
+  const handleNew = (type: 0 | 1) => {
+    setEditingCategory({
+      id: 0, // 임시 ID
+      name: "",
+      icon: "➕",
+      type: type,
+    });
     setSheetOpen(true);
   };
 
@@ -68,9 +86,7 @@ const CategorySettings = () => {
   };
 
   const handleDelete = async (id: number) => {
-    // Tauri/로컬 앱 감성을 위해 브라우저 confirm 대신 나중에 커스텀 AlertDialog를 쓰는 것이 좋지만,
-    // 우선 로직 유지를 위해 남겨둡니다.
-    if (window.confirm("Are you sure you want to delete this category?")) {
+    if (window.confirm("정말로 이 카테고리를 삭제하시겠습니까?")) {
       try {
         await invoke("delete_category", { id });
         fetchCategories();
@@ -91,9 +107,9 @@ const CategorySettings = () => {
     };
 
     try {
-      if (editingCategory) {
+      if (editingCategory && editingCategory.id) {
         await invoke("update_category", {
-          id: editingCategory.id!,
+          id: editingCategory.id,
           category: payload,
         });
       } else {
@@ -106,98 +122,117 @@ const CategorySettings = () => {
     }
   };
 
+  const CategoryList = ({
+    title,
+    categories,
+    type,
+    className,
+  }: {
+    title: string;
+    categories: Category[];
+    type: 0 | 1;
+    className?: string;
+  }) => (
+    <Card className={className}>
+      <CardHeader className="flex flex-row items-center justify-between pb-4">
+        <CardTitle className="text-lg font-bold">{title}</CardTitle>
+        <Button size="sm" variant="ghost" onClick={() => handleNew(type)}>
+          <Plus className="h-4 w-4 mr-2" />
+          추가
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <Separator />
+        {loading ? (
+          <p className="text-center py-8 text-sm text-muted-foreground">
+            로딩 중...
+          </p>
+        ) : categories.length === 0 ? (
+          <p className="text-center py-8 text-sm text-muted-foreground">
+            카테고리가 없습니다.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+            {categories.map((cat) => (
+              <li
+                key={cat.id}
+                className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-white shadow-sm hover:bg-muted/50 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <CategoryIcon icon={cat.icon} type={cat.type} size="md" />
+                  <span className="font-semibold text-sm">{cat.name}</span>
+                </div>
+                <div className="hidden group-hover:flex items-center gap-1">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleEdit(cat)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>수정</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => handleDelete(cat.id!)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>삭제</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </li>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-8 max-w-5xl mx-auto">
+      <div className="flex justify-between items-start mb-8">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+          <h1 className="text-2xl font-bold tracking-tight">카테고리 관리</h1>
           <p className="text-muted-foreground">
-            Manage your transaction categories.
+            수입 및 지출 카테고리를 추가, 수정, 삭제할 수 있습니다.
           </p>
         </div>
-        <Button onClick={handleNew}>
-          <Plus className="mr-2 h-4 w-4" /> New Category
-        </Button>
+      </div>
+      <div className="flex flex-col gap-6">
+        <CategoryList title="수입" categories={incomeCategories} type={0} />
+        <CategoryList title="지출" categories={expenseCategories} type={1} />
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-10 italic text-muted-foreground">
-          Loading categories...
-        </div>
-      ) : (
-        <div className="border rounded-md shadow-sm">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="w-[100px]">Icon</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="text-center py-10 text-muted-foreground"
-                  >
-                    No categories found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                categories.map((cat) => (
-                  <TableRow key={cat.id}>
-                    <TableCell className="text-2xl leading-none">
-                      {cat.icon}
-                    </TableCell>
-                    <TableCell className="font-medium">{cat.name}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={cat.type === 0 ? "secondary" : "destructive"}
-                      >
-                        {cat.type === 0 ? "Income" : "Expense"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(cat)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(cat.id!)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {/* Sheet 구현 부분 */}
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen} modal={false}>
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent
           side="right"
-          data-tauri-drag-region={false}
           className="top-12 h-[calc(100vh-theme(spacing.12))]"
+          onCloseAutoFocus={(e) => e.preventDefault()}
         >
           <SheetHeader className="mb-6">
             <SheetTitle>
-              {editingCategory ? "Edit Category" : "New Category"}
+              {editingCategory && editingCategory.id
+                ? "카테고리 수정"
+                : "새 카테고리"}
             </SheetTitle>
             <SheetDescription>
-              {editingCategory
-                ? "Update the details for this category."
-                : "Add a new category to organize your transactions."}
+              카테고리 정보를 입력하고 저장하세요.
             </SheetDescription>
           </SheetHeader>
           <CategoryForm

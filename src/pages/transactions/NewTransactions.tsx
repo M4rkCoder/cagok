@@ -4,18 +4,60 @@ import {
   type ColumnDef,
   getCoreRowModel,
   useReactTable,
+  CellContext,
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Plus, Save, Trash2, Info } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, Save, Minus } from "lucide-react";
+import { format } from "date-fns";
 import { useHeaderStore } from "@/store/useHeaderStore";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
+import { Category } from "@/types";
 
-// --- Editable Cell 컴포넌트 ---
-const EditableCell = ({ getValue, row, column, table }: any) => {
+// --- Type Definitions ---
+interface TransactionRow {
+  id: string;
+  date: string;
+  type: number;
+  category_id: string;
+  is_fixed: number;
+  description: string;
+  amount: string;
+  remarks: string;
+}
+
+interface EditableCellProps extends CellContext<TransactionRow, any> {
+  meta: {
+    updateData: (rowIndex: number, columnId: string, value: any) => void;
+    setActiveCell: (
+      cell: { rowIndex: number; columnId: string } | null,
+    ) => void;
+    categories: Category[];
+  };
+}
+
+// --- EditableCell Component (Refactored) ---
+const EditableCell: React.FC<EditableCellProps> = ({
+  getValue,
+  row,
+  column,
+  table,
+}: any) => {
   const initialValue = getValue();
+  const { updateData, setActiveCell, categories } = table.options.meta;
+  const rowType = row.original.type;
+
   const [value, setValue] = useState(initialValue);
-  const { updateData, setActiveCell } = table.options.meta;
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   useEffect(() => {
     setValue(initialValue);
@@ -31,84 +73,132 @@ const EditableCell = ({ getValue, row, column, table }: any) => {
     setActiveCell({ rowIndex: row.index, columnId: column.id });
   };
 
-  const columnType = column.columnDef.meta?.type;
+  const columnMeta = column.columnDef.meta as any;
+  const columnType = columnMeta?.type;
+  const columnId = column.id;
 
   if (columnType === "select") {
+    const options =
+      columnId === "category_id"
+        ? categories.filter((cat: any) => cat.type === rowType)
+        : columnMeta?.options || [];
+
     return (
-      <select
+      <Select
+        value={value !== null && value !== undefined ? String(value) : ""}
+        onValueChange={(newValue) => {
+          if (columnId === "type") {
+            updateData(row.index, columnId, Number(newValue));
+            updateData(row.index, "category_id", "");
+          } else {
+            updateData(row.index, columnId, newValue);
+          }
+        }}
+        onOpenChange={(open) => {
+          if (open) onFocus();
+          else setActiveCell(null);
+        }}
+      >
+        <SelectTrigger
+          className={cn(
+            "w-full h-8 text-[13px] bg-transparent border-none focus:ring-0 focus:ring-offset-0",
+            value ? "text-foreground" : "text-muted-foreground",
+          )}
+        >
+          <SelectValue placeholder="선택" />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((opt: any) => {
+            const displayName = opt.label || opt.name;
+            const displayValue = opt.value !== undefined ? opt.value : opt.id;
+            return (
+              <SelectItem key={displayValue} value={String(displayValue)}>
+                {opt.icon ? `${opt.icon} ${displayName}` : displayName}
+              </SelectItem>
+            );
+          })}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  if (columnType === "date") {
+    return (
+      <Input
+        type="date"
         value={value ?? ""}
         onFocus={onFocus}
         onChange={(e) => updateData(row.index, column.id, e.target.value)}
-        className="w-full h-full bg-transparent outline-none cursor-pointer px-1 text-[13px]"
-      >
-        <option value="">선택</option>
-        {column.columnDef.meta?.options?.map((opt: any) => {
-          // label이 있으면 label을, 없으면 name을 사용 (유형/항목 공통 대응)
-          const displayName = opt.label || opt.name;
-          const displayValue = opt.value !== undefined ? opt.value : opt.id;
-
-          return (
-            <option key={displayValue} value={displayValue}>
-              {opt.icon ? `${opt.icon} ${displayName}` : displayName}
-            </option>
-          );
-        })}
-      </select>
+        className="w-full h-8 bg-transparent px-2 text-center outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-none"
+      />
     );
   }
 
   return (
-    <input
-      type={
-        columnType === "number"
-          ? "number"
-          : columnType === "date"
-            ? "date"
-            : "text"
-      }
+    <Input
+      type={columnType === "number" ? "number" : "text"}
       value={value ?? ""}
       onFocus={onFocus}
       onChange={(e) => setValue(e.target.value)}
       onBlur={onBlur}
-      placeholder={columnType === "date" ? "" : "입력..."}
-      className="w-full h-full bg-transparent px-2 outline-none focus:bg-blue-50/50 transition-all"
+      placeholder="입력..."
+      className={cn(
+        "w-full h-8 bg-transparent px-2 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-none transition-all",
+        columnType === "number" &&
+          "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+      )}
     />
   );
 };
 
+// --- Main Component ---
 const NewTransactions: React.FC = () => {
   const { t } = useTranslation();
   const { categories } = useAppStore();
   const { setHeader, resetHeader } = useHeaderStore();
 
-  const createEmptyRow = () => ({
-    id: `temp-${Date.now()}-${Math.random()}`,
-    date: "",
-    type: 1,
-    category_id: "",
-    is_fixed: 0,
-    description: "",
-    amount: "",
-    remarks: "",
-  });
+  const createEmptyRow = useCallback(
+    (): TransactionRow => ({
+      id: `temp-${Date.now()}-${Math.random()}`,
+      date: "",
+      type: 1,
+      category_id: "",
+      is_fixed: 0,
+      description: "",
+      amount: "",
+      remarks: "",
+    }),
+    [],
+  );
 
-  const [data, setData] = useState<any[]>(() =>
-    Array.from({ length: 20 }, createEmptyRow)
+  const [data, setData] = useState<TransactionRow[]>(() =>
+    Array.from({ length: 20 }, createEmptyRow),
   );
   const [activeCell, setActiveCell] = useState<{
     rowIndex: number;
     columnId: string;
   } | null>(null);
-
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ r: number; c: string } | null>(
-    null
+    null,
   );
   const [dragEndRow, setDragEndRow] = useState<number | null>(null);
 
+  const updateData = useCallback(
+    (rowIndex: number, columnId: string, value: any) => {
+      setData((old) =>
+        old.map((row, index) =>
+          index === rowIndex ? { ...row, [columnId]: value } : row,
+        ),
+      );
+    },
+    [],
+  );
+
   const handleMouseUp = useCallback(() => {
     if (isDragging && dragStart && dragEndRow !== null) {
-      const sourceValue = data[dragStart.r][dragStart.c];
+      const sourceValue =
+        data[dragStart.r][dragStart.c as keyof TransactionRow];
       const start = Math.min(dragStart.r, dragEndRow);
       const end = Math.max(dragStart.r, dragEndRow);
 
@@ -118,7 +208,7 @@ const NewTransactions: React.FC = () => {
             return { ...row, [dragStart.c]: sourceValue };
           }
           return row;
-        })
+        }),
       );
     }
     setIsDragging(false);
@@ -131,31 +221,29 @@ const NewTransactions: React.FC = () => {
     return () => window.removeEventListener("mouseup", handleMouseUp);
   }, [handleMouseUp]);
 
+  const handleSaveAll = useCallback(() => {
+    const validData = data.filter((row) => row.date && row.amount);
+    console.log("DB로 전송될 유효 데이터:", validData);
+    alert(`${validData.length}건의 데이터가 준비되었습니다.`);
+  }, [data]);
+
   useEffect(() => {
     setHeader(
-      "대량 입력 모드",
+      t("대량 입력 모드"),
       <Button
         onClick={handleSaveAll}
         size="sm"
         className="bg-green-600 hover:bg-green-700"
       >
-        <Save className="w-4 h-4 mr-2" /> 저장
-      </Button>
+        <Save className="w-4 h-4 mr-2" /> {t("저장")}
+      </Button>,
     );
     return () => resetHeader();
-  }, [data]);
+  }, [setHeader, resetHeader, t, handleSaveAll]);
 
-  const updateData = (rowIndex: number, columnId: string, value: any) => {
-    setData((old) =>
-      old.map((row, index) =>
-        index === rowIndex ? { ...row, [columnId]: value } : row
-      )
-    );
-  };
-
-  // 2. 엑셀 붙여넣기 고도화 (현재 선택된 셀 기준)
   const handlePaste = useCallback(
     (e: React.ClipboardEvent) => {
+      e.preventDefault();
       const pasteData = e.clipboardData.getData("text");
       const rows = pasteData
         .split(/\r?\n/)
@@ -167,7 +255,7 @@ const NewTransactions: React.FC = () => {
       setData((old) => {
         const newData = [...old];
         const startRow = activeCell.rowIndex;
-        const columnOrder = [
+        const columnOrder: (keyof TransactionRow)[] = [
           "date",
           "type",
           "category_id",
@@ -176,11 +264,16 @@ const NewTransactions: React.FC = () => {
           "amount",
           "remarks",
         ];
-        const startColIdx = columnOrder.indexOf(activeCell.columnId);
+        const startColIdx = columnOrder.indexOf(
+          activeCell.columnId as keyof TransactionRow,
+        );
+        if (startColIdx === -1) return old;
 
         rows.forEach((rowCells, rIdx) => {
           const targetRowIdx = startRow + rIdx;
-          if (!newData[targetRowIdx]) newData[targetRowIdx] = createEmptyRow();
+          if (!newData[targetRowIdx]) {
+            newData[targetRowIdx] = createEmptyRow();
+          }
 
           rowCells.forEach((cellValue, cIdx) => {
             const targetColIdx = startColIdx + cIdx;
@@ -188,52 +281,45 @@ const NewTransactions: React.FC = () => {
               const colId = columnOrder[targetColIdx];
               let processedValue: any = cellValue;
 
-              if (colId === "amount")
-                processedValue = Number(cellValue.replace(/[^0-9.-]+/g, ""));
-              if (colId === "type")
+              if (colId === "amount") {
+                processedValue =
+                  Number(cellValue.replace(/[^0-9.-]+/g, "")) || "";
+              } else if (colId === "type") {
                 processedValue = cellValue.includes("수입") ? 0 : 1;
-              if (colId === "is_fixed")
-                processedValue = cellValue.toUpperCase() === "Y" ? 1 : 0;
+              } else if (colId === "is_fixed") {
+                processedValue =
+                  cellValue.toUpperCase() === "Y" || cellValue === "1" ? 1 : 0;
+              }
 
-              newData[targetRowIdx][colId] = processedValue;
+              (newData[targetRowIdx] as any)[colId] = processedValue;
             }
           });
         });
         return newData;
       });
     },
-    [activeCell]
+    [activeCell, createEmptyRow],
   );
 
   const handleAddRow = () => setData((prev) => [...prev, createEmptyRow()]);
-
-  const handleSaveAll = () => {
-    // 3. 유효 데이터 필터링 (날짜와 금액이 있는 것만)
-    const validData = data.filter((row) => row.date && row.amount);
-    console.log("DB로 전송될 유효 데이터:", validData);
-    alert(`${validData.length}건의 데이터가 준비되었습니다.`);
-  };
-
-  // [기능 추가] 행 삭제 핸들러
   const handleDeleteRow = (index: number) => {
     setData((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const columns = useMemo<ColumnDef<any>[]>(() => {
-    const baseColumns: ColumnDef<any>[] = [
+  const columns = useMemo<ColumnDef<TransactionRow>[]>(
+    () => [
       {
         id: "rowNumber",
         header: "#",
         size: 40,
-        cell: ({ row }) => (
-          <span className="text-slate-400 text-[10px]">{row.index + 1}</span>
-        ),
+        cell: ({ row }) => row.index + 1,
       },
       {
         accessorKey: "date",
         header: "날짜",
         size: 130,
         meta: { type: "date" },
+        cell: EditableCell,
       },
       {
         accessorKey: "type",
@@ -246,120 +332,85 @@ const NewTransactions: React.FC = () => {
             { label: "지출", value: 1 },
           ],
         },
+        cell: EditableCell,
       },
       {
         accessorKey: "category_id",
         header: "항목",
         size: 140,
-        meta: { type: "select", options: categories },
+        meta: { type: "select" },
+        cell: EditableCell,
       },
-      { accessorKey: "is_fixed", header: "고정", size: 50 },
-      { accessorKey: "description", header: "설명", size: 180 },
+      {
+        accessorKey: "is_fixed",
+        header: "고정",
+        size: 50,
+        cell: ({ row, column, table }) => (
+          <Checkbox
+            checked={row.original.is_fixed === 1}
+            onCheckedChange={(checked) =>
+              (table.options.meta as any).updateData(
+                row.index,
+                column.id,
+                checked ? 1 : 0,
+              )
+            }
+            aria-label="고정 지출 여부"
+            className="w-4 h-4"
+          />
+        ),
+      },
+      {
+        accessorKey: "description",
+        header: "설명",
+        size: 180,
+        cell: EditableCell,
+      },
       {
         accessorKey: "amount",
         header: "금액",
         size: 100,
         meta: { type: "number" },
+        cell: EditableCell,
       },
-      { accessorKey: "remarks", header: "메모", size: 150 },
+      {
+        accessorKey: "remarks",
+        header: "메모",
+        size: 150,
+        cell: EditableCell,
+      },
       {
         id: "actions",
         header: "",
         size: 50,
+        cell: ({ row }) => (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-slate-400 hover:text-slate-700 transition-colors"
+            onClick={() => handleDeleteRow(row.index)}
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </Button>
+        ),
       },
-    ];
-
-    return baseColumns.map((col) => {
-      const colId = col.id || (col as any).accessorKey;
-
-      return {
-        ...col,
-        id: colId, // 명시적으로 ID 부여
-        cell: (info: any) => {
-          const isRowNumber = colId === "rowNumber"; // 번호 열인지 확인
-          const isFixed = colId === "is_fixed";
-          const isActions = colId === "actions";
-          const canDrag = !isRowNumber && !isActions;
-
-          return (
-            <div className="relative w-full h-full group/cell">
-              {/* 실제 셀 내용 */}
-              <div
-                className={cn(
-                  "w-full h-full",
-                  isDragging && "pointer-events-none"
-                )}
-              >
-                {isRowNumber ? (
-                  <span className="text-slate-400 text-[10px]">
-                    {info.row.index + 1}
-                  </span>
-                ) : isActions ? (
-                  // [해결] 삭제 버튼 렌더링
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                    onClick={() => handleDeleteRow(info.row.index)}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </Button>
-                ) : isFixed ? (
-                  <input
-                    type="checkbox"
-                    checked={info.row.original.is_fixed === 1}
-                    onChange={(e) =>
-                      updateData(
-                        info.row.index,
-                        colId,
-                        e.target.checked ? 1 : 0
-                      )
-                    }
-                    className="w-3 h-3 cursor-pointer accent-blue-600"
-                  />
-                ) : (
-                  <EditableCell {...info} />
-                )}
-              </div>
-
-              {/* 드래그 감지 레이어 (입력 가능 셀에만 적용) */}
-              {isDragging && canDrag && (
-                <div
-                  className="absolute inset-0 z-10 pointer-events-auto"
-                  onMouseEnter={() => setDragEndRow(info.row.index)}
-                />
-              )}
-
-              {/* 드래그 핸들 (입력 가능 셀에만 적용) */}
-              {canDrag && (
-                <div
-                  className="absolute bottom-0 right-0 w-2 h-2 bg-blue-600 cursor-crosshair z-30 opacity-0 group-hover/cell:opacity-100 border border-white"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsDragging(true);
-                    setDragStart({ r: info.row.index, c: colId });
-                    setDragEndRow(info.row.index);
-                  }}
-                />
-              )}
-            </div>
-          );
-        },
-      };
-    });
-  }, [isDragging, categories, data]);
+    ],
+    [],
+  );
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    meta: { updateData, setActiveCell } as any,
+    meta: {
+      updateData,
+      setActiveCell,
+      categories,
+    },
   });
 
   return (
-    <div className="p-4 w-full mx-auto overflow-hidden" onPaste={handlePaste}>
-      {/* 상단 안내 바 컴팩트화 */}
+    <div className="p-4 w-full mx-auto" onPaste={handlePaste}>
       <div className="flex justify-between items-center mb-4 bg-slate-800 text-white px-5 py-3 rounded-lg shadow-sm">
         <p className="text-xs font-medium text-slate-300">
           💡 <span className="text-white">Ctrl+V</span>로 엑셀 데이터를
@@ -377,12 +428,9 @@ const NewTransactions: React.FC = () => {
 
       <div className="border rounded-md bg-white shadow-sm border-slate-200 overflow-x-auto">
         <table className="w-full text-[13px] text-left border-collapse table-fixed min-w-[800px]">
-          <thead>
+          <thead className="bg-slate-50 border-b border-slate-200">
             {table.getHeaderGroups().map((headerGroup) => (
-              <tr
-                key={headerGroup.id}
-                className="bg-slate-50 border-b border-slate-200"
-              >
+              <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
@@ -404,29 +452,61 @@ const NewTransactions: React.FC = () => {
                 className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
               >
                 {row.getVisibleCells().map((cell) => {
-                  const currentId = cell.column.id;
+                  const colId = cell.column.id;
+                  const isCentered = [
+                    "rowNumber",
+                    "date",
+                    "is_fixed",
+                    "actions",
+                  ].includes(colId);
 
-                  // 드래그 선택 여부 판단 로직
                   const isDragSelected =
                     isDragging &&
-                    dragStart?.c === currentId &&
-                    ((row.index >= dragStart.r &&
-                      row.index <= (dragEndRow ?? dragStart.r)) ||
-                      (row.index <= dragStart.r &&
-                        row.index >= (dragEndRow ?? dragStart.r)));
+                    dragStart?.c === colId &&
+                    dragEndRow !== null &&
+                    ((row.index >= dragStart.r && row.index <= dragEndRow) ||
+                      (row.index <= dragStart.r && row.index >= dragEndRow));
 
                   return (
                     <td
                       key={cell.id}
                       className={cn(
-                        "p-0 border-r border-slate-100 h-8 transition-all relative",
+                        "p-0 border-r border-slate-100 h-8 relative group/cell",
                         isDragSelected &&
-                          "bg-blue-100/60 ring-2 ring-inset ring-blue-500/50 z-20"
+                          "bg-blue-100/60 ring-2 ring-inset ring-blue-500/50 z-20",
                       )}
                     >
-                      {React.createElement(
-                        cell.column.columnDef.cell as any,
-                        cell.getContext()
+                      <div
+                        className={cn(
+                          "w-full h-full",
+                          isCentered && "flex items-center justify-center",
+                          isDragging && "pointer-events-none",
+                        )}
+                      >
+                        {React.createElement(
+                          cell.column.columnDef.cell as any,
+                          cell.getContext(),
+                        )}
+                      </div>
+                      {!["rowNumber", "actions"].includes(
+                        colId,
+                      ) && (
+                        <>
+                          {isDragging && (
+                            <div
+                              className="absolute inset-0 z-10"
+                              onMouseEnter={() => setDragEndRow(row.index)}
+                            />
+                          )}
+                          <div
+                            className="absolute bottom-0 right-0 w-2 h-2 bg-slate-400 cursor-crosshair z-20 opacity-0 group-hover/cell:opacity-100 active:bg-blue-500 border border-white"
+                            onMouseDown={() => {
+                              setIsDragging(true);
+                              setDragStart({ r: row.index, c: colId });
+                              setDragEndRow(row.index);
+                            }}
+                          />
+                        </>
                       )}
                     </td>
                   );

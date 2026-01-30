@@ -7,7 +7,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-// import { Calendar } from "lucide-react"; // Replaced by DailyExpenseCalendar
 import {
   LineChart,
   Line,
@@ -23,13 +22,15 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { useDashboard } from "@/hooks/useDashboard";
+import { useDashboardStore } from "@/store/useDashboardStore";
 import { TransactionListDialog } from "@/pages/dashboard/TransactionListDialog";
-import { DialogState, TransactionWithCategory } from "@/types";
-import DailyTransactionsDialog from "@/components/DailyTransactionsDialog"; // New import
+import { DialogState, TransactionWithCategory, CategoryExpense } from "@/types";
+import DailyTransactionsDialog from "@/components/DailyTransactionsDialog";
 import { CategoryIcon } from "@/components/CategoryIcon";
+import { CalendarIcon } from "lucide-react";
+import { MonthYearPicker } from "@/components/MonthYearPicker";
+import { useHeaderStore } from "@/store/useHeaderStore";
 
-// 차트 색상
 const COLORS = [
   "#8b5cf6",
   "#ec4899",
@@ -40,6 +41,7 @@ const COLORS = [
 ];
 
 export default function StatisticsPage() {
+  const { setHeader, resetHeader } = useHeaderStore();
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [dialogState, setDialogState] = useState<DialogState>({
     open: false,
@@ -48,32 +50,44 @@ export default function StatisticsPage() {
     showDate: false,
   });
   const [showDailyTransactionsDialog, setShowDailyTransactionsDialog] =
-    useState(false); // New state for daily dialog
+    useState(false);
   const [selectedDateForDialog, setSelectedDateForDialog] = useState<
     string | null
-  >(null); // New state for selected date
+  >(null);
   const {
     loading,
     overview,
     categories,
-    dailyExpenses, // Keep for now if other parts of dashboard use it. Calendar component will fetch its own.
+    categoriesIncome,
     monthlyExpenses,
-    comparisons,
-  } = useDashboard(selectedMonth);
+    loadDashboardData,
+  } = useDashboardStore();
 
-  // 현재 연월 가져오기
+  useEffect(() => {
+    setHeader(
+      "통계 및 분석",
+      <MonthYearPicker
+        selectedMonth={selectedMonth}
+        onMonthChange={setSelectedMonth}
+      />,
+    );
+    return () => resetHeader();
+  }, [selectedMonth, setHeader, resetHeader]);
+
   useEffect(() => {
     const now = new Date();
     const yearMonth = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
+      now.getMonth() + 1,
     ).padStart(2, "0")}`;
     setSelectedMonth(yearMonth);
   }, []);
 
-  const handleDateClick = (date: string) => {
-    setSelectedDateForDialog(date);
-    setShowDailyTransactionsDialog(true);
-  };
+  useEffect(() => {
+    if (selectedMonth) {
+      // 월별 지출은 12개월 데이터를 가져오도록 수정
+      loadDashboardData(selectedMonth);
+    }
+  }, [selectedMonth, loadDashboardData]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("ko-KR", {
@@ -83,22 +97,10 @@ export default function StatisticsPage() {
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return `${date.getMonth() + 1}/${date.getDate()}`;
-  };
-
-  if (loading || !overview) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-lg">로딩 중...</div>
-      </div>
-    );
-  }
-
   const handleCategoryMonthlyClick = async (
     categoryId: number,
-    categoryName: string
+    categoryName: string,
+    type: 0 | 1,
   ) => {
     try {
       const transactions = await invoke<TransactionWithCategory[]>(
@@ -106,9 +108,9 @@ export default function StatisticsPage() {
         {
           categoryId,
           yearMonth: selectedMonth,
-        }
+          txType: type,
+        },
       );
-      console.log("CATEGORY MONTHLY TRANSACTIONS:", transactions);
       setDialogState({
         open: true,
         title: `${categoryName} 내역`,
@@ -120,121 +122,170 @@ export default function StatisticsPage() {
     }
   };
 
-  return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">대시보드</h1>
-          <p className="text-gray-500 mt-1">가계부 통계 및 분석</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>월별 지출 추이</CardTitle>
-              <CardDescription>최근 6개월 지출 내역</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {monthlyExpenses.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={monthlyExpenses}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="year_month" />
-                    <YAxis />
-                    <Tooltip
-                      formatter={(value: any) => formatCurrency(Number(value))}
-                    />
-                    <Bar dataKey="total_amount" fill="#3b82f6" />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-75 text-gray-400">
-                  데이터가 없습니다
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* 카테고리 상세 리스트 */}
-        <Card>
-          <CardHeader>
-            <CardTitle>카테고리별 상세 내역</CardTitle>
-            <CardDescription>전체 카테고리 지출 정보</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {categories.length > 0 ? (
-              <div className="space-y-4">
-                {categories.map((category, index) => (
-                  <div
-                    key={category.category_id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                    onClick={() =>
-                      handleCategoryMonthlyClick(
-                        category.category_id,
-                        category.category_name
-                      )
-                    }
-                  >
-                    <div className="flex items-center gap-4">
-                      <CategoryIcon
-                        icon={category.category_icon}
-                        type={1}
-                        size="md"
-                      />
-                      <div>
-                        <div className="font-semibold">
-                          {category.category_name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {category.transaction_count}건의 거래
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-bold text-lg">
-                        {formatCurrency(category.total_amount)}
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {category.percentage.toFixed(1)}%
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-400">
-                데이터가 없습니다
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <TransactionListDialog
-          open={dialogState.open}
-          title={dialogState.title}
-          transactions={dialogState.transactions}
-          showDate={dialogState.showDate}
-          onOpenChange={(isOpen) => {
-            if (!isOpen) {
-              setDialogState({
-                open: false,
-                title: "",
-                transactions: [],
-                showDate: false,
-              });
-            } else {
-              setDialogState((prev) => ({ ...prev, open: isOpen }));
-            }
-          }}
-        />
-        {/* New DailyTransactionsDialog */}
-        <DailyTransactionsDialog
-          date={selectedDateForDialog}
-          isOpen={showDailyTransactionsDialog}
-          onClose={() => setShowDailyTransactionsDialog(false)}
-        />
+  if (loading || !overview) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-lg">로딩 중...</div>
       </div>
+    );
+  }
+
+  const totalExpense = categories.reduce(
+    (sum, cat) => sum + cat.total_amount,
+    0,
+  );
+  const pieChartData = categories.map((cat, index) => ({
+    name: cat.category_name,
+    value: cat.total_amount,
+    color: COLORS[index % COLORS.length],
+  }));
+
+  const totalIncome = categoriesIncome.reduce(
+    (sum, cat) => sum + cat.total_amount,
+    0,
+  );
+  const pieChartIncomeData = categoriesIncome.map((cat, index) => ({
+    name: cat.category_name,
+    value: cat.total_amount,
+    color: COLORS[index % COLORS.length],
+  }));
+
+  return (
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
+      {/* 1. 월별 지출/수입 추이 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>월별 지출 추이</CardTitle>
+          <CardDescription>최근 12개월 지출 내역</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {monthlyExpenses.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={monthlyExpenses}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="year_month" />
+                <YAxis
+                  tickFormatter={(value) => formatCurrency(Number(value))}
+                />
+                <Tooltip
+                  formatter={(value: any) => formatCurrency(Number(value))}
+                />
+                <Bar dataKey="total_amount" fill="#3b82f6" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] text-gray-400">
+              데이터가 없습니다
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 2. 카테고리별 지출 비율 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>카테고리별 지출</CardTitle>
+          <CardDescription>이번 달 카테고리별 지출 비율</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col md:flex-row items-center justify-center">
+          {totalExpense > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={pieChartData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  fill="#8884d8"
+                  label
+                >
+                  {pieChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: any, name: any, props: any) => [
+                    formatCurrency(Number(value)),
+                    name,
+                  ]}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] w-full text-gray-400">
+              지출 데이터가 없습니다.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 3. 카테고리별 수입 비율 */}
+      <Card>
+        <CardHeader>
+          <CardTitle>카테고리별 수입</CardTitle>
+          <CardDescription>이번 달 카테고리별 수입 비율</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col md:flex-row items-center justify-center">
+          {totalIncome > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={pieChartIncomeData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={100}
+                  fill="#82ca9d"
+                  label
+                >
+                  {pieChartIncomeData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: any, name: any, props: any) => [
+                    formatCurrency(Number(value)),
+                    name,
+                  ]}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-[300px] w-full text-gray-400">
+              수입 데이터가 없습니다.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <TransactionListDialog
+        open={dialogState.open}
+        title={dialogState.title}
+        transactions={dialogState.transactions}
+        showDate={dialogState.showDate}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setDialogState({
+              open: false,
+              title: "",
+              transactions: [],
+              showDate: false,
+            });
+          } else {
+            setDialogState((prev) => ({ ...prev, open: isOpen }));
+          }
+        }}
+      />
+      <DailyTransactionsDialog
+        date={selectedDateForDialog}
+        isOpen={showDailyTransactionsDialog}
+        onClose={() => setShowDailyTransactionsDialog(false)}
+      />
     </div>
   );
 }

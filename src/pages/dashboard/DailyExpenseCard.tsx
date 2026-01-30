@@ -13,13 +13,14 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
-import { useDashboard } from "@/hooks/useDashboard";
 import { useEffect, useState } from "react";
 import DailyExpenseCalendar from "./DailyExpenseCalendar";
+import { DailyExpense } from "@/types";
 
 interface Props {
   selectedMonth: string;
   handleDateClick: (date: string) => void;
+  dailyExpenses: DailyExpense[];
 }
 
 const chartConfig = {
@@ -54,13 +55,13 @@ const getAllDatesInMonth = (year: number, month: number) => {
 export default function DailyExpenseCard({
   selectedMonth,
   handleDateClick,
+  dailyExpenses,
 }: Props) {
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const { dailyExpenses } = useDashboard(selectedMonth);
   const expenseMap = new Map(
     (dailyExpenses || []).map((item) => [item.date, item.total_amount])
   );

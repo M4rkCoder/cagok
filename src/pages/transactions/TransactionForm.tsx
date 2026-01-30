@@ -166,6 +166,7 @@ const TransactionForm: React.FC = () => {
                         type="button"
                         onClick={() => {
                           field.onChange(item.id);
+                          form.setValue("category_id", undefined);
                           if (item.id === 0) form.setValue("is_fixed", 0);
                         }}
                         className={cn(
