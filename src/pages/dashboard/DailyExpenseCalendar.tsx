@@ -54,9 +54,11 @@ export default function DailyExpenseCalendar({
 
             if (outside) {
               return (
-                <div className="flex items-center justify-center w-8 h-8 text-[10px] text-slate-300">
-                  {date.getDate()}
-                </div>
+                <td className="p-0 border-none">
+                  <div className="flex items-center justify-center w-8 h-8 text-[10px] text-slate-300">
+                    {date.getDate()}
+                  </div>
+                </td>
               );
             }
 
@@ -69,18 +71,20 @@ export default function DailyExpenseCalendar({
                 : `rgba(37, 99, 235, ${0.1 + intensity * 0.8})`;
 
             return (
-              <div
-                onClick={() => onDateClick(key)}
-                className="flex items-center justify-center w-8 h-8 rounded-md cursor-pointer transition-colors hover:ring-2 hover:ring-blue-400 hover:ring-offset-1"
-                style={{
-                  backgroundColor: bgColor,
-                  // 지출이 많을수록 글자색을 진하게 하거나 가독성 조절
-                  color: intensity > 0.6 ? "#1e40af" : "inherit",
-                  fontWeight: intensity > 0.4 ? "600" : "400",
-                }}
-              >
-                <span className="text-[14px]">{date.getDate()}</span>
-              </div>
+              <td className="p-0 border-none">
+                <div
+                  onClick={() => onDateClick(key)}
+                  className="flex items-center justify-center w-8 h-8 rounded-md cursor-pointer transition-colors hover:ring-2 hover:ring-blue-400 hover:ring-offset-1"
+                  style={{
+                    backgroundColor: bgColor,
+                    // 지출이 많을수록 글자색을 진하게 하거나 가독성 조절
+                    color: intensity > 0.6 ? "#1e40af" : "inherit",
+                    fontWeight: intensity > 0.4 ? "600" : "400",
+                  }}
+                >
+                  <span className="text-[14px]">{date.getDate()}</span>
+                </div>
+              </td>
             );
           },
         }}

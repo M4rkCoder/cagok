@@ -69,7 +69,7 @@ export function MainExpenseCard({
   }, [overview]);
 
   return (
-    <Card className="overflow-hidden border-none shadow-md bg-white">
+    <Card className="overflow-hidden border-none shadow-md bg-white mb-2">
       <div className="grid grid-cols-1 lg:grid-cols-12">
         {/* 1. 지출 요약부 (좌측) */}
         <div className="lg:col-span-4 p-5 flex flex-col justify-between">
@@ -136,7 +136,7 @@ export function MainExpenseCard({
                         radius={[4, 4, 0, 0]}
                         barSize={25}
                         fill="#2563eb"
-                        fillOpacity={0.6}
+                        fillOpacity={0.8}
                         className="transition-all duration-300 cursor-pointer hover:fill-opacity-100"
                         activeBar={{
                           fillOpacity: 1,

@@ -2,16 +2,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { FolderOpen, Database, Settings, History } from "lucide-react";
+import { FolderOpen, Database, History } from "lucide-react";
 import { toast } from "sonner";
 import {
   Table,
@@ -23,8 +14,17 @@ import {
 } from "@/components/ui/table";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { CsvImportCard } from "./CsvImportCard";
+import { useHeaderStore } from "@/store/useHeaderStore";
 
 export default function DbSettings() {
+  const resetHeader = useHeaderStore((state) => state.resetHeader);
+  const setHeader = useHeaderStore((state) => state.setHeader);
+  useEffect(() => {
+    setHeader("DB 설정");
+
+    return () => resetHeader();
+  }, []);
+
   const [dbPath, setDbPath] = useState("");
   const [exportPath, setExportPath] = useState("");
   const [backups, setBackups] = useState<string[]>([]);

@@ -100,7 +100,7 @@ export default function CategoryIncomeCard({
   };
 
   return (
-    <Card className="p-5 h-[360px] overflow-hidden">
+    <Card className="p-5 h-[310px] overflow-hidden">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-full">
         {/* [1] 차트 영역 */}
         <div className="md:col-span-5 flex flex-col h-full pr-4">
@@ -229,7 +229,7 @@ export default function CategoryIncomeCard({
           <div className="text-sm font-bold text-slate-400 mb-2 uppercase">
             TOP5 수입 카테고리
           </div>
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-hide">
+          <div className="flex-1 overflow-y-auto pr-1 scrollbar-hide">
             {displayCategories.length > 0 ? (
               displayCategories.map((category) => (
                 <div
@@ -262,7 +262,7 @@ export default function CategoryIncomeCard({
                       {formatCurrency(category.total_amount)}
                     </div>
                     <div className="text-[12px] text-emerald-500 font-medium">
-                      {category.percentage.toFixed(1)}%
+                      {category.percentage.toFixed(0)}%
                     </div>
                   </div>
                 </div>

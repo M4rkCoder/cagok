@@ -14,11 +14,9 @@ import {
 import { DashboardPage, SettingsPage, TransactionsPage } from "./pages";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { Toaster } from "./components/ui/sonner";
-import TransactionForm from "./pages/transactions/TransactionForm";
+import NewTransactions from "./pages/transactions/NewTransactions";
 import { useAppStore } from "./store/useAppStore";
-import DbSettings from "./pages/settings/DbSettings";
-import CategorySettings from "./pages/settings/CategorySettings";
-import RecurringSettings from "./pages/settings/RecurringSettings";
+import StatisticsPage from "./pages/statistics/StatisticsPage";
 
 type AppStage = "splash" | "onboarding" | "home";
 
@@ -94,12 +92,11 @@ function App() {
         <Home>
           <Routes>
             <Route path="/" element={<DashboardPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
-            <Route path="/transactions/write" element={<TransactionForm />} />
+            <Route path="/new" element={<NewTransactions />} />
+            <Route path="/statistics" element={<StatisticsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/settings/category" element={<CategorySettings />} />
-            <Route path="/settings/database" element={<DbSettings />} />
-            <Route path="/settings/recurring" element={<RecurringSettings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Home>

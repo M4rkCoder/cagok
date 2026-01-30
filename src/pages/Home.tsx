@@ -24,7 +24,10 @@ function Home({ children }: { children: React.ReactNode }) {
             <AppSidebar collapsed={collapsed} />
           </div>
 
-          <div className="flex-1 flex flex-col overflow-y-auto bg-sidebar p-2">
+          <div
+            id="main"
+            className="flex-1 flex flex-col overflow-y-auto bg-sidebar p-2 relative"
+          >
             <div className="flex-none rounded-xl overflow-hiddenbg-background border shadow-sm p-4">
               {/* ✨ Zustand 기반 유동 헤더 */}
               <div className="shrink-0 flex items-center justify-between pb-2 border-b">

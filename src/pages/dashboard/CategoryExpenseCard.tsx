@@ -82,7 +82,7 @@ export default function CategoryExpenseCard({
         name: "변동비",
         value: Math.max(
           0,
-          (overview.total_expense ?? 0) - (overview.fixed_expense ?? 0),
+          (overview.total_expense ?? 0) - (overview.fixed_expense ?? 0)
         ),
         fill: "transparent", // 아주 연한 블루 (Blue-100)
         stroke: "transparent",
@@ -103,7 +103,7 @@ export default function CategoryExpenseCard({
 
   const handleCategoryMonthlyClick = async (
     categoryId: number,
-    categoryName: string,
+    categoryName: string
   ) => {
     try {
       const transactions = await invoke<TransactionWithCategory[]>(
@@ -111,7 +111,7 @@ export default function CategoryExpenseCard({
         {
           categoryId,
           yearMonth: selectedMonth,
-        },
+        }
       );
       console.log("CATEGORY MONTHLY TRANSACTIONS:", transactions);
       setDialogState({
@@ -126,7 +126,7 @@ export default function CategoryExpenseCard({
   };
 
   return (
-    <Card className="p-5 h-[360px] overflow-hidden">
+    <Card className="p-5 h-[310px] mb-2">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-full">
         {/* [1] 차트 영역 */}
         <div className="md:col-span-5 flex flex-col h-full pr-4">
@@ -138,10 +138,10 @@ export default function CategoryExpenseCard({
 
           <div className="flex-1 w-full flex flex-col items-center justify-center">
             {isMounted && overview.total_expense > 0 ? (
-              <>
+              <div className="relative w-full flex flex-col items-center min-h-[280px]">
                 <ChartContainer
                   config={chartConfig}
-                  className="h-[250px] w-full max-w-[280px]"
+                  className="h-full w-full max-w-[280px]"
                 >
                   <PieChart>
                     <ChartTooltip
@@ -235,7 +235,7 @@ export default function CategoryExpenseCard({
                       cx="50%"
                       cy="50%"
                       innerRadius={105}
-                      outerRadius={120}
+                      outerRadius={115}
                       stroke="none"
                     >
                       {outerData.map((entry, index) => (
@@ -245,26 +245,26 @@ export default function CategoryExpenseCard({
                   </PieChart>
                 </ChartContainer>
 
-                {/* 커스텀 심플 가이드 (Legend 대체) */}
-                <div className="flex items-center justify-center gap-6 mt-2 pt-2 border-t border-slate-50 w-full">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center w-4 h-4 rounded bg-blue-100">
-                      <div className="w-2 h-2 rounded-full bg-blue-600" />
-                    </div>
-                    <span className="text-sm text-slate-500 font-medium">
-                      카테고리 지출
-                    </span>
-                  </div>
+                {/* 커스텀 레전드 */}
+                <div className="absolute top-0 right-0 flex flex-col gap-1 items-start px-2 py-1.5">
                   <div className="flex items-center gap-2">
                     <div className="flex items-center justify-center w-4 h-4 rounded bg-purple-100">
                       <div className="w-2 h-2 rounded-full bg-purple-500" />
                     </div>
                     <span className="text-sm text-slate-500 font-medium">
-                      고정지출 비율
+                      고정지출
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center w-4 h-4 rounded bg-blue-100">
+                      <div className="w-2 h-2 rounded-full bg-blue-600" />
+                    </div>
+                    <span className="text-sm text-slate-500 font-medium">
+                      카테고리
                     </span>
                   </div>
                 </div>
-              </>
+              </div>
             ) : (
               <div className="text-slate-300 text-xs italic text-center py-10">
                 데이터 없음
@@ -278,7 +278,7 @@ export default function CategoryExpenseCard({
           <div className="text-sm font-bold text-slate-400 mb-2 uppercase">
             TOP5 지출 카테고리
           </div>
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-hide">
+          <div className="flex-1 overflow-y-auto pr-1 scrollbar-hide">
             {displayCategories.length > 0 ? (
               displayCategories.map((category) => (
                 <div
@@ -287,7 +287,7 @@ export default function CategoryExpenseCard({
                   onClick={() =>
                     handleCategoryMonthlyClick(
                       category.category_id,
-                      category.category_name,
+                      category.category_name
                     )
                   }
                 >
@@ -298,11 +298,13 @@ export default function CategoryExpenseCard({
                       size="sm"
                     />
                     <div className="min-w-0">
-                      <div className="font-extrabold text-md truncate text-slate-700">
-                        {category.category_name}
-                      </div>
-                      <div className="text-[11px] text-slate-400">
-                        {category.transaction_count}건
+                      <div className="">
+                        <span className="font-extrabold text-md truncate text-slate-700">
+                          {category.category_name}
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          {category.transaction_count}건
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -311,7 +313,7 @@ export default function CategoryExpenseCard({
                       {formatCurrency(category.total_amount)}
                     </div>
                     <div className="text-[12px] text-blue-500 font-medium">
-                      {category.percentage.toFixed(1)}%
+                      {category.percentage.toFixed(0)}%
                     </div>
                   </div>
                 </div>

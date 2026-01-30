@@ -21,8 +21,16 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { useHeaderStore } from "@/store/useHeaderStore";
 
 const CategorySettings = () => {
+  const resetHeader = useHeaderStore((state) => state.resetHeader);
+  const setHeader = useHeaderStore((state) => state.setHeader);
+  useEffect(() => {
+    setHeader("카테고리 설정");
+
+    return () => resetHeader();
+  }, []);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [sheetOpen, setSheetOpen] = useState(false); // 이름을 sheetOpen으로 변경

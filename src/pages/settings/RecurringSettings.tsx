@@ -19,15 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Power,
-  PowerOff,
-  RefreshCw,
-} from "lucide-react";
+import { Plus, Edit, Trash2, Power, PowerOff, RefreshCw } from "lucide-react";
 import type { Category } from "@/types";
+import { useHeaderStore } from "@/store/useHeaderStore";
 
 interface RecurringTransaction {
   id?: number;
@@ -183,6 +177,13 @@ const RecurringTransactionForm = ({
 };
 
 export default function RecurringSettings() {
+  const resetHeader = useHeaderStore((state) => state.resetHeader);
+  const setHeader = useHeaderStore((state) => state.setHeader);
+  useEffect(() => {
+    setHeader("반복 지출 설정");
+
+    return () => resetHeader();
+  }, []);
   const [recurringList, setRecurringList] = useState<RecurringTransaction[]>(
     []
   );
@@ -271,11 +272,16 @@ export default function RecurringSettings() {
 
   const handleProcessSingleRecurring = async (id: number) => {
     try {
-      const count = await invoke<number>("process_single_recurring_transaction", { recurringId: id });
+      const count = await invoke<number>(
+        "process_single_recurring_transaction",
+        { recurringId: id }
+      );
       if (count > 0) {
         toast.success(`반복 지출이 생성되었습니다.`);
       } else {
-        toast.info("새로 생성된 반복 지출이 없습니다. (이미 생성되었거나, 조건 불충족)");
+        toast.info(
+          "새로 생성된 반복 지출이 없습니다. (이미 생성되었거나, 조건 불충족)"
+        );
       }
       loadData(); // Refresh to update last_created_date
     } catch (error) {
@@ -285,13 +291,16 @@ export default function RecurringSettings() {
   };
 
   const getFrequencyText = (frequency: string) =>
-    ({ daily: "매일", weekly: "매주", monthly: "매월", yearly: "매년" }[
+    ({ daily: "매일", weekly: "매주", monthly: "매월", yearly: "매년" })[
       frequency
-    ] || frequency);
+    ] || frequency;
 
   const getDayText = (recurring: RecurringTransaction) => {
     if (recurring.frequency === "weekly" && recurring.day_of_week != null) {
-      return ["일", "월", "화", "수", "목", "금", "토"][recurring.day_of_week] + "요일";
+      return (
+        ["일", "월", "화", "수", "목", "금", "토"][recurring.day_of_week] +
+        "요일"
+      );
     }
     if (recurring.frequency === "monthly" && recurring.day_of_month) {
       return recurring.day_of_month + "일";
