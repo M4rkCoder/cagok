@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Save, Trash2, CalendarIcon } from "lucide-react";
+import { Plus, Save, Trash2 } from "lucide-react";
 import {
   Popover,
   PopoverContent,
@@ -28,12 +28,12 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { format } from "date-fns";
+import { format, addDays, parseISO, isValid } from "date-fns";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 
-// --- 스마트 날짜 파서 (기존 로직 유지) ---
+// --- 스마트 날짜 파서 ---
 const smartParseDate = (input: string): string => {
   if (!input) return "";
   const today = new Date();
@@ -78,8 +78,14 @@ const EditableCell: React.FC<
   CellContext<TransactionRow, any> & { colIdx: number }
 > = ({ getValue, row, column, table, colIdx }) => {
   const initialValue = getValue();
-  const { updateData, setActiveCell, activeCell, categories } = table.options
-    .meta as any;
+  const {
+    updateData,
+    setActiveCell,
+    activeCell,
+    categories,
+    onDragStart,
+    batchUpdate,
+  } = table.options.meta as any;
   const [value, setValue] = useState(initialValue);
   const [openCombo, setOpenCombo] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -92,11 +98,11 @@ const EditableCell: React.FC<
   const isActive =
     activeCell?.rowIndex === row.index && activeCell?.colIdx === colIdx;
 
+  // 항목열 활성화 시 즉시 팝업 오픈 및 검색창 포커스
   useEffect(() => {
     if (isActive) {
       if (column.id === "category_id") {
         setOpenCombo(true);
-        comboTriggerRef.current?.focus();
       } else {
         inputRef.current?.focus();
       }
@@ -110,30 +116,45 @@ const EditableCell: React.FC<
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const maxRows = table.getRowModel().rows.length;
+
     if (e.key === "Tab") {
       e.preventDefault();
       if (column.id === "category_id") {
-        moveNext(row.index, row.original.type === 1 ? 3 : 4);
+        if (e.shiftKey)
+          moveNext(row.index, 1); // Shift+Tab: 날짜로
+        else moveNext(row.index, row.original.type === 1 ? 3 : 4); // Tab: 고정 또는 설명으로
       } else if (e.shiftKey) {
-        moveNext(
-          colIdx === 1 ? Math.max(0, row.index - 1) : row.index,
-          colIdx === 1 ? 6 : colIdx - 1
-        );
+        const prevCol = colIdx === 1 ? 6 : colIdx - 1;
+        const prevRow = colIdx === 1 ? Math.max(0, row.index - 1) : row.index;
+        moveNext(prevRow, prevCol);
       } else {
-        moveNext(
-          colIdx === 6 ? Math.min(maxRows - 1, row.index + 1) : row.index,
-          colIdx === 6 ? 1 : colIdx + 1
-        );
+        const nextCol = colIdx === 6 ? 1 : colIdx + 1;
+        const nextRow =
+          colIdx === 6 ? Math.min(maxRows - 1, row.index + 1) : row.index;
+        moveNext(nextRow, nextCol);
       }
     } else if (e.key === "Enter") {
       e.preventDefault();
-      moveNext(Math.min(maxRows - 1, row.index + 1), 1);
-    } else if (e.key === "ArrowUp")
-      moveNext(Math.max(0, row.index - 1), colIdx);
-    else if (e.key === "ArrowDown")
       moveNext(Math.min(maxRows - 1, row.index + 1), colIdx);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      moveNext(Math.max(0, row.index - 1), colIdx);
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      moveNext(Math.min(maxRows - 1, row.index + 1), colIdx);
+    }
   };
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    const pasteData = e.clipboardData.getData("text");
+    const rows = pasteData.split(/\r\n|\n|\r/).map((r) => r.split("\t"));
+    if (rows.length > 0) {
+      e.preventDefault();
+      batchUpdate(row.index, colIdx, rows);
+    }
+  };
+
+  // --- 항목 열 (Popover + Command) ---
   if (column.id === "category_id") {
     const selected = categories.find((c: any) => c.id === value);
     return (
@@ -141,29 +162,35 @@ const EditableCell: React.FC<
         <PopoverTrigger asChild>
           <button
             ref={comboTriggerRef}
-            onClick={() => setOpenCombo(true)}
             onKeyDown={handleKeyDown}
+            onClick={() => setOpenCombo(true)}
             className={cn(
-              "w-full h-full flex items-center px-2 outline-none",
+              "w-full h-full flex items-center px-2 outline-none transition-colors",
               isActive && "bg-blue-50/50"
             )}
           >
             {selected ? (
-              <div className="flex items-center gap-2 truncate text-[13px]">
+              <div className="flex items-center gap-2 truncate text-[12px]">
                 <Badge
                   variant={selected.type === 0 ? "secondary" : "destructive"}
-                  className="h-4 px-1 text-[10px]"
+                  className="h-4 px-1 text-[9px]"
                 >
                   {selected.type === 0 ? "수입" : "지출"}
                 </Badge>
                 <span className="truncate">{selected.name}</span>
               </div>
             ) : (
-              <span className="text-slate-400 text-[13px]">항목 선택...</span>
+              <span className="text-slate-400 text-[12px]">선택...</span>
             )}
           </button>
         </PopoverTrigger>
-        <PopoverContent className="p-0 w-[220px]" align="start">
+        <PopoverContent
+          className="p-0 w-[220px]"
+          align="start"
+          onOpenAutoFocus={(e) => {
+            /* CommandInput autoFocus 작동을 위해 비워둠 */
+          }}
+        >
           <Command>
             <CommandInput
               placeholder="검색..."
@@ -171,8 +198,10 @@ const EditableCell: React.FC<
               onKeyDown={(e) => {
                 if (e.key === "Tab") {
                   e.preventDefault();
+                  e.stopPropagation();
                   setOpenCombo(false);
-                  moveNext(row.index, row.original.type === 1 ? 3 : 4);
+                  if (e.shiftKey) moveNext(row.index, 1);
+                  else moveNext(row.index, row.original.type === 1 ? 3 : 4);
                 }
               }}
             />
@@ -209,24 +238,31 @@ const EditableCell: React.FC<
     );
   }
 
+  // --- 일반 입력 열 ---
   return (
-    <Input
-      ref={inputRef}
-      value={value ?? ""}
-      onChange={(e) => setValue(e.target.value)}
-      onBlur={() => {
-        let f = value;
-        if (column.id === "date" && value) f = smartParseDate(value);
-        if (initialValue !== f) updateData(row.index, column.id, f);
-      }}
-      onFocus={() => setActiveCell({ rowIndex: row.index, colIdx })}
-      onKeyDown={handleKeyDown}
-      className={cn(
-        "w-full h-8 bg-transparent border-none focus-visible:ring-0 px-2 text-[13px]",
-        (column.columnDef.meta as any)?.type === "number" &&
-          "text-right font-mono"
-      )}
-    />
+    <div className="relative w-full h-full group">
+      <Input
+        ref={inputRef}
+        value={value ?? ""}
+        onChange={(e) => setValue(e.target.value)}
+        onPaste={handlePaste}
+        onKeyDown={handleKeyDown}
+        onBlur={() => {
+          let f = value;
+          if (column.id === "date" && value) f = smartParseDate(value);
+          if (initialValue !== f) updateData(row.index, column.id, f);
+        }}
+        className={cn(
+          "w-full h-full bg-transparent border-none focus-visible:ring-0 px-2 text-[13px]",
+          (column.columnDef.meta as any)?.type === "number" &&
+            "text-right font-mono"
+        )}
+      />
+      <div
+        onMouseDown={(e) => onDragStart(e, row.index, colIdx)}
+        className="absolute bottom-0 right-0 w-2 h-2 bg-blue-600 cursor-crosshair hidden group-hover:block z-20"
+      />
+    </div>
   );
 };
 
@@ -243,7 +279,7 @@ const NewTransactions: React.FC = () => {
     remarks: "",
   });
   const [data, setData] = useState<TransactionRow[]>(() =>
-    Array.from({ length: 5 }, createEmptyRow)
+    Array.from({ length: 15 }, createEmptyRow)
   );
   const [activeCell, setActiveCell] = useState<{
     rowIndex: number;
@@ -256,14 +292,86 @@ const NewTransactions: React.FC = () => {
     );
   }, []);
 
-  const addRow = () => {
-    setData((prev) => [...prev, createEmptyRow()]);
-    setTimeout(() => setActiveCell({ rowIndex: data.length, colIdx: 1 }), 50);
-  };
+  const batchUpdate = useCallback(
+    (startRow: number, startCol: number, rows: string[][]) => {
+      const colKeys = [
+        "date",
+        "category_id",
+        "is_fixed",
+        "description",
+        "amount",
+        "remarks",
+      ];
+      setData((prev) => {
+        const newData = [...prev];
+        rows.forEach((rowData, i) => {
+          const tRow = startRow + i;
+          if (tRow < newData.length) {
+            rowData.forEach((val, j) => {
+              const tColIdx = startCol - 1 + j;
+              if (tColIdx < colKeys.length)
+                newData[tRow] = { ...newData[tRow], [colKeys[tColIdx]]: val };
+            });
+          }
+        });
+        return newData;
+      });
+    },
+    []
+  );
 
-  const removeRow = (index: number) => {
-    setData((prev) => prev.filter((_, i) => i !== index));
-    setActiveCell(null);
+  const onDragStart = (
+    e: React.MouseEvent,
+    startRow: number,
+    startCol: number
+  ) => {
+    e.preventDefault();
+    const colKeys = [
+      "date",
+      "category_id",
+      "is_fixed",
+      "description",
+      "amount",
+      "remarks",
+    ];
+    const key = colKeys[startCol - 1];
+    const baseValue = data[startRow][key as keyof TransactionRow];
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const target = moveEvent.target as HTMLElement;
+      const cell = target.closest("td");
+      if (cell) {
+        const tr = cell.parentElement;
+        if (tr) {
+          const endRow = Array.from(tr.parentElement!.children).indexOf(tr);
+          if (endRow > startRow) {
+            setData((prev) => {
+              const next = [...prev];
+              for (let i = startRow + 1; i <= endRow; i++) {
+                let newVal = baseValue;
+                if (
+                  key === "date" &&
+                  typeof baseValue === "string" &&
+                  baseValue
+                ) {
+                  const d = parseISO(baseValue);
+                  if (isValid(d))
+                    newVal = format(addDays(d, i - startRow), "yyyy-MM-dd");
+                }
+                next[i] = { ...next[i], [key]: newVal };
+              }
+              return next;
+            });
+          }
+        }
+      }
+    };
+    const onMouseUp = () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
   };
 
   const columns = useMemo<ColumnDef<TransactionRow>[]>(
@@ -287,7 +395,7 @@ const NewTransactions: React.FC = () => {
       {
         accessorKey: "category_id",
         header: "항목",
-        size: 180,
+        size: 160,
         cell: (i) => <EditableCell {...i} colIdx={2} />,
       },
       {
@@ -295,9 +403,10 @@ const NewTransactions: React.FC = () => {
         header: "고정",
         size: 50,
         cell: ({ row, table }) => {
+          const { setActiveCell, activeCell, updateData } = table.options
+            .meta as any;
           const isActive =
-            (table.options.meta as any).activeCell?.rowIndex === row.index &&
-            (table.options.meta as any).activeCell?.colIdx === 3;
+            activeCell?.rowIndex === row.index && activeCell?.colIdx === 3;
           const cbRef = useRef<HTMLButtonElement>(null);
           useEffect(() => {
             if (isActive) cbRef.current?.focus();
@@ -305,7 +414,7 @@ const NewTransactions: React.FC = () => {
           return (
             <div
               className={cn(
-                "w-full h-full flex items-center justify-center",
+                "w-full h-full flex items-center justify-center transition-colors",
                 isActive && "bg-blue-100/50"
               )}
             >
@@ -320,9 +429,24 @@ const NewTransactions: React.FC = () => {
                   if (e.key === " ") e.stopPropagation();
                   if (e.key === "Tab") {
                     e.preventDefault();
-                    (table.options.meta as any).setActiveCell({
+                    e.stopPropagation();
+                    setActiveCell({
                       rowIndex: row.index,
-                      colIdx: 4,
+                      colIdx: e.shiftKey ? 2 : 4,
+                    });
+                  }
+                  if (e.key === "ArrowUp") {
+                    e.preventDefault();
+                    setActiveCell({
+                      rowIndex: Math.max(0, row.index - 1),
+                      colIdx: 3,
+                    });
+                  }
+                  if (e.key === "ArrowDown") {
+                    e.preventDefault();
+                    setActiveCell({
+                      rowIndex: Math.min(data.length - 1, row.index + 1),
+                      colIdx: 3,
                     });
                   }
                 }}
@@ -354,13 +478,15 @@ const NewTransactions: React.FC = () => {
       {
         id: "actions",
         header: "",
-        size: 50,
+        size: 40,
         cell: ({ row }) => (
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => removeRow(row.index)}
-            className="h-8 w-8 text-slate-400 hover:text-red-500 transition-colors"
+            onClick={() =>
+              setData((prev) => prev.filter((_, i) => i !== row.index))
+            }
+            className="h-8 w-8 text-slate-400 hover:text-red-500"
           >
             <Trash2 size={14} />
           </Button>
@@ -374,36 +500,42 @@ const NewTransactions: React.FC = () => {
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    meta: { updateData, setActiveCell, activeCell, categories },
+    meta: {
+      updateData,
+      setActiveCell,
+      activeCell,
+      categories,
+      batchUpdate,
+      onDragStart,
+    },
   });
 
   return (
     <div className="p-6 bg-slate-50 min-h-screen">
-      <div className="max-w-[1200px] mx-auto space-y-4">
+      <div className="max-w-[1250px] mx-auto space-y-4">
         <div className="bg-slate-900 p-4 rounded-xl flex justify-between items-center text-white shadow-xl">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-            <h2 className="font-bold tracking-tight">대량 입력 모드</h2>
+            <h2 className="font-bold">엑셀형 대량 입력기</h2>
           </div>
           <Button
             size="sm"
-            className="bg-blue-600 hover:bg-blue-700 shadow-lg"
+            className="bg-blue-600 hover:bg-blue-700"
             onClick={() => console.log(data)}
           >
             <Save size={16} className="mr-2" />
-            저장하기
+            저장
           </Button>
         </div>
-
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <table className="w-full text-[13px] border-collapse table-fixed">
-            <thead className="bg-slate-50 border-b border-slate-200">
+          <table className="w-full text-[13px] border-collapse table-fixed select-none">
+            <thead className="bg-slate-50 border-b">
               {table.getHeaderGroups().map((hg) => (
                 <tr key={hg.id}>
                   {hg.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="p-3 border-r border-slate-200 text-slate-500 font-bold text-xs uppercase"
+                      className="p-3 border-r border-slate-200 text-slate-500 font-bold text-xs uppercase text-left"
                       style={{ width: header.column.columnDef.size }}
                     >
                       {header.column.columnDef.header as string}
@@ -439,11 +571,16 @@ const NewTransactions: React.FC = () => {
             </tbody>
           </table>
           <button
-            onClick={addRow}
-            className="w-full py-3 flex items-center justify-center gap-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50/50 transition-all border-t border-dashed"
+            onClick={() => {
+              setData((p) => [...p, createEmptyRow()]);
+              setTimeout(
+                () => setActiveCell({ rowIndex: data.length, colIdx: 1 }),
+                50
+              );
+            }}
+            className="w-full py-3 flex items-center justify-center gap-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all border-t border-dashed"
           >
-            <Plus size={16} />
-            <span className="font-medium text-sm">새로운 행 추가</span>
+            <Plus size={16} />행 추가
           </button>
         </div>
       </div>
