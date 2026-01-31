@@ -1,5 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { useTranslation } from "react-i18next";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -8,22 +13,56 @@ import {
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Save, Minus } from "lucide-react";
+import { Plus, Save, Trash2, CalendarIcon } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { format } from "date-fns";
-import { useHeaderStore } from "@/store/useHeaderStore";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
-import { Category } from "@/types";
+import { Badge } from "@/components/ui/badge";
 
-// --- Type Definitions ---
+// --- 스마트 날짜 파서 (기존 로직 유지) ---
+const smartParseDate = (input: string): string => {
+  if (!input) return "";
+  const today = new Date();
+  const year = today.getFullYear();
+  const clean = input.replace(/[^0-9]/g, "");
+  let res: Date;
+  if (clean.length === 8)
+    res = new Date(
+      parseInt(clean.slice(0, 4)),
+      parseInt(clean.slice(4, 6)) - 1,
+      parseInt(clean.slice(6, 8))
+    );
+  else if (clean.length === 4)
+    res = new Date(
+      year,
+      parseInt(clean.slice(0, 2)) - 1,
+      parseInt(clean.slice(2, 4))
+    );
+  else if (clean.length === 2 || clean.length === 1)
+    res = new Date(year, today.getMonth(), parseInt(clean));
+  else {
+    const p = input.split(/[-./]/);
+    if (p.length === 3)
+      res = new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]));
+    else return input;
+  }
+  return isNaN(res.getTime()) ? input : format(res, "yyyy-MM-dd");
+};
+
 interface TransactionRow {
   id: string;
   date: string;
@@ -35,275 +74,196 @@ interface TransactionRow {
   remarks: string;
 }
 
-interface EditableCellProps extends CellContext<TransactionRow, any> {
-  meta: {
-    updateData: (rowIndex: number, columnId: string, value: any) => void;
-    setActiveCell: (
-      cell: { rowIndex: number; columnId: string } | null,
-    ) => void;
-    categories: Category[];
-  };
-}
-
-// --- EditableCell Component (Refactored) ---
-const EditableCell: React.FC<EditableCellProps> = ({
-  getValue,
-  row,
-  column,
-  table,
-}: any) => {
+const EditableCell: React.FC<
+  CellContext<TransactionRow, any> & { colIdx: number }
+> = ({ getValue, row, column, table, colIdx }) => {
   const initialValue = getValue();
-  const { updateData, setActiveCell, categories } = table.options.meta;
-  const rowType = row.original.type;
-
+  const { updateData, setActiveCell, activeCell, categories } = table.options
+    .meta as any;
   const [value, setValue] = useState(initialValue);
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [openCombo, setOpenCombo] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const comboTriggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setValue(initialValue);
   }, [initialValue]);
 
-  const onBlur = () => {
-    if (initialValue !== value) {
-      updateData(row.index, column.id, value);
+  const isActive =
+    activeCell?.rowIndex === row.index && activeCell?.colIdx === colIdx;
+
+  useEffect(() => {
+    if (isActive) {
+      if (column.id === "category_id") {
+        setOpenCombo(true);
+        comboTriggerRef.current?.focus();
+      } else {
+        inputRef.current?.focus();
+      }
+    } else {
+      setOpenCombo(false);
     }
+  }, [isActive, column.id]);
+
+  const moveNext = (r: number, c: number) =>
+    setActiveCell({ rowIndex: r, colIdx: c });
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const maxRows = table.getRowModel().rows.length;
+    if (e.key === "Tab") {
+      e.preventDefault();
+      if (column.id === "category_id") {
+        moveNext(row.index, row.original.type === 1 ? 3 : 4);
+      } else if (e.shiftKey) {
+        moveNext(
+          colIdx === 1 ? Math.max(0, row.index - 1) : row.index,
+          colIdx === 1 ? 6 : colIdx - 1
+        );
+      } else {
+        moveNext(
+          colIdx === 6 ? Math.min(maxRows - 1, row.index + 1) : row.index,
+          colIdx === 6 ? 1 : colIdx + 1
+        );
+      }
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      moveNext(Math.min(maxRows - 1, row.index + 1), 1);
+    } else if (e.key === "ArrowUp")
+      moveNext(Math.max(0, row.index - 1), colIdx);
+    else if (e.key === "ArrowDown")
+      moveNext(Math.min(maxRows - 1, row.index + 1), colIdx);
   };
 
-  const onFocus = () => {
-    setActiveCell({ rowIndex: row.index, columnId: column.id });
-  };
-
-  const columnMeta = column.columnDef.meta as any;
-  const columnType = columnMeta?.type;
-  const columnId = column.id;
-
-  if (columnType === "select") {
-    const options =
-      columnId === "category_id"
-        ? categories.filter((cat: any) => cat.type === rowType)
-        : columnMeta?.options || [];
-
+  if (column.id === "category_id") {
+    const selected = categories.find((c: any) => c.id === value);
     return (
-      <Select
-        value={value !== null && value !== undefined ? String(value) : ""}
-        onValueChange={(newValue) => {
-          if (columnId === "type") {
-            updateData(row.index, columnId, Number(newValue));
-            updateData(row.index, "category_id", "");
-          } else {
-            updateData(row.index, columnId, newValue);
-          }
-        }}
-        onOpenChange={(open) => {
-          if (open) onFocus();
-          else setActiveCell(null);
-        }}
-      >
-        <SelectTrigger
-          className={cn(
-            "w-full h-8 text-[13px] bg-transparent border-none focus:ring-0 focus:ring-offset-0",
-            value ? "text-foreground" : "text-muted-foreground",
-          )}
-        >
-          <SelectValue placeholder="선택" />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((opt: any) => {
-            const displayName = opt.label || opt.name;
-            const displayValue = opt.value !== undefined ? opt.value : opt.id;
-            return (
-              <SelectItem key={displayValue} value={String(displayValue)}>
-                {opt.icon ? `${opt.icon} ${displayName}` : displayName}
-              </SelectItem>
-            );
-          })}
-        </SelectContent>
-      </Select>
-    );
-  }
-
-  if (columnType === "date") {
-    return (
-      <Input
-        type="date"
-        value={value ?? ""}
-        onFocus={onFocus}
-        onChange={(e) => updateData(row.index, column.id, e.target.value)}
-        className="w-full h-8 bg-transparent px-2 text-center outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-none"
-      />
+      <Popover open={openCombo} onOpenChange={setOpenCombo}>
+        <PopoverTrigger asChild>
+          <button
+            ref={comboTriggerRef}
+            onClick={() => setOpenCombo(true)}
+            onKeyDown={handleKeyDown}
+            className={cn(
+              "w-full h-full flex items-center px-2 outline-none",
+              isActive && "bg-blue-50/50"
+            )}
+          >
+            {selected ? (
+              <div className="flex items-center gap-2 truncate text-[13px]">
+                <Badge
+                  variant={selected.type === 0 ? "secondary" : "destructive"}
+                  className="h-4 px-1 text-[10px]"
+                >
+                  {selected.type === 0 ? "수입" : "지출"}
+                </Badge>
+                <span className="truncate">{selected.name}</span>
+              </div>
+            ) : (
+              <span className="text-slate-400 text-[13px]">항목 선택...</span>
+            )}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="p-0 w-[220px]" align="start">
+          <Command>
+            <CommandInput
+              placeholder="검색..."
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Tab") {
+                  e.preventDefault();
+                  setOpenCombo(false);
+                  moveNext(row.index, row.original.type === 1 ? 3 : 4);
+                }
+              }}
+            />
+            <CommandList>
+              <CommandEmpty>결과 없음</CommandEmpty>
+              <CommandGroup>
+                {categories.map((cat: any) => (
+                  <CommandItem
+                    key={cat.id}
+                    onSelect={() => {
+                      updateData(row.index, "category_id", cat.id);
+                      updateData(row.index, "type", cat.type);
+                      setOpenCombo(false);
+                      setTimeout(
+                        () => moveNext(row.index, cat.type === 1 ? 3 : 4),
+                        50
+                      );
+                    }}
+                  >
+                    <Badge
+                      variant={cat.type === 0 ? "secondary" : "destructive"}
+                      className="mr-2"
+                    >
+                      {cat.type === 0 ? "수입" : "지출"}
+                    </Badge>
+                    {cat.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     );
   }
 
   return (
     <Input
-      type={columnType === "number" ? "number" : "text"}
+      ref={inputRef}
       value={value ?? ""}
-      onFocus={onFocus}
       onChange={(e) => setValue(e.target.value)}
-      onBlur={onBlur}
-      placeholder="입력..."
+      onBlur={() => {
+        let f = value;
+        if (column.id === "date" && value) f = smartParseDate(value);
+        if (initialValue !== f) updateData(row.index, column.id, f);
+      }}
+      onFocus={() => setActiveCell({ rowIndex: row.index, colIdx })}
+      onKeyDown={handleKeyDown}
       className={cn(
-        "w-full h-8 bg-transparent px-2 outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-none transition-all",
-        columnType === "number" &&
-          "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none",
+        "w-full h-8 bg-transparent border-none focus-visible:ring-0 px-2 text-[13px]",
+        (column.columnDef.meta as any)?.type === "number" &&
+          "text-right font-mono"
       )}
     />
   );
 };
 
-// --- Main Component ---
 const NewTransactions: React.FC = () => {
-  const { t } = useTranslation();
   const { categories } = useAppStore();
-  const { setHeader, resetHeader } = useHeaderStore();
-
-  const createEmptyRow = useCallback(
-    (): TransactionRow => ({
-      id: `temp-${Date.now()}-${Math.random()}`,
-      date: "",
-      type: 1,
-      category_id: "",
-      is_fixed: 0,
-      description: "",
-      amount: "",
-      remarks: "",
-    }),
-    [],
-  );
-
+  const createEmptyRow = () => ({
+    id: crypto.randomUUID(),
+    date: "",
+    type: 1,
+    category_id: "",
+    is_fixed: 0,
+    description: "",
+    amount: "",
+    remarks: "",
+  });
   const [data, setData] = useState<TransactionRow[]>(() =>
-    Array.from({ length: 20 }, createEmptyRow),
+    Array.from({ length: 5 }, createEmptyRow)
   );
   const [activeCell, setActiveCell] = useState<{
     rowIndex: number;
-    columnId: string;
+    colIdx: number;
   } | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<{ r: number; c: string } | null>(
-    null,
-  );
-  const [dragEndRow, setDragEndRow] = useState<number | null>(null);
 
-  const updateData = useCallback(
-    (rowIndex: number, columnId: string, value: any) => {
-      setData((old) =>
-        old.map((row, index) =>
-          index === rowIndex ? { ...row, [columnId]: value } : row,
-        ),
-      );
-    },
-    [],
-  );
-
-  const handleMouseUp = useCallback(() => {
-    if (isDragging && dragStart && dragEndRow !== null) {
-      const sourceValue =
-        data[dragStart.r][dragStart.c as keyof TransactionRow];
-      const start = Math.min(dragStart.r, dragEndRow);
-      const end = Math.max(dragStart.r, dragEndRow);
-
-      setData((old) =>
-        old.map((row, idx) => {
-          if (idx >= start && idx <= end) {
-            return { ...row, [dragStart.c]: sourceValue };
-          }
-          return row;
-        }),
-      );
-    }
-    setIsDragging(false);
-    setDragStart(null);
-    setDragEndRow(null);
-  }, [isDragging, dragStart, dragEndRow, data]);
-
-  useEffect(() => {
-    window.addEventListener("mouseup", handleMouseUp);
-    return () => window.removeEventListener("mouseup", handleMouseUp);
-  }, [handleMouseUp]);
-
-  const handleSaveAll = useCallback(() => {
-    const validData = data.filter((row) => row.date && row.amount);
-    console.log("DB로 전송될 유효 데이터:", validData);
-    alert(`${validData.length}건의 데이터가 준비되었습니다.`);
-  }, [data]);
-
-  useEffect(() => {
-    setHeader(
-      t("대량 입력 모드"),
-      <Button
-        onClick={handleSaveAll}
-        size="sm"
-        className="bg-green-600 hover:bg-green-700"
-      >
-        <Save className="w-4 h-4 mr-2" /> {t("저장")}
-      </Button>,
+  const updateData = useCallback((r: number, cid: string, val: any) => {
+    setData((prev) =>
+      prev.map((row, i) => (i === r ? { ...row, [cid]: val } : row))
     );
-    return () => resetHeader();
-  }, [setHeader, resetHeader, t, handleSaveAll]);
+  }, []);
 
-  const handlePaste = useCallback(
-    (e: React.ClipboardEvent) => {
-      e.preventDefault();
-      const pasteData = e.clipboardData.getData("text");
-      const rows = pasteData
-        .split(/\r?\n/)
-        .filter((row) => row.trim() !== "")
-        .map((row) => row.split("\t"));
+  const addRow = () => {
+    setData((prev) => [...prev, createEmptyRow()]);
+    setTimeout(() => setActiveCell({ rowIndex: data.length, colIdx: 1 }), 50);
+  };
 
-      if (!activeCell) return;
-
-      setData((old) => {
-        const newData = [...old];
-        const startRow = activeCell.rowIndex;
-        const columnOrder: (keyof TransactionRow)[] = [
-          "date",
-          "type",
-          "category_id",
-          "is_fixed",
-          "description",
-          "amount",
-          "remarks",
-        ];
-        const startColIdx = columnOrder.indexOf(
-          activeCell.columnId as keyof TransactionRow,
-        );
-        if (startColIdx === -1) return old;
-
-        rows.forEach((rowCells, rIdx) => {
-          const targetRowIdx = startRow + rIdx;
-          if (!newData[targetRowIdx]) {
-            newData[targetRowIdx] = createEmptyRow();
-          }
-
-          rowCells.forEach((cellValue, cIdx) => {
-            const targetColIdx = startColIdx + cIdx;
-            if (targetColIdx < columnOrder.length) {
-              const colId = columnOrder[targetColIdx];
-              let processedValue: any = cellValue;
-
-              if (colId === "amount") {
-                processedValue =
-                  Number(cellValue.replace(/[^0-9.-]+/g, "")) || "";
-              } else if (colId === "type") {
-                processedValue = cellValue.includes("수입") ? 0 : 1;
-              } else if (colId === "is_fixed") {
-                processedValue =
-                  cellValue.toUpperCase() === "Y" || cellValue === "1" ? 1 : 0;
-              }
-
-              (newData[targetRowIdx] as any)[colId] = processedValue;
-            }
-          });
-        });
-        return newData;
-      });
-    },
-    [activeCell, createEmptyRow],
-  );
-
-  const handleAddRow = () => setData((prev) => [...prev, createEmptyRow()]);
-  const handleDeleteRow = (index: number) => {
+  const removeRow = (index: number) => {
     setData((prev) => prev.filter((_, i) => i !== index));
+    setActiveCell(null);
   };
 
   const columns = useMemo<ColumnDef<TransactionRow>[]>(
@@ -312,72 +272,84 @@ const NewTransactions: React.FC = () => {
         id: "rowNumber",
         header: "#",
         size: 40,
-        cell: ({ row }) => row.index + 1,
+        cell: ({ row }) => (
+          <span className="text-slate-400 text-[11px] flex justify-center">
+            {row.index + 1}
+          </span>
+        ),
       },
       {
         accessorKey: "date",
         header: "날짜",
-        size: 130,
-        meta: { type: "date" },
-        cell: EditableCell,
-      },
-      {
-        accessorKey: "type",
-        header: "유형",
-        size: 80,
-        meta: {
-          type: "select",
-          options: [
-            { label: "수입", value: 0 },
-            { label: "지출", value: 1 },
-          ],
-        },
-        cell: EditableCell,
+        size: 120,
+        cell: (i) => <EditableCell {...i} colIdx={1} />,
       },
       {
         accessorKey: "category_id",
         header: "항목",
-        size: 140,
-        meta: { type: "select" },
-        cell: EditableCell,
+        size: 180,
+        cell: (i) => <EditableCell {...i} colIdx={2} />,
       },
       {
         accessorKey: "is_fixed",
         header: "고정",
         size: 50,
-        cell: ({ row, column, table }) => (
-          <Checkbox
-            checked={row.original.is_fixed === 1}
-            onCheckedChange={(checked) =>
-              (table.options.meta as any).updateData(
-                row.index,
-                column.id,
-                checked ? 1 : 0,
-              )
-            }
-            aria-label="고정 지출 여부"
-            className="w-4 h-4"
-          />
-        ),
+        cell: ({ row, table }) => {
+          const isActive =
+            (table.options.meta as any).activeCell?.rowIndex === row.index &&
+            (table.options.meta as any).activeCell?.colIdx === 3;
+          const cbRef = useRef<HTMLButtonElement>(null);
+          useEffect(() => {
+            if (isActive) cbRef.current?.focus();
+          }, [isActive]);
+          return (
+            <div
+              className={cn(
+                "w-full h-full flex items-center justify-center",
+                isActive && "bg-blue-100/50"
+              )}
+            >
+              <Checkbox
+                ref={cbRef}
+                checked={row.original.is_fixed === 1}
+                disabled={row.original.type === 0}
+                onCheckedChange={(c) =>
+                  updateData(row.index, "is_fixed", c ? 1 : 0)
+                }
+                onKeyDown={(e) => {
+                  if (e.key === " ") e.stopPropagation();
+                  if (e.key === "Tab") {
+                    e.preventDefault();
+                    (table.options.meta as any).setActiveCell({
+                      rowIndex: row.index,
+                      colIdx: 4,
+                    });
+                  }
+                }}
+                className={cn(isActive && "ring-2 ring-blue-500")}
+              />
+            </div>
+          );
+        },
       },
       {
         accessorKey: "description",
         header: "설명",
         size: 180,
-        cell: EditableCell,
+        cell: (i) => <EditableCell {...i} colIdx={4} />,
       },
       {
         accessorKey: "amount",
         header: "금액",
         size: 100,
         meta: { type: "number" },
-        cell: EditableCell,
+        cell: (i) => <EditableCell {...i} colIdx={5} />,
       },
       {
         accessorKey: "remarks",
         header: "메모",
         size: 150,
-        cell: EditableCell,
+        cell: (i) => <EditableCell {...i} colIdx={6} />,
       },
       {
         id: "actions",
@@ -387,134 +359,93 @@ const NewTransactions: React.FC = () => {
           <Button
             variant="ghost"
             size="icon"
-            className="h-6 w-6 text-slate-400 hover:text-slate-700 transition-colors"
-            onClick={() => handleDeleteRow(row.index)}
+            onClick={() => removeRow(row.index)}
+            className="h-8 w-8 text-slate-400 hover:text-red-500 transition-colors"
           >
-            <Minus className="w-3.5 h-3.5" />
+            <Trash2 size={14} />
           </Button>
         ),
       },
     ],
-    [],
+    [updateData, data.length]
   );
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    meta: {
-      updateData,
-      setActiveCell,
-      categories,
-    },
+    meta: { updateData, setActiveCell, activeCell, categories },
   });
 
   return (
-    <div className="p-4 w-full mx-auto" onPaste={handlePaste}>
-      <div className="flex justify-between items-center mb-4 bg-slate-800 text-white px-5 py-3 rounded-lg shadow-sm">
-        <p className="text-xs font-medium text-slate-300">
-          💡 <span className="text-white">Ctrl+V</span>로 엑셀 데이터를
-          붙여넣으세요. 날짜와 금액이 필수입니다.
-        </p>
-        <Button
-          onClick={handleAddRow}
-          variant="ghost"
-          size="sm"
-          className="text-white hover:bg-white/10 h-8 text-xs"
-        >
-          <Plus className="w-3 h-3 mr-1" /> 행 추가
-        </Button>
-      </div>
+    <div className="p-6 bg-slate-50 min-h-screen">
+      <div className="max-w-[1200px] mx-auto space-y-4">
+        <div className="bg-slate-900 p-4 rounded-xl flex justify-between items-center text-white shadow-xl">
+          <div className="flex items-center gap-3">
+            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+            <h2 className="font-bold tracking-tight">대량 입력 모드</h2>
+          </div>
+          <Button
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-700 shadow-lg"
+            onClick={() => console.log(data)}
+          >
+            <Save size={16} className="mr-2" />
+            저장하기
+          </Button>
+        </div>
 
-      <div className="border rounded-md bg-white shadow-sm border-slate-200 overflow-x-auto">
-        <table className="w-full text-[13px] text-left border-collapse table-fixed min-w-[800px]">
-          <thead className="bg-slate-50 border-b border-slate-200">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-2 py-2 font-bold text-slate-500 border-r border-slate-200 text-center"
-                    style={{ width: header.column.columnDef.size }}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : (header.column.columnDef.header as string)}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr
-                key={row.id}
-                className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
-              >
-                {row.getVisibleCells().map((cell) => {
-                  const colId = cell.column.id;
-                  const isCentered = [
-                    "rowNumber",
-                    "date",
-                    "is_fixed",
-                    "actions",
-                  ].includes(colId);
-
-                  const isDragSelected =
-                    isDragging &&
-                    dragStart?.c === colId &&
-                    dragEndRow !== null &&
-                    ((row.index >= dragStart.r && row.index <= dragEndRow) ||
-                      (row.index <= dragStart.r && row.index >= dragEndRow));
-
-                  return (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <table className="w-full text-[13px] border-collapse table-fixed">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              {table.getHeaderGroups().map((hg) => (
+                <tr key={hg.id}>
+                  {hg.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="p-3 border-r border-slate-200 text-slate-500 font-bold text-xs uppercase"
+                      style={{ width: header.column.columnDef.size }}
+                    >
+                      {header.column.columnDef.header as string}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <tr
+                  key={row.id}
+                  className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"
+                >
+                  {row.getVisibleCells().map((cell, idx) => (
                     <td
                       key={cell.id}
                       className={cn(
-                        "p-0 border-r border-slate-100 h-8 relative group/cell",
-                        isDragSelected &&
-                          "bg-blue-100/60 ring-2 ring-inset ring-blue-500/50 z-20",
+                        "p-0 border-r border-slate-100 relative h-10",
+                        activeCell?.rowIndex === row.index &&
+                          activeCell?.colIdx === idx &&
+                          "shadow-[inset_0_0_0_2px_#3b82f6] z-10"
                       )}
                     >
-                      <div
-                        className={cn(
-                          "w-full h-full",
-                          isCentered && "flex items-center justify-center",
-                          isDragging && "pointer-events-none",
-                        )}
-                      >
-                        {React.createElement(
-                          cell.column.columnDef.cell as any,
-                          cell.getContext(),
-                        )}
-                      </div>
-                      {!["rowNumber", "actions"].includes(
-                        colId,
-                      ) && (
-                        <>
-                          {isDragging && (
-                            <div
-                              className="absolute inset-0 z-10"
-                              onMouseEnter={() => setDragEndRow(row.index)}
-                            />
-                          )}
-                          <div
-                            className="absolute bottom-0 right-0 w-2 h-2 bg-slate-400 cursor-crosshair z-20 opacity-0 group-hover/cell:opacity-100 active:bg-blue-500 border border-white"
-                            onMouseDown={() => {
-                              setIsDragging(true);
-                              setDragStart({ r: row.index, c: colId });
-                              setDragEndRow(row.index);
-                            }}
-                          />
-                        </>
+                      {React.createElement(
+                        cell.column.columnDef.cell as any,
+                        cell.getContext()
                       )}
                     </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button
+            onClick={addRow}
+            className="w-full py-3 flex items-center justify-center gap-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50/50 transition-all border-t border-dashed"
+          >
+            <Plus size={16} />
+            <span className="font-medium text-sm">새로운 행 추가</span>
+          </button>
+        </div>
       </div>
     </div>
   );
