@@ -11,14 +11,14 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Save, Trash2 } from "lucide-react";
+import { Minus, Plus, Save } from "lucide-react";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format, addDays, parseISO, isValid } from "date-fns";
 import EditableCell, { TransactionRow } from "./EditableCell";
 
-const NewTransactions: React.FC = () => {
+const QuickInputTransaction: React.FC = () => {
   const [dragRange, setDragRange] = useState<{
     start: number;
     end: number;
@@ -36,7 +36,7 @@ const NewTransactions: React.FC = () => {
     remarks: "",
   });
   const [data, setData] = useState<TransactionRow[]>(() =>
-    Array.from({ length: 15 }, createEmptyRow),
+    Array.from({ length: 10 }, createEmptyRow)
   );
   const [activeCell, setActiveCell] = useState<{
     rowIndex: number;
@@ -45,7 +45,7 @@ const NewTransactions: React.FC = () => {
 
   const updateData = useCallback((r: number, cid: string, val: any) => {
     setData((prev) =>
-      prev.map((row, i) => (i === r ? { ...row, [cid]: val } : row)),
+      prev.map((row, i) => (i === r ? { ...row, [cid]: val } : row))
     );
   }, []);
 
@@ -74,13 +74,13 @@ const NewTransactions: React.FC = () => {
         return newData;
       });
     },
-    [],
+    []
   );
 
   const onDragStart = (
     e: React.MouseEvent,
     startRow: number,
-    startCol: number,
+    startCol: number
   ) => {
     e.preventDefault();
     const colKeys = [
@@ -175,7 +175,7 @@ const NewTransactions: React.FC = () => {
               <div
                 className={cn(
                   "w-full h-full flex items-center justify-center transition-colors",
-                  isActive && "bg-blue-100/50",
+                  isActive && "bg-blue-100/50"
                 )}
               >
                 <Checkbox
@@ -266,7 +266,7 @@ const NewTransactions: React.FC = () => {
         ),
       },
     ],
-    [updateData, data.length],
+    [updateData, data.length]
   );
 
   const table = useReactTable({
@@ -302,7 +302,7 @@ const NewTransactions: React.FC = () => {
                   row.description ||
                   row.amount ||
                   row.remarks ||
-                  row.category_id,
+                  row.category_id
               );
               console.log(filledData);
             }}
@@ -350,7 +350,7 @@ const NewTransactions: React.FC = () => {
                           isSelectedByDrag && "bg-blue-100/40",
                           activeCell?.rowIndex === row.index &&
                             activeCell?.colIdx === idx &&
-                            "shadow-[inset_0_0_0_2px_#3b82f6] z-10",
+                            "shadow-[inset_0_0_0_2px_#3b82f6] z-10"
                         )}
                         onClick={() =>
                           setActiveCell({ rowIndex: row.index, colIdx: idx })
@@ -358,7 +358,7 @@ const NewTransactions: React.FC = () => {
                       >
                         {React.createElement(
                           cell.column.columnDef.cell as any,
-                          cell.getContext(),
+                          cell.getContext()
                         )}
                         {isSelectedByDrag && (
                           <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
@@ -375,7 +375,7 @@ const NewTransactions: React.FC = () => {
               setData((p) => [...p, createEmptyRow()]);
               setTimeout(
                 () => setActiveCell({ rowIndex: data.length, colIdx: 1 }),
-                50,
+                50
               );
             }}
             className="w-full py-3 flex items-center justify-center gap-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all border-t border-dashed"
@@ -388,4 +388,4 @@ const NewTransactions: React.FC = () => {
   );
 };
 
-export default NewTransactions;
+export default QuickInputTransaction;

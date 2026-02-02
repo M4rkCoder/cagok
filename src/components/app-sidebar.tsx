@@ -33,7 +33,6 @@ const items = {
       icon: SquareLibrary,
     },
     { title: "Statistics", url: "/statistics", icon: ChartArea },
-    { title: "New", url: "/new", icon: Pencil },
     { title: "Settings", url: "/settings", icon: Settings },
   ],
 };

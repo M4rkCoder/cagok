@@ -22,34 +22,24 @@ import {
 } from "@/components/ui/sheet";
 import { useHeaderStore } from "@/store/useHeaderStore";
 import { cn } from "@/lib/utils";
+import { useCategoryStore } from "@/store/useCategoryStore";
+import { useAppStore } from "@/store/useAppStore";
 
 const CategorySettings = () => {
   const { setHeader, resetHeader } = useHeaderStore();
+  const categories = useAppStore((s) => s.categories);
+  const editingCategoryId = useCategoryStore((s) => s.editingCategoryId);
   useEffect(() => {
     setHeader("카테고리 설정");
     return () => resetHeader();
   }, [setHeader, resetHeader]);
-
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    submitCategoryForm,
+    startEditCategory,
+    deleteCategory,
+    resetCategoryForm,
+  } = useCategoryStore();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-
-  const fetchCategories = async () => {
-    setLoading(true);
-    try {
-      const fetchedCategories = await invoke<Category[]>("get_categories");
-      setCategories(fetchedCategories);
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
 
   const { incomeCategories, expenseCategories } = useMemo(() => {
     return categories.reduce(
@@ -61,17 +51,20 @@ const CategorySettings = () => {
         }
         return acc;
       },
-      { incomeCategories: [] as Category[], expenseCategories: [] as Category[] }
+      {
+        incomeCategories: [] as Category[],
+        expenseCategories: [] as Category[],
+      }
     );
   }, [categories]);
 
   const handleSheetClose = () => {
     setSheetOpen(false);
-    setEditingCategory(null);
+    resetCategoryForm();
   };
 
   const handleNew = (type: 0 | 1) => {
-    setEditingCategory({
+    startEditCategory({
       id: 0, // 임시 ID
       name: "",
       icon: "➕",
@@ -81,44 +74,17 @@ const CategorySettings = () => {
   };
 
   const handleEdit = (category: Category) => {
-    setEditingCategory(category);
+    startEditCategory(category);
     setSheetOpen(true);
   };
 
   const handleDelete = async (id: number) => {
     if (window.confirm("정말로 이 카테고리를 삭제하시겠습니까?")) {
       try {
-        await invoke("delete_category", { id });
-        fetchCategories();
+        await deleteCategory(id);
       } catch (error) {
         console.error("Failed to delete category:", error);
       }
-    }
-  };
-
-  const handleFormSubmit = async (values: {
-    name: string;
-    icon: string;
-    type: string;
-  }) => {
-    const payload = {
-      ...values,
-      type: parseInt(values.type, 10),
-    };
-
-    try {
-      if (editingCategory && editingCategory.id) {
-        await invoke("update_category", {
-          id: editingCategory.id,
-          category: payload,
-        });
-      } else {
-        await invoke("create_category", { category: payload });
-      }
-      handleSheetClose();
-      fetchCategories();
-    } catch (error) {
-      console.error("Failed to save category:", error);
     }
   };
 
@@ -143,11 +109,7 @@ const CategorySettings = () => {
       </CardHeader>
       <CardContent>
         <Separator />
-        {loading ? (
-          <p className="text-center py-8 text-sm text-muted-foreground">
-            로딩 중...
-          </p>
-        ) : categories.length === 0 ? (
+        {categories.length === 0 ? (
           <p className="text-center py-8 text-sm text-muted-foreground">
             카테고리가 없습니다.
           </p>
@@ -219,7 +181,7 @@ const CategorySettings = () => {
         <CategoryList title="지출" categories={expenseCategories} type={1} />
       </div>
 
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen} modal={false}>
         <SheetContent
           side="right"
           className="top-12 h-[calc(100vh-theme(spacing.12))]"
@@ -227,18 +189,15 @@ const CategorySettings = () => {
         >
           <SheetHeader className="mb-6">
             <SheetTitle>
-              {editingCategory && editingCategory.id
-                ? "카테고리 수정"
-                : "새 카테고리"}
+              {editingCategoryId !== null ? "카테고리 수정" : "새 카테고리"}
             </SheetTitle>
             <SheetDescription>
               카테고리 정보를 입력하고 저장하세요.
             </SheetDescription>
           </SheetHeader>
           <CategoryForm
-            onSubmit={handleFormSubmit}
+            onSubmit={submitCategoryForm}
             onCancel={handleSheetClose}
-            defaultValues={editingCategory || undefined}
           />
         </SheetContent>
       </Sheet>

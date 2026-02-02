@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -16,6 +16,7 @@ import {
 import { Category } from "@/types";
 import { cn } from "@/lib/utils";
 import { CategoryIcon } from "@/components/CategoryIcon"; // 컴포넌트 임포트
+import { useCategoryStore } from "@/store/useCategoryStore";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "이름을 입력해주세요." }),
@@ -29,21 +30,41 @@ interface CategoryFormProps {
   defaultValues?: Category;
 }
 
-const CategoryForm: React.FC<CategoryFormProps> = ({
-  onSubmit,
-  onCancel,
-  defaultValues,
-}) => {
+const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
+  const {
+    newCategoryName,
+    newCategoryIcon,
+    editingCategoryId,
+    setCategoryState,
+  } = useCategoryStore();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: defaultValues?.name || "",
-      icon: defaultValues?.icon || "💰",
-      type: (defaultValues?.type?.toString() as "0" | "1") || "1",
+      name: "",
+      icon: "➕",
+      type: "1",
     },
   });
+
+  useEffect(() => {
+    if (editingCategoryId !== null) {
+      // 수정 모드
+      form.reset({
+        name: newCategoryName,
+        icon: newCategoryIcon,
+        type: "1", // ⚠️ type도 store에 있으면 거기서 가져오면 더 좋음
+      });
+    } else {
+      // 신규 모드
+      form.reset({
+        name: "",
+        icon: "➕",
+        type: "1",
+      });
+    }
+  }, [editingCategoryId, newCategoryName, newCategoryIcon, form]);
 
   // 현재 선택된 타입을 실시간으로 감시
   const currentType = form.watch("type");

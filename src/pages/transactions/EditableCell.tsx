@@ -29,8 +29,9 @@ import { format, addDays, parseISO, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import CategoryForm from "@/pages/settings/CategoryForm";
+import { ExpenseBadge, IncomeBadge } from "./TransactionBadge";
+import { useCategoryStore } from "@/store/useCategoryStore";
 
-// --- 스마트 날짜 파서 ---
 const smartParseDate = (input: string): string => {
   if (!input) return "";
   const today = new Date();
@@ -41,13 +42,13 @@ const smartParseDate = (input: string): string => {
     res = new Date(
       parseInt(clean.slice(0, 4)),
       parseInt(clean.slice(4, 6)) - 1,
-      parseInt(clean.slice(6, 8)),
+      parseInt(clean.slice(6, 8))
     );
   else if (clean.length === 4)
     res = new Date(
       year,
       parseInt(clean.slice(0, 2)) - 1,
-      parseInt(clean.slice(2, 4)),
+      parseInt(clean.slice(2, 4))
     );
   else if (clean.length === 2 || clean.length === 1)
     res = new Date(year, today.getMonth(), parseInt(clean));
@@ -78,6 +79,7 @@ const EditableCell = ({
   table,
   colIdx,
 }: CellContext<TransactionRow, any> & { colIdx: number }): React.ReactNode => {
+  const { submitCategoryForm } = useCategoryStore();
   const initialValue = getValue();
   const {
     updateData,
@@ -178,16 +180,13 @@ const EditableCell = ({
           }}
           className={cn(
             "w-full h-full bg-transparent border-none focus-visible:ring-0 pr-10 pl-2 text-[13px] rounded-none",
-            isActive && "z-20",
+            isActive && "z-20"
           )}
         />
         <Popover open={openCombo} onOpenChange={setOpenCombo}>
           <PopoverTrigger asChild>
             <button
-              className={cn(
-                "absolute right-0 top-0 size-10 z-30 flex items-center justify-center",
-                isActive && "bg-blue-50/50",
-              )}
+              className="absolute right-0 top-0 size-10 z-30 flex items-center justify-center"
               onClick={() => setOpenCombo(true)}
               onKeyDown={handleKeyDown}
               tabIndex={-1}
@@ -234,18 +233,15 @@ const EditableCell = ({
               onClick={() => setOpenCombo(true)}
               className={cn(
                 "w-full h-full flex items-center px-2 outline-none transition-colors",
-                isActive && "bg-blue-50/50",
+                isActive && "bg-blue-50/50"
               )}
             >
               {selected ? (
-                <div className="flex items-center gap-2 truncate text-[12px]">
-                  <Badge
-                    variant={selected.type === 0 ? "secondary" : "destructive"}
-                    className="h-4 px-1 text-[9px]"
-                  >
-                    {selected.type === 0 ? "수입" : "지출"}
-                  </Badge>
-                  <span className="truncate">{selected.name}</span>
+                <div className="flex items-center gap-1 truncate text-[12px]">
+                  {selected.type === 0 ? <IncomeBadge /> : <ExpenseBadge />}
+                  <span>
+                    {selected.icon} {selected.name}
+                  </span>
                 </div>
               ) : (
                 <span className="text-slate-400 text-[12px]">선택...</span>
@@ -253,7 +249,7 @@ const EditableCell = ({
             </button>
           </PopoverTrigger>
           <PopoverContent
-            className="p-0 w-[220px]"
+            className="p-0 w-[170px]"
             align="start"
             onOpenAutoFocus={(e) => {
               /* CommandInput autoFocus 작동을 위해 비워둠 */
@@ -295,18 +291,17 @@ const EditableCell = ({
                         setOpenCombo(false);
                         setTimeout(
                           () => moveNext(row.index, cat.type === 1 ? 3 : 4),
-                          50,
+                          50
                         );
                       }}
                     >
-                      <Badge
-                        variant={cat.type === 0 ? "secondary" : "destructive"}
-                        className="mr-2"
-                      >
-                        {cat.type === 0 ? "수입" : "지출"}
-                      </Badge>
-                      {cat.icon}
-                      {cat.name}
+                      <div className="flex items-center gap-1 truncate">
+                        {cat.type === 0 ? <IncomeBadge /> : <ExpenseBadge />}
+                        <span>
+                          {cat.icon}
+                          {cat.name}
+                        </span>
+                      </div>
                     </CommandItem>
                   ))}
                 </CommandGroup>
@@ -324,9 +319,9 @@ const EditableCell = ({
             </Command>
           </PopoverContent>
         </Popover>
-        <Sheet open={openSheet} onOpenChange={setOpenSheet}>
+        <Sheet open={openSheet} onOpenChange={setOpenSheet} modal={false}>
           <SheetTrigger /> {/* This trigger is now a direct child of Sheet */}
-          <SheetContent>
+          <SheetContent className="top-12 h-[calc(100vh-theme(spacing.12))]">
             <SheetHeader>
               <SheetTitle>새 카테고리 추가</SheetTitle>
               <SheetDescription>
@@ -334,10 +329,7 @@ const EditableCell = ({
               </SheetDescription>
             </SheetHeader>
             <CategoryForm
-              onSubmit={() => {
-                setOpenSheet(false);
-                // TODO: Refresh categories in useAppStore or trigger a re-fetch
-              }}
+              onSubmit={submitCategoryForm}
               onCancel={() => setOpenSheet(false)}
             />
           </SheetContent>
@@ -367,7 +359,7 @@ const EditableCell = ({
         className={cn(
           "w-full h-full bg-transparent border-none focus-visible:ring-0 px-2 text-[13px] rounded-none",
           (column.columnDef.meta as any)?.type === "number" &&
-            "text-right font-mono",
+            "text-right font-mono"
         )}
       />
       <div
