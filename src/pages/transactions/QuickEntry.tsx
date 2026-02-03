@@ -18,7 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { format, addDays, parseISO, isValid } from "date-fns";
 import EditableCell, { TransactionRow } from "./EditableCell";
 
-const QuickInputTransaction: React.FC = () => {
+const QuickEntry: React.FC = () => {
   const [dragRange, setDragRange] = useState<{
     start: number;
     end: number;
@@ -388,4 +388,4 @@ const QuickInputTransaction: React.FC = () => {
   );
 };
 
-export default QuickInputTransaction;
+export default QuickEntry;

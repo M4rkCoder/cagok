@@ -31,6 +31,8 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         dashboard::compare_dashboard,
         dashboard::get_recent_7days_expenses,
         dashboard::get_recent_transactions,
+        dashboard::get_top_fixed_expenses,
+        dashboard::get_top_incomes,
         //recurring
         recurring::get_recurring_transactions,
         recurring::create_recurring_transaction,

@@ -17,8 +17,8 @@ interface TransactionState {
   loading: boolean;
   sheetOpen: boolean;
   editingTransaction: Transaction | null;
-  isConfirmOpen: boolean;
-  confirmType: ConfirmType;
+  //isConfirmOpen: boolean;
+  //confirmType: ConfirmType;
   targetId: number | null;
 
   // Actions
@@ -28,10 +28,10 @@ interface TransactionState {
   handleSheetClose: () => void;
   submitForm: (values: TransactionFormValues) => Promise<void>;
   deleteTransaction: (id: number) => Promise<void>;
-  setConfirmOpen: (open: boolean) => void;
-  openConfirm: (type: ConfirmType, id: number) => void;
-  closeConfirm: () => void;
-  handleConfirmAction: () => Promise<void>;
+  // setConfirmOpen: (open: boolean) => void;
+  // openConfirm: (type: ConfirmType, id: number) => void;
+  // closeConfirm: () => void;
+  // handleConfirmAction: () => Promise<void>;
 }
 
 export const useTransactionStore = create<TransactionState>((set, get) => ({
@@ -96,35 +96,35 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     }
   },
 
-  setConfirmOpen: (open) => set({ isConfirmOpen: open }),
+  // setConfirmOpen: (open) => set({ isConfirmOpen: open }),
 
-  // 삭제 다이얼로그를 여는 함수
-  openConfirm: (type, id) => {
-    set({ isConfirmOpen: true, confirmType: type, targetId: id });
-  },
-  closeConfirm: () =>
-    set({ isConfirmOpen: false, confirmType: null, targetId: null }),
+  // // 삭제 다이얼로그를 여는 함수
+  // openConfirm: (type, id) => {
+  //   set({ isConfirmOpen: true, confirmType: type, targetId: id });
+  // },
+  // closeConfirm: () =>
+  //   set({ isConfirmOpen: false, confirmType: null, targetId: null }),
 
-  handleConfirmAction: async () => {
-    const { confirmType, targetId } = get();
-    if (!targetId) return;
+  // handleConfirmAction: async () => {
+  //   const { confirmType, targetId } = get();
+  //   if (!targetId) return;
 
-    try {
-      if (confirmType === "transaction") {
-        await invoke("delete_transaction", { id: targetId });
-        toast.success("삭제되었습니다.");
-        get().fetchTransactions();
-      } else if (confirmType === "category") {
-        await invoke("delete_category", { id: targetId });
-        toast.success("삭제되었습니다.");
-        useCategoryStore.getState().resetCategoryForm();
-        await useAppStore.getState().fetchCategories();
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("삭제에 실패했습니다.");
-    } finally {
-      get().closeConfirm();
-    }
-  },
+  //   try {
+  //     if (confirmType === "transaction") {
+  //       await invoke("delete_transaction", { id: targetId });
+  //       toast.success("삭제되었습니다.");
+  //       get().fetchTransactions();
+  //     } else if (confirmType === "category") {
+  //       await invoke("delete_category", { id: targetId });
+  //       toast.success("삭제되었습니다.");
+  //       useCategoryStore.getState().resetCategoryForm();
+  //       await useAppStore.getState().fetchCategories();
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //     toast.error("삭제에 실패했습니다.");
+  //   } finally {
+  //     get().closeConfirm();
+  //   }
+  // },
 }));

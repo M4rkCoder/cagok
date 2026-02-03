@@ -488,7 +488,53 @@ impl DashboardRepository {
 
         conn.query_row(query, params![start, end], |row| row.get(0))
     }
+
+    pub fn get_top_transactions(
+        conn: &Connection,
+        year_month: &str, // 형식: "YYYY-MM"
+        limit: i32,
+        tx_type: i32, // 0: income 1: expense
+        only_fixed: bool, // true: fixed cost only false: all
+    ) -> Result<Vec<TransactionWithCategory>> {
+        let start_date = format!("{}-01", year_month);
+        let end_date = format!("{}-31", year_month);
+
+        // 고정 항목 필터 조건 동적 생성
+        let fixed_filter = if only_fixed { "AND t.is_fixed = 1" } else { "" };
+
+        let query = format!("
+        SELECT 
+            t.id, t.description, t.amount, t.date, t.type, t.is_fixed, t.remarks, t.category_id,
+            c.name as category_name,
+            c.icon as category_icon
+        FROM transactions t
+        LEFT JOIN categories c ON t.category_id = c.id
+        WHERE t.type = ?1 
+          {} 
+          AND t.date BETWEEN ?2 AND ?3
+        ORDER BY t.amount DESC, t.id DESC
+        LIMIT ?4
+        ", fixed_filter);
+
+        let mut stmt = conn.prepare(&query)?;
+        let rows = stmt.query_map(params![tx_type, start_date, end_date, limit], |row| {
+        Ok(TransactionWithCategory {
+            id: row.get(0)?,
+            description: row.get(1)?,
+            amount: row.get(2)?,
+            date: row.get(3)?,
+            r#type: row.get(4)?,
+            is_fixed: row.get(5)?,
+            remarks: row.get(6)?,
+            category_id: row.get(7)?,
+            category_name: row.get(8)?,
+            category_icon: row.get(9)?,
+            })
+        })?;
+        rows.collect()
+    }
 }
+
 
 pub struct RecurringTransactionRepository;
 

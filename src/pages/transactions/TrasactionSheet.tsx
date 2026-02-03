@@ -14,18 +14,18 @@ import {
 import TransactionForm from "./TransactionForm";
 import { Plus } from "lucide-react";
 import { useTransactionStore } from "@/store/useTransactionStore";
+import { useConfirmStore } from "@/store/useConfirmStore";
 
 const TransactionSheet = () => {
   const { t } = useTranslation();
-  const {
-    sheetOpen,
-    setSheetOpen,
-    editingTransaction,
-    handleSheetClose,
-    isConfirmOpen,
-  } = useTransactionStore();
+  const { sheetOpen, setSheetOpen, editingTransaction, handleSheetClose } =
+    useTransactionStore();
+
+  const { isOpen } = useConfirmStore();
 
   const handleOpenChange = (open: boolean) => {
+    if (isOpen) return;
+
     if (!open) {
       handleSheetClose();
     } else {
@@ -45,11 +45,14 @@ const TransactionSheet = () => {
         className="top-12 h-[calc(100vh-theme(spacing.12))]"
         // 다이얼로그가 열려있을 때 시트 외부 클릭으로 닫히는 것 방지
         onPointerDownOutside={(e) => {
-          if (isConfirmOpen) e.preventDefault();
+          if (isOpen) e.preventDefault();
         }}
         // 다이얼로그가 포커스를 가져갈 때 시트가 닫히는 것 방지
         onInteractOutside={(e) => {
-          if (isConfirmOpen) e.preventDefault();
+          if (isOpen) e.preventDefault();
+        }}
+        onEscapeKeyDown={(e) => {
+          if (isOpen) e.preventDefault();
         }}
       >
         <SheetHeader>

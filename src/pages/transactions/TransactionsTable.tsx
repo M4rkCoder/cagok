@@ -8,9 +8,7 @@ import {
   getFilteredRowModel,
 } from "@tanstack/react-table";
 import { Transaction, TransactionWithCategory } from "@/types";
-
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
@@ -22,10 +20,8 @@ import TransactionTableContent from "./TransactionTableContent";
 import TransactionPagination from "./TransactionPagination";
 import { SquarePen, Trash2 } from "lucide-react";
 import { ExpenseBadge, IncomeBadge } from "./TransactionBadge";
-import TransactionSheet from "./TrasactionSheet";
-import ConfirmDialog from "@/components/ConfirmDialog";
 import { useTransactionStore } from "@/store/useTransactionStore";
-import { useHeaderStore } from "@/store/useHeaderStore";
+import { useConfirmStore } from "@/store/useConfirmStore";
 
 const TransactionsTable: React.FC = () => {
   const { t } = useTranslation();
@@ -34,14 +30,11 @@ const TransactionsTable: React.FC = () => {
     transactions,
     loading,
     fetchTransactions,
-    isConfirmOpen,
-    openConfirm,
-    confirmType,
-    closeConfirm,
-    handleConfirmAction,
+    deleteTransaction,
     setEditingTransaction,
     setSheetOpen,
   } = useTransactionStore();
+  const { confirm } = useConfirmStore();
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -54,18 +47,16 @@ const TransactionsTable: React.FC = () => {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
-  const config = {
-    transaction: {
+  const onClickDelete = (id: number) => {
+    confirm({
       title: "가계부 기록 삭제",
       description:
         "이 거래 내역을 정말 삭제하시겠습니까? \n 삭제 후에는 복구할 수 없습니다.",
-    },
-    category: {
-      title: "카테고리 삭제",
-      description:
-        "이 카테고리를 정말 삭제하시겠습니까? \n 해당 카테고리로 분류된 내역들은 '미분류'로 변경됩니다.",
-    },
-  }[confirmType || "transaction"];
+      onConfirm: async () => {
+        await deleteTransaction(id);
+      },
+    });
+  };
 
   useEffect(() => {
     fetchTransactions();
@@ -188,7 +179,7 @@ const TransactionsTable: React.FC = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Trash2
-                  onClick={() => openConfirm("transaction", row.original.id!)}
+                  onClick={() => onClickDelete(row.original.id!)}
                   className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-all text-slate-400 hover:text-slate-600"
                 />
               </TooltipTrigger>
@@ -288,14 +279,6 @@ const TransactionsTable: React.FC = () => {
 
       {/* Pagination */}
       <TransactionPagination table={table} />
-
-      <ConfirmDialog
-        open={isConfirmOpen}
-        onOpenChange={closeConfirm}
-        onConfirm={handleConfirmAction}
-        title={config.title}
-        description={config.description}
-      />
     </div>
   );
 };

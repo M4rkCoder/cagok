@@ -242,4 +242,14 @@ impl DashboardService {
             }
         }
     }
+    pub fn get_top_fixed_expenses(conn: &Connection, year_month: String, limit: i32) -> Result<Vec<TransactionWithCategory>, String> {
+        DashboardRepository::get_top_transactions(&conn, &year_month, limit, 1, true)
+            .map_err(|e| e.to_string())
+    }
+
+    pub fn get_top_incomes(conn: &Connection, year_month: String, limit: i32) -> Result<Vec<TransactionWithCategory>, String> {
+        DashboardRepository::get_top_transactions(&conn, &year_month, limit, 0, false)
+            .map_err(|e| e.to_string())
+    }
+
 }

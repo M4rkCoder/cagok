@@ -18,6 +18,8 @@ interface DashboardState {
   dailyExpenses: DailyExpense[];
   daily7Expenses: DailyExpense[];
   recentTransactions: TransactionWithCategory[];
+  topIncomes: TransactionWithCategory[];
+  topFixedExpenses: TransactionWithCategory[];
   monthlyExpenses: MonthlyExpense[];
   comparisons: Record<ComparisonType, ComparisonMetric | null>;
   loading: boolean;
@@ -50,6 +52,8 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   dailyExpenses: [],
   daily7Expenses: [],
   recentTransactions: [],
+  topIncomes: [],
+  topFixedExpenses: [],
   monthlyExpenses: [],
   comparisons: {
     Expense: null,
@@ -80,6 +84,8 @@ export const useDashboardStore = create<DashboardState>((set) => ({
         dailyData,
         daily7Data,
         recentData,
+        topIncomesData,
+        topFixedData,
         monthlyData,
         comparisonData,
       ] = await Promise.all([
@@ -101,6 +107,16 @@ export const useDashboardStore = create<DashboardState>((set) => ({
           yearMonth: selectedMonth,
         }),
         invoke<TransactionWithCategory[]>("get_recent_transactions", {
+          yearMonth: selectedMonth,
+          limit: 5,
+        }),
+        // 새로 만든 Command 호출 (Top 5개)
+        invoke<TransactionWithCategory[]>("get_top_incomes", {
+          yearMonth: selectedMonth,
+          limit: 5,
+        }),
+        // 새로 만든 Command 호출 (Top 5개)
+        invoke<TransactionWithCategory[]>("get_top_fixed_expenses", {
           yearMonth: selectedMonth,
           limit: 5,
         }),
@@ -137,6 +153,8 @@ export const useDashboardStore = create<DashboardState>((set) => ({
         daily7Expenses: daily7Data,
         monthlyExpenses: monthlyData,
         recentTransactions: recentData,
+        topIncomes: topIncomesData,
+        topFixedExpenses: topFixedData,
         comparisons: comparisonMap,
       });
     } catch (error) {

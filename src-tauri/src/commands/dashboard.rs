@@ -80,3 +80,23 @@ pub fn get_recent_transactions(
     let conn = db.0.lock().unwrap();
     DashboardService::get_recent_transactions(&conn, &year_month, limit)
 }
+
+#[tauri::command]
+pub fn get_top_fixed_expenses(
+    db: State<'_, DbConnection>,
+    year_month: String,
+    limit: i32,
+) -> Result<Vec<TransactionWithCategory>, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardService::get_top_fixed_expenses(&conn, year_month, limit)
+}
+
+#[tauri::command]
+pub fn get_top_incomes(
+    db: State<'_, DbConnection>,
+    year_month: String,
+    limit: i32,
+) -> Result<Vec<TransactionWithCategory>, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardService::get_top_incomes(&conn, year_month, limit)
+}

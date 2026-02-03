@@ -1,5 +1,5 @@
 import { MonthYearPicker } from "@/components/MonthYearPicker";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import { MainExpenseCard } from "./MainExpenseCard";
 import { SummaryItemRow } from "./SummaryItemsRow";
@@ -12,12 +12,12 @@ import DailyExpenseCard from "./DailyExpenseCard";
 import CategoryIncomeCard from "./CategoryIncomeCard";
 import { DotNavigation } from "../../components/DotNavigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAppStore } from "@/store/useAppStore";
 
 export default function Dashboard() {
   type DashboardSection = "summary" | "category";
   const [activeSection, setActiveSection] =
     useState<DashboardSection>("summary");
+  const [isScrolling, setIsScrolling] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [dialogState, setDialogState] = useState<DialogState>({
     open: false,
@@ -38,6 +38,8 @@ export default function Dashboard() {
     dailyExpenses,
     daily7Expenses,
     recentTransactions,
+    topFixedExpenses,
+    topIncomes,
     comparisons,
     loadDashboardData,
   } = useDashboardStore();
@@ -56,7 +58,7 @@ export default function Dashboard() {
       <MonthYearPicker
         selectedMonth={selectedMonth}
         onMonthChange={setSelectedMonth}
-      />,
+      />
     );
 
     return () => resetHeader();
@@ -66,7 +68,7 @@ export default function Dashboard() {
   useEffect(() => {
     const now = new Date();
     const yearMonth = `${now.getFullYear()}-${String(
-      now.getMonth() + 1,
+      now.getMonth() + 1
     ).padStart(2, "0")}`;
     setSelectedMonth(yearMonth);
   }, []);
@@ -75,6 +77,40 @@ export default function Dashboard() {
     setSelectedDateForDialog(date);
     setShowDailyTransactionsDialog(true);
   };
+  const handleWheel = useCallback(
+    (e: WheelEvent) => {
+      // 다이얼로그가 열려있을 때는 휠 스크롤로 섹션 이동 금지
+      if (dialogState.open || showDailyTransactionsDialog || isScrolling)
+        return;
+
+      const threshold = 20; // 미세한 움직임 무시를 위한 임계값
+      if (Math.abs(e.deltaY) < threshold) return;
+
+      if (e.deltaY > 0 && activeSection === "summary") {
+        // 아래로 스크롤 -> 카테고리로
+        setActiveSection("category");
+        lockScroll();
+      } else if (e.deltaY < 0 && activeSection === "category") {
+        // 위로 스크롤 -> 요약으로
+        setActiveSection("summary");
+        lockScroll();
+      }
+    },
+    [activeSection, isScrolling, dialogState.open, showDailyTransactionsDialog]
+  );
+
+  // 스크롤 잠금 함수 (애니메이션 시간 동안 대기)
+  const lockScroll = () => {
+    setIsScrolling(true);
+    setTimeout(() => {
+      setIsScrolling(false);
+    }, 500); // Framer Motion 전환 시간에 맞춰 조절 (현재 0.35s이므로 0.5s가 적당)
+  };
+
+  useEffect(() => {
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, [handleWheel]);
 
   if (loading || !overview) {
     return (
@@ -84,7 +120,7 @@ export default function Dashboard() {
     );
   }
   const sections = [
-    { id: "summary", label: "현황" },
+    { id: "summary", label: "월별 현황" },
     { id: "category", label: "카테고리" },
   ];
 
@@ -95,7 +131,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="pt-6 px-6 max-w-7xl mx-auto">
+    <div className="pt-6 px-6 max-w-7xl mx-auto overflow-hidden h-[calc(100vh-147px)]">
       <DotNavigation
         sections={sections}
         activeId={activeSection}
@@ -147,6 +183,7 @@ export default function Dashboard() {
               selectedMonth={selectedMonth}
               overview={overview}
               setDialogState={setDialogState}
+              topList={topFixedExpenses}
               categories={categories}
             />
 
@@ -154,6 +191,7 @@ export default function Dashboard() {
               selectedMonth={selectedMonth}
               overview={overview}
               setDialogState={setDialogState}
+              topList={topIncomes}
               categoriesIncome={categoriesIncome}
             />
           </motion.div>

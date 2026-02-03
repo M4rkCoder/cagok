@@ -21,6 +21,7 @@ interface Props {
   selectedMonth: string;
   overview: MonthlyOverview;
   setDialogState: Dispatch<SetStateAction<DialogState>>;
+  topList: TransactionWithCategory[];
   categoriesIncome: CategoryExpense[];
 }
 
@@ -35,6 +36,7 @@ export default function CategoryIncomeCard({
   selectedMonth,
   overview,
   setDialogState,
+  topList,
   categoriesIncome: categories,
 }: Props) {
   const [isMounted, setIsMounted] = useState(false);
@@ -105,7 +107,7 @@ export default function CategoryIncomeCard({
 
   return (
     <Card className="p-5 h-[310px] overflow-hidden">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-full">
+      <div className="grid grid-cols-1 md:grid-cols-13 gap-6 h-full">
         {/* [1] 차트 영역 */}
         <div className="md:col-span-5 flex flex-col h-full pr-4">
           <div className="flex items-center justify-between mb-1">
@@ -138,7 +140,7 @@ export default function CategoryIncomeCard({
                                       backgroundColor: item.payload.fill,
                                     }}
                                   />
-                                  <span className="text-[14px] font-bold text-slate-700 truncate max-w-[80px] native-emoji">
+                                  <span className="text-[13px] font-bold text-slate-700 truncate max-w-[120px] native-emoji">
                                     {item.payload.icon} {name}
                                   </span>
                                 </div>
@@ -238,7 +240,7 @@ export default function CategoryIncomeCard({
               displayCategories.map((category) => (
                 <div
                   key={category.category_id}
-                  className="flex items-center justify-between p-1.5 rounded-xl hover:bg-slate-100 transition-all cursor-pointer group"
+                  className="flex items-center justify-between p-1 rounded-xl hover:bg-slate-100 transition-all cursor-pointer group"
                   onClick={() =>
                     handleCategoryMonthlyClick(
                       category.category_id,
@@ -279,30 +281,42 @@ export default function CategoryIncomeCard({
           </div>
         </div>
 
-        {/* [3] 추가 공간 컬럼 2: md:col-span-3 (비중 25%) */}
-        <div className="md:col-span-3 flex flex-col h-full">
+        <div className="md:col-span-4 flex flex-col h-full">
           <div className="text-sm font-bold text-slate-400 mb-2 uppercase">
             주요 수입 내역
           </div>
-          <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-hide bg-slate-50/50 rounded-xl border border-dashed p-2">
-            {/* 리스트 2번 공간: 예시로 나머지 카테고리를 넣거나 비워둘 수 있습니다. */}
-            {remainingCategories.length > 0 ? (
-              remainingCategories.map((category) => (
+          <div className="flex-1 overflow-y-auto pr-1 scrollbar-hide">
+            {topList.length > 0 ? (
+              topList.map((item) => (
                 <div
-                  key={category.category_id}
-                  className="flex items-center justify-between p-2 border-b border-white last:border-0 opacity-70 scale-95 origin-left"
+                  key={item.id}
+                  className="flex items-center justify-between p-1 rounded-xl hover:bg-slate-100 transition-all cursor-pointer group"
                 >
-                  <div className="font-medium text-[10px] text-slate-600 truncate max-w-[60px]">
-                    {category.category_name}
+                  <div className="flex items-center gap-3 min-w-0">
+                    <CategoryIcon
+                      icon={item.category_icon}
+                      type={0}
+                      size="sm"
+                    />
+                    <div className="min-w-0">
+                      <div className="font-extrabold text-md truncate text-slate-700">
+                        {item.description}
+                      </div>
+                      <div className="text-[11px] text-slate-400">
+                        {item.category_name}
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-[10px] text-slate-500 font-bold">
-                    {formatCurrency(category.total_amount)}
+                  <div className="text-right">
+                    <div className="font-bold text-sm text-slate-700">
+                      {formatCurrency(item.amount)}
+                    </div>
                   </div>
                 </div>
               ))
             ) : (
               <div className="h-full flex items-center justify-center text-[10px] text-slate-300 italic">
-                추가 공간
+                내역없음
               </div>
             )}
           </div>

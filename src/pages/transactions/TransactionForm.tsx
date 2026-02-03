@@ -51,6 +51,7 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { useConfirmStore } from "@/store/useConfirmStore";
 
 const transactionSchema = z.object({
   type: z.number(),
@@ -66,12 +67,12 @@ type TransactionFormValues = z.infer<typeof transactionSchema>;
 
 const TransactionForm: React.FC = () => {
   const { t } = useTranslation();
+  const { confirm, isOpen } = useConfirmStore();
   const {
     editingTransaction,
     submitForm,
     handleSheetClose,
-    openConfirm,
-    isConfirmOpen,
+    deleteTransaction,
   } = useTransactionStore();
   const { categories } = useAppStore();
   const {
@@ -85,6 +86,8 @@ const TransactionForm: React.FC = () => {
     startEditCategory,
     addCategory,
     updateCategory,
+    deleteCategory,
+    submitCategoryForm,
   } = useCategoryStore();
   const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
 
@@ -109,17 +112,29 @@ const TransactionForm: React.FC = () => {
   // 카테고리 저장 (추가/수정 통합)
   const handleSaveCategory = async () => {
     if (!newCategoryName.trim()) return;
-    const payload = {
+    await submitCategoryForm({
       name: newCategoryName,
       icon: newCategoryIcon,
-      type: currentType,
-    };
+      type: String(currentType),
+    });
+  };
 
-    if (editingCategoryId) {
-      await updateCategory(editingCategoryId, payload);
-    } else {
-      await addCategory(payload);
-    }
+  const onClickDeleteCategory = (e: React.MouseEvent, cat: Category) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
+
+    confirm({
+      title: "카테고리 삭제",
+      description: `[${cat.name}] 카테고리를 삭제하시겠습니까? 관련 내역은 '미분류'로 변경됩니다.`,
+      onConfirm: async () => {
+        await deleteCategory(cat.id);
+        // 현재 폼에서 선택된 카테고리가 삭제된 것이라면 선택 해제
+        if (form.getValues("category_id") === cat.id) {
+          form.setValue("category_id", undefined);
+        }
+      },
+    });
   };
 
   const onInvalid = (errors: any) => {
@@ -242,7 +257,7 @@ const TransactionForm: React.FC = () => {
             <Popover
               open={isCategoryPopoverOpen}
               onOpenChange={(open) => {
-                if (isConfirmOpen) return;
+                if (isOpen) return;
                 setIsCategoryPopoverOpen(open);
                 if (!open) resetCategoryForm();
               }}
@@ -350,7 +365,10 @@ const TransactionForm: React.FC = () => {
                                     {cat.name}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div
+                                  className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
                                   <button
                                     onClick={(e) => {
                                       e.preventDefault();
@@ -362,10 +380,9 @@ const TransactionForm: React.FC = () => {
                                     <SquarePen className="w-3.5 h-3.5" />
                                   </button>
                                   <button
+                                    type="button"
                                     onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      openConfirm("category", cat.id);
+                                      onClickDeleteCategory(e, cat);
                                     }}
                                     className="p-1.5 hover:bg-slate-200 rounded-md text-slate-400 hover:text-rose-500"
                                   >
@@ -542,12 +559,22 @@ const TransactionForm: React.FC = () => {
           </Button>
           {editingTransaction && (
             <Button
+              type="button"
               variant="outline"
               className="flex-1 h-14 rounded-2xl border-slate-100 text-rose-500 hover:bg-rose-50"
-              onClick={() =>
-                editingTransaction?.id &&
-                openConfirm("transaction", editingTransaction.id)
-              }
+              onClick={() => {
+                confirm({
+                  title: "내역 삭제",
+                  description:
+                    "이 내역을 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.",
+                  onConfirm: async () => {
+                    if (editingTransaction.id) {
+                      deleteTransaction(editingTransaction.id);
+                      handleSheetClose();
+                    }
+                  },
+                });
+              }}
             >
               {t("delete")}
             </Button>

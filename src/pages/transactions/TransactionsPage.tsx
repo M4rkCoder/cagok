@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import TransactionsTable from "./TransactionsTable";
-import QuickInputTransaction from "./QuickInputTransaction";
 import { useHeaderStore } from "@/store/useHeaderStore";
 import TransactionSheet from "./TrasactionSheet";
 import { Button } from "@/components/ui/button";
-import { TableProperties } from "lucide-react";
+import { TableProperties, Zap } from "lucide-react";
+import QuickEntry from "./QuickEntry";
 
 const TransactionsPage = () => {
   const { t } = useTranslation();
@@ -19,7 +19,7 @@ const TransactionsPage = () => {
 
   const subSections = [
     { id: "table", component: <TransactionsTable /> },
-    { id: "quickinput", component: <QuickInputTransaction /> },
+    { id: "quickinput", component: <QuickEntry /> },
   ];
   const { setHeader, resetHeader, activeSection, setActiveSection } =
     useHeaderStore();
@@ -38,8 +38,8 @@ const TransactionsPage = () => {
               variant="outline"
               onClick={() => setActiveSection("quickinput")}
             >
-              <TableProperties className="mr-1" />
-              간편 대량 입력
+              <Zap className="mr-1" />
+              빠른 입력
             </Button>
             <TransactionSheet />
           </>
@@ -47,7 +47,8 @@ const TransactionsPage = () => {
 
         {activeSection === "quickinput" && (
           <Button variant="outline" onClick={() => setActiveSection("table")}>
-            리스트 보기
+            <TableProperties />
+            내역 조회
           </Button>
         )}
       </>
