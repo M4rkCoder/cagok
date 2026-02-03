@@ -1,5 +1,5 @@
 use super::{
-    Category, CategoryExpense, DailyExpense, MonthlyExpense, MonthlyOverview, RecurringFrequency,
+    Category, CategoryExpense, CategoryMonthlyAmount, DailyExpense, FinancialSummaryStats, MetricStats, MonthlyExpense, MonthlyFinancialSummaryItem, MonthlyOverview, RecurringFrequency,
     RecurringTransaction, Transaction, TransactionWithCategory,
 };
 use rusqlite::{params, Connection, Result};
@@ -533,8 +533,231 @@ impl DashboardRepository {
         })?;
         rows.collect()
     }
-}
 
+    // pub fn get_yearly_summary(conn: &Connection, year: i32) -> Result<Vec<YearlySummaryItem>> {
+    //     let query = "
+    //         SELECT 
+    //             CAST(strftime('%Y', date) AS INTEGER) as year,
+    //             COALESCE(SUM(CASE WHEN type = 0 THEN amount ELSE 0 END), 0) as total_income,
+    //             COALESCE(SUM(CASE WHEN type = 1 THEN amount ELSE 0 END), 0) as total_expense
+    //         FROM transactions
+    //         WHERE strftime('%Y', date) = ?1
+    //         GROUP BY year
+    //         ORDER BY year ASC
+    //     ";
+
+    //     let mut stmt = conn.prepare(query)?;
+    //     let rows = stmt.query_map(params![year.to_string()], |row| {
+    //         let total_income: f64 = row.get(1)?;
+    //         let total_expense: f64 = row.get(2)?;
+    //         Ok(YearlySummaryItem {
+    //             year: row.get(0)?,
+    //             total_income,
+    //             total_expense,
+    //             net_income: total_income - total_expense,
+    //         })
+    //     })?;
+    //     rows.collect()
+    // }
+
+    pub fn get_monthly_financial_summary(
+        conn: &Connection,
+        year: i32,
+    ) -> Result<Vec<MonthlyFinancialSummaryItem>> {
+        let mut monthly_summary = Vec::new();
+
+        for month in 1..=12 {
+            let year_month = format!("{}-{:02}", year, month);
+            let start_date = format!("{}-01", year_month);
+            let end_date = format!("{}-31", year_month);
+
+            let total_income: f64 = conn.query_row(
+                "SELECT COALESCE(SUM(amount), 0) FROM transactions 
+                 WHERE type = 0 AND date BETWEEN ?1 AND ?2",
+                params![start_date, end_date],
+                |row| row.get(0),
+            )?;
+
+            let total_expense: f64 = conn.query_row(
+                "SELECT COALESCE(SUM(amount), 0) FROM transactions 
+                 WHERE type = 1 AND date BETWEEN ?1 AND ?2",
+                params![start_date, end_date],
+                |row| row.get(0),
+            )?;
+
+            monthly_summary.push(MonthlyFinancialSummaryItem {
+                year_month,
+                total_income,
+                total_expense,
+                net_income: total_income - total_expense,
+            });
+        }
+
+        Ok(monthly_summary)
+    }
+
+    // Helper to get stats (total, count, max, min) for a given type and year
+    fn get_amount_stats_by_year_and_type(
+        conn: &Connection,
+        year: i32,
+        tx_type: i32,
+    ) -> Result<MetricStats, rusqlite::Error> {
+        let start_date = format!("{}-01-01", year);
+        let end_date = format!("{}-12-31", year);
+
+        let query = "
+            SELECT
+                COALESCE(SUM(amount), 0) AS total,
+                COUNT(amount) AS count,
+                COALESCE(MAX(amount), 0) AS max,
+                COALESCE(MIN(amount), 0) AS min
+            FROM transactions
+            WHERE type = ?1 AND date BETWEEN ?2 AND ?3
+        ";
+
+        conn.query_row(query, params![tx_type, start_date, end_date], |row| {
+            let total: f64 = row.get(0)?;
+            let count: i32 = row.get(1)?;
+            let max: f64 = row.get(2)?;
+            let min: f64 = row.get(3)?;
+            let average = if count > 0 { total / count as f64 } else { 0.0 };
+
+            Ok(MetricStats {
+                total,
+                average,
+                max,
+                min,
+            })
+        })
+    }
+
+    // Helper to get stats (total, count, max, min) for fixed expenses for a given year
+    fn get_fixed_expense_stats_by_year(
+        conn: &Connection,
+        year: i32,
+    ) -> Result<MetricStats, rusqlite::Error> {
+        let start_date = format!("{}-01-01", year);
+        let end_date = format!("{}-12-31", year);
+
+        let query = "
+            SELECT
+                COALESCE(SUM(amount), 0) AS total,
+                COUNT(amount) AS count,
+                COALESCE(MAX(amount), 0) AS max,
+                COALESCE(MIN(amount), 0) AS min
+            FROM transactions
+            WHERE type = 1 AND is_fixed = 1 AND date BETWEEN ?1 AND ?2
+        ";
+
+        conn.query_row(query, params![start_date, end_date], |row| {
+            let total: f64 = row.get(0)?;
+            let count: i32 = row.get(1)?;
+            let max: f64 = row.get(2)?;
+            let min: f64 = row.get(3)?;
+            let average = if count > 0 { total / count as f64 } else { 0.0 };
+
+            Ok(MetricStats {
+                total,
+                average,
+                max,
+                min,
+            })
+        })
+    }
+
+    pub fn get_financial_summary_stats_for_year(
+        conn: &Connection,
+        year: i32,
+    ) -> Result<FinancialSummaryStats, String> {
+        let income_stats = Self::get_amount_stats_by_year_and_type(conn, year, 0)
+            .map_err(|e| format!("Failed to get income stats: {}", e))?;
+        let expense_stats = Self::get_amount_stats_by_year_and_type(conn, year, 1)
+            .map_err(|e| format!("Failed to get expense stats: {}", e))?;
+        let fixed_expense_stats = Self::get_fixed_expense_stats_by_year(conn, year)
+            .map_err(|e| format!("Failed to get fixed expense stats: {}", e))?;
+
+        let net_income_total = income_stats.total - expense_stats.total;
+        let net_income_average = income_stats.average - expense_stats.average; // This is a simplification, a true average net income across months might be different
+
+        // To get max/min net income, we need monthly net incomes, which is already done by get_monthly_financial_summary
+        let monthly_financial_summary_items = Self::get_monthly_financial_summary(conn, year)
+            .map_err(|e| format!("Failed to get monthly financial summary for net income stats: {}", e))?;
+
+        let mut net_income_max = f64::NEG_INFINITY;
+        let mut net_income_min = f64::INFINITY;
+
+        if !monthly_financial_summary_items.is_empty() {
+            for item in &monthly_financial_summary_items {
+                net_income_max = net_income_max.max(item.net_income);
+                net_income_min = net_income_min.min(item.net_income);
+            }
+        } else {
+            net_income_max = 0.0;
+            net_income_min = 0.0;
+        }
+
+        let net_income_stats = MetricStats {
+            total: net_income_total,
+            average: net_income_average,
+            max: net_income_max,
+            min: net_income_min,
+        };
+
+        Ok(FinancialSummaryStats {
+            income: income_stats,
+            expense: expense_stats,
+            net_income: net_income_stats,
+            fixed_expense: fixed_expense_stats,
+        })
+    }
+
+    pub fn get_monthly_category_amounts_for_year(
+        conn: &Connection,
+        year: i32,
+        category_id: Option<i64>,
+    ) -> Result<Vec<CategoryMonthlyAmount>, rusqlite::Error> {
+        let mut query = String::from(
+            "SELECT 
+                strftime('%Y-%m', t.date) as year_month,
+                c.id as category_id,
+                c.name as category_name,
+                c.icon as category_icon,
+                SUM(t.amount) as total_amount,
+                t.type
+            FROM transactions t
+            INNER JOIN categories c ON t.category_id = c.id
+            WHERE strftime('%Y', t.date) = ?1
+            ",
+        );
+
+        let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![Box::new(year.to_string())];
+
+        if let Some(cat_id) = category_id {
+            query.push_str(" AND c.id = ?2");
+            params.push(Box::new(cat_id));
+        }
+
+        query.push_str(
+            " GROUP BY year_month, c.id, c.name, c.icon, t.type
+              ORDER BY year_month ASC, t.type ASC, total_amount DESC
+            ",
+        );
+
+        let mut stmt = conn.prepare(&query)?;
+        let rows = stmt.query_map(rusqlite::params_from_iter(params.iter().map(|p| p.as_ref())), |row| {
+            Ok(CategoryMonthlyAmount {
+                year_month: row.get(0)?,
+                category_id: row.get(1)?,
+                category_name: row.get(2)?,
+                category_icon: row.get(3)?,
+                total_amount: row.get(4)?,
+                r#type: row.get(5)?,
+            })
+        })?;
+
+        rows.collect()
+    }
+}
 
 pub struct RecurringTransactionRepository;
 

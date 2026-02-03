@@ -1,8 +1,8 @@
 use super::{ComparisonMetric, ComparisonType};
 use crate::db::repository::DashboardRepository;
-use crate::db::{CategoryExpense, DailyExpense, MonthlyExpense, MonthlyOverview, TransactionWithCategory };
+use crate::db::{CategoryExpense, CategoryMonthlyAmount, DailyExpense, FinancialSummaryStats, MonthlyExpense, MonthlyFinancialSummaryItem, MonthlyOverview, TransactionWithCategory, YearlySummaryItem };
 use rusqlite::Connection;
-use chrono::{Local, NaiveDate, Duration};
+use chrono::{Local, NaiveDate, Duration, Datelike};
 
 pub struct DashboardService;
 
@@ -87,6 +87,71 @@ impl DashboardService {
         DashboardRepository::get_monthly_transactions(conn, months, tx_type)
             .map_err(|e| format!("Failed to get monthly expenses: {}", e))
     }
+
+    pub fn get_yearly_financial_summary(
+        conn: &Connection,
+        years_to_look_back: i32,
+    ) -> Result<Vec<YearlySummaryItem>, String> {
+        let current_year = Local::now().year();
+        let mut yearly_summary = Vec::new();
+
+        for i in 0..years_to_look_back {
+            let year = current_year - i;
+            let start_date = format!("{}-01-01", year);
+            let end_date = format!("{}-12-31", year);
+
+            let total_income = DashboardRepository::get_amount_sum_by_range(
+                conn,
+                0, // income
+                &start_date,
+                &end_date,
+            ).map_err(|e| format!("Failed to get total income for year {}: {}", year, e))? as f64;
+
+            let total_expense = DashboardRepository::get_amount_sum_by_range(
+                conn,
+                1, // expense
+                &start_date,
+                &end_date,
+            ).map_err(|e| format!("Failed to get total expense for year {}: {}", year, e))? as f64;
+
+            yearly_summary.push(YearlySummaryItem {
+                year,
+                total_income,
+                total_expense,
+                net_income: total_income - total_expense,
+            });
+        }
+
+        // Reverse to show oldest year first (optional, can be done in frontend)
+        yearly_summary.reverse();
+        Ok(yearly_summary)
+    }
+
+    pub fn get_monthly_financial_summary(
+        conn: &Connection,
+        year: i32,
+    ) -> Result<Vec<MonthlyFinancialSummaryItem>, String> {
+        DashboardRepository::get_monthly_financial_summary(conn, year)
+            .map_err(|e| format!("Failed to get monthly financial summary for year {}: {}", year, e))
+    }
+
+    pub fn get_financial_summary_stats(
+        conn: &Connection,
+        year: i32,
+    ) -> Result<FinancialSummaryStats, String> {
+        DashboardRepository::get_financial_summary_stats_for_year(conn, year)
+            .map_err(|e| format!("Failed to get financial summary stats for year {}: {}", year, e))
+    }
+
+    pub fn get_monthly_category_amounts(
+        conn: &Connection,
+        year: i32,
+        category_id: Option<i64>,
+    ) -> Result<Vec<CategoryMonthlyAmount>, String> {
+        DashboardRepository::get_monthly_category_amounts_for_year(conn, year, category_id)
+            .map_err(|e| format!("Failed to get monthly category amounts for year {}: {}", year, e))
+    }
+
     pub fn compare(
         conn: &Connection,
         comparison_type: ComparisonType,

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import CategoryForm from "./CategoryForm";
 import type { Category } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -24,22 +23,20 @@ import { useHeaderStore } from "@/store/useHeaderStore";
 import { cn } from "@/lib/utils";
 import { useCategoryStore } from "@/store/useCategoryStore";
 import { useAppStore } from "@/store/useAppStore";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 const CategorySettings = () => {
   const { setHeader, resetHeader } = useHeaderStore();
   const categories = useAppStore((s) => s.categories);
-  const editingCategoryId = useCategoryStore((s) => s.editingCategoryId);
+  const { editingCategoryId, startEditCategory, deleteCategory, resetCategoryForm, submitCategoryForm } = useCategoryStore();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"income" | "expense">("expense"); // Default to expense
+
   useEffect(() => {
     setHeader("카테고리 설정");
     return () => resetHeader();
   }, [setHeader, resetHeader]);
-  const {
-    submitCategoryForm,
-    startEditCategory,
-    deleteCategory,
-    resetCategoryForm,
-  } = useCategoryStore();
-  const [sheetOpen, setSheetOpen] = useState(false);
 
   const { incomeCategories, expenseCategories } = useMemo(() => {
     return categories.reduce(
@@ -54,7 +51,7 @@ const CategorySettings = () => {
       {
         incomeCategories: [] as Category[],
         expenseCategories: [] as Category[],
-      }
+      },
     );
   }, [categories]);
 
@@ -176,10 +173,30 @@ const CategorySettings = () => {
           </p>
         </div>
       </div>
-      <div className="flex flex-col gap-6">
-        <CategoryList title="수입" categories={incomeCategories} type={0} />
-        <CategoryList title="지출" categories={expenseCategories} type={1} />
-      </div>
+
+      <Tabs defaultValue="expense" value={activeTab} onValueChange={(value) => setActiveTab(value as "income" | "expense")}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="income">
+            수입
+            <Badge variant="secondary" className="ml-2">
+              {incomeCategories.length}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="expense">
+            지출
+            <Badge variant="secondary" className="ml-2">
+              {expenseCategories.length}
+            </Badge>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="income">
+          <CategoryList title="수입 카테고리" categories={incomeCategories} type={0} />
+        </TabsContent>
+        <TabsContent value="expense">
+          <CategoryList title="지출 카테고리" categories={expenseCategories} type={1} />
+        </TabsContent>
+      </Tabs>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen} modal={false}>
         <SheetContent

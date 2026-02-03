@@ -20,4 +20,9 @@ export type {
   MonthlyExpense,
   TransactionWithCategory,
   DialogState,
+  YearlySummaryItem,
+  MonthlyFinancialSummaryItem,
+  FinancialSummaryStats,
+  MetricStats,
+  CategoryMonthlyAmount,
 } from "./dashboard";

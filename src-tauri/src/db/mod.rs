@@ -80,6 +80,75 @@ pub struct MonthlyExpense {
     pub transaction_count: i32,
 }
 
+// 대시보드: 연간 요약 구조체
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct YearlySummaryItem {
+    pub year: i32,
+    pub total_income: f64,
+    pub total_expense: f64,
+    pub net_income: f64,
+}
+
+// 대시보드: 월별 재무 요약 구조체
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct MonthlyFinancialSummaryItem {
+    pub year_month: String,
+    pub total_income: f64,
+    pub total_expense: f64,
+    pub net_income: f64,
+}
+
+// 재무 요약 통계값 개별 항목
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct MetricStats {
+    pub total: f64,
+    pub average: f64,
+    pub max: f64,
+    pub min: f64,
+}
+
+impl Default for MetricStats {
+    fn default() -> Self {
+        MetricStats {
+            total: 0.0,
+            average: 0.0,
+            max: f64::NEG_INFINITY,
+            min: f64::INFINITY,
+        }
+    }
+}
+
+// 연간 재무 요약 통계 전체 구조체
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FinancialSummaryStats {
+    pub income: MetricStats,
+    pub expense: MetricStats,
+    pub net_income: MetricStats,
+    pub fixed_expense: MetricStats,
+}
+
+impl Default for FinancialSummaryStats {
+    fn default() -> Self {
+        FinancialSummaryStats {
+            income: MetricStats::default(),
+            expense: MetricStats::default(),
+            net_income: MetricStats::default(),
+            fixed_expense: MetricStats::default(),
+        }
+    }
+}
+
+// 대시보드: 월별 카테고리별 금액
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CategoryMonthlyAmount {
+    pub year_month: String,
+    pub category_id: i64,
+    pub category_name: String,
+    pub category_icon: String,
+    pub total_amount: f64,
+    pub r#type: i64, // 0: income, 1: expense
+}
+
 // 반복 지출 관련
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 #[serde(rename_all = "lowercase")]

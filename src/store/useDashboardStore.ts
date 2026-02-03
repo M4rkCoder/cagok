@@ -9,7 +9,27 @@ import {
   ComparisonType,
   ComparisonMetric,
   TransactionWithCategory,
+  FinancialSummaryStats,
+  MonthlyFinancialSummaryItem,
+  CategoryMonthlyAmount,
+  MetricStats
 } from "@/types";
+
+// Default empty MetricStats for safe access (re-defined here for store-specific use if needed)
+const emptyMetricStats: MetricStats = {
+  total: 0,
+  average: 0,
+  max: 0,
+  min: 0,
+};
+
+// Default empty FinancialSummaryStats for safe access when fetched data is null
+const defaultFinancialSummaryStats: FinancialSummaryStats = {
+  income: emptyMetricStats,
+  expense: emptyMetricStats,
+  netIncome: emptyMetricStats,
+  fixedExpense: emptyMetricStats,
+};
 
 interface DashboardState {
   overview: MonthlyOverview | null;
@@ -21,9 +41,17 @@ interface DashboardState {
   topIncomes: TransactionWithCategory[];
   topFixedExpenses: TransactionWithCategory[];
   monthlyExpenses: MonthlyExpense[];
+  monthlyFinancialSummary: MonthlyFinancialSummaryItem[];
+  financialSummaryStats: FinancialSummaryStats | null;
+  categoryMonthlyAmounts: CategoryMonthlyAmount[];
   comparisons: Record<ComparisonType, ComparisonMetric | null>;
   loading: boolean;
   loadDashboardData: (selectedMonth: string) => Promise<void>;
+  loadYearlyDashboardData: (year: number) => Promise<void>;
+  loadCategoryMonthlyAmounts: (
+    year: number,
+    categoryId?: number | null,
+  ) => Promise<void>;
 }
 
 const getMonthRange = (yearMonth: string) => {
@@ -45,7 +73,7 @@ const getMonthRange = (yearMonth: string) => {
   };
 };
 
-export const useDashboardStore = create<DashboardState>((set) => ({
+export const useDashboardStore = create<DashboardState>((set, get) => ({
   overview: null,
   categories: [],
   categoriesIncome: [],
@@ -55,6 +83,9 @@ export const useDashboardStore = create<DashboardState>((set) => ({
   topIncomes: [],
   topFixedExpenses: [],
   monthlyExpenses: [],
+  monthlyFinancialSummary: [],
+  financialSummaryStats: null,
+  categoryMonthlyAmounts: [],
   comparisons: {
     Expense: null,
     Income: null,
@@ -159,6 +190,46 @@ export const useDashboardStore = create<DashboardState>((set) => ({
       });
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  loadYearlyDashboardData: async (year: number) => {
+    try {
+      set({ loading: true });
+      const [financialSummaryData, monthlyData] = await Promise.all([
+        invoke<FinancialSummaryStats | null>("get_financial_summary_stats_command", { year }),
+        invoke<MonthlyFinancialSummaryItem[]>("get_monthly_financial_summary_command", { year }),
+      ]);
+
+      set({
+        financialSummaryStats: financialSummaryData ?? defaultFinancialSummaryStats,
+        monthlyFinancialSummary: monthlyData ?? [],
+      });
+
+      // Initially load all monthly category amounts for the selected year
+      get().loadCategoryMonthlyAmounts(year, null);
+    } catch (error) {
+      console.error("Failed to load yearly dashboard data:", error);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  loadCategoryMonthlyAmounts: async (
+    year: number,
+    categoryId?: number | null,
+  ) => {
+    try {
+      set({ loading: true });
+      const amounts = await invoke<CategoryMonthlyAmount[]>(
+        "get_monthly_category_amounts_command",
+        { year, categoryId },
+      );
+      set({ categoryMonthlyAmounts: amounts ?? [] });
+    } catch (error) {
+      console.error("Failed to load monthly category amounts:", error);
     } finally {
       set({ loading: false });
     }

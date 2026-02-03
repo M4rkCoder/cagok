@@ -1,4 +1,4 @@
-use crate::db::{CategoryExpense, DailyExpense, DbConnection, MonthlyExpense, MonthlyOverview, TransactionWithCategory};
+use crate::db::{CategoryExpense, CategoryMonthlyAmount, DailyExpense, DbConnection, FinancialSummaryStats, MonthlyExpense, MonthlyFinancialSummaryItem, MonthlyOverview, TransactionWithCategory, YearlySummaryItem};
 use crate::services::dashboard::DashboardService;
 use crate::services::{ComparisonMetric, ComparisonType};
 use tauri::State;
@@ -39,6 +39,43 @@ pub fn get_monthly_transactions(
 ) -> Result<Vec<MonthlyExpense>, String> {
     let conn = db.0.lock().unwrap();
     DashboardService::get_monthly_transactions(&conn, months, tx_type)
+}
+
+#[tauri::command]
+pub fn get_yearly_financial_summary_command(
+    db: State<'_, DbConnection>,
+    years_to_look_back: i32,
+) -> Result<Vec<YearlySummaryItem>, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardService::get_yearly_financial_summary(&conn, years_to_look_back)
+}
+
+#[tauri::command]
+pub fn get_monthly_financial_summary_command(
+    db: State<'_, DbConnection>,
+    year: i32,
+) -> Result<Vec<MonthlyFinancialSummaryItem>, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardService::get_monthly_financial_summary(&conn, year)
+}
+
+#[tauri::command]
+pub fn get_financial_summary_stats_command(
+    db: State<'_, DbConnection>,
+    year: i32,
+) -> Result<FinancialSummaryStats, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardService::get_financial_summary_stats(&conn, year)
+}
+
+#[tauri::command]
+pub fn get_monthly_category_amounts_command(
+    db: State<'_, DbConnection>,
+    year: i32,
+    category_id: Option<i64>,
+) -> Result<Vec<CategoryMonthlyAmount>, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardService::get_monthly_category_amounts(&conn, year, category_id)
 }
 
 #[tauri::command]
