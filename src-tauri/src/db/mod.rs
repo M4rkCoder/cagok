@@ -120,6 +120,7 @@ impl Default for MetricStats {
 
 // 연간 재무 요약 통계 전체 구조체
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct FinancialSummaryStats {
     pub income: MetricStats,
     pub expense: MetricStats,

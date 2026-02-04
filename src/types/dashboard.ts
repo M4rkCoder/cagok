@@ -59,20 +59,6 @@ export interface YearlySummaryItem {
   net_income: number;
 }
 
-export interface YearlySummaryItem {
-  year: number;
-  total_income: number;
-  total_expense: number;
-  net_income: number;
-}
-
-export interface YearlySummaryItem {
-  year: number;
-  total_income: number;
-  total_expense: number;
-  net_income: number;
-}
-
 export interface CategoryMonthlyAmount {
   year_month: string;
   category_id: number;
