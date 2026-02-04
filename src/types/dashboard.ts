@@ -49,7 +49,9 @@ export interface MonthlyFinancialSummaryItem {
   year_month: string;
   total_income: number;
   total_expense: number;
-  net_income: number;
+  netIncome: number;
+  fixed_expense: number;
+  variable_expense: number;
 }
 
 export interface YearlySummaryItem {

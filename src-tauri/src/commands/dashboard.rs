@@ -1,4 +1,7 @@
-use crate::db::{CategoryExpense, CategoryMonthlyAmount, DailyExpense, DbConnection, FinancialSummaryStats, MonthlyExpense, MonthlyFinancialSummaryItem, MonthlyOverview, TransactionWithCategory, YearlySummaryItem};
+use crate::db::{
+    CategoryExpense, DailyExpense, DbConnection, MonthlyExpense, MonthlyFinancialSummaryItem,
+    MonthlyOverview, TransactionWithCategory, YearlySummaryItem, FinancialSummaryStats, CategoryMonthlyAmount, YearlyDashboardData
+};
 use crate::services::dashboard::DashboardService;
 use crate::services::{ComparisonMetric, ComparisonType};
 use tauri::State;
@@ -136,4 +139,13 @@ pub fn get_top_incomes(
 ) -> Result<Vec<TransactionWithCategory>, String> {
     let conn = db.0.lock().unwrap();
     DashboardService::get_top_incomes(&conn, year_month, limit)
+}
+
+#[tauri::command]
+pub fn get_yearly_dashboard_data_command(
+    db: State<'_, DbConnection>,
+    year: i32,
+) -> Result<YearlyDashboardData, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardService::get_yearly_dashboard_data(&conn, year)
 }

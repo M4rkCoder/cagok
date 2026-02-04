@@ -198,14 +198,15 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   loadYearlyDashboardData: async (year: number) => {
     try {
       set({ loading: true });
-      const [financialSummaryData, monthlyData] = await Promise.all([
-        invoke<FinancialSummaryStats | null>("get_financial_summary_stats_command", { year }),
-        invoke<MonthlyFinancialSummaryItem[]>("get_monthly_financial_summary_command", { year }),
-      ]);
+      const yearlyData = await invoke<{
+        financialSummaryStats: FinancialSummaryStats;
+        monthlyFinancialSummary: MonthlyFinancialSummaryItem[];
+      } | null>("get_yearly_dashboard_data_command", { year });
+
 
       set({
-        financialSummaryStats: financialSummaryData ?? defaultFinancialSummaryStats,
-        monthlyFinancialSummary: monthlyData ?? [],
+        financialSummaryStats: yearlyData?.financialSummaryStats ?? defaultFinancialSummaryStats,
+        monthlyFinancialSummary: yearlyData?.monthlyFinancialSummary ?? [],
       });
 
       // Initially load all monthly category amounts for the selected year

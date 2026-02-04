@@ -34,9 +34,10 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         dashboard::get_top_fixed_expenses,
         dashboard::get_top_incomes,
         dashboard::get_yearly_financial_summary_command,
+        dashboard::get_monthly_category_amounts_command,
+        dashboard::get_yearly_dashboard_data_command,
         dashboard::get_monthly_financial_summary_command,
         dashboard::get_financial_summary_stats_command,
-        dashboard::get_monthly_category_amounts_command,
         //recurring
         recurring::get_recurring_transactions,
         recurring::create_recurring_transaction,

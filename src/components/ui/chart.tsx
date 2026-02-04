@@ -10,6 +10,7 @@ export type ChartConfig = {
   [k in string]: {
     label?: React.ReactNode;
     icon?: React.ComponentType;
+    negativeColor?: string; // Add this line
   } & (
     | { color?: string; theme?: never }
     | { color?: never; theme: Record<keyof typeof THEMES, string> }
@@ -69,7 +70,7 @@ function ChartContainer({
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(
-    ([, config]) => config.theme || config.color
+    ([, config]) => config.theme || config.color || config.negativeColor
   );
 
   if (!colorConfig.length) {
@@ -88,7 +89,13 @@ ${colorConfig
     const color =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
       itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+    const negativeColor = itemConfig.negativeColor;
+    return [
+      color ? `  --color-${key}: ${color};` : null,
+      negativeColor ? `  --color-${key}-negative: ${negativeColor};` : null,
+    ]
+      .filter(Boolean)
+      .join("\n");
   })
   .join("\n")}
 }

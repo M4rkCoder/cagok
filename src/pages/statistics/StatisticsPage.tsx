@@ -52,6 +52,7 @@ import { SummaryCards } from "./SummaryCard";
 import { YearlyTrendChart } from "./YearlyTrendChart";
 import { CategoryMonthlyTrendSection } from "./CategoryMonthlyTrendSection";
 import { CategoryRatioChart } from "./CategoryRatioCharts";
+import { CategoryYearlyTreemap } from "./CategoryYearlyTreemap";
 
 const COLORS = [
   "#8b5cf6",
@@ -81,7 +82,7 @@ const emptyFinancialSummaryStats: FinancialSummaryStats = {
 export default function StatisticsPage() {
   const { setHeader, resetHeader } = useHeaderStore();
   const [selectedYear, setSelectedYear] = useState<number>(
-    new Date().getFullYear()
+    new Date().getFullYear(),
   );
   const [dialogState, setDialogState] = useState<DialogState>({
     open: false,
@@ -111,7 +112,7 @@ export default function StatisticsPage() {
   useEffect(() => {
     setHeader(
       "통계 및 분석",
-      <YearPicker selectedYear={selectedYear} onYearChange={setSelectedYear} />
+      <YearPicker selectedYear={selectedYear} onYearChange={setSelectedYear} />,
     );
     return () => resetHeader();
   }, [selectedYear, setHeader, resetHeader]);
@@ -136,7 +137,7 @@ export default function StatisticsPage() {
   const handleCategoryMonthlyClick = async (
     categoryId: number,
     categoryName: string,
-    type: 0 | 1
+    type: 0 | 1,
   ) => {
     try {
       const transactions = await invoke<TransactionWithCategory[]>(
@@ -145,7 +146,7 @@ export default function StatisticsPage() {
           categoryId,
           yearMonth: `${selectedYear}-01`,
           txType: type,
-        }
+        },
       );
       setDialogState({
         open: true,
@@ -171,14 +172,14 @@ export default function StatisticsPage() {
   }
 
   // Calculate min and max for net income to center the Y-axis at 0
-  const allNetIncomes = monthlyFinancialSummary.map((item) => item.net_income);
+  const allNetIncomes = monthlyFinancialSummary.map((item) => item.netIncome); // Use camelCase
   const maxNetIncome = Math.max(0, ...allNetIncomes, 1); // Ensure at least 1 to prevent division by zero
   const minNetIncome = Math.min(0, ...allNetIncomes, -1); // Ensure at least -1
   const symmetricMax = Math.max(Math.abs(maxNetIncome), Math.abs(minNetIncome));
 
   const totalExpense = categories.reduce(
     (sum, cat) => sum + cat.total_amount,
-    0
+    0,
   );
   const pieChartData = categories.map((cat, index) => ({
     name: cat.category_name,
@@ -188,7 +189,7 @@ export default function StatisticsPage() {
 
   const totalIncome = categoriesIncome.reduce(
     (sum, cat) => sum + cat.total_amount,
-    0
+    0,
   );
   const pieChartIncomeData = categoriesIncome.map((cat, index) => ({
     name: cat.category_name,
@@ -233,7 +234,7 @@ export default function StatisticsPage() {
 
   // Dynamically generate bars and assign colors
   const uniqueCategoriesInChart = Array.from(
-    new Set(categoryMonthlyAmounts.map((item) => item.category_id))
+    new Set(categoryMonthlyAmounts.map((item) => item.category_id)),
   ).map((id) => categories.find((cat) => cat.category_id === id));
 
   const categoryBars = uniqueCategoriesInChart
@@ -264,25 +265,25 @@ export default function StatisticsPage() {
     });
 
   const allMonthlyCategoryNetIncomes = monthlyChartData.map(
-    (item) => item.net_income as number
+    (item) => item.net_income as number,
   );
   const maxMonthlyCategoryNetIncome = Math.max(
     0,
     ...allMonthlyCategoryNetIncomes,
-    1
+    1,
   );
   const minMonthlyCategoryNetIncome = Math.min(
     0,
     ...allMonthlyCategoryNetIncomes,
-    -1
+    -1,
   );
   const symmetricMaxMonthlyCategory = Math.max(
     Math.abs(maxMonthlyCategoryNetIncome),
-    Math.abs(minMonthlyCategoryNetIncome)
+    Math.abs(minMonthlyCategoryNetIncome),
   );
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="px-4 py-6 space-y-6">
       {/* 1. 요약 카드 */}
       <SummaryCards
         stats={financialSummaryStats ?? emptyFinancialSummaryStats}
@@ -305,7 +306,7 @@ export default function StatisticsPage() {
         categoryMonthlyAmounts={categoryMonthlyAmounts}
         formatCurrency={formatCurrency}
       />
-
+      <CategoryYearlyTreemap year={selectedYear} />
       {/* 4. 비율 차트 섹션 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <CategoryRatioChart
@@ -325,6 +326,8 @@ export default function StatisticsPage() {
       {/* 다이얼로그들 */}
       {/* <TransactionListDialog />
       <DailyTransactionsDialog /> */}
+
+      {/* 5. 카테고리별 연간 지출 트리맵 */}
     </div>
   );
 }

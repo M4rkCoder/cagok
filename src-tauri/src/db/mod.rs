@@ -9,7 +9,6 @@ pub struct DbConnection(pub Mutex<Connection>);
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
-
 pub struct Category {
     pub id: Option<i64>,
     pub name: String,
@@ -89,13 +88,25 @@ pub struct YearlySummaryItem {
     pub net_income: f64,
 }
 
-// 대시보드: 월별 재무 요약 구조체
+// Repository에서 서비스 레이어로 전달할 월별 트랜잭션의 raw 데이터 구조체
+#[derive(Debug, Clone)]
+pub struct MonthlyTransactionRaw {
+    pub year_month: String,
+    pub amount: f64,
+    pub r#type: i64, // 0: income, 1: expense
+    pub is_fixed: i64, // 0: variable, 1: fixed
+}
+
+// 대시보드: 월별 재무 요약 구조체 (Service -> Frontend 전달용)
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct MonthlyFinancialSummaryItem {
     pub year_month: String,
     pub total_income: f64,
     pub total_expense: f64,
     pub net_income: f64,
+    pub fixed_expense: f64,
+    pub variable_expense: f64,
 }
 
 // 재무 요약 통계값 개별 항목
@@ -192,4 +203,12 @@ pub struct RecurringTransaction {
     pub is_active: bool,
     pub last_created_date: Option<String>,
     pub remarks: Option<String>,
+}
+
+// 연간 대시보드 데이터 통합 응답 구조체
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct YearlyDashboardData {
+    pub financial_summary_stats: FinancialSummaryStats,
+    pub monthly_financial_summary: Vec<MonthlyFinancialSummaryItem>,
 }
