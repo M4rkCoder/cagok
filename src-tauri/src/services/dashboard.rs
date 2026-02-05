@@ -6,7 +6,7 @@ use crate::db::{
 YearlyDashboardData,
 };
 use rusqlite::Connection;
-use chrono::{Local, NaiveDate, Duration, Datelike};
+use chrono::{Local, NaiveDate, Duration, Datelike, Months};
 use std::collections::HashMap;
 
 pub struct DashboardService;
@@ -126,90 +126,96 @@ impl DashboardService {
 
     pub fn get_monthly_financial_summary(
         conn: &Connection,
-        year: i32,
+        base_month: &str, // String -> &str
     ) -> Result<Vec<MonthlyFinancialSummaryItem>, String> {
-        let raw_transactions = DashboardRepository::get_transactions_by_year(conn, year).map_err(|e| {
-            format!(
-                "Failed to get raw monthly financial summary for year {}: {}",
-                year, e
-            )
+        // 1. Repository 함수 호출 (이미 &str을 받으므로 그대로 전달)
+        let raw_transactions = DashboardRepository::get_transactions_recent_year(conn, base_month).map_err(|e| {
+            format!("Failed to get raw monthly financial summary for base month {}: {}", base_month, e)
         })?;
-
-        let mut monthly_data: HashMap<String, (f64, f64, f64)> = HashMap::new(); // (total_income, total_expense, fixed_expense)
-
+    
+        let mut monthly_data: HashMap<String, (f64, f64, f64)> = HashMap::new();
+    
         for tx in raw_transactions {
-            let entry = monthly_data
-                .entry(tx.year_month)
-                .or_insert((0.0, 0.0, 0.0));
-
-            if tx.r#type == 0 { // Income
+            let entry = monthly_data.entry(tx.year_month).or_insert((0.0, 0.0, 0.0));
+            if tx.r#type == 0 {
                 entry.0 += tx.amount;
-            } else { // Expense
+            } else {
                 entry.1 += tx.amount;
-                if tx.is_fixed == 1 { // Fixed expense
-                    entry.2 += tx.amount;
-                }
+                if tx.is_fixed == 1 { entry.2 += tx.amount; }
             }
         }
-
+    
         let mut monthly_summary = Vec::new();
-
-        for month in 1..=12 {
-            let year_month = format!("{}-{:02}", year, month);
+        
+        // 2. 날짜 파싱 (참조를 사용하여 새 String 생성)
+        let end_date = NaiveDate::parse_from_str(&format!("{}-01", base_month), "%Y-%m-%d")
+            .map_err(|_| format!("Invalid date format: {}. Expected YYYY-MM", base_month))?;
+    
+        for i in (0..12).rev() {
+            let current_date = end_date.checked_sub_months(Months::new(i as u32))
+                .ok_or_else(|| "Date calculation error".to_string())?;
             
-            let (total_income, total_expense, fixed_expense) = *monthly_data.get(&year_month).unwrap_or(&(0.0, 0.0, 0.0));
+            let year_month = current_date.format("%Y-%m").to_string();
+            let (total_income, total_expense, fixed_expense) = 
+                monthly_data.get(&year_month).cloned().unwrap_or((0.0, 0.0, 0.0));
             
-            let net_income = total_income - total_expense;
-            let variable_expense = total_expense - fixed_expense;
-
             monthly_summary.push(MonthlyFinancialSummaryItem {
                 year_month,
                 total_income,
                 total_expense,
-                net_income,
+                net_income: total_income - total_expense,
                 fixed_expense,
-                variable_expense,
+                variable_expense: total_expense - fixed_expense,
             });
         }
-
+    
         Ok(monthly_summary)
     }
 
     pub fn get_financial_summary_stats(
         conn: &Connection,
-        year: i32,
+        base_month: &str, // &str로 변경
     ) -> Result<FinancialSummaryStats, String> {
-        let raw_transactions = DashboardRepository::get_transactions_by_year(conn, year)
-            .map_err(|e| format!("Failed to get raw transactions for year {}: {}", year, e))?;
-
+        // 1. Repository 호출 (최근 12개월 범위 조회)
+        let raw_transactions = DashboardRepository::get_transactions_recent_year(conn, base_month)
+            .map_err(|e| format!("Failed to get raw transactions for base month {}: {}", base_month, e))?;
+    
         // Helper to aggregate data by month
-        let mut monthly_data: HashMap<String, (f64, f64, f64, i32, i32, i32)> = HashMap::new(); // (total_income, total_expense, fixed_expense, income_count, expense_count, fixed_expense_count)
-
+        let mut monthly_data: HashMap<String, (f64, f64, f64, i32, i32, i32)> = HashMap::new();
+    
         for tx in raw_transactions {
             let entry = monthly_data
                 .entry(tx.year_month)
                 .or_insert((0.0, 0.0, 0.0, 0, 0, 0));
-
+    
             if tx.r#type == 0 { // Income
                 entry.0 += tx.amount;
                 entry.3 += 1;
             } else { // Expense
                 entry.1 += tx.amount;
                 entry.4 += 1;
-                if tx.is_fixed == 1 { // Fixed expense
+                if tx.is_fixed == 1 {
                     entry.2 += tx.amount;
                     entry.5 += 1;
                 }
             }
         }
-
+    
         let mut income_totals: Vec<f64> = Vec::new();
         let mut expense_totals: Vec<f64> = Vec::new();
         let mut fixed_expense_totals: Vec<f64> = Vec::new();
         let mut net_income_totals: Vec<f64> = Vec::new();
-
-        for month_num in 1..=12 {
-            let year_month = format!("{}-{:02}", year, month_num);
+    
+        // 2. 날짜 타임라인 생성 (과거 11개월 전 ~ 현재 월까지)
+        let end_date = NaiveDate::parse_from_str(&format!("{}-01", base_month), "%Y-%m-%d")
+            .map_err(|_| format!("Invalid date format: {}. Expected YYYY-MM", base_month))?;
+    
+        for i in (0..12).rev() {
+            let current_date = end_date.checked_sub_months(Months::new(i as u32))
+                .ok_or_else(|| "Date calculation error".to_string())?;
+            
+            let year_month = current_date.format("%Y-%m").to_string();
+            
             let (total_income, total_expense, fixed_expense, _, _, _) = 
                 *monthly_data.get(&year_month).unwrap_or(&(0.0, 0.0, 0.0, 0, 0, 0));
             
@@ -218,12 +224,13 @@ impl DashboardService {
             fixed_expense_totals.push(fixed_expense);
             net_income_totals.push(total_income - total_expense);
         }
-
+    
+        // 3. 통계 계산 (12개 데이터 포인트를 기반으로 최대/최소/평균 산출)
         let income_stats = Self::calculate_metric_stats(&income_totals);
         let expense_stats = Self::calculate_metric_stats(&expense_totals);
         let fixed_expense_stats = Self::calculate_metric_stats(&fixed_expense_totals);
         let net_income_stats = Self::calculate_metric_stats(&net_income_totals);
-
+    
         Ok(FinancialSummaryStats {
             income: income_stats,
             expense: expense_stats,
@@ -254,11 +261,16 @@ impl DashboardService {
 
     pub fn get_monthly_category_amounts(
         conn: &Connection,
-        year: i32,
+        base_month: &str, // &str로 변경
         category_id: Option<i64>,
     ) -> Result<Vec<CategoryMonthlyAmount>, String> {
-        DashboardRepository::get_monthly_category_amounts_for_year(conn, year, category_id)
-            .map_err(|e| format!("Failed to get monthly category amounts for year {}: {}", year, e))
+        DashboardRepository::get_monthly_category_amounts_recent_year(conn, base_month, category_id)
+            .map_err(|e| {
+                format!(
+                    "Failed to get monthly category amounts for base month {}: {}",
+                    base_month, e
+                )
+            })
     }
 
     pub fn compare(
@@ -316,17 +328,19 @@ impl DashboardService {
     
     pub fn get_yearly_dashboard_data(
         conn: &Connection,
-        year: i32,
+        base_month: &str, // i32 year 대신 &str base_month 적용
     ) -> Result<YearlyDashboardData, String> {
-        // 1. 월별 재무 요약 데이터 생성 (기존 로직 재사용)
-        let monthly_summary = Self::get_monthly_financial_summary(conn, year)?;
-
-        // 2. 재무 통계 데이터 가져오기 (이제 서비스 레이어에서 월별 기반으로 계산)
-        let financial_summary_stats = Self::get_financial_summary_stats(conn, year)?;
-
+        // 1. 월별 재무 요약 데이터 생성 (최근 12개월 타임라인)
+        let monthly_summary = Self::get_monthly_financial_summary(conn, base_month)?;
+    
+        // 2. 재무 통계 데이터 가져오기 (최근 12개월 합계/평균/최대/최소 계산)
+        // 이 함수 내부도 연도 필터가 아닌 날짜 범위 필터로 수정되어야 합니다.
+        let financial_summary_stats = Self::get_financial_summary_stats(conn, base_month)?;
+    
         // 3. 최종 데이터 조합하여 반환
         Ok(YearlyDashboardData {
             financial_summary_stats,
             monthly_financial_summary: monthly_summary,
         })
-}}
+    }
+}

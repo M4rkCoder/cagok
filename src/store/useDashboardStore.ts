@@ -12,7 +12,7 @@ import {
   FinancialSummaryStats,
   MonthlyFinancialSummaryItem,
   CategoryMonthlyAmount,
-  MetricStats
+  MetricStats,
 } from "@/types";
 
 // Default empty MetricStats for safe access (re-defined here for store-specific use if needed)
@@ -47,10 +47,10 @@ interface DashboardState {
   comparisons: Record<ComparisonType, ComparisonMetric | null>;
   loading: boolean;
   loadDashboardData: (selectedMonth: string) => Promise<void>;
-  loadYearlyDashboardData: (year: number) => Promise<void>;
+  loadYearlyDashboardData: (selectedMonth: string) => Promise<void>;
   loadCategoryMonthlyAmounts: (
-    year: number,
-    categoryId?: number | null,
+    selectedMonth: string,
+    categoryId?: number | null
   ) => Promise<void>;
 }
 
@@ -195,22 +195,22 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     }
   },
 
-  loadYearlyDashboardData: async (year: number) => {
+  loadYearlyDashboardData: async (selectedMonth: string) => {
     try {
       set({ loading: true });
+
       const yearlyData = await invoke<{
         financialSummaryStats: FinancialSummaryStats;
         monthlyFinancialSummary: MonthlyFinancialSummaryItem[];
-      } | null>("get_yearly_dashboard_data_command", { year });
-
-
-      set({
-        financialSummaryStats: yearlyData?.financialSummaryStats ?? defaultFinancialSummaryStats,
-        monthlyFinancialSummary: yearlyData?.monthlyFinancialSummary ?? [],
+      } | null>("get_yearly_dashboard_data_command", {
+        baseMonth: selectedMonth,
       });
 
-      // Initially load all monthly category amounts for the selected year
-      get().loadCategoryMonthlyAmounts(year, null);
+      set({
+        financialSummaryStats:
+          yearlyData?.financialSummaryStats ?? defaultFinancialSummaryStats,
+        monthlyFinancialSummary: yearlyData?.monthlyFinancialSummary ?? [],
+      });
     } catch (error) {
       console.error("Failed to load yearly dashboard data:", error);
     } finally {
@@ -219,15 +219,21 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   loadCategoryMonthlyAmounts: async (
-    year: number,
-    categoryId?: number | null,
+    selectedMonth: string,
+    categoryId?: number | null
   ) => {
     try {
       set({ loading: true });
+
+      // 백엔드 커맨드 호출 시 인자명을 baseMonth로 변경합니다.
       const amounts = await invoke<CategoryMonthlyAmount[]>(
         "get_monthly_category_amounts_command",
-        { year, categoryId },
+        {
+          baseMonth: selectedMonth, // 백엔드의 base_month 파라미터와 매핑됨
+          categoryId: categoryId ?? null,
+        }
       );
+
       set({ categoryMonthlyAmounts: amounts ?? [] });
     } catch (error) {
       console.error("Failed to load monthly category amounts:", error);

@@ -6,16 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Legend,
-  Area,
-  AreaChart,
-} from "recharts";
+import { XAxis, YAxis, CartesianGrid, Area, AreaChart } from "recharts";
 import {
   Select,
   SelectContent,
@@ -25,22 +16,20 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryIcon } from "@/components/CategoryIcon";
-import { CategoryExpense, CategoryMonthlyAmount } from "@/types";
+import { Category, CategoryMonthlyAmount } from "@/types";
 import {
   ChartConfig,
   ChartContainer,
   ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
 
 interface CategoryMonthlyTrendSectionProps {
-  selectedYear: number;
-  categories: CategoryExpense[];
-  categoriesIncome: CategoryExpense[];
+  baseMonth: string; // "YYYY-MM" 형식
+  categories: Category[];
   loadCategoryMonthlyAmounts: (
-    year: number,
+    baseMonth: string,
     categoryId: number | null
   ) => Promise<void>;
   categoryMonthlyAmounts: CategoryMonthlyAmount[];
@@ -49,9 +38,8 @@ interface CategoryMonthlyTrendSectionProps {
 
 export const CategoryMonthlyTrendSection = memo(
   function CategoryMonthlyTrendSection({
-    selectedYear,
+    baseMonth,
     categories,
-    categoriesIncome,
     loadCategoryMonthlyAmounts,
     categoryMonthlyAmounts,
     formatCurrency,
@@ -63,45 +51,65 @@ export const CategoryMonthlyTrendSection = memo(
       null
     );
 
-    useEffect(() => {
-      loadCategoryMonthlyAmounts(selectedYear, internalCategoryId);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedYear, internalCategoryId]);
-
+    // 1. 카테고리 분리 (수입: 0, 지출: 1)
+    const expenseCategories = useMemo(
+      () => categories.filter((c) => c.type === 1),
+      [categories]
+    );
+    const incomeCategories = useMemo(
+      () => categories.filter((c) => c.type === 0),
+      [categories]
+    );
+    // 현재 탭에 맞는 카테고리 목록
     const currentCategories =
-      activeType === "income" ? categoriesIncome : categories;
+      activeType === "income" ? incomeCategories : expenseCategories;
 
-    // 1. 데이터 가공 및 색상 설정
+    useEffect(() => {
+      loadCategoryMonthlyAmounts(baseMonth, internalCategoryId);
+    }, [baseMonth, internalCategoryId, loadCategoryMonthlyAmounts]);
+
+    // 2. 데이터 가공 및 차트 설정
     const { chartData, chartConfig, displayCategoryNames } = useMemo(() => {
       const config: ChartConfig = {};
-      const allCategoriesForType =
-        activeType === "income" ? categoriesIncome : categories;
+      const targetCategories =
+        activeType === "income" ? incomeCategories : expenseCategories;
 
-      // 1. 색상 및 라벨 사전 생성
-      allCategoriesForType.forEach((cat, index) => {
-        const hue = activeType === "expense" ? 221 : 142;
+      // 색상 및 레이블 설정
+      targetCategories.forEach((cat, index) => {
+        const hue = activeType === "expense" ? 221 : 142; // 지출은 파란색 계열, 수입은 초록색 계열
         const lightness =
-          30 + index * (50 / Math.max(allCategoriesForType.length - 1, 1));
-        config[cat.category_name] = {
-          label: cat.category_name,
+          30 + index * (50 / Math.max(targetCategories.length - 1, 1));
+
+        config[cat.name] = {
+          label: cat.name,
           color: `hsl(${hue}, 83%, ${lightness}%)`,
         };
       });
 
-      // 2. [가장 중요] 스택 순서를 원본 카테고리 배열의 순서로 '완전 고정'
-      const fixedOrderNames = allCategoriesForType.map(
-        (cat) => cat.category_name
-      );
-      // 3. 월별 데이터 구성
-      const data = Array.from({ length: 12 }, (_, i) => {
-        const month = i + 1;
-        const yearMonth = `${selectedYear}-${String(month).padStart(2, "0")}`;
-        const row: any = { month: `${month}월` };
+      // 스택 순서 고정
+      const fixedOrderNames = targetCategories.map((cat) => cat.name);
 
+      // 최근 12개월 날짜 생성 로직
+      const last12Months = Array.from({ length: 12 }, (_, i) => {
+        const [year, month] = baseMonth.split("-").map(Number);
+        const date = new Date(year, month - 1 - (11 - i), 1);
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        return {
+          label: `${date.getMonth() + 1}월`,
+          key: `${y}-${m}`,
+        };
+      });
+
+      // 월별 데이터 매핑
+      const data = last12Months.map((monthObj) => {
+        const row: any = { month: monthObj.label };
+
+        // 해당 월의 데이터 중 현재 타입(수입/지출)과 일치하는 항목만 필터링
         categoryMonthlyAmounts
           .filter(
             (item) =>
-              item.year_month === yearMonth &&
+              item.year_month === monthObj.key &&
               (activeType === "income" ? item.type === 0 : item.type === 1)
           )
           .forEach((item) => {
@@ -114,14 +122,14 @@ export const CategoryMonthlyTrendSection = memo(
       return {
         chartData: data,
         chartConfig: config,
-        displayCategoryNames: fixedOrderNames, // 필터링하지 않은 전체 순서 리스트를 보냅니다.
+        displayCategoryNames: fixedOrderNames,
       };
     }, [
       categoryMonthlyAmounts,
       activeType,
-      selectedYear,
-      categories,
-      categoriesIncome,
+      baseMonth,
+      expenseCategories,
+      incomeCategories,
     ]);
 
     return (
@@ -129,31 +137,32 @@ export const CategoryMonthlyTrendSection = memo(
         <CardHeader className="items-center pb-0 md:flex-row justify-between space-y-0">
           <div className="grid gap-1">
             <CardTitle>월별 상세 추이</CardTitle>
-            <CardDescription>{selectedYear}년 카테고리별 흐름</CardDescription>
+            <CardDescription>기준: {baseMonth} (최근 12개월)</CardDescription>
           </div>
           <div className="flex items-center gap-2 pb-4">
             <Tabs
               value={activeType}
               onValueChange={(v) => {
                 setActiveType(v as "income" | "expense");
-                setInternalCategoryId(null);
+                setInternalCategoryId(null); // 타입 변경 시 필터 초기화
               }}
             >
               <TabsList className="h-10">
                 <TabsTrigger
                   value="expense"
-                  className="text-sm data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all"
+                  className="text-sm data-[state=active]:bg-slate-900 data-[state=active]:text-white"
                 >
                   지출
                 </TabsTrigger>
                 <TabsTrigger
                   value="income"
-                  className="text-sm data-[state=active]:bg-slate-900 data-[state=active]:text-white transition-all"
+                  className="text-sm data-[state=active]:bg-slate-900 data-[state=active]:text-white"
                 >
                   수입
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+
             <Select
               value={internalCategoryId?.toString() ?? "all"}
               onValueChange={(v) =>
@@ -166,17 +175,14 @@ export const CategoryMonthlyTrendSection = memo(
               <SelectContent>
                 <SelectItem value="all">전체보기</SelectItem>
                 {currentCategories.map((cat) => (
-                  <SelectItem
-                    key={cat.category_id}
-                    value={cat.category_id.toString()}
-                  >
+                  <SelectItem key={cat.id} value={cat.id.toString()}>
                     <div className="flex items-center gap-2">
                       <CategoryIcon
-                        icon={cat.category_icon}
+                        icon={cat.icon}
                         type={cat.type as 0 | 1}
                         size="sm"
                       />
-                      {cat.category_name}
+                      {cat.name}
                     </div>
                   </SelectItem>
                 ))}
@@ -192,40 +198,31 @@ export const CategoryMonthlyTrendSection = memo(
             <AreaChart data={chartData} margin={{ left: 12, right: 12 }}>
               <CartesianGrid
                 vertical={false}
-                horizontal={true}
+                horizontal
                 strokeDasharray="3 3"
                 stroke="#000"
-                opacity={0.2}
+                opacity={0.1}
               />
               <XAxis
                 dataKey="month"
                 tickLine={false}
                 axisLine={true}
                 tickMargin={8}
-                minTickGap={32}
-                fontSize={13}
-                padding={{ left: 20, right: 20 }}
-                scale="point"
+                fontSize={12}
               />
               <YAxis
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
                 tickFormatter={(value) => value.toLocaleString()}
-                width={80}
-                fontSize={13}
-                tick={{ fill: "hsl(var(--muted-foreground))" }}
+                width={60}
+                fontSize={12}
               />
               <ChartTooltip
-                cursor={{
-                  stroke: "hsl(var(--muted-foreground))",
-                  strokeWidth: 0,
-                }}
-                itemSorter={(item) => 1}
+                cursor={{ strokeWidth: 0 }}
                 content={
                   <ChartTooltipContent
                     className="w-[200px]"
-                    labelFormatter={(value) => value}
                     formatter={(value, name: string) => (
                       <div className="flex w-full items-center justify-between gap-2 text-xs">
                         <div className="flex items-center gap-1">
@@ -237,7 +234,7 @@ export const CategoryMonthlyTrendSection = memo(
                           />
                           {chartConfig[name]?.label || name}
                         </div>
-                        <span className="font-medium text-foreground">
+                        <span className="font-medium">
                           {formatCurrency(Number(value))}
                         </span>
                       </div>
@@ -247,16 +244,14 @@ export const CategoryMonthlyTrendSection = memo(
               />
               <ChartLegend
                 content={() => {
-                  // 1. 표시할 10개만 자르기
                   const visibleNames = displayCategoryNames.slice(0, 10);
                   const hasMore = displayCategoryNames.length > 10;
-
                   return (
                     <div className="flex flex-wrap justify-center gap-4 pt-4">
                       {visibleNames.map((name) => (
                         <div
                           key={name}
-                          className="flex items-center gap-1.5 text-sm font-medium"
+                          className="flex items-center gap-1.5 text-xs font-medium"
                         >
                           <div
                             className="h-3 w-3 rounded-full"
@@ -269,10 +264,8 @@ export const CategoryMonthlyTrendSection = memo(
                           </span>
                         </div>
                       ))}
-
-                      {/* 2. 10개가 넘을 경우 추가 표시 */}
                       {hasMore && (
-                        <div className="text-sm font-medium text-muted-foreground/60 italic">
+                        <div className="text-xs font-medium text-muted-foreground/60 italic">
                           외 {displayCategoryNames.length - 10}개
                         </div>
                       )}
@@ -280,16 +273,16 @@ export const CategoryMonthlyTrendSection = memo(
                   );
                 }}
               />
-              {displayCategoryNames.map((name, index) => (
+              {displayCategoryNames.map((name) => (
                 <Area
                   key={name}
-                  type="monotone" // 부드러운 곡선 효과
+                  type="monotone"
                   dataKey={name}
-                  stackId="1" // 모든 Area에 동일한 stackId를 주어 쌓이게 함
-                  stroke={chartConfig[name]?.color} // 영역 경계선 색상
-                  strokeWidth={0.5}
-                  fill={chartConfig[name]?.color} // 영역 내부 색상
-                  fillOpacity={0.6} // 겹침을 인지할 수 있는 적절한 투명도
+                  stackId="1"
+                  stroke={chartConfig[name]?.color}
+                  strokeWidth={1}
+                  fill={chartConfig[name]?.color}
+                  fillOpacity={0.5}
                   connectNulls
                 />
               ))}

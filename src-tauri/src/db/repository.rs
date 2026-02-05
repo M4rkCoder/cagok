@@ -531,9 +531,9 @@ impl DashboardRepository {
         rows.collect()
     }
 
-    pub fn get_transactions_by_year(
+    pub fn get_transactions_recent_year(
         conn: &Connection,
-        year: i32,
+        base_month: &str, // "YYYY-MM"
     ) -> Result<Vec<MonthlyTransactionRaw>, rusqlite::Error> {
         let query = "
             SELECT
@@ -542,12 +542,13 @@ impl DashboardRepository {
                 type,
                 is_fixed
             FROM transactions
-            WHERE strftime('%Y', date) = ?1
+            WHERE date >= date(?1 || '-01', '-11 months') 
+                AND date <= date(?1 || '-01', '+1 month', '-1 day')
             ORDER BY year_month ASC, date ASC;
         ";
 
         let mut stmt = conn.prepare(query)?;
-        let rows = stmt.query_map(params![year.to_string()], |row| {
+        let rows = stmt.query_map(params![base_month], |row| {
             Ok(MonthlyTransactionRaw {
                 year_month: row.get(0)?,
                 amount: row.get(1)?,
@@ -559,11 +560,12 @@ impl DashboardRepository {
         rows.collect()
     }
 
-    pub fn get_monthly_category_amounts_for_year(
+    pub fn get_monthly_category_amounts_recent_year(
         conn: &Connection,
-        year: i32,
+        base_month: &str, // "YYYY-MM" 형식
         category_id: Option<i64>,
     ) -> Result<Vec<CategoryMonthlyAmount>, rusqlite::Error> {
+        // 1. 기본 쿼리 작성 (범위 기반 날짜 필터링)
         let mut query = String::from(
             "SELECT 
                 strftime('%Y-%m', t.date) as year_month,
@@ -574,23 +576,26 @@ impl DashboardRepository {
                 t.type
             FROM transactions t
             INNER JOIN categories c ON t.category_id = c.id
-            WHERE strftime('%Y', t.date) = ?1
+            WHERE t.date >= date(?1 || '-01', '-11 months') 
+              AND t.date <= date(?1 || '-01', '+1 month', '-1 day')
             ",
         );
-
-        let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![Box::new(year.to_string())];
-
+    
+        // 2. 파라미터 구성
+        let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![Box::new(base_month.to_string())];
+    
+        // 3. 카테고리 필터가 있는 경우 추가
         if let Some(cat_id) = category_id {
             query.push_str(" AND c.id = ?2");
             params.push(Box::new(cat_id));
         }
-
+    
         query.push_str(
             " GROUP BY year_month, c.id, c.name, c.icon, t.type
               ORDER BY year_month ASC, t.type ASC, total_amount DESC
             ",
         );
-
+    
         let mut stmt = conn.prepare(&query)?;
         let rows = stmt.query_map(rusqlite::params_from_iter(params.iter().map(|p| p.as_ref())), |row| {
             Ok(CategoryMonthlyAmount {
@@ -602,7 +607,7 @@ impl DashboardRepository {
                 r#type: row.get(5)?,
             })
         })?;
-
+    
         rows.collect()
     }
 }

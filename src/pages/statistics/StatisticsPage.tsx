@@ -53,6 +53,8 @@ import { YearlyTrendChart } from "./YearlyTrendChart";
 import { CategoryMonthlyTrendSection } from "./CategoryMonthlyTrendSection";
 import { CategoryRatioChart } from "./CategoryRatioCharts";
 import { CategoryYearlyTreemap } from "./CategoryYearlyTreemap";
+import { MonthYearPicker } from "@/components/MonthYearPicker";
+import { useAppStore } from "@/store/useAppStore";
 
 const COLORS = [
   "#8b5cf6",
@@ -81,8 +83,13 @@ const emptyFinancialSummaryStats: FinancialSummaryStats = {
 
 export default function StatisticsPage() {
   const { setHeader, resetHeader } = useHeaderStore();
+
+  const [viewMode, setViewMode] = useState<"year" | "month">("month");
   const [selectedYear, setSelectedYear] = useState<number>(
-    new Date().getFullYear(),
+    new Date().getFullYear()
+  );
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    format(new Date(), "yyyy-MM")
   );
   const [dialogState, setDialogState] = useState<DialogState>({
     open: false,
@@ -99,8 +106,6 @@ export default function StatisticsPage() {
   const {
     loading,
     overview,
-    categories,
-    categoriesIncome,
     monthlyFinancialSummary,
     financialSummaryStats,
     categoryMonthlyAmounts,
@@ -109,22 +114,65 @@ export default function StatisticsPage() {
     loadCategoryMonthlyAmounts,
   } = useDashboardStore();
 
+  const { categories } = useAppStore();
+
   useEffect(() => {
     setHeader(
       "통계 및 분석",
-      <YearPicker selectedYear={selectedYear} onYearChange={setSelectedYear} />,
+      <div className="flex items-center gap-2">
+        {/* 모드 전환 토글 (간단한 디자인 예시) */}
+        <div className="flex bg-slate-100 p-1 rounded-md mr-2">
+          <button
+            onClick={() => setViewMode("month")}
+            className={cn(
+              "px-3 py-1 text-xs rounded",
+              viewMode === "month"
+                ? "bg-white shadow-sm font-bold"
+                : "text-slate-500"
+            )}
+          >
+            월별
+          </button>
+          <button
+            onClick={() => setViewMode("year")}
+            className={cn(
+              "px-3 py-1 text-xs rounded",
+              viewMode === "year"
+                ? "bg-white shadow-sm font-bold"
+                : "text-slate-500"
+            )}
+          >
+            연도별
+          </button>
+        </div>
+
+        {/* 선택된 모드에 따른 피커 노출 */}
+        {viewMode === "year" ? (
+          <YearPicker
+            selectedYear={selectedYear}
+            onYearChange={setSelectedYear}
+          />
+        ) : (
+          <MonthYearPicker
+            selectedMonth={selectedMonth}
+            onMonthChange={setSelectedMonth}
+          />
+        )}
+      </div>
     );
     return () => resetHeader();
-  }, [selectedYear, setHeader, resetHeader]);
+  }, [selectedYear, selectedMonth, viewMode, setHeader, resetHeader]);
 
   useEffect(() => {
-    if (selectedYear) {
-      loadYearlyDashboardData(selectedYear);
-      const firstMonthOfYear = `${selectedYear}-01`;
-      loadDashboardData(firstMonthOfYear);
-      console.log("외부컴포넌트");
+    let baseMonth = selectedMonth;
+    if (viewMode === "year") {
+      baseMonth = `${selectedYear}-12`;
     }
-  }, [selectedYear]);
+
+    // 2. 통합 데이터 로드 (최근 12개월 롤링)
+    loadYearlyDashboardData(baseMonth);
+    loadCategoryMonthlyAmounts(baseMonth, null);
+  }, [selectedYear, selectedMonth, viewMode]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("ko-KR", {
@@ -132,31 +180,6 @@ export default function StatisticsPage() {
       currency: "KRW",
       maximumFractionDigits: 0,
     }).format(amount);
-  };
-
-  const handleCategoryMonthlyClick = async (
-    categoryId: number,
-    categoryName: string,
-    type: 0 | 1,
-  ) => {
-    try {
-      const transactions = await invoke<TransactionWithCategory[]>(
-        "get_transactions_by_month_and_category",
-        {
-          categoryId,
-          yearMonth: `${selectedYear}-01`,
-          txType: type,
-        },
-      );
-      setDialogState({
-        open: true,
-        title: `${categoryName} 내역`,
-        transactions,
-        showDate: true,
-      });
-    } catch (e) {
-      console.error("카테고리별 거래 조회 실패:", e);
-    }
   };
 
   if (
@@ -177,111 +200,6 @@ export default function StatisticsPage() {
   const minNetIncome = Math.min(0, ...allNetIncomes, -1); // Ensure at least -1
   const symmetricMax = Math.max(Math.abs(maxNetIncome), Math.abs(minNetIncome));
 
-  const totalExpense = categories.reduce(
-    (sum, cat) => sum + cat.total_amount,
-    0,
-  );
-  const pieChartData = categories.map((cat, index) => ({
-    name: cat.category_name,
-    value: cat.total_amount,
-    color: COLORS[index % COLORS.length],
-  }));
-
-  const totalIncome = categoriesIncome.reduce(
-    (sum, cat) => sum + cat.total_amount,
-    0,
-  );
-  const pieChartIncomeData = categoriesIncome.map((cat, index) => ({
-    name: cat.category_name,
-    value: cat.total_amount,
-    color: COLORS[index % COLORS.length],
-  }));
-
-  // Process categoryMonthlyAmounts for the new stacked bar chart
-  const monthlyChartData = Array.from({ length: 12 }, (_, i) => {
-    const month = i + 1;
-    const yearMonth = `${selectedYear}-${String(month).padStart(2, "0")}`;
-    const dataForMonth: { [key: string]: number | string } = {
-      year_month: yearMonth,
-      month_short: format(new Date(yearMonth), "M월"),
-      total_income: 0,
-      total_expense: 0,
-      net_income: 0,
-    };
-
-    let monthIncome = 0;
-    let monthExpense = 0;
-
-    categoryMonthlyAmounts
-      .filter((item) => item.year_month === yearMonth)
-      .forEach((item) => {
-        const key = `${item.category_name}_${item.type === 0 ? "income" : "expense"}`;
-        dataForMonth[key] = item.total_amount;
-
-        if (item.type === 0) {
-          monthIncome += item.total_amount;
-        } else {
-          monthExpense += item.total_amount;
-        }
-      });
-
-    dataForMonth.total_income = monthIncome;
-    dataForMonth.total_expense = monthExpense;
-    dataForMonth.net_income = monthIncome - monthExpense;
-
-    return dataForMonth;
-  });
-
-  // Dynamically generate bars and assign colors
-  const uniqueCategoriesInChart = Array.from(
-    new Set(categoryMonthlyAmounts.map((item) => item.category_id)),
-  ).map((id) => categories.find((cat) => cat.category_id === id));
-
-  const categoryBars = uniqueCategoriesInChart
-    .filter(Boolean)
-    .flatMap((category, index) => {
-      const incomeKey = `${category?.category_name}_income`;
-      const expenseKey = `${category?.category_name}_expense`;
-      const colorIndex = index % COLORS.length;
-      return [
-        <Bar
-          key={incomeKey}
-          yAxisId="left"
-          dataKey={incomeKey}
-          stackId="category_stack"
-          fill={COLORS[colorIndex]}
-          name={`${category?.category_name} (수입)`}
-        />,
-        <Bar
-          key={expenseKey}
-          yAxisId="left"
-          dataKey={expenseKey}
-          stackId="category_stack"
-          fill={COLORS[colorIndex]} // Use the same color for income/expense of same category
-          name={`${category?.category_name} (지출)`}
-          opacity={0.7}
-        />,
-      ];
-    });
-
-  const allMonthlyCategoryNetIncomes = monthlyChartData.map(
-    (item) => item.net_income as number,
-  );
-  const maxMonthlyCategoryNetIncome = Math.max(
-    0,
-    ...allMonthlyCategoryNetIncomes,
-    1,
-  );
-  const minMonthlyCategoryNetIncome = Math.min(
-    0,
-    ...allMonthlyCategoryNetIncomes,
-    -1,
-  );
-  const symmetricMaxMonthlyCategory = Math.max(
-    Math.abs(maxMonthlyCategoryNetIncome),
-    Math.abs(minMonthlyCategoryNetIncome),
-  );
-
   return (
     <div className="px-4 py-6 space-y-6">
       {/* 1. 요약 카드 */}
@@ -299,35 +217,19 @@ export default function StatisticsPage() {
 
       {/* 3. 월별 카테고리별 상세 추이 (필터 포함 - 분리 권장) */}
       <CategoryMonthlyTrendSection
-        selectedYear={selectedYear}
+        baseMonth={viewMode === "year" ? `${selectedYear}-12` : selectedMonth}
         categories={categories}
-        categoriesIncome={categoriesIncome}
         loadCategoryMonthlyAmounts={loadCategoryMonthlyAmounts}
         categoryMonthlyAmounts={categoryMonthlyAmounts}
         formatCurrency={formatCurrency}
       />
-      <CategoryYearlyTreemap year={selectedYear} />
-      {/* 4. 비율 차트 섹션 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <CategoryRatioChart
-          title="카테고리별 지출 비율"
-          data={pieChartData}
-          total={totalExpense}
-          formatCurrency={formatCurrency}
-        />
-        <CategoryRatioChart
-          title="카테고리별 수입 비율"
-          data={pieChartIncomeData}
-          total={totalIncome}
-          formatCurrency={formatCurrency}
-        />
-      </div>
+      <CategoryYearlyTreemap
+        baseMonth={viewMode === "year" ? `${selectedYear}-12` : selectedMonth}
+      />
 
       {/* 다이얼로그들 */}
       {/* <TransactionListDialog />
       <DailyTransactionsDialog /> */}
-
-      {/* 5. 카테고리별 연간 지출 트리맵 */}
     </div>
   );
 }

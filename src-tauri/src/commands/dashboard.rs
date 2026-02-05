@@ -56,29 +56,29 @@ pub fn get_yearly_financial_summary_command(
 #[tauri::command]
 pub fn get_monthly_financial_summary_command(
     db: State<'_, DbConnection>,
-    year: i32,
+    base_month: String, // i32 year 대신 String base_month를 받습니다.
 ) -> Result<Vec<MonthlyFinancialSummaryItem>, String> {
     let conn = db.0.lock().unwrap();
-    DashboardService::get_monthly_financial_summary(&conn, year)
+    DashboardService::get_monthly_financial_summary(&conn, &base_month)
 }
 
 #[tauri::command]
 pub fn get_financial_summary_stats_command(
     db: State<'_, DbConnection>,
-    year: i32,
+    base_month: String,
 ) -> Result<FinancialSummaryStats, String> {
     let conn = db.0.lock().unwrap();
-    DashboardService::get_financial_summary_stats(&conn, year)
+    DashboardService::get_financial_summary_stats(&conn, &base_month)
 }
 
 #[tauri::command]
 pub fn get_monthly_category_amounts_command(
     db: State<'_, DbConnection>,
-    year: i32,
+    base_month: String, // i32 year에서 String으로 변경
     category_id: Option<i64>,
 ) -> Result<Vec<CategoryMonthlyAmount>, String> {
     let conn = db.0.lock().unwrap();
-    DashboardService::get_monthly_category_amounts(&conn, year, category_id)
+    DashboardService::get_monthly_category_amounts(&conn, &base_month, category_id)
 }
 
 #[tauri::command]
@@ -144,8 +144,9 @@ pub fn get_top_incomes(
 #[tauri::command]
 pub fn get_yearly_dashboard_data_command(
     db: State<'_, DbConnection>,
-    year: i32,
+    base_month: String, // i32 year에서 String으로 변경
 ) -> Result<YearlyDashboardData, String> {
     let conn = db.0.lock().unwrap();
-    DashboardService::get_yearly_dashboard_data(&conn, year)
+
+    DashboardService::get_yearly_dashboard_data(&conn, &base_month)
 }
