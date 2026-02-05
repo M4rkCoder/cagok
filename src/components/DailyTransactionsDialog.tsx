@@ -24,7 +24,7 @@ const DailyTransactionsDialog: React.FC<DailyTransactionsDialogProps> = ({
   onClose,
 }) => {
   const [transactions, setTransactions] = useState<TransactionWithCategory[]>(
-    []
+    [],
   );
 
   useEffect(() => {
@@ -33,7 +33,7 @@ const DailyTransactionsDialog: React.FC<DailyTransactionsDialogProps> = ({
         try {
           const fetchedTransactions = await invoke<TransactionWithCategory[]>(
             "get_transactions_by_date",
-            { date }
+            { date },
           );
           setTransactions(fetchedTransactions);
         } catch (error) {
@@ -53,18 +53,18 @@ const DailyTransactionsDialog: React.FC<DailyTransactionsDialogProps> = ({
     : "";
   const totalExpense = transactions.reduce(
     (sum, tx) => (tx.type === 1 ? sum + tx.amount : sum),
-    0
+    0,
   );
   const totalIncome = transactions.reduce(
     (sum, tx) => (tx.type === 0 ? sum + tx.amount : sum),
-    0
+    0,
   );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="fixed top-12 bottom-0 translate-y-0 my-auto h-fit sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{formattedDate} 지출 내역</DialogTitle>
+          <DialogTitle>{formattedDate} 내역</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="flex justify-between text-sm font-semibold">

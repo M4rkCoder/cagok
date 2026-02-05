@@ -18,10 +18,10 @@ export default function TitleBar() {
 
       // 이벤트 등록
       const unlistenMax = await win.listen("tauri://maximize", () =>
-        setIsMaximized(true)
+        setIsMaximized(true),
       );
       const unlistenUnmax = await win.listen("tauri://unmaximize", () =>
-        setIsMaximized(false)
+        setIsMaximized(false),
       );
       const unlistenResize = await win.listen("tauri://resize", async () => {
         const max = await win.isMaximized();
@@ -62,19 +62,17 @@ export default function TitleBar() {
   return (
     <div
       data-tauri-drag-region
-      className="h-full flex items-center justify-between bg-blue-600 text-white px-4"
+      className="h-full flex items-center justify-between bg-blue-600 text-white px-4 select-none"
+      onDoubleClick={toggleMax}
     >
       {/* 로고 + 제목 */}
-      <div
-        className="flex items-center gap-2 cursor-default"
-        onDoubleClick={handleLogoDoubleClick}
-      >
+      <div className="flex items-center gap-2 cursor-default pointer-events-none">
         <FinanceModeRounded className="w-8 h-8" />
         <span className="font-bold no-drag select-none">FINKRO</span>
       </div>
 
       {/* 최소화/최대화/닫기 버튼 */}
-      <div className="flex gap-2">
+      <div className="flex gap-2" onDoubleClick={(e) => e.stopPropagation()}>
         <button
           className="no-drag w-9 h-9 flex items-center justify-center hover:bg-slate-700 transition-colors"
           data-tauri-drag-region="false"

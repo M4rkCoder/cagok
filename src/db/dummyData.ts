@@ -13,7 +13,7 @@ function randomDate(year = 2026, month = 1) {
   const day = randomInt(1, 28);
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(
     2,
-    "0"
+    "0",
   )}`;
 }
 
@@ -32,7 +32,8 @@ const categorySeed = [
   { name: "교통비", icon: "🚇", type: 1 },
   { name: "카페", icon: "☕", type: 1 },
   { name: "쇼핑", icon: "🛍️", type: 1 },
-  { name: "고정비", icon: "🏠", type: 1 },
+  { name: "주거비", icon: "🏠", type: 1 },
+  { name: "의료비", icon: "🏥", type: 1 },
 ];
 
 /* =========================
@@ -51,7 +52,7 @@ export async function insertDummyCategories() {
         INSERT OR IGNORE INTO categories (name, icon, type)
         VALUES (?, ?, ?)
         `,
-        [category.name, category.icon, category.type]
+        [category.name, category.icon, category.type],
       );
     }
 
@@ -72,7 +73,7 @@ async function getCategoryIds(type: 0 | 1): Promise<number[]> {
 
   const result = await db.select<{ id: number }[]>(
     "SELECT id FROM categories WHERE type = ?",
-    [type]
+    [type],
   );
 
   return result.map((row) => row.id);
@@ -85,7 +86,7 @@ async function getCategoryIds(type: 0 | 1): Promise<number[]> {
 export async function insertDummyTransactions(
   count = 100,
   year = 2026,
-  month = 1
+  month = 1,
 ) {
   const db = await getDB();
 
@@ -113,11 +114,13 @@ export async function insertDummyTransactions(
 
       const isFixed = !isIncome && Math.random() < 0.3 ? 1 : 0;
 
+      const accountId = 1;
+
       await db.execute(
         `
         INSERT INTO transactions
-        (description, amount, date, type, is_fixed, category_id)
-        VALUES (?, ?, ?, ?, ?, ?)
+        (description, amount, date, type, is_fixed, category_id, account_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         `,
         [
           isIncome ? "더미 수입" : "더미 지출",
@@ -126,7 +129,8 @@ export async function insertDummyTransactions(
           type,
           isFixed,
           categoryId,
-        ]
+          accountId,
+        ],
       );
     }
 

@@ -17,9 +17,9 @@ function Home({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <div className="h-screen w-screen flex flex-col overflow-hidden bg-sidebar">
-        <div className="h-12 shrink-0 z-50 bg-background">
+        <header className="h-12 shrink-0 z-[100] bg-background">
           <TitleBar />
-        </div>
+        </header>
 
         <div className="flex flex-1 overflow-y-auto">
           <div className="shrink-0">
@@ -38,7 +38,7 @@ function Home({ children }: { children: React.ReactNode }) {
                     <PanelLeftClose
                       className={cn(
                         "h-6 w-6 transition-transform",
-                        collapsed && "rotate-180"
+                        collapsed && "rotate-180",
                       )}
                     />
                   </button>

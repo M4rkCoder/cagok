@@ -50,7 +50,7 @@ function App() {
       }
 
       if (stage === "onboarding") {
-        await setWindowSize(600, 500);
+        await setWindowSize(1200, 800);
       }
 
       if (stage === "home") {
