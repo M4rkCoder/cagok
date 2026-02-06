@@ -16,13 +16,10 @@ import {
   CategoryExpense,
 } from "@/types";
 import { Dispatch, SetStateAction } from "react";
+import { useDashboardStore } from "@/store/useDashboardStore";
 
 interface Props {
-  selectedMonth: string;
-  overview: MonthlyOverview;
   setDialogState: Dispatch<SetStateAction<DialogState>>;
-  topList: TransactionWithCategory[];
-  categoriesIncome: CategoryExpense[];
 }
 
 const chartConfig = {
@@ -32,13 +29,13 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export default function CategoryIncomeCard({
-  selectedMonth,
-  overview,
-  setDialogState,
-  topList,
-  categoriesIncome: categories,
-}: Props) {
+export default function CategoryIncomeCard({ setDialogState }: Props) {
+  const {
+    selectedMonth,
+    overview,
+    topIncomes: topList,
+    categoriesIncome: categories,
+  } = useDashboardStore();
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
@@ -49,6 +46,10 @@ export default function CategoryIncomeCard({
       .sort((a, b) => b.total_amount - a.total_amount)
       .slice(0, 5);
   }, [categories]);
+
+  const displayToplist = useMemo(() => {
+    return [...topList].sort((a, b) => b.amount - a.amount).slice(0, 5);
+  }, [topList]);
 
   // 나머지 카테고리 (필요 시 우측 컬럼에 사용 가능)
   const remainingCategories = useMemo(() => {
@@ -286,8 +287,8 @@ export default function CategoryIncomeCard({
             주요 수입 내역
           </div>
           <div className="flex-1 overflow-y-auto pr-1 scrollbar-hide">
-            {topList.length > 0 ? (
-              topList.map((item) => (
+            {displayToplist.length > 0 ? (
+              displayToplist.map((item) => (
                 <div
                   key={item.id}
                   className="flex items-center justify-between p-1 rounded-xl hover:bg-slate-100 transition-all cursor-pointer group"

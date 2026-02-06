@@ -18,7 +18,6 @@ export default function Dashboard() {
   const [activeSection, setActiveSection] =
     useState<DashboardSection>("summary");
   const [isScrolling, setIsScrolling] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [dialogState, setDialogState] = useState<DialogState>({
     open: false,
     title: "",
@@ -31,26 +30,25 @@ export default function Dashboard() {
     string | null
   >(null); // New state for selected date
   const {
+    selectedMonth,
     loading,
     overview,
-    categories,
+    categoriesExpense,
     categoriesIncome,
     dailyExpenses,
-    daily7Expenses,
     recentTransactions,
     topFixedExpenses,
     topIncomes,
     comparisons,
+    setSelectedMonth,
     loadDashboardData,
   } = useDashboardStore();
   const resetHeader = useHeaderStore((state) => state.resetHeader);
   const setHeader = useHeaderStore((state) => state.setHeader);
 
   useEffect(() => {
-    if (selectedMonth) {
-      loadDashboardData(selectedMonth);
-    }
-  }, [selectedMonth, loadDashboardData]);
+    loadDashboardData();
+  }, []);
 
   useEffect(() => {
     setHeader(
@@ -63,15 +61,6 @@ export default function Dashboard() {
 
     return () => resetHeader();
   }, [selectedMonth]);
-
-  // 현재 연월 가져오기
-  useEffect(() => {
-    const now = new Date();
-    const yearMonth = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
-    ).padStart(2, "0")}`;
-    setSelectedMonth(yearMonth);
-  }, []);
 
   const handleDateClick = (date: string) => {
     setSelectedDateForDialog(date);
@@ -131,7 +120,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="pt-6 px-6 max-w-7xl mx-auto overflow-hidden h-[calc(100vh-147px)]">
+    <div className="pt-3 px-6 max-w-7xl mx-auto overflow-hidden h-[calc(100vh-147px)]">
       <DotNavigation
         sections={sections}
         activeId={activeSection}
@@ -148,25 +137,11 @@ export default function Dashboard() {
             exit="exit"
             transition={{ duration: 0.35, ease: "easeOut" }}
           >
-            <MainExpenseCard
-              overview={overview}
-              comparison={comparisons.Expense}
-              dailyExpenses={daily7Expenses}
-              recentTransactions={recentTransactions}
-              lang="ko"
-            />
+            <MainExpenseCard lang="ko" />
 
-            <SummaryItemRow
-              overview={overview}
-              comparisons={comparisons}
-              lang="ko"
-            />
+            <SummaryItemRow lang="ko" />
 
-            <DailyExpenseCard
-              selectedMonth={selectedMonth}
-              handleDateClick={handleDateClick}
-              dailyExpenses={dailyExpenses}
-            />
+            <DailyExpenseCard handleDateClick={handleDateClick} />
           </motion.div>
         )}
 
@@ -179,21 +154,9 @@ export default function Dashboard() {
             exit="exit"
             transition={{ duration: 0.35, ease: "easeOut" }}
           >
-            <CategoryExpenseCard
-              selectedMonth={selectedMonth}
-              overview={overview}
-              setDialogState={setDialogState}
-              topList={topFixedExpenses}
-              categories={categories}
-            />
+            <CategoryExpenseCard setDialogState={setDialogState} />
 
-            <CategoryIncomeCard
-              selectedMonth={selectedMonth}
-              overview={overview}
-              setDialogState={setDialogState}
-              topList={topIncomes}
-              categoriesIncome={categoriesIncome}
-            />
+            <CategoryIncomeCard setDialogState={setDialogState} />
           </motion.div>
         )}
       </AnimatePresence>

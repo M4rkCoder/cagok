@@ -1,21 +1,17 @@
 import { DiffBadge } from "./DiffBadge";
 import { CurrencyIcon } from "@/components/ui/CurrencyIcon";
 import CountUp from "@/components/CoutUp";
-import { ComparisonMetric, MonthlyOverview, ComparisonType } from "@/types";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
+import { useDashboardStore } from "@/store/useDashboardStore";
 
 interface SummaryItemRowProps {
-  overview: MonthlyOverview;
-  comparisons: Record<ComparisonType, ComparisonMetric | null>;
   lang: "ko" | "en";
 }
 
-export function SummaryItemRow({
-  overview,
-  comparisons,
-  lang,
-}: SummaryItemRowProps) {
+export function SummaryItemRow({ lang }: SummaryItemRowProps) {
+  const { overview, comparisons } = useDashboardStore();
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
       {[

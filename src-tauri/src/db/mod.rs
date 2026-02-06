@@ -50,6 +50,7 @@ pub struct MonthlyOverview {
     pub net_income: f64,
     pub fixed_expense: f64,
     pub fixed_expense_ratio: f64,
+    pub daily_average: f64,
 }
 
 // 대시보드: 카테고리별 지출 구조체
@@ -60,6 +61,17 @@ pub struct CategoryExpense {
     pub category_icon: String,
     pub total_amount: f64,
     pub percentage: f64,
+    pub transaction_count: i32,
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct DailyCategoryTransaction {
+    pub date: String,
+    pub category_id: i32,
+    pub category_name: String,
+    pub category_icon: String,
+    pub total_amount: f64,
+    pub tx_type: i32,
     pub transaction_count: i32,
 }
 

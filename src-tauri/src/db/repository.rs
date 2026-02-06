@@ -1,4 +1,4 @@
-use super::{Category, CategoryExpense, CategoryMonthlyAmount, DailyExpense, MonthlyExpense, MonthlyOverview, RecurringFrequency, RecurringTransaction, Transaction, TransactionWithCategory, MonthlyTransactionRaw};
+use super::{Category, CategoryExpense, CategoryMonthlyAmount, DailyExpense, MonthlyExpense, MonthlyOverview, RecurringFrequency, RecurringTransaction, Transaction, TransactionWithCategory, MonthlyTransactionRaw, DailyCategoryTransaction};
 use rusqlite::{params, Connection, Result};
 
 pub fn get_setting(conn: &Connection, key: &str) -> Result<Option<String>> {
@@ -259,6 +259,7 @@ impl DashboardRepository {
             net_income: total_income - total_expense,
             fixed_expense,
             fixed_expense_ratio,
+            daily_average: 0.0,
         })
     }
 
@@ -344,6 +345,46 @@ impl DashboardRepository {
             })
         })?;
 
+        rows.collect()
+    }
+
+    pub fn get_daily_category_transactions(
+        conn: &Connection,
+        year_month: &str,
+        tx_type: i32, // 0: income, 1: expense
+    ) -> Result<Vec<DailyCategoryTransaction>> {
+        let start_date = format!("{}-01", year_month);
+    
+        let query = "
+            SELECT 
+                t.date,
+                c.id as category_id,
+                c.name as category_name,
+                c.icon as category_icon,
+                COALESCE(SUM(t.amount), 0) as total_amount,
+                t.type as tx_type,
+                COUNT(t.id) as count
+            FROM transactions t
+            INNER JOIN categories c ON t.category_id = c.id
+            WHERE t.type = ?1 
+              AND t.date BETWEEN date(?2) AND date(?2, '+1 month', '-1 day')
+            GROUP BY t.date, c.id, c.name, c.icon, t.type
+            ORDER BY t.date ASC, total_amount DESC
+        ";
+    
+        let mut stmt = conn.prepare(query)?;
+        let rows = stmt.query_map(params![tx_type, start_date], |row| {
+            Ok(DailyCategoryTransaction {
+                date: row.get(0)?,
+                category_id: row.get(1)?,
+                category_name: row.get(2)?,
+                category_icon: row.get(3)?,
+                total_amount: row.get(4)?,
+                tx_type: row.get(5)?,
+                transaction_count: row.get(6)?,
+            })
+        })?;
+    
         rows.collect()
     }
 

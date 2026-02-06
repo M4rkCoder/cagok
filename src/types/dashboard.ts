@@ -19,6 +19,7 @@ export interface MonthlyOverview {
   net_income: number;
   fixed_expense: number;
   fixed_expense_ratio: number;
+  daily_average: number;
 }
 
 export interface CategoryExpense {
@@ -103,3 +104,13 @@ export type DialogState = {
   transactions: TransactionWithCategory[];
   showDate: boolean;
 };
+
+export interface DailyCategoryTransaction {
+  date: string;
+  category_id: number;
+  category_name: string;
+  category_icon: string;
+  total_amount: number;
+  tx_type: number;
+  transaction_count: number;
+}

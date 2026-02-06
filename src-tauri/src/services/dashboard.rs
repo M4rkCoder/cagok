@@ -3,7 +3,7 @@ use crate::db::repository::DashboardRepository;
 use crate::db::{
     CategoryExpense, CategoryMonthlyAmount, DailyExpense, FinancialSummaryStats, MetricStats, MonthlyExpense,
     MonthlyFinancialSummaryItem, MonthlyOverview, TransactionWithCategory, YearlySummaryItem,
-YearlyDashboardData,
+YearlyDashboardData, DailyCategoryTransaction,
 };
 use rusqlite::Connection;
 use chrono::{Local, NaiveDate, Duration, Datelike, Months};
@@ -16,8 +16,46 @@ impl DashboardService {
         conn: &Connection,
         year_month: &str,
     ) -> Result<MonthlyOverview, String> {
-        DashboardRepository::get_monthly_overview(conn, year_month)
-            .map_err(|e| format!("Failed to get monthly overview: {}", e))
+        // 1. 레포지토리에서 기초 데이터(소계) 가져오기
+        let mut overview = DashboardRepository::get_monthly_overview(conn, year_month)
+            .map_err(|e| format!("Failed to get monthly overview: {}", e))?;
+    
+        // 2. 해당 월의 총 일수(days in month) 계산
+        let days_in_month = Self::get_days_in_month(year_month)
+            .ok_or_else(|| format!("Invalid year_month format: {}", year_month))?;
+    
+        // 3. 일평균 지출 계산 (0으로 나누기 방지)
+        overview.daily_average = if days_in_month > 0 {
+            overview.total_expense / (days_in_month as f64)
+        } else {
+            0.0
+        };
+    
+        Ok(overview)
+    }
+    
+    /// "YYYY-MM" 형식의 문자열을 받아 해당 월의 일수를 반환하는 헬퍼 함수
+    fn get_days_in_month(year_month: &str) -> Option<u32> {
+        let parts: Vec<&str> = year_month.split('-').collect();
+        if parts.len() != 2 {
+            return None;
+        }
+    
+        let year: i32 = parts[0].parse().ok()?;
+        let month: u32 = parts[1].parse().ok()?;
+    
+        // 다음 달의 1일을 구한 뒤 하루를 빼서 현재 달의 마지막 날을 찾음
+        let (next_year, next_month) = if month == 12 {
+            (year + 1, 1)
+        } else {
+            (year, month + 1)
+        };
+    
+        let last_day = NaiveDate::from_ymd_opt(next_year, next_month, 1)?
+            .pred_opt()? // 하루 전으로 이동
+            .day();
+    
+        Some(last_day)
     }
 
     pub fn get_category_transactions(
@@ -84,6 +122,15 @@ impl DashboardService {
     ) -> Result<Vec<MonthlyExpense>, String> {
         DashboardRepository::get_monthly_transactions(conn, months, tx_type)
             .map_err(|e| format!("Failed to get monthly expenses: {}", e))
+    }
+
+    pub fn get_daily_category_transactions(
+        conn: &Connection,
+        year_month: &str,
+        tx_type: i32,
+    ) -> Result<Vec<DailyCategoryTransaction>, String> {
+        DashboardRepository::get_daily_category_transactions(conn, year_month, tx_type)
+            .map_err(|e| format!("해당 월의 일단위 카테고리 지출 내역을 가져오는데 실패했습니다: {}", e))
     }
 
     pub fn get_yearly_financial_summary(

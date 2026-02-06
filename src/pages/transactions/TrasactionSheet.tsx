@@ -1,12 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
-  SheetClose,
   SheetContent,
-  SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -16,10 +13,36 @@ import { Plus } from "lucide-react";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { useConfirmStore } from "@/store/useConfirmStore";
 
-const TransactionSheet = () => {
+// 1. Props 타입 정의 (선택적 속성)
+interface TransactionSheetProps {
+  triggerClassName?: string;
+  triggerText?: string | ReactNode;
+  variant?:
+    | "default"
+    | "link"
+    | "destructive"
+    | "outline"
+    | "secondary"
+    | "ghost";
+  showIcon?: boolean;
+  defaultCategoryId?: number; // 아이콘 표시 여부도 선택할 수 있게 하면 유연합니다.
+}
+
+const TransactionSheet = ({
+  triggerClassName,
+  triggerText,
+  variant = "default",
+  showIcon = true, // 기본값은 아이콘 표시
+  defaultCategoryId,
+}: TransactionSheetProps) => {
   const { t } = useTranslation();
-  const { sheetOpen, setSheetOpen, editingTransaction, handleSheetClose } =
-    useTransactionStore();
+  const {
+    sheetOpen,
+    setSheetOpen,
+    editingTransaction,
+    handleSheetClose,
+    setDefaultCategoryId,
+  } = useTransactionStore();
 
   const { isOpen } = useConfirmStore();
 
@@ -28,26 +51,31 @@ const TransactionSheet = () => {
 
     if (!open) {
       handleSheetClose();
+      setDefaultCategoryId(null);
     } else {
+      if (defaultCategoryId) {
+        setDefaultCategoryId(defaultCategoryId);
+      }
       setSheetOpen(true);
     }
   };
 
   return (
-    <Sheet open={sheetOpen} onOpenChange={handleOpenChange} modal={false}>
+    <Sheet open={sheetOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
-        <Button variant="default" className="shadow-lg">
-          <Plus className="h-6 w-6" /> {t("new_transaction")}
+        {/* 2. props가 있으면 사용하고, 없으면 기본값(기존 설정) 사용 */}
+        <Button variant={variant} className={triggerClassName || "shadow-lg"}>
+          {showIcon && <Plus className="h-6 w-6" />}
+          {triggerText || t("new_transaction")}
         </Button>
       </SheetTrigger>
+
       <SheetContent
         data-tauri-drag-region={false}
         className="top-12 h-[calc(100vh-theme(spacing.12))]"
-        // 다이얼로그가 열려있을 때 시트 외부 클릭으로 닫히는 것 방지
         onPointerDownOutside={(e) => {
           if (isOpen) e.preventDefault();
         }}
-        // 다이얼로그가 포커스를 가져갈 때 시트가 닫히는 것 방지
         onInteractOutside={(e) => {
           if (isOpen) e.preventDefault();
         }}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import EmojiPicker, { EmojiClickData, EmojiStyle } from "emoji-picker-react";
+import EmojiPicker, { EmojiStyle } from "emoji-picker-react";
 import {
   Command,
   CommandEmpty,
@@ -38,32 +38,21 @@ import {
   Pin,
   Banknote,
   Scroll,
-  Smile,
   Trash2,
   X,
-  XCircle,
   SquarePen,
 } from "lucide-react";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { useAppStore } from "@/store/useAppStore";
 import { useCategoryStore } from "@/store/useCategoryStore";
 import { CategoryIcon } from "@/components/CategoryIcon";
-import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useConfirmStore } from "@/store/useConfirmStore";
-
-const transactionSchema = z.object({
-  type: z.number(),
-  is_fixed: z.number(),
-  amount: z.number().min(1, { message: "금액은 1원 이상이어야 합니다." }),
-  date: z.string().min(1, { message: "날짜를 선택해주세요." }),
-  description: z.string().min(1, { message: "내용을 입력해주세요." }),
-  remarks: z.string().optional(),
-  category_id: z.number().optional(),
-});
-
-type TransactionFormValues = z.infer<typeof transactionSchema>;
+import {
+  transactionSchema,
+  TransactionFormValues,
+} from "@/schemas/transaction";
 
 const TransactionForm: React.FC = () => {
   const { t } = useTranslation();
@@ -73,6 +62,7 @@ const TransactionForm: React.FC = () => {
     submitForm,
     handleSheetClose,
     deleteTransaction,
+    defaultCategoryId,
   } = useTransactionStore();
   const { categories } = useAppStore();
   const {
@@ -84,8 +74,6 @@ const TransactionForm: React.FC = () => {
     setCategoryState,
     resetCategoryForm,
     startEditCategory,
-    addCategory,
-    updateCategory,
     deleteCategory,
     submitCategoryForm,
   } = useCategoryStore();
@@ -103,6 +91,14 @@ const TransactionForm: React.FC = () => {
       category_id: editingTransaction?.category_id,
     },
   });
+  useEffect(() => {
+    if (!editingTransaction && defaultCategoryId) {
+      form.setValue("category_id", defaultCategoryId, {
+        shouldValidate: true, // 값이 바뀌면 유효성 검사도 수행
+        shouldDirty: true, // 폼이 변경되었음을 인지
+      });
+    }
+  }, [defaultCategoryId, editingTransaction, form]);
 
   const currentType = form.watch("type");
   const selectedCategory =

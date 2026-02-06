@@ -44,24 +44,48 @@ pub fn initialize_app(
         }
     }
 
-    //insert_default_categories(&conn).map_err(|e| e.to_string())?;
+    insert_default_categories(&conn, &language).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 // 초기 카테고리 생성을 위한 헬퍼 함수
-fn insert_default_categories(conn: &rusqlite::Connection) -> rusqlite::Result<()> {
-    let categories = [
-        ("식비", "🍔", 1),    // 1: Expense
-        ("교통", "🚗", 1),
-        ("쇼핑", "🛍️", 1),
-        ("의료", "🏥", 1),
-        ("월급", "💰", 0),    // 0: Income
-        ("용돈", "🎁", 0),
-    ];
+fn insert_default_categories(conn: &rusqlite::Connection, language: &str) -> rusqlite::Result<()> {
+    let count: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM categories",
+        [],
+        |row| row.get(0),
+    )?;
+
+    if count > 0 {
+        return Ok(());
+    }
+
+    // 언어별 카테고리 정의
+    let categories = if language == "ko" {
+        vec![
+            ("식비", "🍔", 1),
+            ("교통", "🚗", 1),
+            ("쇼핑", "🛍️", 1),
+            ("의료", "🏥", 1),
+            ("주거", "🏠", 1),
+            ("월급", "💰", 0),
+            ("용돈", "🎁", 0),
+        ]
+    } else {
+        vec![
+            ("Food", "🍔", 1),
+            ("Transport", "🚗", 1),
+            ("Shopping", "🛍️", 1),
+            ("Medical", "🏥", 1),
+            ("Housing", "🏠", 1),
+            ("Salary", "💰", 0),
+            ("Allowance", "🎁", 0),
+        ]
+    };
 
     for (name, icon, c_type) in categories {
         conn.execute(
-            "INSERT OR IGNORE INTO categories (name, icon, type) VALUES (?, ?, ?)",
+            "INSERT INTO categories (name, icon, type) VALUES (?, ?, ?)",
             rusqlite::params![name, icon, c_type],
         )?;
     }

@@ -55,6 +55,7 @@ import { CategoryRatioChart } from "./CategoryRatioCharts";
 import { CategoryYearlyTreemap } from "./CategoryYearlyTreemap";
 import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { useAppStore } from "@/store/useAppStore";
+import { useStatisticsStore } from "@/store/useStatisticsStore";
 
 const COLORS = [
   "#8b5cf6",
@@ -105,14 +106,12 @@ export default function StatisticsPage() {
 
   const {
     loading,
-    overview,
     monthlyFinancialSummary,
     financialSummaryStats,
     categoryMonthlyAmounts,
-    loadDashboardData,
-    loadYearlyDashboardData,
-    loadCategoryMonthlyAmounts,
-  } = useDashboardStore();
+    loadYearlyStatistics,
+    loadCategoryTrend,
+  } = useStatisticsStore();
 
   const { categories } = useAppStore();
 
@@ -170,8 +169,8 @@ export default function StatisticsPage() {
     }
 
     // 2. 통합 데이터 로드 (최근 12개월 롤링)
-    loadYearlyDashboardData(baseMonth);
-    loadCategoryMonthlyAmounts(baseMonth, null);
+    loadYearlyStatistics(baseMonth);
+    loadCategoryTrend(baseMonth, null);
   }, [selectedYear, selectedMonth, viewMode]);
 
   const formatCurrency = (amount: number) => {
@@ -219,7 +218,7 @@ export default function StatisticsPage() {
       <CategoryMonthlyTrendSection
         baseMonth={viewMode === "year" ? `${selectedYear}-12` : selectedMonth}
         categories={categories}
-        loadCategoryMonthlyAmounts={loadCategoryMonthlyAmounts}
+        loadCategoryMonthlyAmounts={loadCategoryTrend}
         categoryMonthlyAmounts={categoryMonthlyAmounts}
         formatCurrency={formatCurrency}
       />

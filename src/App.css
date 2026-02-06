@@ -176,6 +176,10 @@
     justify-content: center;
   }
 
+  .font-emoji {
+    font-family: var(--emoji-font) !important;
+  }
+
   .custom-scroll {
     scrollbar-width: thin;
   }

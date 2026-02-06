@@ -4,9 +4,14 @@ import { CardFooter } from "@/components/ui/card";
 interface Props {
   metric: ComparisonMetric | null;
   expenseRate: number | null;
+  dailyAverage?: number | null;
 }
 
-export function ComparisonCardFooter({ metric, expenseRate }: Props) {
+export function ComparisonCardFooter({
+  metric,
+  expenseRate,
+  dailyAverage,
+}: Props) {
   const isEmpty = !metric || metric.previous === 0;
 
   const formatValue = () => {
@@ -18,10 +23,20 @@ export function ComparisonCardFooter({ metric, expenseRate }: Props) {
     }).format(Math.abs(metric.diff));
   };
 
+  const formatKRW = (value: number) => {
+    return new Intl.NumberFormat("ko-KR", {
+      style: "currency",
+      currency: "KRW",
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
   const isIncrease = (metric?.diff ?? 0) > 0;
   const isSame = metric?.diff === 0;
   const hasExpenseRate =
     typeof expenseRate === "number" && Number.isFinite(expenseRate);
+
+  const hasDailyAverage = typeof dailyAverage === "number" && dailyAverage > 0;
 
   const expenseRateColor = () => {
     if (!Number.isFinite(expenseRate)) return "text-muted-foreground";
@@ -37,6 +52,16 @@ export function ComparisonCardFooter({ metric, expenseRate }: Props) {
       <div className="flex flex-col gap-1">
         {!isEmpty && (
           <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+            {/* 2. 일평균 지출액 (새로 추가된 부분) */}
+            {hasDailyAverage && (
+              <div className="flex items-center gap-1">
+                <span>하루 평균</span>
+                <span className="text-slate-900 font-extrabold bg-slate-100 px-1.5 py-0.5 rounded tracking-tighter">
+                  {formatKRW(dailyAverage)}
+                </span>
+                <span>썼어요</span>
+              </div>
+            )}
             {isSame ? (
               "지난 달과 동일함"
             ) : (

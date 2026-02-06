@@ -9,49 +9,26 @@ import {
   ComparisonType,
   ComparisonMetric,
   TransactionWithCategory,
-  FinancialSummaryStats,
-  MonthlyFinancialSummaryItem,
-  CategoryMonthlyAmount,
-  MetricStats,
+  DailyCategoryTransaction,
 } from "@/types";
-
-// Default empty MetricStats for safe access (re-defined here for store-specific use if needed)
-const emptyMetricStats: MetricStats = {
-  total: 0,
-  average: 0,
-  max: 0,
-  min: 0,
-};
-
-// Default empty FinancialSummaryStats for safe access when fetched data is null
-const defaultFinancialSummaryStats: FinancialSummaryStats = {
-  income: emptyMetricStats,
-  expense: emptyMetricStats,
-  netIncome: emptyMetricStats,
-  fixedExpense: emptyMetricStats,
-};
+import { format } from "date-fns";
 
 interface DashboardState {
+  selectedMonth: string;
   overview: MonthlyOverview | null;
-  categories: CategoryExpense[];
+  categoriesExpense: CategoryExpense[];
   categoriesIncome: CategoryExpense[];
   dailyExpenses: DailyExpense[];
   daily7Expenses: DailyExpense[];
+  dailyCategoryExpenses: DailyCategoryTransaction[];
   recentTransactions: TransactionWithCategory[];
   topIncomes: TransactionWithCategory[];
   topFixedExpenses: TransactionWithCategory[];
   monthlyExpenses: MonthlyExpense[];
-  monthlyFinancialSummary: MonthlyFinancialSummaryItem[];
-  financialSummaryStats: FinancialSummaryStats | null;
-  categoryMonthlyAmounts: CategoryMonthlyAmount[];
   comparisons: Record<ComparisonType, ComparisonMetric | null>;
   loading: boolean;
-  loadDashboardData: (selectedMonth: string) => Promise<void>;
-  loadYearlyDashboardData: (selectedMonth: string) => Promise<void>;
-  loadCategoryMonthlyAmounts: (
-    selectedMonth: string,
-    categoryId?: number | null
-  ) => Promise<void>;
+  setSelectedMonth: (month: string) => void;
+  loadDashboardData: () => Promise<void>;
 }
 
 const getMonthRange = (yearMonth: string) => {
@@ -74,18 +51,17 @@ const getMonthRange = (yearMonth: string) => {
 };
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
+  selectedMonth: format(new Date(), "yyyy-MM"),
   overview: null,
-  categories: [],
+  categoriesExpense: [],
   categoriesIncome: [],
   dailyExpenses: [],
   daily7Expenses: [],
+  dailyCategoryExpenses: [],
   recentTransactions: [],
   topIncomes: [],
   topFixedExpenses: [],
   monthlyExpenses: [],
-  monthlyFinancialSummary: [],
-  financialSummaryStats: null,
-  categoryMonthlyAmounts: [],
   comparisons: {
     Expense: null,
     Income: null,
@@ -94,7 +70,14 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     FixedRatio: null,
   },
   loading: true,
-  loadDashboardData: async (selectedMonth: string) => {
+  setSelectedMonth: (month: string) => {
+    set({ selectedMonth: month });
+    get().loadDashboardData();
+  },
+
+  loadDashboardData: async () => {
+    const { selectedMonth } = get();
+    if (!selectedMonth) return;
     try {
       set({ loading: true });
 
@@ -110,10 +93,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
       const [
         overviewData,
-        categoriesData,
+        categoriesExpense,
         categoriesIncome,
         dailyData,
         daily7Data,
+        dailyCategoryData,
         recentData,
         topIncomesData,
         topFixedData,
@@ -137,19 +121,21 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         invoke<DailyExpense[]>("get_recent_7days_expenses", {
           yearMonth: selectedMonth,
         }),
+        invoke<DailyCategoryTransaction[]>("get_daily_category_transactions", {
+          yearMonth: selectedMonth,
+          txType: 1, // 지출 기준
+        }),
         invoke<TransactionWithCategory[]>("get_recent_transactions", {
           yearMonth: selectedMonth,
           limit: 5,
         }),
-        // 새로 만든 Command 호출 (Top 5개)
         invoke<TransactionWithCategory[]>("get_top_incomes", {
           yearMonth: selectedMonth,
           limit: 5,
         }),
-        // 새로 만든 Command 호출 (Top 5개)
         invoke<TransactionWithCategory[]>("get_top_fixed_expenses", {
           yearMonth: selectedMonth,
-          limit: 5,
+          limit: 20,
         }),
         invoke<MonthlyExpense[]>("get_monthly_transactions", {
           months: 6,
@@ -178,10 +164,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
       set({
         overview: overviewData,
-        categories: categoriesData,
+        categoriesExpense: categoriesExpense,
         categoriesIncome: categoriesIncome,
         dailyExpenses: dailyData,
         daily7Expenses: daily7Data,
+        dailyCategoryExpenses: dailyCategoryData,
         monthlyExpenses: monthlyData,
         recentTransactions: recentData,
         topIncomes: topIncomesData,
@@ -190,53 +177,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       });
     } catch (error) {
       console.error("Failed to load dashboard data:", error);
-    } finally {
-      set({ loading: false });
-    }
-  },
-
-  loadYearlyDashboardData: async (selectedMonth: string) => {
-    try {
-      set({ loading: true });
-
-      const yearlyData = await invoke<{
-        financialSummaryStats: FinancialSummaryStats;
-        monthlyFinancialSummary: MonthlyFinancialSummaryItem[];
-      } | null>("get_yearly_dashboard_data_command", {
-        baseMonth: selectedMonth,
-      });
-
-      set({
-        financialSummaryStats:
-          yearlyData?.financialSummaryStats ?? defaultFinancialSummaryStats,
-        monthlyFinancialSummary: yearlyData?.monthlyFinancialSummary ?? [],
-      });
-    } catch (error) {
-      console.error("Failed to load yearly dashboard data:", error);
-    } finally {
-      set({ loading: false });
-    }
-  },
-
-  loadCategoryMonthlyAmounts: async (
-    selectedMonth: string,
-    categoryId?: number | null
-  ) => {
-    try {
-      set({ loading: true });
-
-      // 백엔드 커맨드 호출 시 인자명을 baseMonth로 변경합니다.
-      const amounts = await invoke<CategoryMonthlyAmount[]>(
-        "get_monthly_category_amounts_command",
-        {
-          baseMonth: selectedMonth, // 백엔드의 base_month 파라미터와 매핑됨
-          categoryId: categoryId ?? null,
-        }
-      );
-
-      set({ categoryMonthlyAmounts: amounts ?? [] });
-    } catch (error) {
-      console.error("Failed to load monthly category amounts:", error);
     } finally {
       set({ loading: false });
     }

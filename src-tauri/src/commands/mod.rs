@@ -38,6 +38,7 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         dashboard::get_yearly_dashboard_data_command,
         dashboard::get_monthly_financial_summary_command,
         dashboard::get_financial_summary_stats_command,
+        dashboard::get_daily_category_transactions,
         //recurring
         recurring::get_recurring_transactions,
         recurring::create_recurring_transaction,

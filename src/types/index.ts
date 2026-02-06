@@ -25,4 +25,5 @@ export type {
   FinancialSummaryStats,
   MetricStats,
   CategoryMonthlyAmount,
+  DailyCategoryTransaction,
 } from "./dashboard";

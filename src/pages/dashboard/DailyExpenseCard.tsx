@@ -6,29 +6,28 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   BarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
-import { useEffect, useState } from "react";
-import DailyExpenseCalendar from "./DailyExpenseCalendar";
-import { DailyExpense } from "@/types";
+import { useEffect, useState, useMemo } from "react";
+import { useDashboardStore } from "@/store/useDashboardStore";
+import CategoryExpenseChart from "./CategoryExpenseChart";
 
 interface Props {
-  selectedMonth: string;
   handleDateClick: (date: string) => void;
-  dailyExpenses: DailyExpense[];
 }
-
-const chartConfig = {
-  total_amount: {
-    label: "지출액",
-    color: "#2563eb",
-  },
-} satisfies ChartConfig;
 
 const formatDateWithDay = (dateStr: string) => {
   if (!dateStr) return "";
@@ -36,107 +35,138 @@ const formatDateWithDay = (dateStr: string) => {
   return `${date.getMonth() + 1}.${date.getDate()}`;
 };
 
-const getAllDatesInMonth = (year: number, month: number) => {
-  const dates = [];
-  const lastDate = new Date(year, month + 1, 0).getDate();
-  for (let day = 1; day <= lastDate; day++) {
-    const date = new Date(year, month, day);
-    const yyyy = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const dd = String(date.getDate()).padStart(2, "0");
-    dates.push({
-      date: `${yyyy}-${mm}-${dd}`,
-      total_amount: 0,
+export default function DailyExpenseCard({ handleDateClick }: Props) {
+  const { selectedMonth, dailyCategoryExpenses, categoriesExpense } =
+    useDashboardStore();
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
+
+  // 1. 색상 맵 (기존 로직 유지)
+  const categoryConfig = useMemo(() => {
+    const config: Record<string, { id: string; name: string; color: string }> =
+      {};
+    categoriesExpense.forEach((cat, index) => {
+      const lightness =
+        30 + index * (55 / Math.max(categoriesExpense.length - 1, 1));
+      config[cat.category_name] = {
+        id: cat.category_id.toString(),
+        name: cat.category_name,
+        color: `hsl(221, 83%, ${lightness}%)`,
+      };
     });
-  }
-  return dates;
-};
+    // 전체 보기용 단일 색상 추가
+    config["total"] = { id: "all", name: "전체", color: "hsl(221, 83%, 45%)" };
+    return config;
+  }, [categoriesExpense]);
 
-export default function DailyExpenseCard({
-  selectedMonth,
-  handleDateClick,
-  dailyExpenses,
-}: Props) {
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  // 2. 데이터 가공 (total 필드 추가)
+  const chartData = useMemo(() => {
+    const [year, month] = selectedMonth.split("-").map(Number);
+    const lastDate = new Date(year, month, 0).getDate();
+    const data = [];
 
-  const expenseMap = new Map(
-    (dailyExpenses || []).map((item) => [item.date, item.total_amount])
-  );
-  const [year, month] = selectedMonth.split("-").map(Number);
-  const allDates = getAllDatesInMonth(year, month - 1);
+    for (let d = 1; d <= lastDate; d++) {
+      const dateStr = `${selectedMonth}-${String(d).padStart(2, "0")}`;
+      const dayData: any = {
+        date: dateStr,
+        displayDate: `${month}.${d}`,
+        total: 0, // 전체 합산용 필드
+      };
 
-  const dailyChartData = allDates.map((day) => ({
-    ...day,
-    total_amount: expenseMap.get(day.date) ?? 0,
-    displayDate: formatDateWithDay(day.date),
-  }));
+      dailyCategoryExpenses
+        .filter((item) => item.date === dateStr)
+        .forEach((item) => {
+          const amount = item.total_amount;
+          dayData[item.category_name] = amount;
+          dayData.total += amount; // 날짜별 총액 누적
+        });
+
+      data.push(dayData);
+    }
+    return data;
+  }, [selectedMonth, dailyCategoryExpenses]);
 
   return (
-    <Card className="p-5">
-      <div className="flex flex-col md:grid md:grid-cols-3 items-start">
-        {/* 차트 영역 (좌측 2컬럼) */}
+    <Card className="pt-5 pb-0 px-5">
+      <div className="flex flex-col md:grid md:grid-cols-3 items-start gap-4">
         <div className="md:col-span-2 w-full">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold text-slate-400 tracking-widest uppercase">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-sm font-semibold text-slate-400">
               일일 지출 현황
             </span>
           </div>
 
-          <div className="h-[230px] w-full">
-            {/* 차트 높이를 약간 늘려 캘린더와 밸런스 유지 */}
-            {isMounted && dailyChartData.length > 0 ? (
-              <ChartContainer config={chartConfig} className="h-full w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={dailyChartData}
-                    margin={{ top: 0, right: 10, left: 10, bottom: 0 }}
-                  >
-                    <CartesianGrid
-                      vertical={false}
-                      strokeDasharray="3 3"
-                      stroke="#e2e8f0"
-                    />
-                    <XAxis
-                      dataKey="displayDate"
-                      tickLine={false}
-                      axisLine={false}
-                      fontSize={12}
-                      tick={{ fill: "#94a3b8" }}
-                      interval={Math.floor(dailyChartData.length / 7)} // 라벨 겹침 방지
-                    />
-                    <YAxis hide />
-                    <ChartTooltip
-                      cursor={{ fill: "#f1f5f9" }}
-                      content={<ChartTooltipContent hideIndicator />}
-                    />
+          <div className="h-[240px] w-full">
+            <ChartContainer config={categoryConfig} className="h-full w-full">
+              <ResponsiveContainer>
+                <BarChart data={chartData}>
+                  <CartesianGrid
+                    vertical={false}
+                    strokeDasharray="3 3"
+                    stroke="#e2e8f0"
+                  />
+                  <XAxis
+                    dataKey="displayDate"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    interval={4}
+                    minTickGap={10}
+                  />
+                  <YAxis hide />
+                  <ChartTooltip
+                    cursor={{ fill: "rgba(226, 232, 240, 0.4)" }}
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value, name) => (
+                          <div className="flex items-center justify-between gap-8 w-full">
+                            <span className="text-slate-500 text-xs">
+                              {name}
+                            </span>
+                            <span className="font-bold text-xs">
+                              {Number(value).toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                      />
+                    }
+                  />
+
+                  {/* 3. 조건부 Bar 렌더링 */}
+                  {selectedCategoryId === "all" ? (
+                    // 전체 카테고리일 때는 'total' 필드 하나만 단색으로 표시
                     <Bar
-                      dataKey="total_amount"
-                      radius={[4, 4, 0, 0]}
-                      fill="var(--color-total_amount)"
-                      fillOpacity={0.8}
-                      className="cursor-pointer hover:fill-opacity-100 transition-opacity"
+                      dataKey="total"
+                      name="총 지출"
+                      fill={categoryConfig["total"].color}
+                      radius={[4, 4, 0, 0]} // 막대 상단 둥글게
                       onClick={(data) => handleDateClick(data.payload.date)}
+                      className="cursor-pointer"
                     />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-400 border border-dashed rounded-lg">
-                데이터가 없습니다.
-              </div>
-            )}
+                  ) : (
+                    // 특정 카테고리 선택 시에는 해당 카테고리만 표시
+                    categoriesExpense.map((cat) => (
+                      <Bar
+                        key={cat.category_id}
+                        dataKey={cat.category_name}
+                        stackId="a"
+                        fill={categoryConfig[cat.category_name].color}
+                        hide={selectedCategoryId !== cat.category_id.toString()}
+                        onClick={(data) => handleDateClick(data.payload.date)}
+                        className="cursor-pointer"
+                      />
+                    ))
+                  )}
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
           </div>
         </div>
 
-        {/* 캘린더 영역 (우측 1컬럼) */}
-        <div className="w-full pl-2 hidden md:block">
-          <DailyExpenseCalendar
-            selectedMonth={selectedMonth}
-            dailyExpenses={dailyChartData}
-            onDateClick={handleDateClick}
+        <div className="w-full h-full pl-2 hidden md:block">
+          <CategoryExpenseChart
+            activeId={selectedCategoryId}
+            selectedCategoryId={selectedCategoryId}
+            setSelectedCategoryId={setSelectedCategoryId}
           />
         </div>
       </div>

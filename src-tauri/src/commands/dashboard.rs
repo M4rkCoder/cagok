@@ -1,6 +1,6 @@
 use crate::db::{
     CategoryExpense, DailyExpense, DbConnection, MonthlyExpense, MonthlyFinancialSummaryItem,
-    MonthlyOverview, TransactionWithCategory, YearlySummaryItem, FinancialSummaryStats, CategoryMonthlyAmount, YearlyDashboardData
+    MonthlyOverview, TransactionWithCategory, YearlySummaryItem, FinancialSummaryStats, CategoryMonthlyAmount, YearlyDashboardData, DailyCategoryTransaction
 };
 use crate::services::dashboard::DashboardService;
 use crate::services::{ComparisonMetric, ComparisonType};
@@ -42,6 +42,16 @@ pub fn get_monthly_transactions(
 ) -> Result<Vec<MonthlyExpense>, String> {
     let conn = db.0.lock().unwrap();
     DashboardService::get_monthly_transactions(&conn, months, tx_type)
+}
+
+#[tauri::command]
+pub fn get_daily_category_transactions(
+    db: State<'_, DbConnection>,
+    year_month: String, // "YYYY-MM" 형식
+    tx_type: i32,       // 0: income, 1: expense
+) -> Result<Vec<DailyCategoryTransaction>, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardService::get_daily_category_transactions(&conn, &year_month, tx_type)
 }
 
 #[tauri::command]
