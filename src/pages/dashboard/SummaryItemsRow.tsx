@@ -1,6 +1,6 @@
 import { DiffBadge } from "./DiffBadge";
 import { CurrencyIcon } from "@/components/ui/CurrencyIcon";
-import CountUp from "@/components/CoutUp";
+import CountUp from "@/components/CountUp";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useDashboardStore } from "@/store/useDashboardStore";

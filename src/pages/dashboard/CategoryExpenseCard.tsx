@@ -90,7 +90,7 @@ export default function CategoryExpenseCard({ setDialogState }: Props) {
         name: "변동비",
         value: Math.max(
           0,
-          (overview.total_expense ?? 0) - (overview.fixed_expense ?? 0)
+          (overview.total_expense ?? 0) - (overview.fixed_expense ?? 0),
         ),
         fill: "transparent", // 아주 연한 블루 (Blue-100)
         stroke: "transparent",
@@ -111,7 +111,7 @@ export default function CategoryExpenseCard({ setDialogState }: Props) {
 
   const handleCategoryMonthlyClick = async (
     categoryId: number,
-    categoryName: string
+    categoryName: string,
   ) => {
     try {
       const transactions = await invoke<TransactionWithCategory[]>(
@@ -119,7 +119,7 @@ export default function CategoryExpenseCard({ setDialogState }: Props) {
         {
           categoryId,
           yearMonth: selectedMonth,
-        }
+        },
       );
       console.log("CATEGORY MONTHLY TRANSACTIONS:", transactions);
       setDialogState({
@@ -285,7 +285,7 @@ export default function CategoryExpenseCard({ setDialogState }: Props) {
                   onClick={() =>
                     handleCategoryMonthlyClick(
                       category.category_id,
-                      category.category_name
+                      category.category_name,
                     )
                   }
                 >

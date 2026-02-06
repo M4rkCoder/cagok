@@ -29,7 +29,13 @@ import { Badge } from "@/components/ui/badge";
 const CategorySettings = () => {
   const { setHeader, resetHeader } = useHeaderStore();
   const categories = useAppStore((s) => s.categories);
-  const { editingCategoryId, startEditCategory, deleteCategory, resetCategoryForm, submitCategoryForm } = useCategoryStore();
+  const {
+    editingCategoryId,
+    startEditCategory,
+    deleteCategory,
+    resetCategoryForm,
+    submitCategoryForm,
+  } = useCategoryStore();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"income" | "expense">("expense"); // Default to expense
 
@@ -111,27 +117,27 @@ const CategorySettings = () => {
             카테고리가 없습니다.
           </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 mt-4">
             {categories.map((cat) => (
-              <li
+              <div
                 key={cat.id}
-                className="flex items-center justify-between p-3 rounded-lg border border-slate-100 bg-white shadow-sm hover:bg-muted/50 transition-colors group"
+                className="flex flex-col items-center justify-center p-2 rounded-md bg-white shadow-sm hover:bg-muted/50 transition-colors group relative"
               >
-                <div className="flex items-center gap-3">
-                  <CategoryIcon icon={cat.icon} type={cat.type} size="md" />
-                  <span className="font-semibold text-sm">{cat.name}</span>
-                </div>
-                <div className="hidden group-hover:flex items-center gap-1">
+                <CategoryIcon icon={cat.icon} type={cat.type} size="lg" />
+                <span className="font-semibold text-sm mt-1 text-center truncate w-full px-1">
+                  {cat.name}
+                </span>
+                <div className="absolute top-1 right-1 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-6 w-6"
                           onClick={() => handleEdit(cat)}
                         >
-                          <Pencil className="h-4 w-4" />
+                          <Pencil className="h-3 w-3" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -143,10 +149,10 @@ const CategorySettings = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-6 w-6"
                           onClick={() => handleDelete(cat.id!)}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-3 w-3 text-destructive" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -155,7 +161,7 @@ const CategorySettings = () => {
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-              </li>
+              </div>
             ))}
           </div>
         )}
@@ -174,31 +180,71 @@ const CategorySettings = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="expense" value={activeTab} onValueChange={(value) => setActiveTab(value as "income" | "expense")}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="income">
+      <Tabs
+        defaultValue="expense"
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as "income" | "expense")}
+      >
+        <TabsList className="mb-4 p-1 h-auto">
+          <TabsTrigger
+            value="income"
+            className={cn(
+              "data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm flex items-center",
+              activeTab === "income" ? "bg-blue-600 text-white" : "",
+            )}
+          >
             수입
-            <Badge variant="secondary" className="ml-2">
+            <Badge
+              variant="secondary"
+              className={cn(
+                "ml-2 font-bold",
+                activeTab === "income"
+                  ? "bg-white text-blue-600"
+                  : "text-green-600 bg-green-100",
+              )}
+            >
               {incomeCategories.length}
             </Badge>
           </TabsTrigger>
-          <TabsTrigger value="expense">
+          <TabsTrigger
+            value="expense"
+            className={cn(
+              "data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-sm flex items-center",
+              activeTab === "expense" ? "bg-blue-600 text-white" : "",
+            )}
+          >
             지출
-            <Badge variant="secondary" className="ml-2">
+            <Badge
+              variant="secondary"
+              className={cn(
+                "ml-2 font-bold",
+                activeTab === "expense"
+                  ? "bg-white text-blue-600"
+                  : "text-red-600 bg-red-100",
+              )}
+            >
               {expenseCategories.length}
             </Badge>
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="income">
-          <CategoryList title="수입 카테고리" categories={incomeCategories} type={0} />
+          <CategoryList
+            title="수입 카테고리"
+            categories={incomeCategories}
+            type={0}
+          />
         </TabsContent>
         <TabsContent value="expense">
-          <CategoryList title="지출 카테고리" categories={expenseCategories} type={1} />
+          <CategoryList
+            title="지출 카테고리"
+            categories={expenseCategories}
+            type={1}
+          />
         </TabsContent>
       </Tabs>
 
-      <Sheet open={sheetOpen} onOpenChange={setSheetOpen} modal={false}>
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent
           side="right"
           className="top-12 h-[calc(100vh-theme(spacing.12))]"

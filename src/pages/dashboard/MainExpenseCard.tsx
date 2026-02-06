@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { DiffBadge } from "./DiffBadge";
 import { CurrencyIcon } from "@/components/ui/CurrencyIcon";
-import CountUp from "@/components/CoutUp";
+import CountUp from "@/components/CountUp";
 import { ComparisonCardFooter } from "./ComparisonCardFooter";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
@@ -55,7 +55,7 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
         {/* 1. 지출 요약부 (좌측) */}
         <div className="lg:col-span-4 p-5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-7">
+            <div className="flex items-center justify-between mb-8">
               <span className="text-sm font-semibold text-slate-400 tracking-widest uppercase">
                 {lang === "ko" ? "이번 달 지출" : "Monthly Expense"}
               </span>
@@ -101,7 +101,7 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
                           className={cn(
                             "flex items-center justify-between py-1.5 px-2 transition-all duration-200 ease-out",
                             "hover:bg-white hover:scale-[1.03] hover:shadow-sm hover:z-10 hover:rounded-md",
-                            "group cursor-default"
+                            "group cursor-default",
                           )}
                         >
                           {/* 왼쪽: 날짜 + 이모지 + 설명 (gap을 2로 축소) */}

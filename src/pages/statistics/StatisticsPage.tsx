@@ -56,6 +56,7 @@ import { CategoryYearlyTreemap } from "./CategoryYearlyTreemap";
 import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { useAppStore } from "@/store/useAppStore";
 import { useStatisticsStore } from "@/store/useStatisticsStore";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const COLORS = [
   "#8b5cf6",
@@ -87,10 +88,10 @@ export default function StatisticsPage() {
 
   const [viewMode, setViewMode] = useState<"year" | "month">("month");
   const [selectedYear, setSelectedYear] = useState<number>(
-    new Date().getFullYear()
+    new Date().getFullYear(),
   );
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    format(new Date(), "yyyy-MM")
+    format(new Date(), "yyyy-MM"),
   );
   const [dialogState, setDialogState] = useState<DialogState>({
     open: false,
@@ -119,45 +120,43 @@ export default function StatisticsPage() {
     setHeader(
       "통계 및 분석",
       <div className="flex items-center gap-2">
-        {/* 모드 전환 토글 (간단한 디자인 예시) */}
-        <div className="flex bg-slate-100 p-1 rounded-md mr-2">
-          <button
-            onClick={() => setViewMode("month")}
-            className={cn(
-              "px-3 py-1 text-xs rounded",
-              viewMode === "month"
-                ? "bg-white shadow-sm font-bold"
-                : "text-slate-500"
-            )}
-          >
-            월별
-          </button>
-          <button
-            onClick={() => setViewMode("year")}
-            className={cn(
-              "px-3 py-1 text-xs rounded",
-              viewMode === "year"
-                ? "bg-white shadow-sm font-bold"
-                : "text-slate-500"
-            )}
-          >
-            연도별
-          </button>
-        </div>
-
         {/* 선택된 모드에 따른 피커 노출 */}
-        {viewMode === "year" ? (
+        {viewMode === "year" && (
           <YearPicker
             selectedYear={selectedYear}
             onYearChange={setSelectedYear}
           />
-        ) : (
-          <MonthYearPicker
-            selectedMonth={selectedMonth}
-            onMonthChange={setSelectedMonth}
-          />
         )}
-      </div>
+        {/* 모드 전환 토글 (간단한 디자인 예시) */}
+        <Tabs
+          value={viewMode}
+          onValueChange={(value) => setViewMode(value as "month" | "year")}
+          className="mr-2"
+        >
+          <TabsList className="bg-slate-100 h-10 p-1.5 grid w-[180px] grid-cols-2">
+            <TabsTrigger
+              value="month"
+              className={cn(
+                "h-full text-xs transition-all",
+                "data-[state=active]:bg-white data-[state=active]:text-slate-950 data-[state=active]:shadow-sm data-[state=active]:font-bold",
+                "text-slate-500",
+              )}
+            >
+              이번 달 기준
+            </TabsTrigger>
+            <TabsTrigger
+              value="year"
+              className={cn(
+                "h-full text-xs transition-all",
+                "data-[state=active]:bg-white data-[state=active]:text-slate-950 data-[state=active]:shadow-sm data-[state=active]:font-bold",
+                "text-slate-500",
+              )}
+            >
+              연도별
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>,
     );
     return () => resetHeader();
   }, [selectedYear, selectedMonth, viewMode, setHeader, resetHeader]);

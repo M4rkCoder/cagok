@@ -8,7 +8,7 @@ import { DialogState } from "@/types";
 import DailyTransactionsDialog from "@/components/DailyTransactionsDialog"; // New import
 import { useHeaderStore } from "@/store/useHeaderStore";
 import CategoryExpenseCard from "./CategoryExpenseCard";
-import DailyExpenseCard from "./DailyExpenseCard";
+import DailyTransactionCard from "./DailyTransactionCard";
 import CategoryIncomeCard from "./CategoryIncomeCard";
 import { DotNavigation } from "../../components/DotNavigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -33,13 +33,6 @@ export default function Dashboard() {
     selectedMonth,
     loading,
     overview,
-    categoriesExpense,
-    categoriesIncome,
-    dailyExpenses,
-    recentTransactions,
-    topFixedExpenses,
-    topIncomes,
-    comparisons,
     setSelectedMonth,
     loadDashboardData,
   } = useDashboardStore();
@@ -56,7 +49,7 @@ export default function Dashboard() {
       <MonthYearPicker
         selectedMonth={selectedMonth}
         onMonthChange={setSelectedMonth}
-      />
+      />,
     );
 
     return () => resetHeader();
@@ -85,7 +78,7 @@ export default function Dashboard() {
         lockScroll();
       }
     },
-    [activeSection, isScrolling, dialogState.open, showDailyTransactionsDialog]
+    [activeSection, isScrolling, dialogState.open, showDailyTransactionsDialog],
   );
 
   // 스크롤 잠금 함수 (애니메이션 시간 동안 대기)
@@ -141,7 +134,7 @@ export default function Dashboard() {
 
             <SummaryItemRow lang="ko" />
 
-            <DailyExpenseCard handleDateClick={handleDateClick} />
+            <DailyTransactionCard handleDateClick={handleDateClick} />
           </motion.div>
         )}
 

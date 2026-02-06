@@ -66,7 +66,7 @@ export default function CategoryIncomeCard({ setDialogState }: Props) {
         ...cat,
         name: cat.category_name,
         value: cat.total_amount,
-        fill: `hsl(142, 72%, ${lightness}%)`,
+        fill: `hsl(142, 83%, ${lightness}%)`,
         percentage: cat.percentage.toFixed(1),
         type: "category",
         icon: cat.category_icon,
@@ -84,7 +84,7 @@ export default function CategoryIncomeCard({ setDialogState }: Props) {
 
   const handleCategoryMonthlyClick = async (
     categoryId: number,
-    categoryName: string
+    categoryName: string,
   ) => {
     try {
       const transactions = await invoke<TransactionWithCategory[]>(
@@ -92,7 +92,7 @@ export default function CategoryIncomeCard({ setDialogState }: Props) {
         {
           categoryId,
           yearMonth: selectedMonth,
-        }
+        },
       );
       console.log("CATEGORY MONTHLY TRANSACTIONS:", transactions);
       setDialogState({
@@ -245,7 +245,7 @@ export default function CategoryIncomeCard({ setDialogState }: Props) {
                   onClick={() =>
                     handleCategoryMonthlyClick(
                       category.category_id,
-                      category.category_name
+                      category.category_name,
                     )
                   }
                 >

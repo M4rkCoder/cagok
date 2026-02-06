@@ -14,48 +14,60 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getThemeColor } from "@/lib/utils"; // 유틸 함수 임포트
 
 interface CategoryChartProps {
-  activeId: string; // 현재 선택된 ID만 받음
+  mode: "expense" | "income"; // 모드 추가
+  activeId: string;
   selectedCategoryId: string;
   setSelectedCategoryId: (id: string) => void;
 }
 
 const chartConfig = {
   value: {
-    label: "지출액",
+    label: "금액",
   },
 } satisfies ChartConfig;
 
-export default function CategoryExpenseChart({
+export default function CategoryTransactionChart({
+  mode,
   activeId,
   selectedCategoryId,
   setSelectedCategoryId,
 }: CategoryChartProps) {
-  const { overview, categoriesExpense: categories } = useDashboardStore();
+  const { overview, categoriesExpense, categoriesIncome } = useDashboardStore();
   const [isMounted, setIsMounted] = React.useState(false);
 
   React.useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // 데이터 가공
+  // 1. 모드에 따른 데이터 소스 선택
+  const categories = mode === "expense" ? categoriesExpense : categoriesIncome;
+  const totalAmount =
+    mode === "expense"
+      ? (overview?.total_expense ?? 0)
+      : (overview?.total_income ?? 0);
+
+  // 2. 데이터 가공 (유틸 함수 사용)
   const chartData = React.useMemo(() => {
     return categories.map((cat, index) => {
-      const lightness = 30 + index * (55 / Math.max(categories.length - 1, 1));
+      // 수입/지출 각각의 ID 필드 대응
+      const id = (cat.category_id || cat.income_category_id).toString();
       return {
         ...cat,
+        id,
         name: cat.category_name,
         value: cat.total_amount,
-        fill: `hsl(221, 83%, ${lightness}%)`,
+        fill: getThemeColor(mode, index, categories.length), // 유틸 함수 적용
       };
     });
-  }, [categories]);
+  }, [categories, mode]);
 
-  // 중앙 텍스트용 현재 선택된 아이템 정보
+  // 중앙 텍스트용 선택된 아이템 정보
   const selectedItem = React.useMemo(
-    () => chartData.find((item) => item.category_id.toString() === activeId),
-    [chartData, activeId]
+    () => chartData.find((item) => item.id === activeId),
+    [chartData, activeId],
   );
 
   const formatCurrency = (amount: number) => {
@@ -67,25 +79,26 @@ export default function CategoryExpenseChart({
   };
 
   return (
-    <div className="flex flex-col h-full w-full items-center justify-center">
+    <div className="flex flex-col h-full w-full items-center justify-between">
       <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
         <SelectTrigger className="w-[140px] h-8 text-sm">
           <SelectValue placeholder="카테고리 선택" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">전체 카테고리</SelectItem>
-          {categories.map((cat) => (
-            <SelectItem
-              key={cat.category_id}
-              value={cat.category_id.toString()}
-            >
-              <span className="font-emoji">{cat.category_icon}</span>
-              <span className="text-sm">{cat.category_name}</span>
-            </SelectItem>
-          ))}
+          {categories.map((cat) => {
+            const id = (cat.category_id || cat.income_category_id).toString();
+            return (
+              <SelectItem key={id} value={id}>
+                <span className="font-emoji mr-2">{cat.category_icon}</span>
+                <span className="text-sm">{cat.category_name}</span>
+              </SelectItem>
+            );
+          })}
         </SelectContent>
       </Select>
-      {isMounted && (overview?.total_expense ?? 0) > 0 ? (
+
+      {isMounted && totalAmount > 0 ? (
         <ChartContainer
           config={chartConfig}
           className="mx-auto aspect-square w-full max-w-[250px]"
@@ -106,26 +119,25 @@ export default function CategoryExpenseChart({
               isAnimationActive={true}
             >
               {chartData.map((entry, index) => {
-                const isSelected = entry.category_id.toString() === activeId;
+                const isSelected = entry.id === activeId;
                 return (
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.fill}
-                    // 선택된 항목만 살짝 투명도를 주거나 테두리를 표시해 가독성 확보
                     stroke={isSelected ? "#000" : "none"}
                     strokeWidth={1}
                     style={{
                       opacity: activeId === "all" || isSelected ? 1 : 0.3,
                       transition: "opacity 0.3s ease",
+                      cursor: "pointer",
                     }}
+                    onClick={() => setSelectedCategoryId(entry.id)}
                   />
                 );
               })}
               <Label
                 content={({ viewBox }) => {
                   if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    const isAll = activeId === "all";
-
                     return (
                       <text
                         x={viewBox.cx}
@@ -133,16 +145,18 @@ export default function CategoryExpenseChart({
                         textAnchor="middle"
                         dominantBaseline="middle"
                       >
-                        {/* 1. 카테고리 아이콘 또는 제목 */}
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) - 25}
                           className="fill-muted-foreground text-lg native-emoji"
                         >
-                          {selectedItem ? selectedItem.category_icon : "💰"}
+                          {selectedItem
+                            ? selectedItem.category_icon
+                            : mode === "expense"
+                              ? "💸"
+                              : "💰"}
                         </tspan>
 
-                        {/* 2. 금액 표시 */}
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 5}
@@ -150,10 +164,9 @@ export default function CategoryExpenseChart({
                         >
                           {selectedItem
                             ? formatCurrency(selectedItem.value)
-                            : formatCurrency(overview?.total_expense ?? 0)}
+                            : formatCurrency(totalAmount)}
                         </tspan>
 
-                        {/* 3. 퍼센트(%) 및 이름 */}
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 28}
@@ -161,7 +174,7 @@ export default function CategoryExpenseChart({
                         >
                           {selectedItem
                             ? `${selectedItem.name} (${selectedItem.percentage.toFixed(1)}%)`
-                            : "총 지출(100%)"}
+                            : `총 ${mode === "expense" ? "지출" : "수입"}(100%)`}
                         </tspan>
                       </text>
                     );
@@ -173,7 +186,9 @@ export default function CategoryExpenseChart({
           </PieChart>
         </ChartContainer>
       ) : (
-        <div className="text-slate-300 text-xs italic">데이터 없음</div>
+        <div className="h-[250px] flex items-center justify-center text-slate-300 text-xs italic">
+          데이터 없음
+        </div>
       )}
     </div>
   );

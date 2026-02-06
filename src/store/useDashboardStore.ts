@@ -21,6 +21,7 @@ interface DashboardState {
   dailyExpenses: DailyExpense[];
   daily7Expenses: DailyExpense[];
   dailyCategoryExpenses: DailyCategoryTransaction[];
+  dailyCategoryIncomes: DailyCategoryTransaction[];
   recentTransactions: TransactionWithCategory[];
   topIncomes: TransactionWithCategory[];
   topFixedExpenses: TransactionWithCategory[];
@@ -38,7 +39,7 @@ const getMonthRange = (yearMonth: string) => {
 
   const prevMonth = new Date(year, month - 2, 1);
   const prevYearMonth = `${prevMonth.getFullYear()}-${String(
-    prevMonth.getMonth() + 1
+    prevMonth.getMonth() + 1,
   ).padStart(2, "0")}`;
 
   return {
@@ -58,6 +59,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   dailyExpenses: [],
   daily7Expenses: [],
   dailyCategoryExpenses: [],
+  dailyCategoryIncomes: [],
   recentTransactions: [],
   topIncomes: [],
   topFixedExpenses: [],
@@ -97,7 +99,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         categoriesIncome,
         dailyData,
         daily7Data,
-        dailyCategoryData,
+        dailyCategoryExpense,
+        dailyCategoryIncome,
         recentData,
         topIncomesData,
         topFixedData,
@@ -125,6 +128,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           yearMonth: selectedMonth,
           txType: 1, // 지출 기준
         }),
+        invoke<DailyCategoryTransaction[]>("get_daily_category_transactions", {
+          yearMonth: selectedMonth,
+          txType: 0, // 수입 기준
+        }),
         invoke<TransactionWithCategory[]>("get_recent_transactions", {
           yearMonth: selectedMonth,
           limit: 5,
@@ -149,8 +156,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
               currentEnd: current.end,
               previousStart: previous.start,
               previousEnd: previous.end,
-            }).then((data) => ({ type, data }))
-          )
+            }).then((data) => ({ type, data })),
+          ),
         ),
       ]);
 
@@ -159,7 +166,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           acc[type] = data;
           return acc;
         },
-        {} as Record<ComparisonType, ComparisonMetric>
+        {} as Record<ComparisonType, ComparisonMetric>,
       );
 
       set({
@@ -168,7 +175,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         categoriesIncome: categoriesIncome,
         dailyExpenses: dailyData,
         daily7Expenses: daily7Data,
-        dailyCategoryExpenses: dailyCategoryData,
+        dailyCategoryExpenses: dailyCategoryExpense,
+        dailyCategoryIncomes: dailyCategoryIncome,
         monthlyExpenses: monthlyData,
         recentTransactions: recentData,
         topIncomes: topIncomesData,

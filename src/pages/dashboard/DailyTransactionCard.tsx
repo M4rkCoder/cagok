@@ -3,15 +3,7 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from "@/components/ui/chart";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   BarChart,
   Bar,
@@ -19,46 +11,60 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import CategoryExpenseChart from "./CategoryExpenseChart";
+import CategoryExpenseChart from "./CategoryTransactionChart"; // 이 컴포넌트 내부에서도 모드에 따른 처리가 필요할 수 있습니다.
+import { getThemeColor } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"; // shadcn/ui 탭 사용 가정
+import CategoryTransactionChart from "./CategoryTransactionChart";
 
 interface Props {
   handleDateClick: (date: string) => void;
 }
 
-const formatDateWithDay = (dateStr: string) => {
-  if (!dateStr) return "";
-  const date = new Date(dateStr);
-  return `${date.getMonth() + 1}.${date.getDate()}`;
-};
+type ViewMode = "expense" | "income";
 
-export default function DailyExpenseCard({ handleDateClick }: Props) {
-  const { selectedMonth, dailyCategoryExpenses, categoriesExpense } =
-    useDashboardStore();
+export default function DailyTransactionCard({ handleDateClick }: Props) {
+  const {
+    selectedMonth,
+    dailyCategoryExpenses,
+    categoriesExpense,
+    dailyCategoryIncomes, // 수입 데이터 추가
+    categoriesIncome, // 수입 카테고리 추가
+  } = useDashboardStore();
+
+  const [viewMode, setViewMode] = useState<ViewMode>("expense");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
 
-  // 1. 색상 맵 (기존 로직 유지)
+  // 1. 현재 모드에 따른 데이터 소스 선택
+  const currentCategories =
+    viewMode === "expense" ? categoriesExpense : categoriesIncome;
+  const currentDailyData =
+    viewMode === "expense" ? dailyCategoryExpenses : dailyCategoryIncomes;
+
+  // 2. 색상 맵 (viewMode에 따라 동적 생성)
   const categoryConfig = useMemo(() => {
     const config: Record<string, { id: string; name: string; color: string }> =
       {};
-    categoriesExpense.forEach((cat, index) => {
-      const lightness =
-        30 + index * (55 / Math.max(categoriesExpense.length - 1, 1));
+
+    currentCategories.forEach((cat, index) => {
       config[cat.category_name] = {
-        id: cat.category_id.toString(),
+        id: (cat.category_id || cat.income_category_id).toString(),
         name: cat.category_name,
-        color: `hsl(221, 83%, ${lightness}%)`,
+        color: getThemeColor(viewMode, index, currentCategories.length),
       };
     });
-    // 전체 보기용 단일 색상 추가
-    config["total"] = { id: "all", name: "전체", color: "hsl(221, 83%, 45%)" };
-    return config;
-  }, [categoriesExpense]);
 
-  // 2. 데이터 가공 (total 필드 추가)
+    config["total"] = {
+      id: "all",
+      name: "전체",
+      color: getThemeColor(viewMode),
+    };
+    return config;
+  }, [currentCategories, viewMode]);
+
+  // 3. 데이터 가공
   const chartData = useMemo(() => {
     const [year, month] = selectedMonth.split("-").map(Number);
     const lastDate = new Date(year, month, 0).getDate();
@@ -69,21 +75,27 @@ export default function DailyExpenseCard({ handleDateClick }: Props) {
       const dayData: any = {
         date: dateStr,
         displayDate: `${month}.${d}`,
-        total: 0, // 전체 합산용 필드
+        total: 0,
       };
 
-      dailyCategoryExpenses
+      currentDailyData
         .filter((item) => item.date === dateStr)
         .forEach((item) => {
           const amount = item.total_amount;
           dayData[item.category_name] = amount;
-          dayData.total += amount; // 날짜별 총액 누적
+          dayData.total += amount;
         });
 
       data.push(dayData);
     }
     return data;
-  }, [selectedMonth, dailyCategoryExpenses]);
+  }, [selectedMonth, currentDailyData]);
+
+  // 탭 변경 시 선택된 카테고리 초기화
+  const handleTabChange = (value: string) => {
+    setViewMode(value as ViewMode);
+    setSelectedCategoryId("all");
+  };
 
   return (
     <Card className="pt-5 pb-0 px-5">
@@ -91,8 +103,30 @@ export default function DailyExpenseCard({ handleDateClick }: Props) {
         <div className="md:col-span-2 w-full">
           <div className="flex items-center justify-between mb-4">
             <span className="text-sm font-semibold text-slate-400">
-              일일 지출 현황
+              일일 {viewMode === "expense" ? "지출" : "수입"} 현황
             </span>
+
+            {/* 지출/수입 전환 탭 */}
+            <Tabs
+              value={viewMode}
+              onValueChange={handleTabChange}
+              className="h-8 w-[140px]"
+            >
+              <TabsList className="grid w-full grid-cols-2 h-8">
+                <TabsTrigger
+                  value="expense"
+                  className="text-xs transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
+                >
+                  지출
+                </TabsTrigger>
+                <TabsTrigger
+                  value="income"
+                  className="text-xs transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-medium"
+                >
+                  수입
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
 
           <div className="h-[240px] w-full">
@@ -123,7 +157,7 @@ export default function DailyExpenseCard({ handleDateClick }: Props) {
                               {name}
                             </span>
                             <span className="font-bold text-xs">
-                              {Number(value).toLocaleString()}
+                              {Number(value).toLocaleString()}원
                             </span>
                           </div>
                         )}
@@ -131,26 +165,26 @@ export default function DailyExpenseCard({ handleDateClick }: Props) {
                     }
                   />
 
-                  {/* 3. 조건부 Bar 렌더링 */}
                   {selectedCategoryId === "all" ? (
-                    // 전체 카테고리일 때는 'total' 필드 하나만 단색으로 표시
                     <Bar
                       dataKey="total"
-                      name="총 지출"
+                      name={viewMode === "expense" ? "총 지출" : "총 수입"}
                       fill={categoryConfig["total"].color}
-                      radius={[4, 4, 0, 0]} // 막대 상단 둥글게
+                      radius={[4, 4, 0, 0]}
                       onClick={(data) => handleDateClick(data.payload.date)}
                       className="cursor-pointer"
                     />
                   ) : (
-                    // 특정 카테고리 선택 시에는 해당 카테고리만 표시
-                    categoriesExpense.map((cat) => (
+                    currentCategories.map((cat) => (
                       <Bar
-                        key={cat.category_id}
+                        key={cat.category_id || cat.income_category_id}
                         dataKey={cat.category_name}
                         stackId="a"
-                        fill={categoryConfig[cat.category_name].color}
-                        hide={selectedCategoryId !== cat.category_id.toString()}
+                        fill={categoryConfig[cat.category_name]?.color}
+                        hide={
+                          selectedCategoryId !==
+                          (cat.category_id || cat.income_category_id).toString()
+                        }
                         onClick={(data) => handleDateClick(data.payload.date)}
                         className="cursor-pointer"
                       />
@@ -163,7 +197,8 @@ export default function DailyExpenseCard({ handleDateClick }: Props) {
         </div>
 
         <div className="w-full h-full pl-2 hidden md:block">
-          <CategoryExpenseChart
+          <CategoryTransactionChart
+            mode={viewMode} // 모드 전달 (해당 컴포넌트에서 수입/지출 카테고리 목록을 렌더링하도록 수정 필요)
             activeId={selectedCategoryId}
             selectedCategoryId={selectedCategoryId}
             setSelectedCategoryId={setSelectedCategoryId}

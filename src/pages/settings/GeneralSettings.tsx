@@ -17,63 +17,61 @@ import { useAppStore } from "@/store/useAppStore";
 import { useHeaderStore } from "@/store/useHeaderStore";
 
 const GeneralSettings = () => {
-  const resetHeader = useHeaderStore((state) => state.resetHeader);
-  const setHeader = useHeaderStore((state) => state.setHeader);
+  const { resetHeader, setHeader } = useHeaderStore();
 
   useEffect(() => {
     setHeader("일반 설정");
     return () => resetHeader();
   }, []);
 
-  const [appName, setAppName] = useState("");
-  const [language, setLanguage] = useState("");
+  const [localAppName, setLocalAppName] = useState("");
+  const [localLanguage, setLocalLanguage] = useState(""); // Local state for language
   const [currency, setCurrency] = useState("");
-  const [password, setPassword] = useState(""); // 패스워드 상태 추가
+  const [password, setPassword] = useState("");
 
-  const updateGlobalAppName = useAppStore((state) => state.setAppName);
+  const {
+    language: globalLanguage,
+    updateSetting,
+    setAppName: updateGlobalAppName,
+  } = useAppStore();
 
   // 설정 로드 함수
   const loadSettings = async () => {
     const name = await invoke<string | null>("get_setting_command", {
       key: "app_name",
     });
-    const lang = await invoke<string | null>("get_setting_command", {
-      key: "language",
-    });
     const curr = await invoke<string | null>("get_setting_command", {
       key: "currency",
     });
 
-    setAppName(name || "Finkro");
-    setLanguage(lang || "ko");
+    setLocalAppName(name || "Finkro");
+    setLocalLanguage(globalLanguage); // Initialize local language from global store
     setCurrency(curr || "KRW");
   };
 
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [globalLanguage]); // Re-run if global language changes
 
   const handleSaveSettings = async () => {
     try {
-      await invoke("set_setting_command", { key: "app_name", value: appName });
-      await invoke("set_setting_command", { key: "language", value: language });
+      await invoke("set_setting_command", {
+        key: "app_name",
+        value: localAppName,
+      });
       await invoke("set_setting_command", { key: "currency", value: currency });
+      await updateSetting("language", localLanguage); // Update global language on save
 
-      // 비밀번호가 입력된 경우에만 업데이트 로직 수행
       if (password.trim() !== "") {
-        // Rust 백엔드에서 password_hash를 업데이트하도록 처리
-        // 만약 set_setting_command가 일반 텍스트만 저장한다면,
-        // 비밀번호 전용 핸들러를 호출하는 것이 보안상 좋습니다.
         await invoke("set_setting_command", {
           key: "password_hash",
           value: password,
         });
-        setPassword(""); // 저장 후 입력창 비우기
+        setPassword("");
       }
 
-      updateGlobalAppName(appName);
+      updateGlobalAppName(localAppName);
       toast.success("설정이 저장되었습니다.");
-      await loadSettings();
     } catch (error) {
       console.error(error);
       toast.error("설정 저장에 실패했습니다.");
@@ -95,8 +93,8 @@ const GeneralSettings = () => {
             </Label>
             <Input
               id="appName"
-              value={appName}
-              onChange={(e) => setAppName(e.target.value)}
+              value={localAppName}
+              onChange={(e) => setLocalAppName(e.target.value)}
               placeholder="Finkro"
             />
           </div>
@@ -104,7 +102,7 @@ const GeneralSettings = () => {
           {/* 기본 언어 */}
           <div className="space-y-2">
             <Label htmlFor="language">기본 언어</Label>
-            <Select value={language} onValueChange={setLanguage}>
+            <Select value={localLanguage} onValueChange={setLocalLanguage}>
               <SelectTrigger id="language">
                 <SelectValue placeholder="언어 선택" />
               </SelectTrigger>
