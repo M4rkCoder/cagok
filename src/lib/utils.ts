@@ -10,7 +10,7 @@ type ColorType = "expense" | "income" | "total";
 export const getThemeColor = (
   type: ColorType = "expense",
   index?: number,
-  total?: number,
+  total?: number
 ): string => {
   const hues: Record<ColorType, number> = {
     expense: 221, // 파란색
@@ -41,4 +41,33 @@ export const getThemeColor = (
   const lightness = minL + index * ((maxL - minL) / divisor);
 
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
+
+export const getFixedColor = (index: number, total: number): string => {
+  const hue = 215;
+  const saturation = 15; // 회색 느낌을 위해 채도를 낮춤
+  const minL = 40; // 진한 회색
+  const maxL = 85; // 연한 회색
+  const divisor = Math.max(total - 1, 1);
+  const lightness = minL + index * ((maxL - minL) / divisor);
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
+
+// 변동 지출: 옅은 오렌지 계열 (Hue: 35, 전체적으로 밝은 명도 설정)
+export const getVariableColor = (index: number, total: number): string => {
+  const hue = 35;
+  const saturation = 90;
+  const minL = 50; // 기본 오렌지
+  const maxL = 90; // 아주 옅은 오렌지
+  const divisor = Math.max(total - 1, 1);
+  const lightness = minL + index * ((maxL - minL) / divisor);
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+};
+
+export const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat("ko-KR", {
+    style: "currency",
+    currency: "KRW",
+    maximumFractionDigits: 0,
+  }).format(amount);
 };

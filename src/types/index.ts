@@ -26,4 +26,5 @@ export type {
   MetricStats,
   CategoryMonthlyAmount,
   DailyCategoryTransaction,
+  TreemapNode,
 } from "./dashboard";

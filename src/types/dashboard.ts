@@ -114,3 +114,14 @@ export interface DailyCategoryTransaction {
   tx_type: number;
   transaction_count: number;
 }
+
+export interface TreemapNode {
+  name: string;
+  value: number;
+  percentage: number;
+  category_id?: number;
+  category_icon?: string;
+  item_type: "root" | "group" | "category";
+  children?: TreemapNode[];
+  [key: string]: any;
+}

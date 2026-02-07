@@ -10,6 +10,7 @@ import {
   ComparisonMetric,
   TransactionWithCategory,
   DailyCategoryTransaction,
+  TreemapNode,
 } from "@/types";
 import { format } from "date-fns";
 
@@ -25,11 +26,15 @@ interface DashboardState {
   recentTransactions: TransactionWithCategory[];
   topIncomes: TransactionWithCategory[];
   topFixedExpenses: TransactionWithCategory[];
+  topVariableExpenses: TransactionWithCategory[];
   monthlyExpenses: MonthlyExpense[];
   comparisons: Record<ComparisonType, ComparisonMetric | null>;
   loading: boolean;
+  expenseTreemap: TreemapNode | null;
+  activeTreemapNode: string | null;
   setSelectedMonth: (month: string) => void;
   loadDashboardData: () => Promise<void>;
+  setActiveTreemapNode: (node: string | null) => void;
 }
 
 const getMonthRange = (yearMonth: string) => {
@@ -39,7 +44,7 @@ const getMonthRange = (yearMonth: string) => {
 
   const prevMonth = new Date(year, month - 2, 1);
   const prevYearMonth = `${prevMonth.getFullYear()}-${String(
-    prevMonth.getMonth() + 1,
+    prevMonth.getMonth() + 1
   ).padStart(2, "0")}`;
 
   return {
@@ -63,6 +68,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   recentTransactions: [],
   topIncomes: [],
   topFixedExpenses: [],
+  topVariableExpenses: [],
   monthlyExpenses: [],
   comparisons: {
     Expense: null,
@@ -72,6 +78,9 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     FixedRatio: null,
   },
   loading: true,
+  expenseTreemap: null,
+  activeTreemapNode: null,
+  setActiveTreemapNode: (node) => set({ activeTreemapNode: node }),
   setSelectedMonth: (month: string) => {
     set({ selectedMonth: month });
     get().loadDashboardData();
@@ -104,8 +113,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         recentData,
         topIncomesData,
         topFixedData,
+        topVariableData,
         monthlyData,
         comparisonData,
+        treemapData,
       ] = await Promise.all([
         invoke<MonthlyOverview>("get_monthly_overview", {
           yearMonth: selectedMonth,
@@ -144,6 +155,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           yearMonth: selectedMonth,
           limit: 20,
         }),
+        invoke<TransactionWithCategory[]>("get_top_variable_expenses", {
+          yearMonth: selectedMonth,
+          limit: 20,
+        }),
         invoke<MonthlyExpense[]>("get_monthly_transactions", {
           months: 6,
           txType: 1,
@@ -156,9 +171,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
               currentEnd: current.end,
               previousStart: previous.start,
               previousEnd: previous.end,
-            }).then((data) => ({ type, data })),
-          ),
+            }).then((data) => ({ type, data }))
+          )
         ),
+        invoke<TreemapNode>("get_expense_treemap", {
+          yearMonth: selectedMonth,
+        }),
       ]);
 
       const comparisonMap = comparisonData.reduce(
@@ -166,7 +184,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           acc[type] = data;
           return acc;
         },
-        {} as Record<ComparisonType, ComparisonMetric>,
+        {} as Record<ComparisonType, ComparisonMetric>
       );
 
       set({
@@ -181,6 +199,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         recentTransactions: recentData,
         topIncomes: topIncomesData,
         topFixedExpenses: topFixedData,
+        topVariableExpenses: topVariableData,
+        expenseTreemap: treemapData,
         comparisons: comparisonMap,
       });
     } catch (error) {

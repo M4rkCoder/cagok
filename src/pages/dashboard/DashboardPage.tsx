@@ -5,16 +5,16 @@ import { MainExpenseCard } from "./MainExpenseCard";
 import { SummaryItemRow } from "./SummaryItemsRow";
 import { TransactionListDialog } from "@/pages/dashboard/TransactionListDialog";
 import { DialogState } from "@/types";
-import DailyTransactionsDialog from "@/components/DailyTransactionsDialog"; // New import
+import DailyTransactionsDialog from "@/components/DailyTransactionsDialog";
 import { useHeaderStore } from "@/store/useHeaderStore";
-import CategoryExpenseCard from "./CategoryExpenseCard";
 import DailyTransactionCard from "./DailyTransactionCard";
-import CategoryIncomeCard from "./CategoryIncomeCard";
 import { DotNavigation } from "../../components/DotNavigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { CategoryMonthlyTreemap } from "./CategoryMonthlyTreemap";
+import { CategoryTopList } from "./CategoryTopList";
 
 export default function Dashboard() {
-  type DashboardSection = "summary" | "category";
+  type DashboardSection = "summary" | "treemap";
   const [activeSection, setActiveSection] =
     useState<DashboardSection>("summary");
   const [isScrolling, setIsScrolling] = useState(false);
@@ -49,7 +49,7 @@ export default function Dashboard() {
       <MonthYearPicker
         selectedMonth={selectedMonth}
         onMonthChange={setSelectedMonth}
-      />,
+      />
     );
 
     return () => resetHeader();
@@ -61,24 +61,27 @@ export default function Dashboard() {
   };
   const handleWheel = useCallback(
     (e: WheelEvent) => {
-      // 다이얼로그가 열려있을 때는 휠 스크롤로 섹션 이동 금지
       if (dialogState.open || showDailyTransactionsDialog || isScrolling)
         return;
 
-      const threshold = 20; // 미세한 움직임 무시를 위한 임계값
+      const threshold = 20;
       if (Math.abs(e.deltaY) < threshold) return;
 
-      if (e.deltaY > 0 && activeSection === "summary") {
-        // 아래로 스크롤 -> 카테고리로
-        setActiveSection("category");
-        lockScroll();
-      } else if (e.deltaY < 0 && activeSection === "category") {
-        // 위로 스크롤 -> 요약으로
-        setActiveSection("summary");
-        lockScroll();
+      if (e.deltaY > 0) {
+        // 아래로 스크롤: summary -> treemap 직결
+        if (activeSection === "summary") {
+          setActiveSection("treemap");
+          lockScroll();
+        }
+      } else if (e.deltaY < 0) {
+        // 위로 스크롤: treemap -> summary 직결
+        if (activeSection === "treemap") {
+          setActiveSection("summary");
+          lockScroll();
+        }
       }
     },
-    [activeSection, isScrolling, dialogState.open, showDailyTransactionsDialog],
+    [activeSection, isScrolling, dialogState.open, showDailyTransactionsDialog]
   );
 
   // 스크롤 잠금 함수 (애니메이션 시간 동안 대기)
@@ -103,7 +106,7 @@ export default function Dashboard() {
   }
   const sections = [
     { id: "summary", label: "월별 현황" },
-    { id: "category", label: "카테고리" },
+    { id: "treemap", label: "한 눈에 지출 보기" },
   ];
 
   const sectionVariants = {
@@ -137,7 +140,7 @@ export default function Dashboard() {
             <DailyTransactionCard handleDateClick={handleDateClick} />
           </motion.div>
         )}
-
+        {/* 
         {activeSection === "category" && (
           <motion.div
             key="category"
@@ -150,6 +153,21 @@ export default function Dashboard() {
             <CategoryExpenseCard setDialogState={setDialogState} />
 
             <CategoryIncomeCard setDialogState={setDialogState} />
+          </motion.div>
+        )} */}
+
+        {activeSection === "treemap" && (
+          <motion.div
+            key="treemap"
+            variants={sectionVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="w-full h-fit min-h-[600px]"
+          >
+            <CategoryMonthlyTreemap />
+            <CategoryTopList />
           </motion.div>
         )}
       </AnimatePresence>

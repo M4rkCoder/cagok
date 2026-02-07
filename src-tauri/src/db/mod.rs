@@ -121,6 +121,18 @@ pub struct MonthlyFinancialSummaryItem {
     pub variable_expense: f64,
 }
 
+//대시보드: 지출 트리맵 노드
+#[derive(Serialize, Default, Debug)]
+pub struct TreemapNode {
+    pub name: String,
+    pub value: f64,
+    pub percentage: f64,
+    pub category_id: Option<i64>,
+    pub category_icon: Option<String>,
+    pub item_type: String, // "root", "group", "category"
+    pub children: Option<Vec<TreemapNode>>,
+}
+
 // 재무 요약 통계값 개별 항목
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MetricStats {

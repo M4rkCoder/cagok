@@ -3,7 +3,7 @@ use crate::db::repository::DashboardRepository;
 use crate::db::{
     CategoryExpense, CategoryMonthlyAmount, DailyExpense, FinancialSummaryStats, MetricStats, MonthlyExpense,
     MonthlyFinancialSummaryItem, MonthlyOverview, TransactionWithCategory, YearlySummaryItem,
-YearlyDashboardData, DailyCategoryTransaction,
+YearlyDashboardData, DailyCategoryTransaction, TreemapNode,
 };
 use rusqlite::Connection;
 use chrono::{Local, NaiveDate, Duration, Datelike, Months};
@@ -368,6 +368,11 @@ impl DashboardService {
             .map_err(|e| e.to_string())
     }
 
+    pub fn get_top_variable_expenses(conn: &Connection, year_month: String, limit: i32) -> Result<Vec<TransactionWithCategory>, String> {
+        DashboardRepository::get_top_transactions(conn, &year_month, limit, 1, false)
+            .map_err(|e| e.to_string())
+    }
+
     pub fn get_top_incomes(conn: &Connection, year_month: String, limit: i32) -> Result<Vec<TransactionWithCategory>, String> {
         DashboardRepository::get_top_transactions(conn, &year_month, limit, 0, false)
             .map_err(|e| e.to_string())
@@ -388,6 +393,80 @@ impl DashboardService {
         Ok(YearlyDashboardData {
             financial_summary_stats,
             monthly_financial_summary: monthly_summary,
+        })
+    }
+
+    //지출 트리맵 
+    pub fn get_expense_treemap(conn: &Connection, year_month: &str) -> Result<TreemapNode, rusqlite::Error> {
+        // 1. DB에서 카테고리별 합계 가져오기 (튜플 형태 데이터)
+        let raw_data = DashboardRepository::get_category_sums_by_fixed_status(conn, year_month)?;
+    
+        let mut fixed_children = Vec::new();
+        let mut variable_children = Vec::new();
+        let mut total_sum = 0.0;
+        let mut fixed_sum = 0.0;
+        let mut variable_sum = 0.0;
+    
+        // 2. 카테고리들을 고정/변동 그룹으로 분류
+        // 튜플 분해: (is_fixed, id, name, icon, amount)
+        for (is_fixed, id, name, icon, amount) in raw_data {
+            total_sum += amount;
+            
+            let node = TreemapNode {
+                name, // 변수명과 필드명이 같으면 생략 가능
+                value: amount,
+                percentage: 0.0, // 아래에서 계산
+                category_id: Some(id),
+                category_icon: Some(icon),
+                item_type: "category".to_string(),
+                children: None,
+            };
+    
+            if is_fixed {
+                fixed_sum += amount;
+                fixed_children.push(node);
+            } else {
+                variable_sum += amount;
+                variable_children.push(node);
+            }
+        }
+    
+        // 3. 비율(percentage) 계산 (총 지출 대비 비율)
+        for node in fixed_children.iter_mut() {
+            node.percentage = if total_sum > 0.0 { (node.value / total_sum) * 100.0 } else { 0.0 };
+        }
+        for node in variable_children.iter_mut() {
+            node.percentage = if total_sum > 0.0 { (node.value / total_sum) * 100.0 } else { 0.0 };
+        }
+    
+        // 4. 최종 Root 노드 조립
+        Ok(TreemapNode {
+            name: "total_expense".to_string(),
+            value: total_sum,
+            percentage: 100.0,
+            item_type: "root".to_string(),
+            category_id: None,
+            category_icon: None,
+            children: Some(vec![
+                TreemapNode {
+                    name: "fixed".to_string(),
+                    value: fixed_sum,
+                    percentage: if total_sum > 0.0 { (fixed_sum / total_sum) * 100.0 } else { 0.0 },
+                    item_type: "group".to_string(),
+                    children: Some(fixed_children),
+                    category_id: None,
+                    category_icon: None,
+                },
+                TreemapNode {
+                    name: "variable".to_string(),
+                    value: variable_sum,
+                    percentage: if total_sum > 0.0 { (variable_sum / total_sum) * 100.0 } else { 0.0 },
+                    item_type: "group".to_string(),
+                    children: Some(variable_children),
+                    category_id: None,
+                    category_icon: None,
+                },
+            ]),
         })
     }
 }

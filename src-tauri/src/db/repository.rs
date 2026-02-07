@@ -388,6 +388,45 @@ impl DashboardRepository {
         rows.collect()
     }
 
+    //트리맵용 지출/고정지출 카테고리별 쿼리
+    pub fn get_category_sums_by_fixed_status(
+        conn: &Connection,
+        year_month: &str,
+    ) -> Result<Vec<(bool, i64, String, String, f64)>> {
+        // 1. 해당 월의 시작일과 마지막 날을 SQLite 함수로 안전하게 처리하기 위해 매개변수 준비
+        let start_date = format!("{}-01", year_month);
+    
+        let query = "
+            SELECT 
+                t.is_fixed,
+                c.id,
+                c.name,
+                c.icon,
+                SUM(t.amount) as total
+            FROM transactions t
+            INNER JOIN categories c ON t.category_id = c.id
+            WHERE t.type = 1 
+              AND t.date BETWEEN ?1 AND date(?1, '+1 month', '-1 day') -- 안전한 말일 계산
+            GROUP BY t.is_fixed, c.id
+            ORDER BY total DESC
+        ";
+    
+        let mut stmt = conn.prepare(query)?;
+        let rows = stmt.query_map(params![start_date], |row| {
+            Ok((
+                row.get::<_, i32>(0)? == 1, // is_fixed (1이면 true, 0이면 false)
+                row.get::<_, i64>(1)?,      // category_id
+                row.get::<_, String>(2)?,   // category_name
+                row.get::<_, String>(3)?,   // category_icon
+                row.get::<_, f64>(4)?,      // total
+            ))
+        })?;
+    
+        // Iterator의 Result들을 모아서 하나의 Result<Vec>으로 반환 (함수형 스타일)
+        rows.collect()
+    }
+
+
     pub fn get_daily_expenses_by_range(
         conn: &Connection,
         start_date: &str,

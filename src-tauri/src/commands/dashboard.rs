@@ -1,6 +1,6 @@
 use crate::db::{
     CategoryExpense, DailyExpense, DbConnection, MonthlyExpense, MonthlyFinancialSummaryItem,
-    MonthlyOverview, TransactionWithCategory, YearlySummaryItem, FinancialSummaryStats, CategoryMonthlyAmount, YearlyDashboardData, DailyCategoryTransaction
+    MonthlyOverview, TransactionWithCategory, YearlySummaryItem, FinancialSummaryStats, CategoryMonthlyAmount, YearlyDashboardData, DailyCategoryTransaction, TreemapNode
 };
 use crate::services::dashboard::DashboardService;
 use crate::services::{ComparisonMetric, ComparisonType};
@@ -142,6 +142,16 @@ pub fn get_top_fixed_expenses(
 }
 
 #[tauri::command]
+pub fn get_top_variable_expenses(
+    db: State<'_, DbConnection>,
+    year_month: String,
+    limit: i32,
+) -> Result<Vec<TransactionWithCategory>, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardService::get_top_variable_expenses(&conn, year_month, limit)
+}
+
+#[tauri::command]
 pub fn get_top_incomes(
     db: State<'_, DbConnection>,
     year_month: String,
@@ -159,4 +169,16 @@ pub fn get_yearly_dashboard_data_command(
     let conn = db.0.lock().unwrap();
 
     DashboardService::get_yearly_dashboard_data(&conn, &base_month)
+}
+
+#[tauri::command]
+pub fn get_expense_treemap(
+    db: State<'_, DbConnection>,
+    year_month: &str
+) -> Result<TreemapNode, String> {
+    let conn = db.0.lock().unwrap();
+    
+    DashboardService::get_expense_treemap(&conn, year_month)
+        .map_err(|e| e.to_string())
+
 }

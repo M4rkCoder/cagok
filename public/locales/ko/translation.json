@@ -54,5 +54,12 @@
   "3_months": "3개월",
   "6_months": "6개월",
   "1_year": "1년",
-  "all_time": "전체 기간(해제)"
+  "all_time": "전체 기간(해제)",
+  "dashboard": {
+    "treemap": {
+      "total": "전체 지출",
+      "fixed": "고정 지출",
+      "variable": "변동 지출"
+    }
+  }
 }
