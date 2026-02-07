@@ -51,7 +51,7 @@ const TransactionsPage = () => {
             내역 조회
           </Button>
         )}
-      </>
+      </>,
     );
   }, [activeSection, t]);
 
@@ -72,7 +72,7 @@ const TransactionsPage = () => {
           animate="animate"
           exit="exit"
           transition={{ duration: 0.35, ease: "easeOut" }}
-          className="min-h-[100vh]"
+          className="min-h-[653px]"
         >
           {activeComponent.component}
         </motion.div>

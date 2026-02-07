@@ -10,7 +10,7 @@ export const DotNavigation = ({
   onChange,
 }: DotNavigationProps) => {
   return (
-    <nav className="fixed right-5 top-1/2 -translate-y-1/2 z-[999] flex flex-col gap-6">
+    <nav className="fixed right-5 top-1/2 -translate-y-1/2 z-[40] flex flex-col gap-6">
       {sections.map((section) => {
         const isActive = activeId === section.id;
 

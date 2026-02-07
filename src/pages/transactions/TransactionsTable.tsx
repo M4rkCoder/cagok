@@ -38,7 +38,7 @@ const TransactionsTable: React.FC = () => {
 
   const [pagination, setPagination] = useState({
     pageIndex: 0,
-    pageSize: 30,
+    pageSize: 10,
   });
   const [filterType, setFilterType] = useState<string | null>(null); // 0: Income, 1: Expense
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
@@ -73,12 +73,12 @@ const TransactionsTable: React.FC = () => {
         accessorKey: "date",
         header: t("date"),
         cell: ({ row }) => (
-          <div className="flex justify-start items-center h-full">
+          <div className="flex justify-start items-center h-full text-sm">
             {row.original.date}
           </div>
         ),
-        size: 120, // Set initial size for date column
-        minSize: 100,
+        size: 130, // Set initial size for date column
+        minSize: 110,
         enableResizing: true,
       },
       {
@@ -89,8 +89,8 @@ const TransactionsTable: React.FC = () => {
             {row.original.type === 0 ? <IncomeBadge /> : <ExpenseBadge />}
           </div>
         ),
-        size: 100, // Set initial size for type column
-        minSize: 80,
+        size: 90, // Set initial size for type column
+        minSize: 70,
         enableResizing: true,
       },
       {
@@ -98,12 +98,12 @@ const TransactionsTable: React.FC = () => {
         header: t("category"),
         cell: ({ row }) => (
           <div className="flex items-center justify-start space-x-2 h-full">
-            <span>{row.original.category_icon}</span>
+            <span className="native-emoji">{row.original.category_icon}</span>
             <span>{row.original.category_name || t("no_category")}</span>
           </div>
         ),
-        size: 160, // Set initial size for category column
-        minSize: 150,
+        size: 130, // Set initial size for category column
+        minSize: 120,
         enableResizing: true,
       },
       {
@@ -195,7 +195,7 @@ const TransactionsTable: React.FC = () => {
         enableResizing: true,
       },
     ],
-    [t]
+    [t],
   );
 
   const filteredTransactions = useMemo(() => {
@@ -210,7 +210,7 @@ const TransactionsTable: React.FC = () => {
 
     if (filterCategory !== null) {
       filtered = filtered.filter(
-        (t) => t.category_id === parseInt(filterCategory)
+        (t) => t.category_id === parseInt(filterCategory),
       );
     }
 
@@ -220,7 +220,7 @@ const TransactionsTable: React.FC = () => {
         (t) =>
           (t.description &&
             t.description.toLowerCase().includes(lowerCaseSearchQuery)) ||
-          (t.remarks && t.remarks.toLowerCase().includes(lowerCaseSearchQuery))
+          (t.remarks && t.remarks.toLowerCase().includes(lowerCaseSearchQuery)),
       );
     }
 

@@ -78,7 +78,7 @@ export default function TitleBar() {
   return (
     <div
       data-tauri-drag-region
-      className="h-full flex items-center justify-between bg-blue-600 text-white px-4 select-none"
+      className="h-full flex items-center justify-between z-[999] bg-blue-600 text-white px-4 select-none"
       onDoubleClick={toggleMax}
     >
       {/* 로고 + 제목 */}
@@ -88,8 +88,13 @@ export default function TitleBar() {
       </div>
 
       {/* 언어 선택 및 최소화/최대화/닫기 버튼 */}
-      <div className="flex items-center gap-2" onDoubleClick={(e) => e.stopPropagation()}>
-        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}> {/* Control popover open state */}
+      <div
+        className="flex items-center gap-2"
+        onDoubleClick={(e) => e.stopPropagation()}
+      >
+        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+          {" "}
+          {/* Control popover open state */}
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
