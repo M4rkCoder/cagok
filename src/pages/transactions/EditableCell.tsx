@@ -46,13 +46,13 @@ const smartParseDate = (input: string): string => {
     res = new Date(
       parseInt(clean.slice(0, 4)),
       parseInt(clean.slice(4, 6)) - 1,
-      parseInt(clean.slice(6, 8))
+      parseInt(clean.slice(6, 8)),
     );
   else if (clean.length === 4)
     res = new Date(
       year,
       parseInt(clean.slice(0, 2)) - 1,
-      parseInt(clean.slice(2, 4))
+      parseInt(clean.slice(2, 4)),
     );
   else if (clean.length === 2 || clean.length === 1)
     res = new Date(year, today.getMonth(), parseInt(clean));
@@ -106,7 +106,7 @@ const EditableCell = ({
   const [value, setValue] = useState(initialValue);
   const [openCombo, setOpenCombo] = useState(false);
   const [categoryFilterType, setCategoryFilterType] = useState<number | null>(
-    null
+    null,
   ); // null: all, 0: income, 1: expense
   const [commandSearchTerm, setCommandSearchTerm] = useState(""); // New state for command input search term
   const inputRef = useRef<HTMLInputElement>(null);
@@ -117,7 +117,7 @@ const EditableCell = ({
 
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -296,7 +296,7 @@ const EditableCell = ({
                     "w-full h-full bg-transparent border-none focus-visible:ring-0 pr-10 pl-2 text-[13px] rounded-none",
                     isActive && "z-20",
                     showErrorVisuals &&
-                      "border-red-500 outline-2 outline-red-500"
+                      "border-red-500 outline-2 outline-red-500",
                   )}
                 />
                 <Popover open={openCombo} onOpenChange={setOpenCombo}>
@@ -367,7 +367,7 @@ const EditableCell = ({
                         "bg-transparent border-none rounded-none",
                         isActive ? "bg-blue-50/50" : "hover:bg-slate-50/50",
                         showErrorVisuals &&
-                          "border-red-500 outline-2 outline-red-500"
+                          "border-red-500 outline-2 outline-red-500",
                       )}
                     >
                       {selected ? (
@@ -443,7 +443,7 @@ const EditableCell = ({
                                 else
                                   moveNext(
                                     row.index,
-                                    row.original.type === 1 ? 3 : 4
+                                    row.original.type === 1 ? 3 : 4,
                                   );
                               } else if (e.key === "ArrowLeft") {
                                 e.preventDefault();
@@ -454,7 +454,7 @@ const EditableCell = ({
                                 setOpenCombo(false);
                                 moveNext(
                                   row.index,
-                                  row.original.type === 1 ? 3 : 4
+                                  row.original.type === 1 ? 3 : 4,
                                 );
                               }
                               if (
@@ -474,7 +474,7 @@ const EditableCell = ({
                                 "flex-1 py-1 text-xs font-bold rounded-l-md",
                                 categoryFilterType === null
                                   ? "bg-slate-200 text-slate-800"
-                                  : "text-slate-500 hover:bg-slate-100"
+                                  : "text-slate-500 hover:bg-slate-100",
                               )}
                             >
                               {t("all")}
@@ -486,7 +486,7 @@ const EditableCell = ({
                                 "flex-1 py-1 text-xs font-bold",
                                 categoryFilterType === 0
                                   ? "bg-slate-200 text-slate-800"
-                                  : "text-slate-500 hover:bg-slate-100"
+                                  : "text-slate-500 hover:bg-slate-100",
                               )}
                             >
                               {t("income")}
@@ -498,7 +498,7 @@ const EditableCell = ({
                                 "flex-1 py-1 text-xs font-bold rounded-r-md",
                                 categoryFilterType === 1
                                   ? "bg-slate-200 text-slate-800"
-                                  : "text-slate-500 hover:bg-slate-100"
+                                  : "text-slate-500 hover:bg-slate-100",
                               )}
                             >
                               {t("expense")}
@@ -524,13 +524,13 @@ const EditableCell = ({
                                     className={cn(
                                       "flex items-center justify-between px-3 py-1 rounded-xl cursor-pointer group mb-0.5",
                                       value === cat.id &&
-                                        "bg-blue-100 dark:bg-blue-900"
+                                        "bg-blue-100 dark:bg-blue-900",
                                     )}
                                     onSelect={() => {
                                       updateData(
                                         row.index,
                                         "category_id",
-                                        cat.id
+                                        cat.id,
                                       );
                                       updateData(row.index, "type", cat.type);
                                       setOpenCombo(false);
@@ -538,9 +538,9 @@ const EditableCell = ({
                                         () =>
                                           moveNext(
                                             row.index,
-                                            cat.type === 1 ? 3 : 4
+                                            cat.type === 1 ? 3 : 4,
                                           ),
-                                        50
+                                        50,
                                       );
                                     }}
                                   >
@@ -576,6 +576,8 @@ const EditableCell = ({
                                       <button
                                         type="button"
                                         onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
                                           onClickDeleteCategory(cat);
                                         }}
                                         className="p-1.5 hover:bg-slate-200 rounded-md text-slate-400 hover:text-rose-500"
@@ -596,7 +598,7 @@ const EditableCell = ({
                                     onClick={() =>
                                       setCategoryState(
                                         "isEmojiPickerOpen",
-                                        true
+                                        true,
                                       )
                                     }
                                     className="w-9 h-9 flex items-center justify-center bg-white border rounded-lg shadow-sm text-lg shrink-0 native-emoji"
@@ -609,7 +611,7 @@ const EditableCell = ({
                                     onChange={(e) =>
                                       setCategoryState(
                                         "newCategoryName",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     placeholder={
@@ -656,7 +658,7 @@ const EditableCell = ({
                                 onClick={() =>
                                   setCategoryState(
                                     "isAddingNewCategoryMode",
-                                    true
+                                    true,
                                   )
                                 }
                                 className="w-full py-3 flex items-center justify-center gap-1.5 text-[10px] font-black text-emerald-500 border-t border-slate-50 hover:bg-slate-50 transition-colors uppercase"
@@ -712,7 +714,8 @@ const EditableCell = ({
                   "w-full h-full bg-transparent border-none focus-visible:ring-0 px-2 text-[13px] rounded-none",
                   (column.columnDef.meta as any)?.type === "number" &&
                     "text-right font-mono",
-                  showErrorVisuals && "border-red-500 outline-2 outline-red-500"
+                  showErrorVisuals &&
+                    "border-red-500 outline-2 outline-red-500",
                 )}
               />
             </div>

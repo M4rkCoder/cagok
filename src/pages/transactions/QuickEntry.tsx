@@ -56,7 +56,7 @@ const QuickEntry: React.FC = () => {
     remarks: "",
   });
   const [data, setData] = useState<QuickEntryTransactionRow[]>(() =>
-    Array.from({ length: 10 }, createEmptyRow)
+    Array.from({ length: 10 }, createEmptyRow),
   );
   const [activeCell, setActiveCell] = useState<{
     rowIndex: number;
@@ -69,7 +69,7 @@ const QuickEntry: React.FC = () => {
   const updateData = useCallback(
     (r: number, cid: string, val: any) => {
       setData((prev) =>
-        prev.map((row, i) => (i === r ? { ...row, [cid]: val } : row))
+        prev.map((row, i) => (i === r ? { ...row, [cid]: val } : row)),
       );
       setRowErrors((prev) => {
         const newErrors = { ...prev };
@@ -82,7 +82,7 @@ const QuickEntry: React.FC = () => {
         return newErrors;
       });
     },
-    [data]
+    [data],
   );
 
   const batchUpdate = useCallback(
@@ -110,13 +110,13 @@ const QuickEntry: React.FC = () => {
         return newData;
       });
     },
-    []
+    [],
   );
 
   const onDragStart = (
     e: React.MouseEvent,
     startRow: number,
-    startCol: number
+    startCol: number,
   ) => {
     e.preventDefault();
     const colKeys = [
@@ -223,7 +223,7 @@ const QuickEntry: React.FC = () => {
               <div
                 className={cn(
                   "w-full h-full flex items-center justify-center transition-colors",
-                  isActive && "bg-blue-100/50"
+                  isActive && "bg-blue-100/50",
                 )}
               >
                 <Checkbox
@@ -279,7 +279,7 @@ const QuickEntry: React.FC = () => {
       },
       {
         accessorKey: "description",
-        header: "설명",
+        header: "상세 내역",
         size: 180,
         cell: (i) => (
           <EditableCell
@@ -332,7 +332,7 @@ const QuickEntry: React.FC = () => {
         ),
       },
     ],
-    [updateData, data.length, rowErrors]
+    [updateData, data.length, rowErrors],
   );
 
   const table = useReactTable({
@@ -363,7 +363,7 @@ const QuickEntry: React.FC = () => {
         row.description ||
         row.amount ||
         row.remarks ||
-        row.category_id
+        row.category_id,
     );
 
     if (filledData.length === 0) {
@@ -490,7 +490,7 @@ const QuickEntry: React.FC = () => {
                           isSelectedByDrag && "bg-blue-100/40",
                           activeCell?.rowIndex === row.index &&
                             activeCell?.colIdx === idx &&
-                            "bg-white z-20 outline-2 outline-blue-500 outline-offset-[-1px]"
+                            "bg-white z-20 outline-2 outline-blue-500 outline-offset-[-1px]",
                         )}
                         onClick={() =>
                           setActiveCell({ rowIndex: row.index, colIdx: idx })
@@ -498,7 +498,7 @@ const QuickEntry: React.FC = () => {
                       >
                         {React.createElement(
                           cell.column.columnDef.cell as any,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                         {isSelectedByDrag && (
                           <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
@@ -515,7 +515,7 @@ const QuickEntry: React.FC = () => {
               setData((p) => [...p, createEmptyRow()]);
               setTimeout(
                 () => setActiveCell({ rowIndex: data.length, colIdx: 1 }),
-                50
+                50,
               );
             }}
             className="w-full py-3 flex items-center justify-center gap-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all border-t border-dashed"
