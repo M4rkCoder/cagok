@@ -1,8 +1,7 @@
 use super::{ComparisonMetric, ComparisonType};
 use crate::db::repository::DashboardRepository;
 use crate::db::{
-    CategoryExpense, CategoryMonthlyAmount, DailyExpense, FinancialSummaryStats, MetricStats, MonthlyExpense,
-    MonthlyFinancialSummaryItem, MonthlyOverview, TransactionWithCategory, YearlySummaryItem,
+    CategoryExpense, CategoryMonthlyAmount, DailyExpense, FinancialSummaryStats, MetricStats,     MonthlyFinancialSummaryItem, MonthlyOverview, TransactionWithCategory, YearlySummaryItem,
 YearlyDashboardData, DailyCategoryTransaction, TreemapNode,
 };
 use rusqlite::Connection;
@@ -113,15 +112,6 @@ impl DashboardService {
     ) -> Result<Vec<TransactionWithCategory>, String> {
         DashboardRepository::get_recent_transactions(conn, year_month, limit)
             .map_err(|e| format!("최근 지출 내역을 가져오는데 실패했습니다: {}", e))
-    }
-
-    pub fn get_monthly_transactions(
-        conn: &Connection,
-        months: i32,
-        tx_type: i32,
-    ) -> Result<Vec<MonthlyExpense>, String> {
-        DashboardRepository::get_monthly_transactions(conn, months, tx_type)
-            .map_err(|e| format!("Failed to get monthly expenses: {}", e))
     }
 
     pub fn get_daily_category_transactions(

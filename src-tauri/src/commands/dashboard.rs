@@ -1,5 +1,5 @@
 use crate::db::{
-    CategoryExpense, DailyExpense, DbConnection, MonthlyExpense, MonthlyFinancialSummaryItem,
+    CategoryExpense, DailyExpense, DbConnection, MonthlyFinancialSummaryItem,
     MonthlyOverview, TransactionWithCategory, YearlySummaryItem, FinancialSummaryStats, CategoryMonthlyAmount, YearlyDashboardData, DailyCategoryTransaction, TreemapNode
 };
 use crate::services::dashboard::DashboardService;
@@ -32,16 +32,6 @@ pub fn get_daily_expenses(
 ) -> Result<Vec<DailyExpense>, String> {
     let conn = db.0.lock().unwrap();
     DashboardService::get_daily_expenses(&conn, &year_month)
-}
-
-#[tauri::command]
-pub fn get_monthly_transactions(
-    db: State<'_, DbConnection>,
-    months: i32,
-    tx_type: i32,
-) -> Result<Vec<MonthlyExpense>, String> {
-    let conn = db.0.lock().unwrap();
-    DashboardService::get_monthly_transactions(&conn, months, tx_type)
 }
 
 #[tauri::command]

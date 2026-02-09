@@ -5,6 +5,8 @@ import {
   Category,
   TransactionWithCategory,
   TransactionFormValues,
+  DailySummary,
+  MonthlyTotalSummary,
 } from "@/types";
 import { toast } from "sonner";
 import { useAppStore } from "./useAppStore";
@@ -14,6 +16,9 @@ type ConfirmType = "transaction" | "category" | null;
 
 interface TransactionState {
   transactions: TransactionWithCategory[];
+  dailySummaries: DailySummary[];
+  monthlySummaries: MonthlyTotalSummary[];
+  dateTransactions: TransactionWithCategory[];
   loading: boolean;
   sheetOpen: boolean;
   editingTransaction: Transaction | null;
@@ -22,6 +27,9 @@ interface TransactionState {
 
   // Actions
   fetchTransactions: () => Promise<void>;
+  fetchAllDailySummaries: () => Promise<void>;
+  fetchMonthlyTotalTrends: () => Promise<void>;
+  fetchTransactionsByDate: (date: string) => Promise<void>;
   setSheetOpen: (open: boolean) => void;
   setEditingTransaction: (transaction: Transaction | null) => void;
   handleSheetClose: () => void;
@@ -32,6 +40,9 @@ interface TransactionState {
 
 export const useTransactionStore = create<TransactionState>((set, get) => ({
   transactions: [],
+  dailySummaries: [],
+  monthlySummaries: [],
+  dateTransactions: [],
   loading: false,
   sheetOpen: false,
   editingTransaction: null,
@@ -39,6 +50,21 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   confirmType: null,
   targetId: null,
   defaultCategoryId: null,
+
+  fetchMonthlyTotalTrends: async () => {
+    set({ loading: true });
+    try {
+      const summaries = await invoke<MonthlyTotalSummary[]>(
+        "get_all_monthly_total_trends"
+      );
+      set({ monthlySummaries: summaries });
+    } catch (error) {
+      console.error(error);
+      toast.error("월별 통계를 불러오는데 실패했습니다.");
+    } finally {
+      set({ loading: false });
+    }
+  },
 
   fetchTransactions: async () => {
     set({ loading: true });
@@ -54,6 +80,32 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     }
   },
 
+  fetchAllDailySummaries: async () => {
+    set({ loading: true });
+    try {
+      const summaries = await invoke<DailySummary[]>("get_all_daily_summaries");
+      set({ dailySummaries: summaries });
+    } catch (error) {
+      toast.error("일별 요약을 불러오는데 실패했습니다.");
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  fetchTransactionsByDate: async (date: string) => {
+    set({ loading: true });
+    try {
+      const details = await invoke<TransactionWithCategory[]>(
+        "get_transactions_by_date",
+        { date }
+      );
+      set({ dateTransactions: details });
+    } catch (error) {
+      toast.error(`${date}의 내역을 불러오는데 실패했습니다.`);
+    } finally {
+      set({ loading: false });
+    }
+  },
   setSheetOpen: (open) => set({ sheetOpen: open }),
 
   setEditingTransaction: (transaction) =>

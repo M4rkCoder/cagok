@@ -23,3 +23,21 @@ export interface TransactionWithCategory extends Transaction {
   category_name?: string;
   category_icon?: string;
 }
+
+export interface DailySummary {
+  date: string;
+  income_total: number;
+  expense_total: number;
+  income_count: number;
+  expense_count: number;
+  total_count: number;
+}
+
+export interface MonthlyTotalSummary {
+  year_month: string;
+  income_total: number;
+  expense_total: number;
+  income_count: number;
+  expense_count: number;
+  total_count: number;
+}

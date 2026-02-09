@@ -27,7 +27,6 @@ interface DashboardState {
   topIncomes: TransactionWithCategory[];
   topFixedExpenses: TransactionWithCategory[];
   topVariableExpenses: TransactionWithCategory[];
-  monthlyExpenses: MonthlyExpense[];
   comparisons: Record<ComparisonType, ComparisonMetric | null>;
   loading: boolean;
   expenseTreemap: TreemapNode | null;
@@ -69,7 +68,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   topIncomes: [],
   topFixedExpenses: [],
   topVariableExpenses: [],
-  monthlyExpenses: [],
   comparisons: {
     Expense: null,
     Income: null,
@@ -114,7 +112,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         topIncomesData,
         topFixedData,
         topVariableData,
-        monthlyData,
         comparisonData,
         treemapData,
       ] = await Promise.all([
@@ -159,10 +156,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           yearMonth: selectedMonth,
           limit: 20,
         }),
-        invoke<MonthlyExpense[]>("get_monthly_transactions", {
-          months: 6,
-          txType: 1,
-        }),
         Promise.all(
           types.map((type) =>
             getPeriodComparison({
@@ -195,7 +188,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         daily7Expenses: daily7Data,
         dailyCategoryExpenses: dailyCategoryExpense,
         dailyCategoryIncomes: dailyCategoryIncome,
-        monthlyExpenses: monthlyData,
         recentTransactions: recentData,
         topIncomes: topIncomesData,
         topFixedExpenses: topFixedData,

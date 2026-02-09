@@ -56,34 +56,34 @@ const QuickEntry: React.FC = () => {
     remarks: "",
   });
   const [data, setData] = useState<QuickEntryTransactionRow[]>(() =>
-    Array.from({ length: 10 }, createEmptyRow),
+    Array.from({ length: 10 }, createEmptyRow)
   );
   const [activeCell, setActiveCell] = useState<{
     rowIndex: number;
     colIdx: number;
   } | null>(null);
-    const [rowErrors, setRowErrors] = useState<
-      Record<string, Record<string, { message: string; timestamp: number }>>
-    >({});
-  
-    const updateData = useCallback(
-      (r: number, cid: string, val: any) => {
-        setData((prev) =>
-          prev.map((row, i) => (i === r ? { ...row, [cid]: val } : row)),
-        );
-        setRowErrors((prev) => {
-          const newErrors = { ...prev };
-          if (newErrors[data[r].id]) {
-            delete newErrors[data[r].id][cid]; // Clear error for the specific cell
-            if (Object.keys(newErrors[data[r].id]).length === 0) {
-              delete newErrors[data[r].id]; // If no errors left for the row, delete the row entry
-            }
+  const [rowErrors, setRowErrors] = useState<
+    Record<string, Record<string, { message: string; timestamp: number }>>
+  >({});
+
+  const updateData = useCallback(
+    (r: number, cid: string, val: any) => {
+      setData((prev) =>
+        prev.map((row, i) => (i === r ? { ...row, [cid]: val } : row))
+      );
+      setRowErrors((prev) => {
+        const newErrors = { ...prev };
+        if (newErrors[data[r].id]) {
+          delete newErrors[data[r].id][cid]; // Clear error for the specific cell
+          if (Object.keys(newErrors[data[r].id]).length === 0) {
+            delete newErrors[data[r].id]; // If no errors left for the row, delete the row entry
           }
-          return newErrors;
-        });
-      },
-      [data],
-    );
+        }
+        return newErrors;
+      });
+    },
+    [data]
+  );
 
   const batchUpdate = useCallback(
     (startRow: number, startCol: number, rows: string[][]) => {
@@ -110,13 +110,13 @@ const QuickEntry: React.FC = () => {
         return newData;
       });
     },
-    [],
+    []
   );
 
   const onDragStart = (
     e: React.MouseEvent,
     startRow: number,
-    startCol: number,
+    startCol: number
   ) => {
     e.preventDefault();
     const colKeys = [
@@ -223,7 +223,7 @@ const QuickEntry: React.FC = () => {
               <div
                 className={cn(
                   "w-full h-full flex items-center justify-center transition-colors",
-                  isActive && "bg-blue-100/50",
+                  isActive && "bg-blue-100/50"
                 )}
               >
                 <Checkbox
@@ -332,7 +332,7 @@ const QuickEntry: React.FC = () => {
         ),
       },
     ],
-    [updateData, data.length, rowErrors],
+    [updateData, data.length, rowErrors]
   );
 
   const table = useReactTable({
@@ -363,7 +363,7 @@ const QuickEntry: React.FC = () => {
         row.description ||
         row.amount ||
         row.remarks ||
-        row.category_id,
+        row.category_id
     );
 
     if (filledData.length === 0) {
@@ -382,7 +382,7 @@ const QuickEntry: React.FC = () => {
         date: row.date,
         description: row.description,
         remarks: row.remarks || "",
-        category_id: isNaN(parsedCategoryId) ? undefined : parsedCategoryId,
+        category_id: isNaN(parsedCategoryId) ? 0 : parsedCategoryId,
       };
 
       const result = transactionSchema.safeParse(transactionToValidate);
@@ -490,7 +490,7 @@ const QuickEntry: React.FC = () => {
                           isSelectedByDrag && "bg-blue-100/40",
                           activeCell?.rowIndex === row.index &&
                             activeCell?.colIdx === idx &&
-                            "bg-white z-20 outline outline-2 outline-blue-500 outline-offset-[-1px]",
+                            "bg-white z-20 outline-2 outline-blue-500 outline-offset-[-1px]"
                         )}
                         onClick={() =>
                           setActiveCell({ rowIndex: row.index, colIdx: idx })
@@ -498,7 +498,7 @@ const QuickEntry: React.FC = () => {
                       >
                         {React.createElement(
                           cell.column.columnDef.cell as any,
-                          cell.getContext(),
+                          cell.getContext()
                         )}
                         {isSelectedByDrag && (
                           <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
@@ -515,7 +515,7 @@ const QuickEntry: React.FC = () => {
               setData((p) => [...p, createEmptyRow()]);
               setTimeout(
                 () => setActiveCell({ rowIndex: data.length, colIdx: 1 }),
-                50,
+                50
               );
             }}
             className="w-full py-3 flex items-center justify-center gap-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all border-t border-dashed"

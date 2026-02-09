@@ -182,6 +182,7 @@
 
   .custom-scroll {
     scrollbar-width: thin;
+    scrollbar-gutter: stable;
   }
 
   .custom-scroll::-webkit-scrollbar {

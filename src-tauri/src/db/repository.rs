@@ -1,4 +1,4 @@
-use super::{Category, CategoryExpense, CategoryMonthlyAmount, DailyExpense, MonthlyExpense, MonthlyOverview, RecurringFrequency, RecurringTransaction, Transaction, TransactionWithCategory, MonthlyTransactionRaw, DailyCategoryTransaction};
+use super::{Category, CategoryExpense, CategoryMonthlyAmount, DailyExpense, MonthlyOverview, RecurringFrequency, RecurringTransaction, Transaction, TransactionWithCategory, MonthlyTransactionRaw, DailyCategoryTransaction, DailySummary, MonthlyTotalSummary};
 use rusqlite::{params, Connection, Result};
 
 pub fn get_setting(conn: &Connection, key: &str) -> Result<Option<String>> {
@@ -79,6 +79,36 @@ impl TransactionRepository {
 
         rows.collect()
     }
+
+    pub fn get_daily_summaries_all_time(conn: &Connection) -> Result<Vec<DailySummary>> {
+        let query = "
+            SELECT 
+                date,
+                SUM(CASE WHEN type = 0 THEN amount ELSE 0 END) as income_total,
+                SUM(CASE WHEN type = 1 THEN amount ELSE 0 END) as expense_total,
+                COUNT(CASE WHEN type = 0 THEN id END) as income_count,
+                COUNT(CASE WHEN type = 1 THEN id END) as expense_count,
+                COUNT(id) as total_count
+            FROM transactions
+            GROUP BY date
+            ORDER BY date DESC
+        ";
+
+        let mut stmt = conn.prepare(query)?;
+        let rows = stmt.query_map([], |row| {
+            Ok(DailySummary {
+                date: row.get(0)?,
+                income_total: row.get(1)?,
+                expense_total: row.get(2)?,
+                income_count: row.get(3)?,
+                expense_count: row.get(4)?,
+                total_count: row.get(5)?,
+            })
+        })?;
+
+        rows.collect()
+    }
+
 
     pub fn update(conn: &Connection, id: i64, t: Transaction) -> Result<()> {
         conn.execute(
@@ -172,6 +202,37 @@ impl TransactionRepository {
             })
         })?;
 
+        rows.collect()
+    }
+
+    pub fn get_monthly_total_trends_all_time(
+        conn: &Connection
+    ) -> Result<Vec<MonthlyTotalSummary>> {
+        let query = "
+            SELECT 
+                strftime('%Y-%m', date) as month,
+                SUM(CASE WHEN type = 0 THEN amount ELSE 0 END) as income_total,
+                SUM(CASE WHEN type = 1 THEN amount ELSE 0 END) as expense_total,
+                COUNT(CASE WHEN type = 0 THEN id END) as income_count,
+                COUNT(CASE WHEN type = 1 THEN id END) as expense_count,
+                COUNT(id) as total_count
+            FROM transactions
+            GROUP BY month
+            ORDER BY month ASC
+        ";
+    
+        let mut stmt = conn.prepare(query)?;
+        let rows = stmt.query_map([], |row| {
+            Ok(MonthlyTotalSummary {
+                year_month: row.get(0)?,
+                income_total: row.get(1)?,
+                expense_total: row.get(2)?,
+                income_count: row.get(3)?,
+                expense_count: row.get(4)?,
+                total_count: row.get(5)?,
+            })
+        })?;
+    
         rows.collect()
     }
 }
@@ -506,32 +567,6 @@ impl DashboardRepository {
             result.push(row?);
         }
         Ok(result)
-    }
-
-    // 4. 월별 수입/지출 추이 조회 (최근 N개월)
-    pub fn get_monthly_transactions(conn: &Connection, months: i32, tx_type: i32) -> Result<Vec<MonthlyExpense>> {
-        let query = "
-            SELECT 
-                strftime('%Y-%m', date) as month,
-                COALESCE(SUM(amount), 0) as total,
-                COUNT(id) as count
-            FROM transactions
-            WHERE type = ?1 
-                AND date >= date('now', 'start of month', '-' || ?2 || ' months')
-            GROUP BY month
-            ORDER BY month ASC
-        ";
-
-        let mut stmt = conn.prepare(query)?;
-        let rows = stmt.query_map(params![tx_type, months - 1], |row| {
-            Ok(MonthlyExpense {
-                year_month: row.get(0)?,
-                total_amount: row.get(1)?,
-                transaction_count: row.get(2)?,
-            })
-        })?;
-
-        rows.collect()
     }
 
     pub fn get_amount_sum_by_range(

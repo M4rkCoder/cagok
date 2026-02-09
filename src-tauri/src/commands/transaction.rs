@@ -1,5 +1,5 @@
 use crate::db::repository::TransactionRepository;
-use crate::db::{DbConnection, Transaction, TransactionWithCategory};
+use crate::db::{DbConnection, Transaction, TransactionWithCategory, DailySummary, MonthlyTotalSummary};
 use tauri::State;
 
 #[tauri::command]
@@ -49,6 +49,24 @@ pub fn get_transactions_by_date(
     let conn = db.0.lock().unwrap();
     TransactionRepository::get_by_date_with_category(&conn, &date)
         .map_err(|e| format!("Failed to get transactions by date: {}", e))
+}
+
+#[tauri::command]
+pub fn get_all_daily_summaries(
+    db: State<'_, DbConnection>,
+) -> Result<Vec<DailySummary>, String> {
+    let conn = db.0.lock().unwrap();
+    TransactionRepository::get_daily_summaries_all_time(&conn)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_all_monthly_total_trends(
+    db: State<'_, DbConnection>,
+) -> Result<Vec<MonthlyTotalSummary>, String> {
+    let conn = db.0.lock().unwrap();
+    TransactionRepository::get_monthly_total_trends_all_time(&conn)
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]

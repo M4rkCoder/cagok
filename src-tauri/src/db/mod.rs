@@ -42,6 +42,26 @@ pub struct TransactionWithCategory {
     pub category_icon: Option<String>,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct DailySummary {
+    pub date: String,
+    pub income_total: f64,
+    pub expense_total: f64,
+    pub income_count: i64,
+    pub expense_count: i64,
+    pub total_count: i64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct MonthlyTotalSummary {
+    pub year_month: String,
+    pub income_total: f64,
+    pub expense_total: f64,
+    pub income_count: i64,
+    pub expense_count: i64,
+    pub total_count: i64,
+}
+
 // 대시보드: 월별 오버뷰 관련 구조체
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MonthlyOverview {

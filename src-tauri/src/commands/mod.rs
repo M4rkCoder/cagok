@@ -18,6 +18,8 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         transaction::delete_transaction,
         transaction::get_transactions_by_date,
         transaction::get_transactions_by_month_and_category,
+        transaction::get_all_daily_summaries,
+        transaction::get_all_monthly_total_trends,
         //category
         category::create_category,
         category::get_categories,
@@ -27,7 +29,6 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         dashboard::get_monthly_overview,
         dashboard::get_category_transactions,
         dashboard::get_daily_expenses,
-        dashboard::get_monthly_transactions,
         dashboard::compare_dashboard,
         dashboard::get_recent_7days_expenses,
         dashboard::get_recent_transactions,

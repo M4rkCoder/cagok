@@ -3,6 +3,8 @@ export type {
   Transaction,
   CreateTransaction,
   UpdateTransaction,
+  DailySummary,
+  MonthlyTotalSummary,
 } from "./transaction";
 
 //category
