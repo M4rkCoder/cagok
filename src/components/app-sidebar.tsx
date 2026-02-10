@@ -20,6 +20,13 @@ import { useAppStore } from "@/store/useAppStore";
 import { Link, useLocation, NavLink } from "react-router-dom";
 import runSeed from "@/db/seed";
 import { cn } from "@/lib/utils";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "./ui/accordion";
+import { useEffect, useState } from "react";
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -31,6 +38,11 @@ const items = {
       title: "Transaction",
       url: "/transactions",
       icon: SquareLibrary,
+      subMenu: [
+        // 서브메뉴 추가
+        { title: "빠른 입력", url: "/transactions/" },
+        { title: "반복 입력", url: "/transactions/" },
+      ],
     },
     { title: "Statistics", url: "/statistics", icon: ChartArea },
     { title: "Settings", url: "/settings", icon: Settings },
@@ -44,9 +56,19 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
   const { appName } = useAppStore();
 
   const location = useLocation();
+  const [openItem, setOpenItem] = useState<string | undefined>("");
   const isActive = (path: string) => {
     return location.pathname === path;
   };
+
+  useEffect(() => {
+    const currentParent = items.MainMenu.find(
+      (item) => item.subMenu && location.pathname.startsWith(item.url)
+    );
+    if (currentParent) {
+      setOpenItem(currentParent.title);
+    }
+  }, [location.pathname]);
 
   return (
     <aside
@@ -88,27 +110,76 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
           <SidebarGroupContent>
             <SidebarMenu>
               {items.MainMenu.map((item) => {
+                const hasSubMenu = item.subMenu && item.subMenu.length > 0;
+                const isSubActive =
+                  hasSubMenu && location.pathname.startsWith(item.url);
+
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive(item.url)}
-                      tooltip={collapsed ? item.title : undefined}
-                      variant={isActive(item.url) ? "default" : "outline"}
-                    >
-                      <Link to={item.url}>
-                        <item.icon
-                          className={cn(
-                            "shrink-0",
-                            collapsed ? "h-7 w-7 scale-120" : "h-6 w-6",
-                            isActive(item.url)
-                              ? "text-black"
-                              : "text-muted-foreground"
-                          )}
-                        />
-                        {!collapsed && <span>{item.title}</span>}
-                      </Link>
-                    </SidebarMenuButton>
+                    {hasSubMenu && !collapsed ? (
+                      <Accordion
+                        type="single"
+                        collapsible
+                        value={openItem}
+                        onValueChange={setOpenItem}
+                        className="w-full border-none"
+                      >
+                        <AccordionItem
+                          value={item.title}
+                          className="border-none"
+                        >
+                          {/* Trigger 내부에 Link를 배치하여 이동과 펼침을 동시에 처리 */}
+                          <AccordionTrigger className="py-0 hover:no-underline [&>svg]:ml-auto">
+                            <SidebarMenuButton
+                              asChild
+                              isActive={isSubActive}
+                              className="w-full"
+                            >
+                              <Link to={item.url}>
+                                <item.icon className="h-6 w-6 shrink-0" />
+                                <span>{item.title}</span>
+                              </Link>
+                            </SidebarMenuButton>
+                          </AccordionTrigger>
+
+                          <AccordionContent className="pb-1 pt-1">
+                            <div className="flex flex-col gap-1 ml-9 border-l border-muted-foreground/20 pl-2">
+                              {item.subMenu?.map((sub) => (
+                                <Link
+                                  key={sub.title + sub.url}
+                                  to={sub.url}
+                                  className={cn(
+                                    "text-[13px] py-1.5 px-2 rounded-md transition-colors hover:bg-sidebar-accent",
+                                    isActive(sub.url)
+                                      ? "text-foreground font-semibold bg-sidebar-accent/50"
+                                      : "text-muted-foreground"
+                                  )}
+                                >
+                                  {sub.title}
+                                </Link>
+                              ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    ) : (
+                      /* 일반 메뉴 또는 접힌 상태 */
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive(item.url) || isSubActive}
+                        tooltip={collapsed ? item.title : undefined}
+                      >
+                        <Link to={item.url}>
+                          <item.icon
+                            className={cn(
+                              "shrink-0 transition-transform duration-300",
+                              collapsed ? "h-7 w-7 scale-120" : "h-6 w-6"
+                            )}
+                          />
+                          {!collapsed && <span>{item.title}</span>}
+                        </Link>
+                      </SidebarMenuButton>
+                    )}
                   </SidebarMenuItem>
                 );
               })}

@@ -103,14 +103,6 @@ pub struct DailyExpense {
     pub transaction_count: i32,
 }
 
-// 대시보드: 월별 지출 추이 구조체
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct MonthlyExpense {
-    pub year_month: String,
-    pub total_amount: f64,
-    pub transaction_count: i32,
-}
-
 // 대시보드: 연간 요약 구조체
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct YearlySummaryItem {

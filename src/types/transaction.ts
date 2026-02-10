@@ -1,3 +1,5 @@
+import { CellContext } from "@tanstack/react-table";
+
 // DB에서 조회되는 트랜잭션
 export interface Transaction {
   id: number;
@@ -40,4 +42,21 @@ export interface MonthlyTotalSummary {
   income_count: number;
   expense_count: number;
   total_count: number;
+}
+
+export interface QuickEntryTransactionRow {
+  id: string;
+  date: string;
+  type: number;
+  category_id: string;
+  is_fixed: number;
+  description: string;
+  amount: string;
+  remarks: string;
+}
+
+export interface CellProps extends CellContext<QuickEntryTransactionRow, any> {
+  colIdx: number;
+  onPaste?: (e: React.ClipboardEvent, r: number, c: number) => void;
+  error?: { message: string; timestamp: number };
 }

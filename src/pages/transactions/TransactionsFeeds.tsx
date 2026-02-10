@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { DailySummaryCard } from "./DailySummaryCard";
-import { TransactionDetailTable } from "./TransactionDetailTable";
-import { TransactionFilterPanel } from "./TransactionFilterPanel";
+import { TransactionDetailTable } from "./components/TransactionDetailTable";
+import { TransactionFilterPanel } from "./components/TransactionFilterPanel";
 import { Button } from "@/components/ui/button";
 import {
   ChevronLeft,

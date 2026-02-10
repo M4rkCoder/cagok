@@ -15,9 +15,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import TransactionFilters from "./TransactionFilters";
-import TransactionTableContent from "./TransactionTableContent";
-import TransactionPagination from "./TransactionPagination";
+import TransactionFilters from "./components/TransactionFilters";
+import TransactionTableContent from "./components/TransactionTableContent";
+import TransactionPagination from "./components/TransactionPagination";
 import { SquarePen, Trash2 } from "lucide-react";
 import { ExpenseBadge, IncomeBadge } from "./TransactionBadge";
 import { useTransactionStore } from "@/store/useTransactionStore";
@@ -195,7 +195,7 @@ const TransactionsTable: React.FC = () => {
         enableResizing: true,
       },
     ],
-    [t],
+    [t]
   );
 
   const filteredTransactions = useMemo(() => {
@@ -210,7 +210,7 @@ const TransactionsTable: React.FC = () => {
 
     if (filterCategory !== null) {
       filtered = filtered.filter(
-        (t) => t.category_id === parseInt(filterCategory),
+        (t) => t.category_id === parseInt(filterCategory)
       );
     }
 
@@ -220,7 +220,7 @@ const TransactionsTable: React.FC = () => {
         (t) =>
           (t.description &&
             t.description.toLowerCase().includes(lowerCaseSearchQuery)) ||
-          (t.remarks && t.remarks.toLowerCase().includes(lowerCaseSearchQuery)),
+          (t.remarks && t.remarks.toLowerCase().includes(lowerCaseSearchQuery))
       );
     }
 

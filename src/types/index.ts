@@ -5,6 +5,8 @@ export type {
   UpdateTransaction,
   DailySummary,
   MonthlyTotalSummary,
+  QuickEntryTransactionRow,
+  CellProps,
 } from "./transaction";
 
 //category

@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { CategoryIcon } from "@/components/CategoryIcon";
-import { ExpenseBadge, IncomeBadge } from "./TransactionBadge";
+import { ExpenseBadge, IncomeBadge } from "../TransactionBadge";
 
 interface Props {
   transactions: TransactionWithCategory[];
