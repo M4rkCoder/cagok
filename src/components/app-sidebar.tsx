@@ -13,6 +13,10 @@ import {
   SquareLibrary,
   ChartArea,
   Pencil,
+  Zap,
+  Recycle,
+  CircleEqual,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FinanceModeRounded from "./FinanceModeRounded";
@@ -27,6 +31,8 @@ import {
   AccordionTrigger,
 } from "./ui/accordion";
 import { useEffect, useState } from "react";
+import { Badge } from "./ui/badge";
+import { PlusBadge } from "./ui/PlusBadge";
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -40,8 +46,18 @@ const items = {
       icon: SquareLibrary,
       subMenu: [
         // 서브메뉴 추가
-        { title: "빠른 입력", url: "/transactions/" },
-        { title: "반복 입력", url: "/transactions/" },
+        {
+          title: "Quick Entry",
+          url: "/transactions/quickentry",
+          icon: Zap,
+          plus: true,
+        },
+        {
+          title: "Recurring",
+          url: "/transactions/recurring",
+          icon: RefreshCw,
+          plus: true,
+        },
       ],
     },
     { title: "Statistics", url: "/statistics", icon: ChartArea },
@@ -63,7 +79,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
 
   useEffect(() => {
     const currentParent = items.MainMenu.find(
-      (item) => item.subMenu && location.pathname.startsWith(item.url)
+      (item) => item.subMenu && location.pathname.startsWith(item.url),
     );
     if (currentParent) {
       setOpenItem(currentParent.title);
@@ -86,7 +102,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
           <div
             className={cn(
               "shrink-0 flex items-center justify-center rounded-lg bg-black p-1.5 shadow-md transition-all duration-300",
-              collapsed ? "w-8 h-8 scale-110" : "w-7 h-7" // 3. 축소 시 로고 크기 확대
+              collapsed ? "w-8 h-8 scale-110" : "w-7 h-7", // 3. 축소 시 로고 크기 확대
             )}
           >
             <FinanceModeRounded className="w-5 h-5 text-white" />
@@ -94,7 +110,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
           {!collapsed && (
             <div className="flex flex-col min-w-0 ml-3 animate-in fade-in duration-500">
               <span className="text-[9px] font-black text-muted-foreground/50 tracking-[0.2em] leading-none mb-1 uppercase">
-                FINKRO
+                C'AGOK
               </span>
               <span className="text-sm font-bold text-foreground leading-none truncate">
                 {appName || ""}
@@ -143,7 +159,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                           </AccordionTrigger>
 
                           <AccordionContent className="pb-1 pt-1">
-                            <div className="flex flex-col gap-1 ml-9 border-l border-muted-foreground/20 pl-2">
+                            <div className="flex flex-col gap-1 ml-4 border-l border-muted-foreground/20">
                               {item.subMenu?.map((sub) => (
                                 <Link
                                   key={sub.title + sub.url}
@@ -152,10 +168,13 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                                     "text-[13px] py-1.5 px-2 rounded-md transition-colors hover:bg-sidebar-accent",
                                     isActive(sub.url)
                                       ? "text-foreground font-semibold bg-sidebar-accent/50"
-                                      : "text-muted-foreground"
+                                      : "text-muted-foreground",
                                   )}
                                 >
-                                  {sub.title}
+                                  <div className="flex items-center gap-1">
+                                    <span>{sub.title}</span>
+                                    {sub.plus && <PlusBadge />}
+                                  </div>
                                 </Link>
                               ))}
                             </div>
@@ -173,7 +192,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                           <item.icon
                             className={cn(
                               "shrink-0 transition-transform duration-300",
-                              collapsed ? "h-7 w-7 scale-120" : "h-6 w-6"
+                              collapsed ? "h-7 w-7 scale-120" : "h-6 w-6",
                             )}
                           />
                           {!collapsed && <span>{item.title}</span>}
@@ -194,7 +213,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
           variant={collapsed ? "ghost" : "secondary"}
           className={cn(
             "w-full truncate overflow-hidden transition-all",
-            collapsed && "h-10 p-0 hover:bg-sidebar-accent"
+            collapsed && "h-10 p-0 hover:bg-sidebar-accent",
           )}
           onClick={(e) => {
             e.preventDefault();

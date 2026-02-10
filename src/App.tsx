@@ -16,6 +16,8 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { Toaster } from "./components/ui/sonner";
 import { useAppStore } from "./store/useAppStore";
 import StatisticsPage from "./pages/statistics/StatisticsPage";
+import QuickEntry from "./pages/transactions/QuickEntry";
+import RecurringSettings from "./pages/settings/RecurringSettings";
 
 type AppStage = "splash" | "onboarding" | "home";
 
@@ -93,6 +95,11 @@ function App() {
             <Route path="/" element={<DashboardPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/transactions/quickentry" element={<QuickEntry />} />
+            <Route
+              path="/transactions/recurring"
+              element={<RecurringSettings />}
+            />
             <Route path="/statistics" element={<StatisticsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />

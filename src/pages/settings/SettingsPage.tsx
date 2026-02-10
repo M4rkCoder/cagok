@@ -15,7 +15,6 @@ const SettingsPage = () => {
     { id: "general", label: "일반 설정" },
     { id: "category", label: "카테고리 설정" },
     { id: "database", label: "DB 설정" },
-    { id: "recurring", label: "반복지출 설정" },
   ];
 
   const sectionVariants = {

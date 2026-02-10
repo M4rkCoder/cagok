@@ -1,11 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import {
   type ColumnDef,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Save } from "lucide-react";
+import { Minus, Plus, Save, Zap } from "lucide-react";
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
 import { useTransactionStore } from "@/store/useTransactionStore";
@@ -16,10 +16,13 @@ import DateCell from "./components/DateCell";
 import { InputCell } from "./components/InputCell";
 import CategoryCell from "./components/CategoryCell";
 import { AmountCell } from "./components/AmountCell";
+import { useHeaderStore } from "@/store/useHeaderStore";
 
 const QuickEntry: React.FC = () => {
   const { categories } = useAppStore();
   const { submitForm } = useTransactionStore();
+  const { setHeader, resetHeader, activeSection, setActiveSection } =
+    useHeaderStore();
 
   const {
     data,
@@ -36,6 +39,12 @@ const QuickEntry: React.FC = () => {
     batchUpdate,
     confirmUpdate,
   } = useQuickEntry(10, submitForm);
+
+  useEffect(() => {
+    setHeader("빠른 입력");
+
+    return () => resetHeader();
+  }, []);
 
   const columns = useMemo<ColumnDef<QuickEntryTransactionRow>[]>(
     () => [
@@ -144,7 +153,7 @@ const QuickEntry: React.FC = () => {
         ),
       },
     ],
-    [updateData, data.length, rowErrors]
+    [updateData, data.length, rowErrors],
   );
 
   const table = useReactTable({
@@ -219,7 +228,7 @@ const QuickEntry: React.FC = () => {
                           isSelectedByDrag && "bg-blue-100/40",
                           activeCell?.rowIndex === row.index &&
                             activeCell?.colIdx === idx &&
-                            "bg-white z-20 outline-2 outline-blue-500 outline-offset-[-1px]"
+                            "bg-white z-20 outline-2 outline-blue-500 outline-offset-[-1px]",
                         )}
                         onClick={() =>
                           setActiveCell({ rowIndex: row.index, colIdx: idx })
@@ -227,7 +236,7 @@ const QuickEntry: React.FC = () => {
                       >
                         {React.createElement(
                           cell.column.columnDef.cell as any,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                         {isSelectedByDrag && (
                           <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
@@ -244,7 +253,7 @@ const QuickEntry: React.FC = () => {
               setData((p) => [...p, createEmptyRow()]);
               setTimeout(
                 () => setActiveCell({ rowIndex: data.length, colIdx: 1 }),
-                50
+                50,
               );
             }}
             className="w-full py-3 flex items-center justify-center gap-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all border-t border-dashed"

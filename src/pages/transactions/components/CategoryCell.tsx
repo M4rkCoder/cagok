@@ -62,11 +62,11 @@ const CategoryCell = ({
     table.options.meta as any;
   const { handleTableKeyDown, moveNext } = useTableNavigation(
     table,
-    setActiveCell
+    setActiveCell,
   );
   const [openCombo, setOpenCombo] = useState(false);
   const [categoryFilterType, setCategoryFilterType] = useState<number | null>(
-    null
+    null,
   ); // null: all, 0: income, 1: expense
   const [commandSearchTerm, setCommandSearchTerm] = useState("");
   const comboTriggerRef = useRef<HTMLButtonElement>(null);
@@ -97,7 +97,7 @@ const CategoryCell = ({
       setCategoryState("isAddingNewCategoryMode", false);
       setCategoryState("isEmojiPickerOpen", false);
       setCategoryState("newCategoryName", "");
-      setCategoryState("newCategoryIcon", "😀");
+      setCategoryState("newCategoryIcon", "➕");
       setCategoryState("editingCategoryId", null);
       setCategoryFilterType(null);
       setCommandSearchTerm("");
@@ -112,7 +112,7 @@ const CategoryCell = ({
       column.id,
       row.original.type ?? 1,
       () => setOpenCombo(false),
-      openCombo
+      openCombo,
     );
   };
 
@@ -195,7 +195,7 @@ const CategoryCell = ({
                     "bg-transparent border-none rounded-none",
                     isActive ? "bg-blue-50/50" : "hover:bg-slate-50/50",
                     showErrorVisuals &&
-                      "border-red-500 outline-2 outline-red-500"
+                      "border-red-500 outline-2 outline-red-500",
                   )}
                 >
                   {selected ? (
@@ -268,7 +268,7 @@ const CategoryCell = ({
                             "flex-1 py-1 text-xs font-bold rounded-l-md",
                             categoryFilterType === null
                               ? "bg-slate-200 text-slate-800"
-                              : "text-slate-500 hover:bg-slate-100"
+                              : "text-slate-500 hover:bg-slate-100",
                           )}
                         >
                           {t("all")}
@@ -280,7 +280,7 @@ const CategoryCell = ({
                             "flex-1 py-1 text-xs font-bold",
                             categoryFilterType === 0
                               ? "bg-slate-200 text-slate-800"
-                              : "text-slate-500 hover:bg-slate-100"
+                              : "text-slate-500 hover:bg-slate-100",
                           )}
                         >
                           {t("income")}
@@ -292,7 +292,7 @@ const CategoryCell = ({
                             "flex-1 py-1 text-xs font-bold rounded-r-md",
                             categoryFilterType === 1
                               ? "bg-slate-200 text-slate-800"
-                              : "text-slate-500 hover:bg-slate-100"
+                              : "text-slate-500 hover:bg-slate-100",
                           )}
                         >
                           {t("expense")}
@@ -317,7 +317,7 @@ const CategoryCell = ({
                                 className={cn(
                                   "flex items-center justify-between px-3 py-1 rounded-xl cursor-pointer group mb-0.5",
                                   value === cat.id &&
-                                    "bg-blue-100 dark:bg-blue-900"
+                                    "bg-blue-100 dark:bg-blue-900",
                                 )}
                                 onSelect={() => {
                                   updateData(row.index, "category_id", cat.id);
@@ -327,9 +327,9 @@ const CategoryCell = ({
                                     () =>
                                       moveNext(
                                         row.index,
-                                        cat.type === 1 ? 3 : 4
+                                        cat.type === 1 ? 3 : 4,
                                       ),
-                                    50
+                                    50,
                                   );
                                 }}
                               >
@@ -395,7 +395,7 @@ const CategoryCell = ({
                                 onChange={(e) =>
                                   setCategoryState(
                                     "newCategoryName",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 placeholder={

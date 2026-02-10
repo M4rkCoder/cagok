@@ -28,7 +28,7 @@ export const CategoryIcon = ({
     xs: "w-5 h-5 text-[11px]",
     sm: "w-9 h-9 text-[1.25rem]", // 20px 정도의 이모지
     md: "w-11 h-11 text-[1.5rem]", // 24px 정도의 이모지
-    lg: "w-24 h-24 text-[3.5rem]", // 56px 정도의 이모지
+    lg: "w-18 h-18 text-[2.5rem]", // 56px 정도의 이모지
   };
 
   return (
@@ -37,7 +37,7 @@ export const CategoryIcon = ({
         // rounded-full로 완전한 원형 구현
         "rounded-full flex items-center justify-center shrink-0 transition-all duration-300 overflow-hidden",
         sizeClasses[size],
-        className
+        className,
       )}
       style={{ backgroundColor: selected.bg }}
     >
