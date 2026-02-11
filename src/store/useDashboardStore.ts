@@ -11,6 +11,7 @@ import {
   TransactionWithCategory,
   DailyCategoryTransaction,
   TreemapNode,
+  DailyDetailResponse,
 } from "@/types";
 import { format } from "date-fns";
 
@@ -31,6 +32,26 @@ interface DashboardState {
   loading: boolean;
   expenseTreemap: TreemapNode | null;
   activeTreemapNode: string | null;
+  detailData: DailyDetailResponse | null;
+  detailLoading: boolean;
+  dialogState: {
+    isOpen: boolean;
+    date: string | null;
+    categoryId: number | null;
+    txType: number;
+  };
+  loadChartDetail: (
+    date: string,
+    txType: number,
+    categoryId?: number | null
+  ) => Promise<void>;
+  setDetailData: (data: DailyDetailResponse | null) => void;
+  openDialog: (
+    date: string,
+    txType: number,
+    categoryId?: number | null
+  ) => void;
+  closeDialog: () => void;
   setSelectedMonth: (month: string) => void;
   loadDashboardData: () => Promise<void>;
   setActiveTreemapNode: (node: string | null) => void;
@@ -78,12 +99,40 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   loading: true,
   expenseTreemap: null,
   activeTreemapNode: null,
+  detailData: null,
+  detailLoading: false,
+  dialogState: { isOpen: false, date: null, categoryId: null, txType: 1 },
+  openDialog: (date, txType, categoryId = null) =>
+    set({ dialogState: { isOpen: true, date, txType, categoryId } }),
+  closeDialog: () =>
+    set((state) => ({ dialogState: { ...state.dialogState, isOpen: false } })),
+  setDetailData: (data) => set({ detailData: data }),
   setActiveTreemapNode: (node) => set({ activeTreemapNode: node }),
   setSelectedMonth: (month: string) => {
     set({ selectedMonth: month });
     get().loadDashboardData();
   },
+  loadChartDetail: async (date, txType, categoryId = null) => {
+    try {
+      set({ detailLoading: true });
 
+      const response = await invoke<DailyDetailResponse>(
+        "get_daily_chart_detail",
+        {
+          date,
+          txType,
+          categoryId, // Option<i64>는 JS의 number | null과 매칭됩니다.
+        }
+      );
+
+      set({ detailData: response });
+    } catch (error) {
+      console.error("Failed to load chart detail:", error);
+      set({ detailData: null });
+    } finally {
+      set({ detailLoading: false });
+    }
+  },
   loadDashboardData: async () => {
     const { selectedMonth } = get();
     if (!selectedMonth) return;

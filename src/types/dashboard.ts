@@ -125,3 +125,8 @@ export interface TreemapNode {
   children?: TreemapNode[];
   [key: string]: any;
 }
+
+export interface DailyDetailResponse {
+  items: TransactionWithCategory[];
+  total_amount: number;
+}

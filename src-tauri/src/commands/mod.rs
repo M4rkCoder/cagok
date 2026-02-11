@@ -20,6 +20,7 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         transaction::get_transactions_by_month_and_category,
         transaction::get_all_daily_summaries,
         transaction::get_all_monthly_total_trends,
+        transaction::get_filtered_transactions_command,
         //category
         category::create_category,
         category::get_categories,
@@ -42,6 +43,7 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         dashboard::get_financial_summary_stats_command,
         dashboard::get_daily_category_transactions,
         dashboard::get_expense_treemap,
+        dashboard::get_daily_chart_detail,
         //recurring
         recurring::get_recurring_transactions,
         recurring::create_recurring_transaction,
@@ -65,6 +67,7 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         app::is_app_initialized,
         app::initialize_app,
         app::restart_app,
+        app::check_recurring,
         //settings
         settings::get_setting_command,
         settings::set_setting_command,

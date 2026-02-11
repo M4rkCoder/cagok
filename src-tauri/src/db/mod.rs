@@ -84,6 +84,12 @@ pub struct CategoryExpense {
     pub transaction_count: i32,
 }
 
+#[derive(serde::Serialize)]
+pub struct DailyDetailResponse {
+    pub items: Vec<TransactionWithCategory>,
+    pub total_amount: f64,
+}
+
 #[derive(Debug, serde::Serialize)]
 pub struct DailyCategoryTransaction {
     pub date: String,
@@ -241,10 +247,28 @@ pub struct RecurringTransaction {
     pub remarks: Option<String>,
 }
 
+#[derive(Clone, Serialize)]
+pub struct RecurringPayload {
+    pub count: i32,
+    pub timestamp: String,
+}
+
 // 연간 대시보드 데이터 통합 응답 구조체
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct YearlyDashboardData {
     pub financial_summary_stats: FinancialSummaryStats,
     pub monthly_financial_summary: Vec<MonthlyFinancialSummaryItem>,
+}
+
+#[derive(serde::Deserialize)]
+pub struct TransactionFilters {
+    pub keyword: Option<String>,
+    pub tx_type: Option<i32>,
+    pub is_fixed: Option<bool>,     // <-- 추가
+    pub category_ids: Option<Vec<i32>>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+    pub min_amount: Option<f64>,
+    pub max_amount: Option<f64>,
 }

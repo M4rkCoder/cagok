@@ -10,6 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "./components/NotificationBell";
 
 export default function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
@@ -29,10 +30,10 @@ export default function TitleBar() {
 
       // 이벤트 등록
       const unlistenMax = await win.listen("tauri://maximize", () =>
-        setIsMaximized(true),
+        setIsMaximized(true)
       );
       const unlistenUnmax = await win.listen("tauri://unmaximize", () =>
-        setIsMaximized(false),
+        setIsMaximized(false)
       );
       const unlistenResize = await win.listen("tauri://resize", async () => {
         const max = await win.isMaximized();
@@ -78,76 +79,60 @@ export default function TitleBar() {
   return (
     <div
       data-tauri-drag-region
-      className="h-full flex items-center justify-between z-[999] bg-blue-600 text-white px-4 select-none"
+      className="h-full flex items-center justify-between z-[999] px-4 select-none 
+                 bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-800 
+                 border-b border-white/10 shadow-lg"
       onDoubleClick={toggleMax}
     >
       {/* 로고 + 제목 */}
       <div className="flex items-center gap-2 cursor-default pointer-events-none">
-        <FinanceModeRounded className="w-8 h-8" />
-        <span className="font-bold no-drag select-none">FINKRO</span>
+        <FinanceModeRounded className="w-8 h-8 text-white" />
+        <span className="font-bold no-drag select-none tracking-tight text-white">
+          C'AGOK
+        </span>
       </div>
 
-      {/* 언어 선택 및 최소화/최대화/닫기 버튼 */}
+      <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 select-none pointer-events-none">
+        <span className="text-[12px] tracking-[0.2em] font-semibold text-blue-100/80 uppercase">
+          {new Date().toLocaleDateString("ko-KR", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            weekday: "short",
+          })}
+        </span>
+      </div>
+
+      {/* 우측 버튼 세트 */}
       <div
-        className="flex items-center gap-2"
+        className="flex items-center gap-1" // 간격을 살짝 줄임
         onDoubleClick={(e) => e.stopPropagation()}
       >
-        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-          {" "}
-          {/* Control popover open state */}
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="hover:bg-blue-500 text-white gap-1"
-            >
-              <Globe className="h-[1.2rem] w-[1.2rem]" />
-              <span className="text-sm">{language === "ko" ? "KO" : "EN"}</span>
-              <span className="sr-only">Select Language</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-32 p-1">
-            <div className="grid gap-1">
-              <Button
-                variant="ghost"
-                className={`justify-start ${language === "ko" ? "bg-accent text-accent-foreground" : ""}`}
-                onClick={() => handleLanguageChange("ko")}
-              >
-                한국어
-              </Button>
-              <Button
-                variant="ghost"
-                className={`justify-start ${language === "en" ? "bg-accent text-accent-foreground" : ""}`}
-                onClick={() => handleLanguageChange("en")}
-              >
-                English
-              </Button>
-            </div>
-          </PopoverContent>
-        </Popover>
+        <NotificationBell />
 
         <button
-          className="no-drag w-9 h-9 flex items-center justify-center hover:bg-slate-700 transition-colors"
-          data-tauri-drag-region="false"
+          className="no-drag w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-md transition-all active:scale-95"
           onClick={minimizeWindow}
         >
-          <Minus size={16} />
+          <Minus size={16} className="text-blue-100" />
         </button>
 
         <button
-          className="no-drag w-9 h-9 flex items-center justify-center hover:bg-slate-700 transition-colors"
-          data-tauri-drag-region="false"
+          className="no-drag w-10 h-10 flex items-center justify-center hover:bg-white/10 rounded-md transition-all active:scale-95"
           onClick={toggleMax}
         >
-          {isMaximized ? <Minimize2 size={16} /> : <Square size={16} />}
+          {isMaximized ? (
+            <Minimize2 size={16} className="text-blue-100" />
+          ) : (
+            <Square size={14} className="text-blue-100" />
+          )}
         </button>
 
         <button
-          className="no-drag w-9 h-9 flex items-center justify-center hover:bg-red-600 transition-colors"
-          data-tauri-drag-region="false"
+          className="no-drag w-10 h-10 flex items-center justify-center hover:bg-red-500 rounded-md transition-all active:scale-95"
           onClick={closeWindow}
         >
-          <X />
+          <X size={18} className="text-blue-100" />
         </button>
       </div>
     </div>

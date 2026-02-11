@@ -1,3 +1,5 @@
+import { Zap } from "lucide-react";
+
 export const PlusBadge = () => {
   return (
     <div
@@ -10,6 +12,14 @@ export const PlusBadge = () => {
       >
         PLUS
       </span>
+    </div>
+  );
+};
+
+export const ProIcon = () => {
+  return (
+    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-amber-500/10 border border-amber-500/20 group-hover:border-amber-500/50 transition-colors">
+      <Zap size={10} className="text-amber-500 fill-amber-500" />
     </div>
   );
 };

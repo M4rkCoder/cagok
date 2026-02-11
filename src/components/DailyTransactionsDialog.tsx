@@ -1,118 +1,182 @@
-import React, { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import React, { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { toast } from "sonner";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useDashboardStore } from "@/store/useDashboardStore";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
-import { Separator } from "@/components/ui/separator";
-import type { TransactionWithCategory } from "@/types/transaction";
+import { ReceiptText } from "lucide-react";
+import { CategoryIcon } from "./CategoryIcon";
+import { motion, AnimatePresence } from "framer-motion"; // 추가
 
-interface DailyTransactionsDialogProps {
-  date: string | null;
-  isOpen: boolean;
-  onClose: () => void;
-}
+const DailyTransactionsDialog = () => {
+  const {
+    dialogState,
+    closeDialog,
+    detailData,
+    detailLoading,
+    loadChartDetail,
+  } = useDashboardStore();
 
-const DailyTransactionsDialog: React.FC<DailyTransactionsDialogProps> = ({
-  date,
-  isOpen,
-  onClose,
-}) => {
-  const [transactions, setTransactions] = useState<TransactionWithCategory[]>(
-    [],
-  );
+  const { isOpen, date, txType, categoryId } = dialogState;
 
   useEffect(() => {
     if (isOpen && date) {
-      const fetchTransactions = async () => {
-        try {
-          const fetchedTransactions = await invoke<TransactionWithCategory[]>(
-            "get_transactions_by_date",
-            { date },
-          );
-          setTransactions(fetchedTransactions);
-        } catch (error) {
-          console.error("Failed to fetch daily transactions:", error);
-          toast.error("일별 거래 내역을 불러오는 데 실패했습니다.");
-          setTransactions([]);
-        }
-      };
-      fetchTransactions();
-    } else {
-      setTransactions([]);
+      loadChartDetail(date, txType, categoryId);
     }
-  }, [isOpen, date]);
+  }, [isOpen, date, txType, categoryId, loadChartDetail]);
 
   const formattedDate = date
-    ? format(new Date(date), "yyyy년 MM월 dd일", { locale: ko })
+    ? format(new Date(date), "M.d (eee)", { locale: ko })
     : "";
-  const totalExpense = transactions.reduce(
-    (sum, tx) => (tx.type === 1 ? sum + tx.amount : sum),
-    0,
-  );
-  const totalIncome = transactions.reduce(
-    (sum, tx) => (tx.type === 0 ? sum + tx.amount : sum),
-    0,
-  );
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="fixed top-12 bottom-0 translate-y-0 my-auto h-fit sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>{formattedDate} 내역</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="flex justify-between text-sm font-semibold">
-            <span>총 수입:</span>
-            <span className="text-blue-600 dark:text-blue-400">
-              {totalIncome.toLocaleString()}원
-            </span>
-          </div>
-          <div className="flex justify-between text-sm font-semibold">
-            <span>총 지출:</span>
-            <span className="text-rose-600 dark:text-rose-400">
-              {totalExpense.toLocaleString()}원
-            </span>
-          </div>
-          <Separator />
-          {transactions.length > 0 ? (
-            <div className="space-y-2 max-h-60 overflow-y-auto">
-              {transactions.map((tx) => (
-                <div
-                  key={tx.id}
-                  className="flex justify-between items-center text-sm"
-                >
-                  <div className="flex items-center space-x-2">
-                    <span className="text-lg">{tx.category_icon}</span>
-                    <span>{tx.category_name || "카테고리 없음"}</span>
-                    <span className="text-muted-foreground">
-                      {tx.description}
+    <Dialog open={isOpen} onOpenChange={closeDialog}>
+      <DialogContent
+        onWheel={(e) => e.stopPropagation()}
+        // 기존 shadcn 애니메이션을 무력화하기 위해 data-[state] 클래스들을 커스텀하거나
+        // Framer Motion과 충돌하지 않도록 스타일을 조정합니다.
+        className="sm:max-w-[400px] p-0 overflow-hidden border-none bg-transparent shadow-none"
+      >
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: 40, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.98 }}
+              transition={{
+                type: "spring",
+                damping: 25,
+                stiffness: 300,
+                duration: 0.3,
+              }}
+              className="flex flex-col h-[500px] max-h-[80vh] w-full bg-white dark:bg-slate-950 rounded-2xl shadow-2xl overflow-hidden border"
+            >
+              {/* Header */}
+              <DialogHeader className="p-4 bg-slate-50/50 dark:bg-slate-900/50 border-b flex-shrink-0">
+                <div className="flex items-center justify-between w-full pr-6">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`p-1.5 rounded-md ${
+                        txType === 0
+                          ? "bg-emerald-100 text-emerald-600"
+                          : "bg-blue-100 text-blue-600"
+                      }`}
+                    >
+                      <ReceiptText className="w-4 h-4" />
+                    </div>
+                    <div className="flex flex-col items-start leading-none">
+                      <DialogTitle className="text-base font-bold">
+                        {txType === 0 ? "수입" : "지출"} 내역
+                      </DialogTitle>
+                      <span className="text-[12px] text-slate-500 font-bold mt-0.5">
+                        {formattedDate}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span
+                      className={`text-lg font-black tracking-tight ${
+                        txType === 0 ? "text-emerald-600" : "text-blue-700"
+                      }`}
+                    >
+                      {detailData?.total_amount?.toLocaleString() || 0}
+                      <small className="text-xs ml-0.5 font-normal text-slate-500">
+                        원
+                      </small>
                     </span>
                   </div>
-                  <span
-                    className={
-                      tx.type === 0
-                        ? "text-blue-600 dark:text-blue-400"
-                        : "text-rose-600 dark:text-rose-400"
-                    }
-                  >
-                    {tx.type === 0 ? "+" : "-"}
-                    {tx.amount.toLocaleString()}원
-                  </span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-center text-muted-foreground">
-              이 날짜에는 거래 내역이 없습니다.
-            </p>
+              </DialogHeader>
+
+              {/* Scroll Area */}
+              <div className="flex-1 min-h-0 overflow-hidden bg-white dark:bg-slate-950">
+                <ScrollArea className="h-full w-full">
+                  <div className="p-2 space-y-1">
+                    {detailLoading ? (
+                      <div className="flex flex-col items-center justify-center py-20 gap-2">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 1,
+                            ease: "linear",
+                          }}
+                          className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full"
+                        />
+                        <p className="text-xs text-slate-400 font-medium">
+                          데이터 로딩 중...
+                        </p>
+                      </div>
+                    ) : detailData?.items && detailData.items.length > 0 ? (
+                      detailData.items.map((tx, idx) => (
+                        <motion.div
+                          key={tx.id}
+                          initial={{ opacity: 0, y: 10 }} // 리스트도 아래에서 위로
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: idx * 0.02, duration: 0.2 }}
+                          className="flex items-center justify-between p-2 ..."
+                        >
+                          <div className="flex items-center gap-3">
+                            <CategoryIcon
+                              type={txType}
+                              size="sm"
+                              icon={tx.category_icon || "💰"}
+                            />
+                            <div className="flex flex-col leading-tight">
+                              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                {tx.description || tx.category_name}
+                              </span>
+                              <span className="text-[11px] text-slate-500">
+                                {tx.category_name}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <span
+                              className={`text-sm font-bold tabular-nums ${
+                                tx.type === 0
+                                  ? "text-emerald-600"
+                                  : "text-blue-700"
+                              }`}
+                            >
+                              {tx.amount.toLocaleString()}
+                              <small className="text-xs ml-0.5 font-normal text-slate-500">
+                                원
+                              </small>
+                            </span>
+                          </div>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <div className="py-20 text-center">
+                        <p className="text-xs text-slate-400">
+                          조회된 내역이 없습니다.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                  <ScrollBar orientation="vertical" className="w-2.5" />
+                </ScrollArea>
+              </div>
+
+              {/* Footer */}
+              <div className="p-3 bg-white dark:bg-slate-900 border-t mt-auto">
+                <button
+                  onClick={closeDialog}
+                  className="w-full py-2.5 text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all outline-none"
+                >
+                  확인
+                </button>
+              </div>
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
       </DialogContent>
     </Dialog>
   );

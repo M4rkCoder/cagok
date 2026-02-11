@@ -46,5 +46,6 @@
   "all_categories": "All Categories",
   "search_transactions": "Search transactions...",
   "pick_start_date": "Pick a start date",
-  "pick_end_date": "Pick an end date"
+  "pick_end_date": "Pick an end date",
+  "recurring_notification": "{{count}} recurring transactions created."
 }

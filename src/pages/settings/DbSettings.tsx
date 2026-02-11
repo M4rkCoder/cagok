@@ -20,7 +20,7 @@ export default function DbSettings() {
   const resetHeader = useHeaderStore((state) => state.resetHeader);
   const setHeader = useHeaderStore((state) => state.setHeader);
   useEffect(() => {
-    setHeader("DB 설정");
+    setHeader("설정");
 
     return () => resetHeader();
   }, []);
@@ -89,9 +89,8 @@ export default function DbSettings() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
-      {/* DB 정보 */}
-      <Card className="p-6 space-y-4">
+    <div className="space-y-6">
+      <Card className="p-6 space-y-6">
         <div className="flex items-center gap-2 text-lg font-semibold">
           <Database className="w-5 h-5" />
           데이터베이스

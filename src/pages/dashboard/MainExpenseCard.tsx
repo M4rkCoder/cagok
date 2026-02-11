@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 import TransactionSheet from "../transactions/TrasactionSheet";
 import { useDashboardStore } from "@/store/useDashboardStore";
+import { Badge } from "@/components/ui/badge";
+import { Plus } from "lucide-react";
 
 interface MainExpenseCardProps {
   lang: "ko" | "en";
@@ -101,7 +103,7 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
                           className={cn(
                             "flex items-center justify-between py-1.5 px-2 transition-all duration-200 ease-out",
                             "hover:bg-white hover:scale-[1.03] hover:shadow-sm hover:z-10 hover:rounded-md",
-                            "group cursor-default",
+                            "group cursor-default"
                           )}
                         >
                           {/* 왼쪽: 날짜 + 이모지 + 설명 (gap을 2로 축소) */}
@@ -145,10 +147,7 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
               </h4>
               <div className="flex-1 min-h-[180px] w-full flex flex-col items-center justify-center gap-6">
                 {/* 상단: 메인 입력 버튼 */}
-                <TransactionSheet
-                  variant="default"
-                  triggerClassName="w-[80%] py-6 shadow-md hover:scale-[1.02] transition-transform"
-                />
+                <TransactionSheet />
 
                 {/* 하단: 퀵 카테고리 칩 섹션 */}
                 <div className="w-full flex flex-col items-center gap-1">
@@ -157,16 +156,20 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
                       quickCategories.map((cat) => (
                         <TransactionSheet
                           key={cat.id}
-                          triggerText={
-                            <div className="flex items-center justify-center gap-1">
-                              <span className="font-emoji">{cat.icon}</span>
-                              <span>{cat.name}</span>
-                            </div>
-                          }
-                          triggerClassName="h-8 min-w-15 w-20 px-2 text-xs font-bold bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 text-slate-600 border border-slate-200 shadow-sm rounded-full transition-colors truncate "
-                          showIcon={false}
                           defaultCategoryId={cat.id}
-                        />
+                        >
+                          <div className="flex items-center">
+                            <Badge
+                              key={cat.id}
+                              variant="secondary"
+                              className="text-[11px] gap-1 cursor-pointer hover:bg-slate-600 hover:text-white"
+                            >
+                              <span className="native-emoji">{cat.icon}</span>
+                              {cat.name}
+                              <Plus className="h-3 w-3" />
+                            </Badge>
+                          </div>
+                        </TransactionSheet>
                       ))
                     ) : (
                       <span className="text-xs text-slate-400 italic">

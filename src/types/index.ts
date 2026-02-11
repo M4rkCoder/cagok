@@ -31,4 +31,5 @@ export type {
   CategoryMonthlyAmount,
   DailyCategoryTransaction,
   TreemapNode,
+  DailyDetailResponse,
 } from "./dashboard";

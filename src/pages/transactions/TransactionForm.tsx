@@ -257,6 +257,7 @@ const TransactionForm: React.FC = () => {
                 setIsCategoryPopoverOpen(open);
                 if (!open) resetCategoryForm();
               }}
+              modal={false}
             >
               <PopoverTrigger asChild>
                 <button
@@ -296,6 +297,7 @@ const TransactionForm: React.FC = () => {
               <PopoverContent
                 className="w-[var(--radix-popover-trigger-width)] p-0"
                 align="start"
+                onWheel={(e) => e.stopPropagation()}
               >
                 <Command className="bg-white overflow-hidden">
                   {isEmojiPickerOpen ? (

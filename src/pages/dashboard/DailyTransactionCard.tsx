@@ -14,28 +14,34 @@ import {
 } from "recharts";
 import { useState, useMemo } from "react";
 import { useDashboardStore } from "@/store/useDashboardStore";
-import CategoryExpenseChart from "./CategoryTransactionChart"; // 이 컴포넌트 내부에서도 모드에 따른 처리가 필요할 수 있습니다.
 import { getThemeColor } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"; // shadcn/ui 탭 사용 가정
 import CategoryTransactionChart from "./CategoryTransactionChart";
 
-interface Props {
-  handleDateClick: (date: string) => void;
-}
-
 type ViewMode = "expense" | "income";
 
-export default function DailyTransactionCard({ handleDateClick }: Props) {
+export default function DailyTransactionCard() {
   const {
     selectedMonth,
     dailyCategoryExpenses,
     categoriesExpense,
-    dailyCategoryIncomes, // 수입 데이터 추가
-    categoriesIncome, // 수입 카테고리 추가
+    dailyCategoryIncomes,
+    categoriesIncome,
+    loadChartDetail,
+    openDialog,
   } = useDashboardStore();
 
   const [viewMode, setViewMode] = useState<ViewMode>("expense");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
+  const handleDateClick = (date: string) => {
+    const txType = viewMode === "expense" ? 1 : 0;
+    const catId =
+      selectedCategoryId === "all" ? null : parseInt(selectedCategoryId);
+    console.log(date, "viewMode:", viewMode, txType, catId);
+    openDialog(date, txType, catId);
+
+    loadChartDetail(date, txType, catId);
+  };
 
   // 1. 현재 모드에 따른 데이터 소스 선택
   const currentCategories =

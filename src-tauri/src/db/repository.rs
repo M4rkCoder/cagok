@@ -1,5 +1,5 @@
-use super::{Category, CategoryExpense, CategoryMonthlyAmount, DailyExpense, MonthlyOverview, RecurringFrequency, RecurringTransaction, Transaction, TransactionWithCategory, MonthlyTransactionRaw, DailyCategoryTransaction, DailySummary, MonthlyTotalSummary};
-use rusqlite::{params, Connection, Result};
+use super::{Category, CategoryExpense, CategoryMonthlyAmount, DailyExpense, MonthlyOverview, RecurringFrequency, RecurringTransaction, Transaction, TransactionWithCategory, MonthlyTransactionRaw, DailyCategoryTransaction, DailySummary, MonthlyTotalSummary, DailyDetailResponse, TransactionFilters};
+use rusqlite::{params, Connection, Result, ToSql};
 
 pub fn get_setting(conn: &Connection, key: &str) -> Result<Option<String>> {
     let mut stmt = conn.prepare("SELECT value FROM app_settings WHERE key = ?1")?;
@@ -37,7 +37,7 @@ impl TransactionRepository {
     }
 
     pub fn get_all(conn: &Connection) -> Result<Vec<Transaction>> {
-        let mut stmt = conn.prepare("SELECT id, description, amount, date, type, is_fixed, remarks, category_id FROM transactions ORDERY BY date DESC")?;
+        let mut stmt = conn.prepare("SELECT id, description, amount, date, type, is_fixed, remarks, category_id FROM transactions ORDER BY date DESC")?;
         let rows = stmt.query_map([], |row| {
             Ok(Transaction {
                 id: row.get(0)?,
@@ -234,6 +234,104 @@ impl TransactionRepository {
         })?;
     
         rows.collect()
+    }
+
+    pub fn get_filtered_transactions(
+        conn: &Connection,
+        f: TransactionFilters,
+    ) -> Result<Vec<TransactionWithCategory>> {
+        let mut query = String::from("
+            SELECT 
+                t.id, t.description, t.amount, t.date, t.type,
+                t.is_fixed, t.remarks, t.category_id,
+                c.name, c.icon
+            FROM transactions t
+            LEFT JOIN categories c ON t.category_id = c.id
+            WHERE 1=1
+        ");
+    
+        let mut params: Vec<Box<dyn ToSql>> = Vec::new();
+    
+        // 키워드 검색 (Description + Remarks)
+        if let Some(keyword) = f.keyword {
+            if !keyword.is_empty() {
+                query.push_str(" AND (t.description LIKE ? OR t.remarks LIKE ?)");
+                let pattern = format!("%{}%", keyword);
+                params.push(Box::new(pattern.clone()));
+                params.push(Box::new(pattern));
+            }
+        }
+    
+        // 타입 검색 (0: 수입, 1: 지출)
+        if let Some(tx_type) = f.tx_type {
+            query.push_str(" AND t.type = ?");
+            params.push(Box::new(tx_type));
+        }
+
+        if let Some(fixed) = f.is_fixed {
+            query.push_str(" AND t.is_fixed = ?");
+            // SQLite는 bool을 0, 1로 처리하므로 변환해서 바인딩
+            params.push(Box::new(if fixed { 1 } else { 0 }));
+        }
+    
+        // 카테고리 다중 선택
+        if let Some(ids) = f.category_ids {
+            if !ids.is_empty() {
+                let placeholders: Vec<String> = ids.iter().map(|_| "?".to_string()).collect();
+                query.push_str(&format!(" AND t.category_id IN ({})", placeholders.join(",")));
+                for id in ids {
+                    params.push(Box::new(id));
+                }
+            }
+        }
+    
+        // 기간 검색
+        if let Some(start) = f.start_date {
+            query.push_str(" AND t.date >= ?");
+            params.push(Box::new(start));
+        }
+        if let Some(end) = f.end_date {
+            query.push_str(" AND t.date <= ?");
+            params.push(Box::new(end));
+        }
+    
+        // 금액 범위
+        if let Some(min) = f.min_amount {
+            query.push_str(" AND t.amount >= ?");
+            params.push(Box::new(min));
+        }
+        if let Some(max) = f.max_amount {
+            query.push_str(" AND t.amount <= ?");
+            params.push(Box::new(max));
+        }
+    
+        query.push_str(" ORDER BY t.date DESC, t.id DESC");
+    
+        let mut stmt = conn.prepare(&query)?;
+        
+        // Vec<Box<dyn ToSql>>를 &[&dyn ToSql]로 변환하여 실행
+        let params_refs: Vec<&dyn ToSql> = params.iter().map(|p| p.as_ref()).collect();
+    
+        let rows = stmt.query_map(&params_refs[..], |row| {
+            Ok(TransactionWithCategory {
+                id: row.get(0)?,
+                description: row.get(1)?,
+                amount: row.get(2)?,
+                date: row.get(3)?,
+                r#type: row.get(4)?,
+                is_fixed: row.get(5)?,
+                remarks: row.get(6)?,
+                category_id: row.get(7)?,
+                category_name: row.get(8).ok(), // LEFT JOIN이므로 null 허용
+                category_icon: row.get(9).ok(),
+            })
+        })?;
+    
+        let mut results = Vec::new();
+        for row in rows {
+            results.push(row?);
+        }
+        Ok(results)
     }
 }
 
@@ -724,6 +822,67 @@ impl DashboardRepository {
         })?;
     
         rows.collect()
+    }
+
+    pub fn get_daily_transactions_with_total(
+        conn: &Connection,
+        date: &str,
+        tx_type: i32,
+        category_id: Option<i64>,
+    ) -> Result<DailyDetailResponse> {
+        // 1. 조건에 따른 SQL 필터 정의
+        let sql_filter = match category_id {
+            Some(_) => "WHERE t.date = ?1 AND t.category_id = ?2",
+            None => "WHERE t.date = ?1 AND t.type = ?2",
+        };
+    
+        let query = format!(
+            "SELECT 
+                t.id, t.description, t.amount, t.date, t.type,
+                t.is_fixed, t.remarks, t.category_id,
+                c.name, c.icon
+             FROM transactions t
+             LEFT JOIN categories c ON t.category_id = c.id
+             {} 
+             ORDER BY t.amount DESC",
+            sql_filter
+        );
+    
+        let mut stmt = conn.prepare(&query)?;
+        let mut total_amount = 0.0;
+    
+        let params_vec: Vec<Box<dyn rusqlite::ToSql>> = match category_id {
+            Some(id) => vec![Box::new(date.to_string()), Box::new(id)],
+            None => vec![Box::new(date.to_string()), Box::new(tx_type)],
+        };
+    
+        let rows = stmt.query_map(
+            rusqlite::params_from_iter(params_vec.iter().map(|p| p.as_ref())),
+            |row| {
+                let amount: f64 = row.get(2)?;
+                Ok(TransactionWithCategory {
+                    id: row.get(0)?,
+                    description: row.get(1)?,
+                    amount,
+                    date: row.get(3)?,
+                    r#type: row.get(4)?,    // i64
+                    is_fixed: row.get(5)?,  // i64
+                    remarks: row.get(6)?,
+                    category_id: row.get(7)?,
+                    category_name: row.get(8)?,
+                    category_icon: row.get(9)?,
+                })
+            }
+        )?;
+    
+        let mut items = Vec::new();
+        for row_result in rows {
+            let item = row_result?;
+            total_amount += item.amount;
+            items.push(item);
+        }
+    
+        Ok(DailyDetailResponse { items, total_amount })
     }
 }
 

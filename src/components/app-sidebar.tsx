@@ -17,6 +17,7 @@ import {
   Recycle,
   CircleEqual,
   RefreshCw,
+  PlusIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FinanceModeRounded from "./FinanceModeRounded";
@@ -32,7 +33,7 @@ import {
 } from "./ui/accordion";
 import { useEffect, useState } from "react";
 import { Badge } from "./ui/badge";
-import { PlusBadge } from "./ui/PlusBadge";
+import { PlusBadge, ProIcon } from "./ui/PlusBadge";
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -79,7 +80,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
 
   useEffect(() => {
     const currentParent = items.MainMenu.find(
-      (item) => item.subMenu && location.pathname.startsWith(item.url),
+      (item) => item.subMenu && location.pathname.startsWith(item.url)
     );
     if (currentParent) {
       setOpenItem(currentParent.title);
@@ -102,7 +103,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
           <div
             className={cn(
               "shrink-0 flex items-center justify-center rounded-lg bg-black p-1.5 shadow-md transition-all duration-300",
-              collapsed ? "w-8 h-8 scale-110" : "w-7 h-7", // 3. 축소 시 로고 크기 확대
+              collapsed ? "w-8 h-8 scale-110" : "w-7 h-7" // 3. 축소 시 로고 크기 확대
             )}
           >
             <FinanceModeRounded className="w-5 h-5 text-white" />
@@ -165,15 +166,17 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                                   key={sub.title + sub.url}
                                   to={sub.url}
                                   className={cn(
-                                    "text-[13px] py-1.5 px-2 rounded-md transition-colors hover:bg-sidebar-accent",
+                                    "text-[13px] py-1.5 px-2 rounded-md transition-colors hover:bg-sidebar-accent flex items-center min-w-0 whitespace-nowrap overflow-hidden",
                                     isActive(sub.url)
                                       ? "text-foreground font-semibold bg-sidebar-accent/50"
-                                      : "text-muted-foreground",
+                                      : "text-muted-foreground"
                                   )}
                                 >
-                                  <div className="flex items-center gap-1">
-                                    <span>{sub.title}</span>
-                                    {sub.plus && <PlusBadge />}
+                                  <div className="flex items-center gap-1 min-w-0 w-full">
+                                    <span className="truncate">
+                                      {sub.title}
+                                    </span>
+                                    {sub.plus && <ProIcon />}
                                   </div>
                                 </Link>
                               ))}
@@ -192,7 +195,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                           <item.icon
                             className={cn(
                               "shrink-0 transition-transform duration-300",
-                              collapsed ? "h-7 w-7 scale-120" : "h-6 w-6",
+                              collapsed ? "h-7 w-7 scale-120" : "h-6 w-6"
                             )}
                           />
                           {!collapsed && <span>{item.title}</span>}
@@ -213,7 +216,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
           variant={collapsed ? "ghost" : "secondary"}
           className={cn(
             "w-full truncate overflow-hidden transition-all",
-            collapsed && "h-10 p-0 hover:bg-sidebar-accent",
+            collapsed && "h-10 p-0 hover:bg-sidebar-accent"
           )}
           onClick={(e) => {
             e.preventDefault();

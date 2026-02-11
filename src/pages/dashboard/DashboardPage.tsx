@@ -3,8 +3,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import { MainExpenseCard } from "./MainExpenseCard";
 import { SummaryItemRow } from "./SummaryItemsRow";
-import { TransactionListDialog } from "@/pages/dashboard/TransactionListDialog";
-import { DialogState } from "@/types";
 import DailyTransactionsDialog from "@/components/DailyTransactionsDialog";
 import { useHeaderStore } from "@/store/useHeaderStore";
 import DailyTransactionCard from "./DailyTransactionCard";
@@ -18,23 +16,13 @@ export default function Dashboard() {
   const [activeSection, setActiveSection] =
     useState<DashboardSection>("summary");
   const [isScrolling, setIsScrolling] = useState(false);
-  const [dialogState, setDialogState] = useState<DialogState>({
-    open: false,
-    title: "",
-    transactions: [],
-    showDate: false,
-  });
-  const [showDailyTransactionsDialog, setShowDailyTransactionsDialog] =
-    useState(false); // New state for daily dialog
-  const [selectedDateForDialog, setSelectedDateForDialog] = useState<
-    string | null
-  >(null); // New state for selected date
   const {
     selectedMonth,
     loading,
     overview,
     setSelectedMonth,
     loadDashboardData,
+    dialogState,
   } = useDashboardStore();
   const resetHeader = useHeaderStore((state) => state.resetHeader);
   const setHeader = useHeaderStore((state) => state.setHeader);
@@ -55,14 +43,9 @@ export default function Dashboard() {
     return () => resetHeader();
   }, [selectedMonth]);
 
-  const handleDateClick = (date: string) => {
-    setSelectedDateForDialog(date);
-    setShowDailyTransactionsDialog(true);
-  };
   const handleWheel = useCallback(
     (e: WheelEvent) => {
-      if (dialogState.open || showDailyTransactionsDialog || isScrolling)
-        return;
+      if (dialogState.isOpen || isScrolling) return;
 
       const threshold = 20;
       if (Math.abs(e.deltaY) < threshold) return;
@@ -81,7 +64,7 @@ export default function Dashboard() {
         }
       }
     },
-    [activeSection, isScrolling, dialogState.open, showDailyTransactionsDialog]
+    [activeSection, dialogState.isOpen, isScrolling]
   );
 
   // 스크롤 잠금 함수 (애니메이션 시간 동안 대기)
@@ -137,7 +120,7 @@ export default function Dashboard() {
 
             <SummaryItemRow lang="ko" />
 
-            <DailyTransactionCard handleDateClick={handleDateClick} />
+            <DailyTransactionCard />
           </motion.div>
         )}
         {/* 
@@ -171,31 +154,8 @@ export default function Dashboard() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <TransactionListDialog
-        open={dialogState.open}
-        title={dialogState.title}
-        transactions={dialogState.transactions}
-        showDate={dialogState.showDate}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) {
-            setDialogState({
-              open: false,
-              title: "",
-              transactions: [],
-              showDate: false,
-            });
-          } else {
-            setDialogState((prev) => ({ ...prev, open: isOpen }));
-          }
-        }}
-      />
       {/* New DailyTransactionsDialog */}
-      <DailyTransactionsDialog
-        date={selectedDateForDialog}
-        isOpen={showDailyTransactionsDialog}
-        onClose={() => setShowDailyTransactionsDialog(false)}
-      />
+      <DailyTransactionsDialog />
     </div>
   );
 }

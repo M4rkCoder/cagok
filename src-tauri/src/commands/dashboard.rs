@@ -1,7 +1,8 @@
 use crate::db::{
     CategoryExpense, DailyExpense, DbConnection, MonthlyFinancialSummaryItem,
-    MonthlyOverview, TransactionWithCategory, YearlySummaryItem, FinancialSummaryStats, CategoryMonthlyAmount, YearlyDashboardData, DailyCategoryTransaction, TreemapNode
+    MonthlyOverview, TransactionWithCategory, YearlySummaryItem, FinancialSummaryStats, CategoryMonthlyAmount, YearlyDashboardData, DailyCategoryTransaction, TreemapNode, DailyDetailResponse
 };
+use crate::db::repository::DashboardRepository;
 use crate::services::dashboard::DashboardService;
 use crate::services::{ComparisonMetric, ComparisonType};
 use tauri::State;
@@ -171,4 +172,21 @@ pub fn get_expense_treemap(
     DashboardService::get_expense_treemap(&conn, year_month)
         .map_err(|e| e.to_string())
 
+}
+
+#[tauri::command]
+pub fn get_daily_chart_detail(
+    db: State<'_, DbConnection>,
+    date: String,
+    tx_type: i32,
+    category_id: Option<i64>,
+) -> Result<DailyDetailResponse, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardRepository::get_daily_transactions_with_total(
+        &conn,
+        &date,
+        tx_type,
+        category_id,
+    )
+    .map_err(|e| e.to_string())
 }

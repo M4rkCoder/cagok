@@ -20,7 +20,7 @@ const GeneralSettings = () => {
   const { resetHeader, setHeader } = useHeaderStore();
 
   useEffect(() => {
-    setHeader("일반 설정");
+    setHeader("설정");
     return () => resetHeader();
   }, []);
 
@@ -82,7 +82,7 @@ const GeneralSettings = () => {
     <div className="space-y-6">
       <Card className="p-6 space-y-6">
         <div className="flex items-center gap-2 text-lg font-semibold border-b pb-2">
-          <Settings className="w-5 h-5 text-blue-600" /> 앱 기본 정보
+          <Settings className="w-5 h-5" /> 일반 설정
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

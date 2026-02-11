@@ -13,26 +13,13 @@ import { Plus } from "lucide-react";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { useConfirmStore } from "@/store/useConfirmStore";
 
-// 1. Props 타입 정의 (선택적 속성)
 interface TransactionSheetProps {
-  triggerClassName?: string;
-  triggerText?: string | ReactNode;
-  variant?:
-    | "default"
-    | "link"
-    | "destructive"
-    | "outline"
-    | "secondary"
-    | "ghost";
-  showIcon?: boolean;
-  defaultCategoryId?: number; // 아이콘 표시 여부도 선택할 수 있게 하면 유연합니다.
+  children?: ReactNode;
+  defaultCategoryId?: number;
 }
 
 const TransactionSheet = ({
-  triggerClassName,
-  triggerText,
-  variant = "default",
-  showIcon = true, // 기본값은 아이콘 표시
+  children,
   defaultCategoryId,
 }: TransactionSheetProps) => {
   const { t } = useTranslation();
@@ -44,10 +31,10 @@ const TransactionSheet = ({
     setDefaultCategoryId,
   } = useTransactionStore();
 
-  const { isOpen } = useConfirmStore();
+  const { isOpen: isConfirmOpen } = useConfirmStore();
 
   const handleOpenChange = (open: boolean) => {
-    if (isOpen) return;
+    if (isConfirmOpen) return;
 
     if (!open) {
       handleSheetClose();
@@ -63,24 +50,27 @@ const TransactionSheet = ({
   return (
     <Sheet open={sheetOpen} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
-        {/* 2. props가 있으면 사용하고, 없으면 기본값(기존 설정) 사용 */}
-        <Button variant={variant} className={triggerClassName || "shadow-lg"}>
-          {showIcon && <Plus className="h-6 w-6" />}
-          {triggerText || t("new_transaction")}
-        </Button>
+        {children ? (
+          children
+        ) : (
+          <Button variant="default" className="shadow-lg cursor-pointer">
+            <Plus className="h-6 w-6" />
+            {t("new_transaction")}
+          </Button>
+        )}
       </SheetTrigger>
 
       <SheetContent
         data-tauri-drag-region={false}
         className="top-12 h-[calc(100vh-theme(spacing.12))]"
         onPointerDownOutside={(e) => {
-          if (isOpen) e.preventDefault();
+          if (isConfirmOpen) e.preventDefault();
         }}
         onInteractOutside={(e) => {
-          if (isOpen) e.preventDefault();
+          if (isConfirmOpen) e.preventDefault();
         }}
         onEscapeKeyDown={(e) => {
-          if (isOpen) e.preventDefault();
+          if (isConfirmOpen) e.preventDefault();
         }}
       >
         <SheetHeader>

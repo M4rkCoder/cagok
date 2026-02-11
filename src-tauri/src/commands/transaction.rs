@@ -1,5 +1,5 @@
 use crate::db::repository::TransactionRepository;
-use crate::db::{DbConnection, Transaction, TransactionWithCategory, DailySummary, MonthlyTotalSummary};
+use crate::db::{DbConnection, Transaction, TransactionWithCategory, DailySummary, MonthlyTotalSummary, TransactionFilters};
 use tauri::State;
 
 #[tauri::command]
@@ -78,4 +78,16 @@ pub fn get_transactions_by_month_and_category(
     let conn = db.0.lock().unwrap();
     TransactionRepository::get_by_month_and_category(&conn, &year_month, category_id)
         .map_err(|e| format!("Failed to get transactions: {}", e))
+}
+
+#[tauri::command]
+pub fn get_filtered_transactions_command(
+    db: State<'_, DbConnection>, // DB Connection이 포함된 앱 상태
+    filters: TransactionFilters,
+) -> Result<Vec<TransactionWithCategory>, String> {
+    let conn = db.0.lock().unwrap();
+    
+    // 레포지토리 함수 호출
+    TransactionRepository::get_filtered_transactions(&conn, filters)
+        .map_err(|e| e.to_string())
 }

@@ -26,6 +26,8 @@
     "core:path:default",
     "core:path:allow-resolve-directory",
     "sql:allow-load",
-    "sql:allow-select"
+    "sql:allow-select",
+    "core:event:allow-unlisten",
+    "core:event:allow-listen"
   ]
 }

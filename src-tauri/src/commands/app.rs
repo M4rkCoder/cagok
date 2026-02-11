@@ -6,6 +6,8 @@ use argon2::{
     Argon2,
 };
 use tauri::{Manager, Runtime, State, Window};
+use crate::RecurringService;
+use crate::RecurringPayload;
 
 #[tauri::command]
 pub fn is_app_initialized(conn: State<DbConnection>) -> Result<bool, String> {
@@ -109,4 +111,24 @@ pub fn restart_app<R: Runtime>(window: Window<R>) -> Result<(), String> {
     app.exit(0);
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn check_recurring<R: tauri::Runtime>(app_handle: tauri::AppHandle<R>) {
+    let db = app_handle.state::<DbConnection>();
+    
+    let process_result = {
+        let conn = db.0.lock().unwrap();
+        RecurringService::process_recurring_transactions(&conn)
+    };
+
+    if let Ok(count) = process_result {
+        if count > 0 {
+            use tauri::Emitter;
+            app_handle.emit("recurring-summary", RecurringPayload {
+                count, // 실제 count 사용
+                timestamp: chrono::Local::now().to_rfc3339(),
+            }).unwrap();
+        }
+    }
 }

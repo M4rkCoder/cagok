@@ -1,6 +1,13 @@
-import { useState, useEffect } from "react";
-import { Search, ChevronRight, Check, ChevronsUpDown, CalendarIcon, X } from "lucide-react";
-import { format, subMonths, startOfMonth, endOfMonth, subYears } from "date-fns";
+import { useState } from "react";
+import {
+  Search,
+  ChevronRight,
+  Check,
+  ChevronsUpDown,
+  CalendarIcon,
+  X,
+} from "lucide-react";
+import { format, startOfMonth, subMonths, subYears } from "date-fns";
 import { ko } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -24,8 +31,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Calendar } from "@/components/ui/calendar";
-import { Category } from "@/types";
-import { useAppStore } from "@/store/useAppStore"; // For categories
+import { useAppStore } from "@/store/useAppStore";
 import { DateRange } from "react-day-picker";
 
 export interface FilterState {
@@ -38,47 +44,57 @@ export interface FilterState {
 
 interface Props {
   onClose: () => void;
-  onApplyFilter: (filters: FilterState) => void;
-  initialFilters: FilterState;
+  onApplyFilter?: (filters: FilterState) => void;
+  initialFilters?: FilterState;
 }
 
-export function TransactionFilterPanel({ onClose, onApplyFilter, initialFilters }: Props) {
+const DEFAULT_FILTERS: FilterState = {
+  keyword: "",
+  categoryIds: [],
+  dateRange: undefined,
+  minAmount: "",
+  maxAmount: "",
+};
+
+export function TransactionFilterPanel({
+  onClose,
+  onApplyFilter,
+  initialFilters,
+}: Props) {
   const { categories } = useAppStore();
-  const [filters, setFilters] = useState<FilterState>(initialFilters);
+  const [filters, setFilters] = useState<FilterState>(() => ({
+    ...DEFAULT_FILTERS,
+    ...initialFilters,
+  }));
   const [openCategory, setOpenCategory] = useState(false);
 
-  // Sync internal state if props change (optional, but good practice)
-  useEffect(() => {
-    setFilters(initialFilters);
-  }, [initialFilters]);
-
-  const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters((prev) => ({ ...prev, keyword: e.target.value }));
+  // 입력값 변경 핸들러 (단순 상태 업데이트)
+  const updateFilter = (key: keyof FilterState, value: any) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
+  // 카테고리 토글
   const toggleCategory = (id: number) => {
-    setFilters((prev) => {
-      const currentIds = prev.categoryIds;
-      if (currentIds.includes(id)) {
-        return { ...prev, categoryIds: currentIds.filter((c) => c !== id) };
-      } else {
-        return { ...prev, categoryIds: [...currentIds, id] };
-      }
-    });
+    const current = filters.categoryIds;
+    const next = current.includes(id)
+      ? current.filter((c) => c !== id)
+      : [...current, id];
+    updateFilter("categoryIds", next);
   };
 
   const selectDatePreset = (months: number) => {
     const end = new Date();
-    const start = months === 0 
-      ? startOfMonth(new Date()) // This month
-      : subMonths(new Date(), months);
-      
+    const start =
+      months === 0
+        ? startOfMonth(new Date()) // This month
+        : subMonths(new Date(), months);
+
     setFilters((prev) => ({
       ...prev,
       dateRange: { from: start, to: end },
     }));
   };
-  
+
   const selectOneYear = () => {
     const end = new Date();
     const start = subYears(new Date(), 1);
@@ -88,10 +104,10 @@ export function TransactionFilterPanel({ onClose, onApplyFilter, initialFilters 
     }));
   };
 
-  const handleApply = () => {
-    onApplyFilter(filters);
-  };
-  
+  // 필터 적용 (백엔드 요청을 위해 부모로 전달)
+  const handleApply = () => onApplyFilter(filters);
+
+  // 초기화
   const handleReset = () => {
     const resetState = {
       keyword: "",
@@ -105,7 +121,7 @@ export function TransactionFilterPanel({ onClose, onApplyFilter, initialFilters 
   };
 
   const selectedCategories = categories.filter((c) =>
-    filters.categoryIds.includes(c.id)
+    filters?.categoryIds?.includes(c.id)
   );
 
   return (
@@ -114,59 +130,57 @@ export function TransactionFilterPanel({ onClose, onApplyFilter, initialFilters 
         <Card className="shadow-md border-slate-200 ring-1 ring-black/5 bg-white/95 backdrop-blur">
           <CardHeader className="pb-3 border-b bg-slate-50/80 flex flex-row items-center justify-between p-4">
             <CardTitle className="text-sm font-bold flex items-center gap-2 text-slate-700">
-              <Search className="h-4 w-4" />
-              필터링
+              <Search className="h-4 w-4" /> 필터링
             </CardTitle>
             <div className="flex items-center gap-1">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-xs text-slate-500 hover:text-slate-900 px-2"
-                    onClick={handleReset}
-                >
-                    초기화
-                </Button>
-                <Button
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-slate-500"
+                onClick={handleReset}
+              >
+                초기화
+              </Button>
+              <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 hover:bg-slate-200 rounded-full"
+                className="h-7 w-7 rounded-full"
                 onClick={onClose}
-                >
+              >
                 <ChevronRight className="h-4 w-4 text-slate-500" />
-                </Button>
+              </Button>
             </div>
           </CardHeader>
+
           <CardContent className="p-4 space-y-6 max-h-[calc(100vh-160px)] overflow-y-auto custom-scrollbar">
-            {/* Keyword Search */}
+            {/* 검색어 */}
             <div className="space-y-2">
-              <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                검색어 (내용/메모)
+              <Label className="text-[11px] font-bold text-slate-400 uppercase">
+                검색어
               </Label>
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
                 <Input
-                  placeholder="내역 검색..."
                   value={filters.keyword}
-                  onChange={handleKeywordChange}
-                  className="pl-9 h-9 text-sm border-slate-200 focus:ring-1 focus:ring-slate-400 bg-white"
+                  onChange={(e) => updateFilter("keyword", e.target.value)}
+                  placeholder="내역 검색..."
+                  className="pl-9 h-9 text-sm"
                 />
               </div>
             </div>
 
             <Separator />
 
-            {/* Category Filter */}
+            {/* 카테고리 */}
             <div className="space-y-2">
-              <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <Label className="text-[11px] font-bold text-slate-400 uppercase">
                 카테고리
               </Label>
               <Popover open={openCategory} onOpenChange={setOpenCategory}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    role="combobox"
-                    aria-expanded={openCategory}
-                    className="w-full justify-between h-9 text-sm font-normal border-slate-200 bg-white hover:bg-slate-50"
+                    className="w-full justify-between h-9 text-sm font-normal"
                   >
                     {filters.categoryIds.length > 0
                       ? `${filters.categoryIds.length}개 선택됨`
@@ -179,86 +193,49 @@ export function TransactionFilterPanel({ onClose, onApplyFilter, initialFilters 
                     <CommandInput placeholder="카테고리 검색..." />
                     <CommandList>
                       <CommandEmpty>결과 없음</CommandEmpty>
-                      <CommandGroup heading="수입">
-                        {categories
-                          .filter((c) => c.type === 0)
-                          .map((category) => (
-                            <CommandItem
-                              key={category.id}
-                              value={category.name}
-                              onSelect={() => toggleCategory(category.id)}
-                              className="cursor-pointer"
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  filters.categoryIds.includes(category.id)
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                              <span className="mr-2 text-lg">{category.icon}</span>
-                              {category.name}
-                            </CommandItem>
-                          ))}
-                      </CommandGroup>
-                      <CommandGroup heading="지출">
-                        {categories
-                          .filter((c) => c.type === 1)
-                          .map((category) => (
-                            <CommandItem
-                              key={category.id}
-                              value={category.name}
-                              onSelect={() => toggleCategory(category.id)}
-                              className="cursor-pointer"
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  filters.categoryIds.includes(category.id)
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                              <span className="mr-2 text-lg">{category.icon}</span>
-                              {category.name}
-                            </CommandItem>
-                          ))}
+                      <CommandGroup heading="카테고리 목록">
+                        {categories.map((category) => (
+                          <CommandItem
+                            key={category.id}
+                            onSelect={() => toggleCategory(category.id)}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                filters.categoryIds.includes(category.id)
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            <span className="mr-2">{category.icon}</span>{" "}
+                            {category.name}
+                          </CommandItem>
+                        ))}
                       </CommandGroup>
                     </CommandList>
                   </Command>
                 </PopoverContent>
               </Popover>
-              
-              {/* Selected Categories Badges */}
-              {selectedCategories.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-2">
-                  {selectedCategories.map((c) => (
-                    <Badge
-                      key={c.id}
-                      variant="secondary"
-                      className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center gap-1"
-                    >
-                      <span>{c.icon}</span>
-                      {c.name}
-                      <X
-                        className="h-3 w-3 cursor-pointer hover:text-red-500"
-                        onClick={() => toggleCategory(c.id)}
-                      />
-                    </Badge>
-                  ))}
-                  {selectedCategories.length > 0 && (
-                      <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1 text-slate-400 hover:text-red-500" onClick={() => setFilters(prev => ({ ...prev, categoryIds: [] }))}>
-                          전체 해제
-                      </Button>
-                  )}
-                </div>
-              )}
+              <div className="flex flex-wrap gap-1 mt-2">
+                {selectedCategories.map((c) => (
+                  <Badge
+                    key={c.id}
+                    variant="secondary"
+                    className="text-[10px] gap-1"
+                  >
+                    {c.icon} {c.name}
+                    <X
+                      className="h-3 w-3 cursor-pointer"
+                      onClick={() => toggleCategory(c.id)}
+                    />
+                  </Badge>
+                ))}
+              </div>
             </div>
 
             <Separator />
 
-            {/* Date Range Filter */}
+            {/* 날짜 범위 */}
             <div className="space-y-3">
               <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                 조회 기간
@@ -297,7 +274,7 @@ export function TransactionFilterPanel({ onClose, onApplyFilter, initialFilters 
                   1년
                 </Button>
               </div>
-              
+
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -341,39 +318,33 @@ export function TransactionFilterPanel({ onClose, onApplyFilter, initialFilters 
 
             <Separator />
 
-            {/* Amount Range Filter */}
+            {/* 금액 범위 */}
             <div className="space-y-2">
-              <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <Label className="text-[11px] font-bold text-slate-400 uppercase">
                 금액 범위
               </Label>
               <div className="flex items-center gap-2">
-                <div className="relative flex-1">
-                    <span className="absolute left-2 top-2.5 text-xs text-slate-400">₩</span>
-                    <Input
-                    placeholder="최소"
-                    type="number"
-                    value={filters.minAmount}
-                    onChange={(e) => setFilters(prev => ({ ...prev, minAmount: e.target.value }))}
-                    className="h-9 text-xs pl-6 border-slate-200 bg-white"
-                    />
-                </div>
-                <span className="text-slate-400 text-xs">~</span>
-                <div className="relative flex-1">
-                    <span className="absolute left-2 top-2.5 text-xs text-slate-400">₩</span>
-                    <Input
-                    placeholder="최대"
-                    type="number"
-                    value={filters.maxAmount}
-                    onChange={(e) => setFilters(prev => ({ ...prev, maxAmount: e.target.value }))}
-                    className="h-9 text-xs pl-6 border-slate-200 bg-white"
-                    />
-                </div>
+                <Input
+                  type="number"
+                  placeholder="최소"
+                  value={filters.minAmount}
+                  onChange={(e) => updateFilter("minAmount", e.target.value)}
+                  className="h-9 text-xs"
+                />
+                <span className="text-slate-400">~</span>
+                <Input
+                  type="number"
+                  placeholder="최대"
+                  value={filters.maxAmount}
+                  onChange={(e) => updateFilter("maxAmount", e.target.value)}
+                  className="h-9 text-xs"
+                />
               </div>
             </div>
 
-            <Button 
-                onClick={handleApply}
-                className="w-full h-10 text-sm font-bold bg-slate-800 hover:bg-slate-900 shadow-md mt-4"
+            <Button
+              onClick={handleApply}
+              className="w-full h-10 text-sm font-bold bg-slate-800 hover:bg-slate-900 shadow-md"
             >
               필터 적용
             </Button>

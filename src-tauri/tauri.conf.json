@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "finkro",
-  "version": "0.1.0",
-  "identifier": "finkro",
+  "productName": "C'AGOK",
+  "version": "0.8.0",
+  "identifier": "com.cagok.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -16,7 +16,7 @@
   "app": {
     "windows": [
       {
-        "title": "FINKRO",
+        "title": "C'AGOK",
         "width": 600,
         "height": 500,
         "visible": false,

@@ -61,5 +61,6 @@
       "fixed": "고정 지출",
       "variable": "변동 지출"
     }
-  }
+  },
+  "recurring_notification": "{{count}}건의 반복 내역이 생성되었습니다."
 }
