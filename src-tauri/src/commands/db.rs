@@ -11,7 +11,7 @@ pub fn get_db_path<R: Runtime>(window: Window<R>) -> Result<String, String> {
     let app = window.app_handle();
     let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
 
-    Ok(app_dir.join("finkro.db").to_string_lossy().to_string())
+    Ok(app_dir.join("cagok.db").to_string_lossy().to_string())
 }
 
 #[tauri::command]
@@ -19,13 +19,13 @@ pub fn backup_db<R: Runtime>(window: Window<R>) -> Result<String, String> {
     let app = window.app_handle();
     let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
 
-    let db_path = app_dir.join("finkro.db");
+    let db_path = app_dir.join("cagok.db");
 
     let backup_dir = app_dir.join("backups");
     std::fs::create_dir_all(&backup_dir).map_err(|e| e.to_string())?;
 
     let filename = format!(
-        "finkro_backup_{}.db",
+        "cagok_backup_{}.db",
         chrono::Local::now().format("%Y%m%d_%H%M%S")
     );
 
@@ -68,7 +68,7 @@ pub fn restore_backup<R: Runtime>(window: Window<R>, filename: String) -> Result
     let app = window.app_handle();
     let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
 
-    let db_path = app_dir.join("finkro.db");
+    let db_path = app_dir.join("cagok.db");
     let backup_path = app_dir.join("backups").join(filename);
 
     if !backup_path.exists() {
@@ -113,11 +113,11 @@ pub fn export_transactions_csv<R: Runtime>(
 
     let document_dir = app.path().document_dir().map_err(|e| e.to_string())?;
 
-    let export_dir = document_dir.join("Finkro").join("Exports");
+    let export_dir = document_dir.join("Cagok").join("Exports");
     std::fs::create_dir_all(&export_dir).map_err(|e| e.to_string())?;
 
     let filename = format!(
-        "finkro_transactions_{}.csv",
+        "Cagok_transactions_{}.csv",
         chrono::Local::now().format("%Y%m%d_%H%M%S")
     );
     let csv_path = export_dir.join(&filename);
@@ -203,7 +203,7 @@ pub fn get_export_path<R: Runtime>(window: Window<R>) -> Result<String, String> 
 
     let document_dir = app.path().document_dir().map_err(|e| e.to_string())?;
 
-    let export_dir = document_dir.join("Finkro").join("Exports");
+    let export_dir = document_dir.join("Cagok").join("Exports");
 
     Ok(export_dir.to_string_lossy().to_string())
 }
@@ -214,7 +214,7 @@ pub fn open_export_folder<R: Runtime>(window: Window<R>) -> Result<(), String> {
 
     let document_dir = app.path().document_dir().map_err(|e| e.to_string())?;
 
-    let export_dir = document_dir.join("Finkro").join("Exports");
+    let export_dir = document_dir.join("Cagok").join("Exports");
 
     open_path(export_dir, None::<String>).map_err(|e| e.to_string())?;
     Ok(())

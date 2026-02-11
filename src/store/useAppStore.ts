@@ -18,7 +18,7 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
-  appName: "Finkro",
+  appName: "C'agok",
   language: "ko",
   categories: [],
   isLoading: true,
@@ -38,7 +38,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
 
       set({
-        appName: name || "Finkro",
+        appName: name || "C'agok",
         language: lang || "ko",
       });
 

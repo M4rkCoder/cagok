@@ -60,3 +60,14 @@ export interface CellProps extends CellContext<QuickEntryTransactionRow, any> {
   onPaste?: (e: React.ClipboardEvent, r: number, c: number) => void;
   error?: { message: string; timestamp: number };
 }
+
+export interface TransactionFilters {
+  keyword?: string;
+  tx_type?: number; // 0: 수입, 1: 지출
+  is_fixed?: boolean; // 0: 변동, 1: 고정
+  category_ids?: number[];
+  start_date?: string;
+  end_date?: string;
+  min_amount?: number;
+  max_amount?: number;
+}

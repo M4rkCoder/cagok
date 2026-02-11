@@ -7,6 +7,7 @@ import {
   TransactionFormValues,
   DailySummary,
   MonthlyTotalSummary,
+  TransactionFilters,
 } from "@/types";
 import { toast } from "sonner";
 import { useAppStore } from "./useAppStore";
@@ -24,6 +25,8 @@ interface TransactionState {
   editingTransaction: Transaction | null;
   targetId: number | null;
   defaultCategoryId: number | null;
+  filters: TransactionFilters;
+  selectedDate: string | null;
 
   // Actions
   fetchTransactions: () => Promise<void>;
@@ -36,7 +39,11 @@ interface TransactionState {
   submitForm: (values: TransactionFormValues) => Promise<void>;
   deleteTransaction: (id: number) => Promise<void>;
   setDefaultCategoryId: (id: number | null) => void;
+  setFilters: (filters: TransactionFilters) => void;
+  fetchFilteredAll: (filters?: TransactionFilters) => Promise<void>;
+  setSelectedDate: (date: string | null) => void;
 }
+const initialFilters: TransactionFilters = {};
 
 export const useTransactionStore = create<TransactionState>((set, get) => ({
   transactions: [],
@@ -50,12 +57,14 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   confirmType: null,
   targetId: null,
   defaultCategoryId: null,
+  filters: initialFilters,
+  selectedDate: null,
 
   fetchMonthlyTotalTrends: async () => {
     set({ loading: true });
     try {
       const summaries = await invoke<MonthlyTotalSummary[]>(
-        "get_all_monthly_total_trends"
+        "get_all_monthly_total_trends",
       );
       set({ monthlySummaries: summaries });
     } catch (error) {
@@ -67,17 +76,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   },
 
   fetchTransactions: async () => {
-    set({ loading: true });
-    try {
-      const fetched = await invoke<TransactionWithCategory[]>(
-        "get_transactions_with_category"
-      );
-      set({ transactions: fetched });
-    } catch (error) {
-      toast.error("거래 내역을 불러오는데 실패했습니다.");
-    } finally {
-      set({ loading: false });
-    }
+    await get().fetchFilteredAll();
   },
 
   fetchAllDailySummaries: async () => {
@@ -97,7 +96,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     try {
       const details = await invoke<TransactionWithCategory[]>(
         "get_transactions_by_date",
-        { date }
+        { date },
       );
       set({ dateTransactions: details });
     } catch (error) {
@@ -146,4 +145,92 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   },
 
   setDefaultCategoryId: (id) => set({ defaultCategoryId: id }),
+  setFilters: (newFilters) => set({ filters: newFilters }),
+  fetchFilteredAll: async (filters) => {
+    const currentFilters = filters ?? get().filters;
+    set({ loading: true });
+
+    try {
+      const results = await invoke<TransactionWithCategory[]>(
+        "get_filtered_transactions_command",
+        { filters: currentFilters },
+      );
+
+      set({ transactions: results });
+
+      const { daily, monthly } = processSummaries(results);
+
+      set({
+        dailySummaries: daily,
+        monthlySummaries: monthly,
+        dateTransactions: results.filter((t) => t.date === get().selectedDate),
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("필터링된 데이터를 불러오는데 실패했습니다.");
+    } finally {
+      set({ loading: false });
+    }
+  },
+  resetFilters: () => set({ filters: initialFilters }),
+  setSelectedDate: (date) => set({ selectedDate: date }),
 }));
+
+function processSummaries(data: TransactionWithCategory[]) {
+  const dailyMap = new Map<string, DailySummary>();
+  const monthlyMap = new Map<string, MonthlyTotalSummary>();
+
+  data.forEach((t) => {
+    const date = t.date; // YYYY-MM-DD
+    const month = date.substring(0, 7); // YYYY-MM
+
+    // --- 1. Daily 요약 데이터 가공 ---
+    const d = dailyMap.get(date) || {
+      date,
+      income_total: 0,
+      expense_total: 0,
+      income_count: 0, // 추가
+      expense_count: 0, // 추가
+      total_count: 0,
+    };
+
+    d.total_count += 1;
+    if (t.type === 0) {
+      d.income_total += t.amount;
+      d.income_count += 1;
+    } else {
+      d.expense_total += t.amount;
+      d.expense_count += 1;
+    }
+    dailyMap.set(date, d as DailySummary); // 타입을 확실히 명시
+
+    // --- 2. Monthly 요약 데이터 가공 ---
+    const m = monthlyMap.get(month) || {
+      year_month: month,
+      income_total: 0,
+      expense_total: 0,
+      income_count: 0, // Monthly에도 필요한 경우 추가
+      expense_count: 0, // Monthly에도 필요한 경우 추가
+      total_count: 0,
+    };
+
+    m.total_count += 1;
+    if (t.type === 0) {
+      m.income_total += t.amount;
+      m.income_count += 1;
+    } else {
+      m.expense_total += t.amount;
+      m.expense_count += 1;
+    }
+    monthlyMap.set(month, m as MonthlyTotalSummary);
+  });
+
+  return {
+    daily: Array.from(dailyMap.values()).sort((a, b) =>
+      b.date.localeCompare(a.date),
+    ),
+    monthly: Array.from(monthlyMap.values()).sort((a, b) =>
+      b.year_month.localeCompare(a.year_month),
+    ),
+  };
+}

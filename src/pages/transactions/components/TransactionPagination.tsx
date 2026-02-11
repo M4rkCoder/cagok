@@ -9,6 +9,13 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TransactionWithCategory } from "@/types";
 
 interface TransactionPaginationProps {
@@ -20,6 +27,7 @@ const TransactionPagination: React.FC<TransactionPaginationProps> = ({
 }) => {
   const currentPage = table.getState().pagination.pageIndex;
   const totalPages = table.getPageCount();
+  const pageSize = table.getState().pagination.pageSize;
 
   // 10개 단위로 그룹화하기 위한 계산
   const pageGroupSize = 10;
@@ -33,77 +41,106 @@ const TransactionPagination: React.FC<TransactionPaginationProps> = ({
   }
 
   return (
-    <Pagination className="py-4">
-      <PaginationContent>
-        {/* 이전 버튼: 현재 페이지가 첫 페이지면 비활성화 */}
-        <PaginationItem>
-          <PaginationPrevious
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              table.previousPage();
-            }}
-            className={
-              !table.getCanPreviousPage()
-                ? "pointer-events-none opacity-50"
-                : "cursor-pointer"
-            }
-          />
-        </PaginationItem>
+    <div className="grid grid-cols-3 items-center px-2 py-4 w-full">
+      {/* 왼쪽: 셀렉터 */}
+      <div className="flex items-center gap-2 text-sm text-slate-500 justify-self-start">
+        <Select
+          value={pageSize.toString()}
+          onValueChange={(value) => {
+            table.setPageSize(Number(value));
+          }}
+        >
+          <SelectTrigger className="h-8 w-[90px] bg-white">
+            <SelectValue placeholder={pageSize.toString()} />
+          </SelectTrigger>
+          <SelectContent side="top">
+            {[10, 15, 20, 30, 40, 50].map((size) => (
+              <SelectItem key={size} value={size.toString()}>
+                {size} 행
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-        {/* 이전 그룹으로 이동하는 '...' (첫 번째 그룹이 아닐 때만 노출) */}
-        {startPage > 0 && (
-          <PaginationItem>
-            <PaginationEllipsis
-              className="cursor-pointer"
-              onClick={() => table.setPageIndex(startPage - 1)}
-            />
-          </PaginationItem>
-        )}
+      {/* 중앙: 페이지네이션 */}
+      <div className="justify-self-center">
+        <Pagination>
+          <PaginationContent>
+            {/* 이전 버튼 */}
+            <PaginationItem>
+              <PaginationPrevious
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  table.previousPage();
+                }}
+                className={
+                  !table.getCanPreviousPage()
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
+                }
+              />
+            </PaginationItem>
 
-        {/* 현재 그룹의 페이지 번호들 (최대 10개) */}
-        {pages.map((page) => (
-          <PaginationItem key={page}>
-            <PaginationLink
-              href="#"
-              isActive={currentPage === page}
-              onClick={(e) => {
-                e.preventDefault();
-                table.setPageIndex(page);
-              }}
-            >
-              {page + 1}
-            </PaginationLink>
-          </PaginationItem>
-        ))}
+            {/* 이전 그룹 '...' */}
+            {startPage > 0 && (
+              <PaginationItem>
+                <PaginationEllipsis
+                  className="cursor-pointer"
+                  onClick={() => table.setPageIndex(startPage - 1)}
+                />
+              </PaginationItem>
+            )}
 
-        {/* 다음 그룹으로 이동하는 '...' (마지막 그룹이 아닐 때만 노출) */}
-        {endPage < totalPages && (
-          <PaginationItem>
-            <PaginationEllipsis
-              className="cursor-pointer"
-              onClick={() => table.setPageIndex(endPage)}
-            />
-          </PaginationItem>
-        )}
+            {/* 페이지 번호 */}
+            {pages.map((page) => (
+              <PaginationItem key={page}>
+                <PaginationLink
+                  href="#"
+                  isActive={currentPage === page}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    table.setPageIndex(page);
+                  }}
+                >
+                  {page + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))}
 
-        {/* 다음 버튼: 현재 페이지가 마지막 페이지면 비활성화 */}
-        <PaginationItem>
-          <PaginationNext
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              table.nextPage();
-            }}
-            className={
-              !table.getCanNextPage()
-                ? "pointer-events-none opacity-50"
-                : "cursor-pointer"
-            }
-          />
-        </PaginationItem>
-      </PaginationContent>
-    </Pagination>
+            {/* 다음 그룹 '...' */}
+            {endPage < totalPages && (
+              <PaginationItem>
+                <PaginationEllipsis
+                  className="cursor-pointer"
+                  onClick={() => table.setPageIndex(endPage)}
+                />
+              </PaginationItem>
+            )}
+
+            {/* 다음 버튼 */}
+            <PaginationItem>
+              <PaginationNext
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  table.nextPage();
+                }}
+                className={
+                  !table.getCanNextPage()
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
+
+      {/* 오른쪽: 빈 공간 (균형 유지) */}
+      <div className="hidden md:block" />
+    </div>
   );
 };
 

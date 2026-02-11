@@ -15,13 +15,14 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import TransactionFilters from "./components/TransactionFilters";
 import TransactionTableContent from "./components/TransactionTableContent";
 import TransactionPagination from "./components/TransactionPagination";
 import { SquarePen, Trash2 } from "lucide-react";
 import { ExpenseBadge, IncomeBadge } from "./TransactionBadge";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { useConfirmStore } from "@/store/useConfirmStore";
+import { TransactionFilterPanel } from "./components/TransactionFilterPanel";
+import { cn } from "@/lib/utils";
 
 const TransactionsTable: React.FC = () => {
   const { t } = useTranslation();
@@ -29,10 +30,11 @@ const TransactionsTable: React.FC = () => {
   const {
     transactions,
     loading,
-    fetchTransactions,
+    fetchFilteredAll, // Use fetchFilteredAll instead of fetchTransactions
     deleteTransaction,
     setEditingTransaction,
     setSheetOpen,
+    setFilters, // To reset filters on mount
   } = useTransactionStore();
   const { confirm } = useConfirmStore();
 
@@ -40,12 +42,6 @@ const TransactionsTable: React.FC = () => {
     pageIndex: 0,
     pageSize: 10,
   });
-  const [filterType, setFilterType] = useState<string | null>(null); // 0: Income, 1: Expense
-  const [filterCategory, setFilterCategory] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [searchTriggerQuery, setSearchTriggerQuery] = useState<string>("");
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
   const onClickDelete = (id: number) => {
     confirm({
@@ -59,8 +55,10 @@ const TransactionsTable: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+    // Mount 시 필터 초기화 및 전체 데이터 로드
+    setFilters({});
+    fetchFilteredAll({});
+  }, [fetchFilteredAll, setFilters]);
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
@@ -198,52 +196,8 @@ const TransactionsTable: React.FC = () => {
     [t]
   );
 
-  const filteredTransactions = useMemo(() => {
-    let filtered = transactions;
-
-    if (filterType === "fixed_expense") {
-      // fixed_expense: type = 1, is_fixed=1
-      filtered = filtered.filter((t) => t.type === 1 && t.is_fixed === 1);
-    } else if (filterType !== null) {
-      filtered = filtered.filter((t) => t.type === parseInt(filterType));
-    }
-
-    if (filterCategory !== null) {
-      filtered = filtered.filter(
-        (t) => t.category_id === parseInt(filterCategory)
-      );
-    }
-
-    if (searchTriggerQuery) {
-      const lowerCaseSearchQuery = searchTriggerQuery.toLowerCase();
-      filtered = filtered.filter(
-        (t) =>
-          (t.description &&
-            t.description.toLowerCase().includes(lowerCaseSearchQuery)) ||
-          (t.remarks && t.remarks.toLowerCase().includes(lowerCaseSearchQuery))
-      );
-    }
-
-    if (startDate) {
-      filtered = filtered.filter((t) => new Date(t.date) >= startDate);
-    }
-
-    if (endDate) {
-      filtered = filtered.filter((t) => new Date(t.date) <= endDate);
-    }
-
-    return filtered;
-  }, [
-    transactions,
-    filterType,
-    filterCategory,
-    searchTriggerQuery,
-    startDate,
-    endDate,
-  ]);
-
   const table = useReactTable({
-    data: filteredTransactions,
+    data: transactions, // Use transactions from store directly
     columns,
     columnResizeMode: "onChange",
     getCoreRowModel: getCoreRowModel(),
@@ -256,22 +210,16 @@ const TransactionsTable: React.FC = () => {
   });
 
   return (
-    <div className="container p-6 max-w-7xl mx-auto py-8">
-      {/* Filters and New Transaction Button section */}
-      <div className="flex items-center justify-between space-x-4 mb-6">
-        <TransactionFilters
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          setSearchTriggerQuery={setSearchTriggerQuery}
-          filterType={filterType}
-          setFilterType={setFilterType}
-          filterCategory={filterCategory}
-          setFilterCategory={setFilterCategory}
-          startDate={startDate}
-          setStartDate={setStartDate}
-          endDate={endDate}
-          setEndDate={setEndDate}
-        />
+    <div className="container p-0 max-w-7xl mx-auto py-4 relative px-4">
+      {/* 상단 고정 필터 패널 (항상 표시) */}
+      <div
+        className={cn(
+          "sticky top-0 z-40 -mx-4 px-4 pb-2 pt-2 bg-slate-50/95 backdrop-blur supports-[backdrop-filter]:bg-slate-50/60 border-b border-slate-200/50 mb-4",
+        )}
+      >
+        <div className="max-w-4xl mx-auto">
+          <TransactionFilterPanel />
+        </div>
       </div>
 
       {/* Table Content */}

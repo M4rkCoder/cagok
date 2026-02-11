@@ -7,6 +7,7 @@ export type {
   MonthlyTotalSummary,
   QuickEntryTransactionRow,
   CellProps,
+  TransactionFilters,
 } from "./transaction";
 
 //category
