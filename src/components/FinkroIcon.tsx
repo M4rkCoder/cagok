@@ -5,7 +5,7 @@ interface IconWithBgProps {
   iconClass?: string;
 }
 
-export function FinkroIcon({
+export function CagokIcon({
   bgClass = "bg-muted",
   iconClass = "text-foreground",
 }: IconWithBgProps) {

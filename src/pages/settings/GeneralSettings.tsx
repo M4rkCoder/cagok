@@ -44,7 +44,7 @@ const GeneralSettings = () => {
       key: "currency",
     });
 
-    setLocalAppName(name || "Finkro");
+    setLocalAppName(name || "C'agok");
     setLocalLanguage(globalLanguage); // Initialize local language from global store
     setCurrency(curr || "KRW");
   };
@@ -95,7 +95,7 @@ const GeneralSettings = () => {
               id="appName"
               value={localAppName}
               onChange={(e) => setLocalAppName(e.target.value)}
-              placeholder="Finkro"
+              placeholder="C'agok"
             />
           </div>
 
