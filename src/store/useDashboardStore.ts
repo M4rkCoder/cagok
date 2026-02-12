@@ -12,6 +12,7 @@ import {
   DailyCategoryTransaction,
   TreemapNode,
   DailyDetailResponse,
+  CategoryFixedVariableSummary,
 } from "@/types";
 import { format } from "date-fns";
 
@@ -40,6 +41,9 @@ interface DashboardState {
     categoryId: number | null;
     txType: number;
   };
+  fixedVariableTransactions: CategoryFixedVariableSummary[];
+  treemapDialogOpen: boolean;
+  setTreemapDialogOpen: (open: boolean) => void;
   loadChartDetail: (
     date: string,
     txType: number,
@@ -102,16 +106,23 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   detailData: null,
   detailLoading: false,
   dialogState: { isOpen: false, date: null, categoryId: null, txType: 1 },
+  fixedVariableTransactions: [],
+  treemapDialogOpen: false,
+  setTreemapDialogOpen: (open: boolean) => set({ treemapDialogOpen: open }),
   openDialog: (date, txType, categoryId = null) =>
     set({ dialogState: { isOpen: true, date, txType, categoryId } }),
   closeDialog: () =>
-    set((state) => ({ dialogState: { ...state.dialogState, isOpen: false } })),
+    set((state) => ({
+      dialogState: { ...state.dialogState, isOpen: false },
+      detailData: { items: [], total_amount: 0, categoryId: null }, // 데이터 초기화
+    })),
   setDetailData: (data) => set({ detailData: data }),
   setActiveTreemapNode: (node) => set({ activeTreemapNode: node }),
   setSelectedMonth: (month: string) => {
     set({ selectedMonth: month });
     get().loadDashboardData();
   },
+
   loadChartDetail: async (date, txType, categoryId = null) => {
     try {
       set({ detailLoading: true });
@@ -163,6 +174,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         topVariableData,
         comparisonData,
         treemapData,
+        fixedVariableData,
       ] = await Promise.all([
         invoke<MonthlyOverview>("get_monthly_overview", {
           yearMonth: selectedMonth,
@@ -219,6 +231,12 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         invoke<TreemapNode>("get_expense_treemap", {
           yearMonth: selectedMonth,
         }),
+        invoke<CategoryFixedVariableSummary[]>(
+          "get_monthly_fixed_variable_transactions",
+          {
+            yearMonth: selectedMonth,
+          }
+        ),
       ]);
 
       const comparisonMap = comparisonData.reduce(
@@ -243,6 +261,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         topVariableExpenses: topVariableData,
         expenseTreemap: treemapData,
         comparisons: comparisonMap,
+        fixedVariableTransactions: fixedVariableData,
       });
     } catch (error) {
       console.error("Failed to load dashboard data:", error);

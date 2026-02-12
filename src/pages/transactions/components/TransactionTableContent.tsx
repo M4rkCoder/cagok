@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TransactionWithCategory } from "@/types";
+import { Spinner } from "@/components/ui/spinner";
 
 interface TransactionTableContentProps {
   table: ReactTableType<TransactionWithCategory>;
@@ -24,7 +25,16 @@ const TransactionTableContent: React.FC<TransactionTableContentProps> = ({
   const columns = table.getAllColumns(); // Get all columns from the table instance
 
   if (loading) {
-    return <p>{t("loading")}</p>;
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-background/50 backdrop-blur-[1px] z-50">
+        <div className="flex flex-col items-center gap-3">
+          <Spinner className="size-8 text-primary" />
+          <span className="text-sm font-medium text-muted-foreground animate-pulse">
+            {t("loading")}
+          </span>
+        </div>
+      </div>
+    );
   }
 
   return (

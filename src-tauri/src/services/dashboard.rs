@@ -2,7 +2,7 @@ use super::{ComparisonMetric, ComparisonType};
 use crate::db::repository::DashboardRepository;
 use crate::db::{
     CategoryExpense, CategoryMonthlyAmount, DailyExpense, FinancialSummaryStats, MetricStats,     MonthlyFinancialSummaryItem, MonthlyOverview, TransactionWithCategory, YearlySummaryItem,
-YearlyDashboardData, DailyCategoryTransaction, TreemapNode,
+YearlyDashboardData, DailyCategoryTransaction, TreemapNode, CategoryFixedVariableSummary,
 };
 use rusqlite::Connection;
 use chrono::{Local, NaiveDate, Duration, Datelike, Months};
@@ -458,5 +458,48 @@ impl DashboardService {
                 },
             ]),
         })
+    }
+
+    pub fn get_monthly_fixed_variable_transactions(
+        conn: &Connection,
+        year_month: &str,
+    ) -> Result<Vec<CategoryFixedVariableSummary>, rusqlite::Error> {
+        let transactions = DashboardRepository::get_monthly_expense_raw(conn, year_month)?;
+
+        // 2. 가공 로직 (비즈니스 레이어에서 수행)
+        use std::collections::HashMap;
+        let mut category_map: HashMap<i64, CategoryFixedVariableSummary> = HashMap::new();
+
+        for tx in transactions {
+            let cat_id = tx.category_id.unwrap_or(0);
+            
+            let entry = category_map.entry(cat_id).or_insert(CategoryFixedVariableSummary {
+                category_id: cat_id,
+                category_name: tx.category_name.clone().unwrap_or_else(|| "미지정".to_string()),
+                category_icon: tx.category_icon.clone().unwrap_or_else(|| "❓".to_string()),
+                fixed_total: 0.0,
+                variable_total: 0.0,
+                fixed_items: Vec::new(),
+                variable_items: Vec::new(),
+            });
+
+            if tx.is_fixed == 1 {
+                entry.fixed_total += tx.amount;
+                entry.fixed_items.push(tx);
+            } else {
+                entry.variable_total += tx.amount;
+                entry.variable_items.push(tx);
+            }
+        }
+
+        // 3. 정렬 및 후처리 (금액순 정렬)
+        let mut result: Vec<CategoryFixedVariableSummary> = category_map.into_values().collect();
+        result.sort_by(|a, b| {
+            let total_a = a.fixed_total + a.variable_total;
+            let total_b = b.fixed_total + b.variable_total;
+            total_b.partial_cmp(&total_a).unwrap()
+        });
+
+        Ok(result)
     }
 }

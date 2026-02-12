@@ -129,4 +129,16 @@ export interface TreemapNode {
 export interface DailyDetailResponse {
   items: TransactionWithCategory[];
   total_amount: number;
+  categoryId?: number | null;
+  is_fixed_view?: boolean;
+}
+
+export interface CategoryFixedVariableSummary {
+  category_id: number;
+  category_name: string;
+  category_icon: string;
+  fixed_total: number;
+  variable_total: number;
+  fixed_items: TransactionWithCategory[];
+  variable_items: TransactionWithCategory[];
 }

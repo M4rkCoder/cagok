@@ -18,6 +18,7 @@ import { TrendBadge } from "./TransactionBadge";
 import { cn } from "@/lib/utils";
 import { useConfirmStore } from "@/store/useConfirmStore";
 import { Transaction } from "@/types";
+import { FeedsSkeleton } from "./components/FeedsSkeleton";
 
 export default function TransactionsFeeds() {
   const {
@@ -74,7 +75,7 @@ export default function TransactionsFeeds() {
     setExpandedMonths((prev) =>
       prev.includes(yearMonth)
         ? prev.filter((m) => m !== yearMonth)
-        : [...prev, yearMonth],
+        : [...prev, yearMonth]
     );
   };
 
@@ -155,35 +156,33 @@ export default function TransactionsFeeds() {
       if (isNewMonth) {
         lastYearMonth = currentYearMonth;
         const monthStats = monthlySummaries.find(
-          (m) => m.year_month === currentYearMonth,
+          (m) => m.year_month === currentYearMonth
         );
 
         items.push(
           <div
             key={`header-${currentYearMonth}`}
-            className="sticky top-16 z-30 pt-3 pb-0 mb-2 group cursor-pointer" // top-16 to account for sticky filter
+            className="sticky top-17 z-30 pt-0 pb-0 mb-2 group cursor-pointer"
             onClick={() => toggleMonth(currentYearMonth)}
           >
-            <div className="relative flex items-center justify-between gap-4 pt-10 p-4 pl-0 rounded-2xl bg-white/60 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-white/40 hover:bg-white/80 transition-all duration-300">
-              <div className="absolute left-[19px] top-0 bottom-0 flex flex-col items-center justify-center -translate-x-1/2">
-                <div className="w-[1px] h-full pt-10 bg-slate-200 group-hover:bg-slate-300 transition-colors" />
-                <div className="z-10 flex items-center justify-center w-7 h-7 rounded-full bg-white border-2 border-slate-200 shadow-sm group-hover:border-slate-800 group-hover:bg-slate-800 transition-all duration-300">
-                  {isExpanded ? (
-                    <ChevronDown
-                      size={14}
-                      className="text-slate-500 group-hover:text-white"
-                      strokeWidth={3}
-                    />
-                  ) : (
-                    <ChevronRight
-                      size={14}
-                      className="text-slate-500 group-hover:text-white"
-                      strokeWidth={3}
-                    />
-                  )}
-                </div>
-                <div className="w-[1px] h-full bg-slate-200 group-hover:bg-slate-300 transition-colors" />
+            <div className="relative flex items-center justify-between gap-4 pt-1 p-4 pl-0 bg-white/60 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-white/40 hover:bg-white/80 transition-all duration-300">
+              <div className="absolute left-[19px] top-0 bottom-0 w-[1px] bg-slate-200 group-hover:bg-slate-300 transition-colors" />
+              <div className="absolute left-[19px] top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-7 h-7 rounded-full bg-white border-2 border-slate-200 shadow-sm group-hover:border-slate-800 group-hover:bg-slate-800 transition-all duration-300">
+                {isExpanded ? (
+                  <ChevronDown
+                    size={14}
+                    className="text-slate-500 group-hover:text-white"
+                    strokeWidth={3}
+                  />
+                ) : (
+                  <ChevronRight
+                    size={14}
+                    className="text-slate-500 group-hover:text-white"
+                    strokeWidth={3}
+                  />
+                )}
               </div>
+              <div className="w-[1px] h-full bg-slate-200 group-hover:bg-slate-300 transition-colors" />
 
               <div className="flex items-center justify-between w-full pl-12 pr-1">
                 <div className="flex items-baseline gap-2">
@@ -221,14 +220,13 @@ export default function TransactionsFeeds() {
                 )}
               </div>
             </div>
-          </div>,
+          </div>
         );
       }
 
       if (isExpanded) {
-        // [수정] 스토어에 이미 로드된 필터링된 데이터(transactions) 중 해당 날짜의 항목만 추출
         const dayTransactions = transactions.filter(
-          (t) => t.date === summary.date,
+          (t) => t.date === summary.date
         );
 
         const showDetails = isFiltering || selectedDate === summary.date;
@@ -249,7 +247,7 @@ export default function TransactionsFeeds() {
                 />
               </div>
             )}
-          </div>,
+          </div>
         );
       }
     });
@@ -272,11 +270,11 @@ export default function TransactionsFeeds() {
   ]);
 
   return (
-    <div className="flex flex-col min-h-full bg-transparent relative px-4">
+    <div className="flex flex-col min-h-full bg-transparent relative px-4 py-1">
       {/* 상단 고정 필터 패널 (항상 표시) */}
       <div
         className={cn(
-          "sticky top-0 z-40 -mx-4 px-4 pb-2 pt-2 bg-slate-50/95 backdrop-blur supports-[backdrop-filter]:bg-slate-50/60 border-b border-slate-200/50 mb-1",
+          "sticky top-0 z-40 -mx-4 px-4 pb-2 pt-2 bg-background backdrop-blur supports-[backdrop-filter]:bg-slate-50/60 mb-1"
         )}
       >
         <div className="max-w-4xl mx-auto">
@@ -308,11 +306,22 @@ export default function TransactionsFeeds() {
         )}
 
         {/* 타임라인 수직선 (데이터가 있을 때만 표시) */}
-        {dailySummaries.length > 0 && (
+        {(dailySummaries.length > 0 || loading) && (
           <div className="absolute left-[20px] top-10 bottom-0 w-[1px] bg-slate-200 z-0" />
         )}
 
-        <div className="flex flex-col relative z-10">{renderItems}</div>
+        <div className="flex flex-col relative z-10">
+          {loading ? (
+            /* 스켈레톤을 여러 개 배치해 리스트처럼 보이게 함 */
+            <div className="space-y-8 mt-4">
+              <FeedsSkeleton />
+              <FeedsSkeleton />
+            </div>
+          ) : (
+            /* 로딩이 끝나면 실제 데이터 출력 */
+            renderItems
+          )}
+        </div>
       </div>
     </div>
   );

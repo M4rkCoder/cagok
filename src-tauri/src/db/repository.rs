@@ -884,6 +884,42 @@ impl DashboardRepository {
     
         Ok(DailyDetailResponse { items, total_amount })
     }
+
+    pub fn get_monthly_expense_raw(
+        conn: &Connection,
+        year_month: &str,
+    ) -> Result<Vec<TransactionWithCategory>> {
+        let start_date = format!("{}-01", year_month);
+
+        let query = "
+            SELECT 
+                t.id, t.description, t.amount, t.date, t.type, t.is_fixed, t.remarks, t.category_id,
+                c.name, c.icon
+            FROM transactions t
+            LEFT JOIN categories c ON t.category_id = c.id
+            WHERE t.type = 1 
+              AND t.date BETWEEN ?1 AND date(?1, '+1 month', '-1 day')
+            ORDER BY t.date DESC
+        ";
+
+        let mut stmt = conn.prepare(query)?;
+        let rows = stmt.query_map(params![start_date], |row| {
+            Ok(TransactionWithCategory {
+                id: row.get(0)?,
+                description: row.get(1)?,
+                amount: row.get(2)?,
+                date: row.get(3)?,
+                r#type: row.get(4)?,
+                is_fixed: row.get(5)?,
+                remarks: row.get(6)?,
+                category_id: row.get(7)?,
+                category_name: row.get::<_, Option<String>>(8).unwrap_or(Some("미지정".to_string())),
+category_icon: row.get::<_, Option<String>>(9).unwrap_or(Some("❓".to_string())),
+            })
+        })?;
+
+        rows.collect()
+    }
 }
 
 pub struct RecurringTransactionRepository;

@@ -272,3 +272,14 @@ pub struct TransactionFilters {
     pub min_amount: Option<f64>,
     pub max_amount: Option<f64>,
 }
+
+#[derive(Debug, Serialize)]
+pub struct CategoryFixedVariableSummary {
+    pub category_id: i64,
+    pub category_name: String,
+    pub category_icon: String,
+    pub fixed_total: f64,
+    pub variable_total: f64,
+    pub fixed_items: Vec<TransactionWithCategory>,
+    pub variable_items: Vec<TransactionWithCategory>,
+}

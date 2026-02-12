@@ -1,7 +1,14 @@
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
-import { CircleMinus, CirclePlus, Minus, PinIcon, Plus } from "lucide-react";
+import {
+  CircleMinus,
+  CirclePlus,
+  Minus,
+  PinIcon,
+  Plus,
+  TrendingUpDownIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface TrendBadgeProps {
@@ -26,7 +33,7 @@ export const IncomeBadge: React.FC = () => {
       flex items-center gap-0.5
     "
     >
-      <CirclePlus className="h-4 w-4 mr-0.5" />
+      <CirclePlus className="h-4 w-4 mr-0.5 text-white" />
       {t("income")}
     </Badge>
   );
@@ -47,7 +54,7 @@ export const ExpenseBadge: React.FC = () => {
       flex items-center gap-0.5
     "
     >
-      <CircleMinus className="w-4 h-4 mr-0.5" />
+      <CircleMinus className="w-4 h-4 mr-0.5 text-white" />
       {t("expense")}
     </Badge>
   );
@@ -62,14 +69,35 @@ export const FixedExpenseBadge: React.FC = () => {
       h-5 px-1 py-1
       bg-gray-200 text-black
       border border-gray-300
-      hover:bg-gray-200
+      hover:bg-gray-300
       rounded-sm
       font-bold text-[10px]
       flex items-center gap-0.5
     "
     >
-      <PinIcon />
+      <PinIcon className="w-4 h-4 mr-0.5 text-black" />
       {t("fixed")}
+    </Badge>
+  );
+};
+
+export const VariableExpenseBadge: React.FC = () => {
+  const { t } = useTranslation();
+
+  return (
+    <Badge
+      className="
+      h-5 px-1 py-1
+      bg-amber-300 text-black
+      border border-amber-300
+      hover:bg-amber-400
+      rounded-sm
+      font-bold text-[10px]
+      flex items-center gap-0.5
+    "
+    >
+      <TrendingUpDownIcon className="w-4 h-4 mr-0.5 text-black" />
+      {t("variable")}
     </Badge>
   );
 };

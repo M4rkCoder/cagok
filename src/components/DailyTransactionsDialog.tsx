@@ -72,6 +72,11 @@ const DailyTransactionsDialog = () => {
                     <div className="flex flex-col items-start leading-none">
                       <DialogTitle className="text-base font-bold">
                         {txType === 0 ? "수입" : "지출"} 내역
+                        {detailData?.is_fixed_view !== undefined && (
+                          <span className="ml-1.5 text-xs font-medium text-slate-400">
+                            ({detailData.is_fixed_view ? "고정" : "변동"})
+                          </span>
+                        )}
                       </DialogTitle>
                       <span className="text-[12px] text-slate-500 font-bold mt-0.5">
                         {formattedDate}

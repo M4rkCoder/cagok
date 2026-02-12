@@ -1,6 +1,6 @@
 use crate::db::{
     CategoryExpense, DailyExpense, DbConnection, MonthlyFinancialSummaryItem,
-    MonthlyOverview, TransactionWithCategory, YearlySummaryItem, FinancialSummaryStats, CategoryMonthlyAmount, YearlyDashboardData, DailyCategoryTransaction, TreemapNode, DailyDetailResponse
+    MonthlyOverview, TransactionWithCategory, YearlySummaryItem, FinancialSummaryStats, CategoryMonthlyAmount, YearlyDashboardData, DailyCategoryTransaction, TreemapNode, DailyDetailResponse, CategoryFixedVariableSummary,
 };
 use crate::db::repository::DashboardRepository;
 use crate::services::dashboard::DashboardService;
@@ -189,4 +189,16 @@ pub fn get_daily_chart_detail(
         category_id,
     )
     .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn get_monthly_fixed_variable_transactions(
+    db: State<'_, DbConnection>,
+    year_month: String,
+) -> Result<Vec<CategoryFixedVariableSummary>, String> {
+    let conn = db.0.lock().unwrap();
+    let result = DashboardService::get_monthly_fixed_variable_transactions(&conn, &year_month)
+        .map_err(|e| format!("데이터 분석 중 오류 발생: {}", e))?;
+
+    Ok(result)
 }

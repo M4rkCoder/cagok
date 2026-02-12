@@ -210,13 +210,9 @@ const TransactionsTable: React.FC = () => {
   });
 
   return (
-    <div className="container p-0 max-w-7xl mx-auto py-4 relative px-4">
+    <div className="container p-0 max-w-7xl mx-auto py-1 relative px-4">
       {/* 상단 고정 필터 패널 (항상 표시) */}
-      <div
-        className={cn(
-          "sticky top-0 z-40 -mx-4 px-4 pb-2 pt-2 bg-slate-50/95 backdrop-blur supports-[backdrop-filter]:bg-slate-50/60 border-b border-slate-200/50 mb-4",
-        )}
-      >
+      <div className={cn("sticky top-0 z-40 -mx-4 px-4 pb-2 pt-2 mb-4")}>
         <div className="max-w-4xl mx-auto">
           <TransactionFilterPanel />
         </div>

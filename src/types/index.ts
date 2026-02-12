@@ -33,4 +33,5 @@ export type {
   DailyCategoryTransaction,
   TreemapNode,
   DailyDetailResponse,
+  CategoryFixedVariableSummary,
 } from "./dashboard";

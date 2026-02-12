@@ -10,6 +10,7 @@ import { DotNavigation } from "../../components/DotNavigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { CategoryMonthlyTreemap } from "./CategoryMonthlyTreemap";
 import { CategoryTopList } from "./CategoryTopList";
+import TreemapDetailDialog from "./TreemapDetailDialog";
 
 export default function Dashboard() {
   type DashboardSection = "summary" | "treemap";
@@ -156,6 +157,7 @@ export default function Dashboard() {
       </AnimatePresence>
       {/* New DailyTransactionsDialog */}
       <DailyTransactionsDialog />
+      <TreemapDetailDialog />
     </div>
   );
 }
