@@ -90,32 +90,12 @@ export function TransactionFilterPanel() {
     useTransactionStore();
 
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [localKeyword, setLocalKeyword] = useState(filters.keyword);
   const [openCategory, setOpenCategory] = useState(false);
   const [openMode, setOpenMode] = useState(false);
   const [tempAmount, setTempAmount] = useState({ min: "", max: "" });
   const [openPrice, setOpenPrice] = useState(false);
   const current = MODE_CONFIG[filters.mode];
-
-  const applyPriceFilter = async () => {
-    setFilters((prev) => ({
-      ...prev,
-      minAmount: tempAmount.min,
-      maxAmount: tempAmount.max,
-    }));
-
-    // 2. 팝오버 닫기
-    setOpenPrice(false);
-
-    const backendFilters = constructBackendFilters();
-    const finalFilters = {
-      ...backendFilters,
-      min_amount: tempAmount.min ? Number(tempAmount.min) : undefined,
-      max_amount: tempAmount.max ? Number(tempAmount.max) : undefined,
-    };
-
-    setStoreFilters(finalFilters);
-    await fetchFilteredAll(finalFilters);
-  };
 
   const updateFilter = (key: keyof FilterState, value: any) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
@@ -127,52 +107,61 @@ export function TransactionFilterPanel() {
     return categories.filter((c) => c.type === targetType);
   }, [categories, filters.mode]);
 
-  const updateMode = (mode: TransactionMode) => {
-    setFilters((prev) => {
-      const targetType = mode === "income" ? 0 : 1;
-      const nextCategoryIds =
-        mode === "all"
-          ? prev.categoryIds
-          : prev.categoryIds.filter(
-              (id) => categories.find((c) => c.id === id)?.type === targetType
-            );
-
-      return { ...prev, mode, categoryIds: nextCategoryIds };
-    });
-  };
-
-  const constructBackendFilters = (): TransactionFilters => {
+  const constructBackendFilters = (
+    fs: FilterState = filters
+  ): TransactionFilters => {
     return {
-      keyword: filters.keyword || undefined,
+      keyword: fs.keyword || undefined,
       tx_type:
-        filters.mode === "all" ? undefined : filters.mode === "income" ? 0 : 1,
+        fs.mode === "all" ? undefined : fs.mode === "income" ? 0 : 1,
       is_fixed:
-        filters.mode === "fixed_expense"
+        fs.mode === "fixed_expense"
           ? true
-          : filters.mode === "variable_expense"
+          : fs.mode === "variable_expense"
             ? false
             : undefined,
       category_ids:
-        filters.categoryIds.length > 0 ? filters.categoryIds : undefined,
-      start_date: filters.dateRange?.from
-        ? format(filters.dateRange.from, "yyyy-MM-dd")
+        fs.categoryIds.length > 0 ? fs.categoryIds : undefined,
+      start_date: fs.dateRange?.from
+        ? format(fs.dateRange.from, "yyyy-MM-dd")
         : undefined,
-      end_date: filters.dateRange?.to
-        ? format(filters.dateRange.to, "yyyy-MM-dd")
+      end_date: fs.dateRange?.to
+        ? format(fs.dateRange.to, "yyyy-MM-dd")
         : undefined,
-      min_amount: filters.minAmount ? Number(filters.minAmount) : undefined,
-      max_amount: filters.maxAmount ? Number(filters.maxAmount) : undefined,
+      min_amount: fs.minAmount ? Number(fs.minAmount) : undefined,
+      max_amount: fs.maxAmount ? Number(fs.maxAmount) : undefined,
     };
   };
 
+  const applyPriceFilter = async () => {
+    const nextFilters = {
+      ...filters,
+      minAmount: tempAmount.min,
+      maxAmount: tempAmount.max,
+    };
+    setFilters(nextFilters);
+
+    // 2. 팝오버 닫기
+    setOpenPrice(false);
+
+    const backendFilters = constructBackendFilters(nextFilters);
+
+    setStoreFilters(backendFilters);
+    await fetchFilteredAll(backendFilters);
+  };
+
   const handleApply = async () => {
-    const backendFilters = constructBackendFilters();
+    const nextFilters = { ...filters, keyword: localKeyword };
+    setFilters(nextFilters);
+
+    const backendFilters = constructBackendFilters(nextFilters);
     setStoreFilters(backendFilters);
     await fetchFilteredAll(backendFilters);
   };
 
   const handleReset = async () => {
     setFilters(DEFAULT_FILTERS);
+    setLocalKeyword("");
     setStoreFilters({});
     await fetchFilteredAll({});
   };
@@ -191,8 +180,8 @@ export function TransactionFilterPanel() {
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-focus-within:text-slate-600 transition-colors" />
 
             <Input
-              value={filters.keyword}
-              onChange={(e) => updateFilter("keyword", e.target.value)}
+              value={localKeyword}
+              onChange={(e) => setLocalKeyword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleApply()}
               placeholder="내역/메모 검색..."
               className="pl-8 h-8 text-xs bg-white/50 border-slate-200 rounded-r-none focus-visible:ring-0 focus-visible:ring-offset-0 border-r-0 transition-all"
@@ -524,6 +513,7 @@ export function TransactionFilterPanel() {
                 className="h-2.5 w-2.5 cursor-pointer hover:text-slate-900"
                 onClick={() => {
                   updateFilter("keyword", "");
+                  setLocalKeyword("");
                 }}
               />
             </Badge>

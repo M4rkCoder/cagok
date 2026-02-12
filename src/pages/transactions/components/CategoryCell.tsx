@@ -174,7 +174,7 @@ const CategoryCell = ({
     });
   };
 
-  const selected = categories.find((c: any) => c.id === value);
+  const selected = categories.find((c: any) => String(c.id) === String(value));
 
   return (
     <div
