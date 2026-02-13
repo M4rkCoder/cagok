@@ -283,3 +283,18 @@ pub struct CategoryFixedVariableSummary {
     pub fixed_items: Vec<TransactionWithCategory>,
     pub variable_items: Vec<TransactionWithCategory>,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ExcelPreviewRow {
+    pub id: String,         // uuid
+    pub date: String,
+    pub tx_type: i32,       // 0: 수입, 1: 지출
+    pub category_id: String,
+    pub category_name: String, // UI 표시용
+    pub is_fixed: i32,      // 0: 변동, 1: 고정
+    pub description: String,
+    pub amount: String,     // UI 편집을 위해 일단 String으로 전달
+    pub remarks: String,
+    pub is_valid: bool,
+    pub error_msg: Option<String>,
+}

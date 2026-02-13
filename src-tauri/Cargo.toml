@@ -23,6 +23,7 @@ tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+calamine = "0.24.0"
 rusqlite = { version = "0.31.0", features = ["serde_json", "bundled"] }
 tauri-plugin-sql = {version ="2.3.1", features= ["sqlite"] }
 chrono = "0.4.42"
@@ -31,4 +32,6 @@ tauri-plugin-fs = "2"
 argon2 = "0.5"
 password-hash = "0.5"
 rand_core = { version = "0.6", features = ["std"] }
+uuid = { version = "1.0", features = ["v4", "fast-rng"] }
+rust_xlsxwriter = "0.93"
 

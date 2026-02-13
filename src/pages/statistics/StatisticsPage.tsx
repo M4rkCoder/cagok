@@ -1,59 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import { useDashboardStore } from "@/store/useDashboardStore";
-import { TransactionListDialog } from "@/pages/dashboard/TransactionListDialog";
-import {
-  DialogState,
-  TransactionWithCategory,
-  CategoryExpense,
-  FinancialSummaryStats,
-  MonthlyFinancialSummaryItem,
-  MetricStats,
-  Category,
-  CategoryMonthlyAmount,
-} from "@/types";
-import DailyTransactionsDialog from "@/components/DailyTransactionsDialog";
-import { CategoryIcon } from "@/components/CategoryIcon";
-import { CalendarIcon } from "lucide-react";
+import { DialogState, FinancialSummaryStats, MetricStats } from "@/types";
 import { YearPicker } from "@/components/YearPicker";
 import { useHeaderStore } from "@/store/useHeaderStore";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { SummaryCards } from "./SummaryCard";
 import { YearlyTrendChart } from "./YearlyTrendChart";
 import { CategoryMonthlyTrendSection } from "./CategoryMonthlyTrendSection";
-import { CategoryRatioChart } from "./CategoryRatioCharts";
 import { CategoryYearlyTreemap } from "./CategoryYearlyTreemap";
-import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { useAppStore } from "@/store/useAppStore";
 import { useStatisticsStore } from "@/store/useStatisticsStore";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -88,10 +42,10 @@ export default function StatisticsPage() {
 
   const [viewMode, setViewMode] = useState<"year" | "month">("month");
   const [selectedYear, setSelectedYear] = useState<number>(
-    new Date().getFullYear(),
+    new Date().getFullYear()
   );
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    format(new Date(), "yyyy-MM"),
+    format(new Date(), "yyyy-MM")
   );
   const [dialogState, setDialogState] = useState<DialogState>({
     open: false,
@@ -114,7 +68,7 @@ export default function StatisticsPage() {
     loadCategoryTrend,
   } = useStatisticsStore();
 
-  const { categories } = useAppStore();
+  const { categoryList: categories } = useAppStore();
 
   useEffect(() => {
     setHeader(
@@ -139,7 +93,7 @@ export default function StatisticsPage() {
               className={cn(
                 "h-full text-xs transition-all",
                 "data-[state=active]:bg-white data-[state=active]:text-slate-950 data-[state=active]:shadow-sm data-[state=active]:font-bold",
-                "text-slate-500",
+                "text-slate-500"
               )}
             >
               이번 달 기준
@@ -149,14 +103,14 @@ export default function StatisticsPage() {
               className={cn(
                 "h-full text-xs transition-all",
                 "data-[state=active]:bg-white data-[state=active]:text-slate-950 data-[state=active]:shadow-sm data-[state=active]:font-bold",
-                "text-slate-500",
+                "text-slate-500"
               )}
             >
               연도별
             </TabsTrigger>
           </TabsList>
         </Tabs>
-      </div>,
+      </div>
     );
     return () => resetHeader();
   }, [selectedYear, selectedMonth, viewMode, setHeader, resetHeader]);

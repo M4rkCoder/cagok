@@ -25,10 +25,8 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Category } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, smartParseDate, evaluateExpression } from "@/lib/utils";
 import {
-  ArrowUpCircle,
-  ArrowDownCircle,
   Calendar,
   Tag,
   FileText,
@@ -41,6 +39,8 @@ import {
   Trash2,
   X,
   SquarePen,
+  CirclePlus,
+  CircleMinus,
 } from "lucide-react";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { useAppStore } from "@/store/useAppStore";
@@ -53,6 +53,8 @@ import {
   transactionSchema,
   TransactionFormValues,
 } from "@/schemas/transaction";
+import { format, parseISO } from "date-fns";
+import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 
 const TransactionForm: React.FC = () => {
   const { t } = useTranslation();
@@ -64,7 +66,7 @@ const TransactionForm: React.FC = () => {
     deleteTransaction,
     defaultCategoryId,
   } = useTransactionStore();
-  const { categories } = useAppStore();
+  const { categoryList: categories } = useAppStore();
   const {
     isAddingNewCategoryMode,
     editingCategoryId,
@@ -78,6 +80,7 @@ const TransactionForm: React.FC = () => {
     submitCategoryForm,
   } = useCategoryStore();
   const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
+  const [preview, setPreview] = useState<string>("0");
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -162,14 +165,14 @@ const TransactionForm: React.FC = () => {
                       {
                         id: 0,
                         name: "수입",
-                        icon: ArrowUpCircle,
+                        icon: CirclePlus,
                         color: "text-emerald-500",
                       },
                       {
                         id: 1,
                         name: "지출",
-                        icon: ArrowDownCircle,
-                        color: "text-rose-500",
+                        icon: CircleMinus,
+                        color: "text-blue-500",
                       },
                     ].map((item) => (
                       <button
@@ -237,7 +240,7 @@ const TransactionForm: React.FC = () => {
                 </TooltipTrigger>
                 <TooltipContent
                   side="top"
-                  className="bg-slate-800 text-white border-none text-[10px] font-bold"
+                  className="bg-slate-800 text-white border-none text-xs font-bold"
                 >
                   고정 지출 설정
                 </TooltipContent>
@@ -247,7 +250,7 @@ const TransactionForm: React.FC = () => {
 
           {/* 2. 카테고리 선택 (수정/삭제 기능 포함) */}
           <div className="space-y-1.5">
-            <FormLabel className="flex items-center gap-2 text-[10px] font-bold text-slate-400 ml-1 tracking-wider uppercase">
+            <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
               <Tag className="w-3 h-3" /> {t("category")}
             </FormLabel>
             <Popover
@@ -473,15 +476,61 @@ const TransactionForm: React.FC = () => {
               control={form.control}
               name="date"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2 text-[10px] font-bold text-slate-400 ml-1 tracking-wider uppercase">
+                <FormItem className="flex flex-col">
+                  <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
                     <Calendar className="w-3 h-3" /> {t("date")}
                   </FormLabel>
-                  <Input
-                    type="date"
-                    className="h-12 bg-slate-50/80 border-none rounded-2xl text-xs font-bold"
-                    {...field}
-                  />
+
+                  <div className="relative group">
+                    <Input
+                      {...field}
+                      placeholder="YYYY-MM-DD 또는 '오늘', '어제'"
+                      className="h-12 bg-slate-50/80 border-none rounded-2xl text-xs font-bold pr-10 focus-visible:ring-2 focus-visible:ring-blue-500/20 transition-all"
+                      // 사용자가 입력을 마치고 나갈 때 스마트 파싱 적용
+                      onBlur={(e) => {
+                        const parsed = smartParseDate(e.target.value);
+                        field.onChange(parsed);
+                      }}
+                      // 엔터키 입력 시 즉시 파싱
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const parsed = smartParseDate(
+                            (e.target as HTMLInputElement).value
+                          );
+                          field.onChange(parsed);
+                          (e.target as HTMLInputElement).blur();
+                        }
+                      }}
+                    />
+
+                    {/* 달력 팝오버 버튼 */}
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 text-slate-400 hover:bg-transparent hover:text-blue-500 transition-colors"
+                        >
+                          <Calendar className="w-4 h-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 z-50" align="end">
+                        <CalendarPicker
+                          mode="single"
+                          selected={
+                            field.value ? parseISO(field.value) : undefined
+                          }
+                          onSelect={(date) => {
+                            if (date) {
+                              field.onChange(format(date, "yyyy-MM-dd"));
+                            }
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </FormItem>
               )}
             />
@@ -489,19 +538,68 @@ const TransactionForm: React.FC = () => {
               control={form.control}
               name="amount"
               render={({ field, fieldState }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-2 text-[10px] font-bold text-slate-400 ml-1 tracking-wider uppercase">
+                <FormItem className="flex flex-col">
+                  <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
                     <Banknote className="w-3 h-3" /> {t("amount")}
                   </FormLabel>
-                  <Input
-                    type="number"
-                    className={cn(
-                      "h-12 bg-slate-50/80 border-none rounded-2xl text-sm font-bold placeholder:text-slate-300",
-                      fieldState.error && "ring-2 ring-rose-500"
-                    )}
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
+
+                  <Tooltip
+                    open={
+                      !!field.value &&
+                      field.value.toString().match(/[+\-*/]/) !== null
+                    }
+                  >
+                    <TooltipTrigger asChild>
+                      <div className="relative">
+                        <Input
+                          {...field}
+                          type="text" // 수식 입력을 위해 text로 변경
+                          placeholder="0"
+                          className={cn(
+                            "h-12 bg-slate-50/80 border-none rounded-2xl text-sm font-bold placeholder:text-slate-300 transition-all",
+                            fieldState.error
+                              ? "ring-2 ring-rose-500"
+                              : "focus-visible:ring-2 focus-visible:ring-blue-500/20"
+                          )}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            field.onChange(val);
+
+                            // 실시간 계산 결과 업데이트
+                            const result = evaluateExpression(val);
+                            if (result !== null) {
+                              setPreview(
+                                new Intl.NumberFormat().format(Number(result))
+                              );
+                            }
+                          }}
+                          onBlur={() => {
+                            // 포커스 아웃 시 수식을 최종 결과값으로 변환
+                            const result = evaluateExpression(
+                              field.value?.toString() || ""
+                            );
+                            if (result !== null) {
+                              field.onChange(result); // 최종 숫자값 저장
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              (e.target as HTMLInputElement).blur();
+                            }
+                          }}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="top"
+                      className="bg-blue-600 text-white border-none text-xs font-bold px-3 py-1.5 rounded-lg shadow-xl mb-1"
+                    >
+                      {fieldState.error
+                        ? fieldState.error.message
+                        : `계산 결과: ${preview}원`}
+                    </TooltipContent>
+                  </Tooltip>
                 </FormItem>
               )}
             />
@@ -513,7 +611,7 @@ const TransactionForm: React.FC = () => {
             name="description"
             render={({ field, fieldState }) => (
               <FormItem>
-                <FormLabel className="flex items-center gap-2 text-[10px] font-bold text-slate-400 ml-1 tracking-wider uppercase">
+                <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
                   <FileText className="w-3 h-3" /> {t("description")}
                 </FormLabel>
                 <Input
@@ -532,7 +630,7 @@ const TransactionForm: React.FC = () => {
             name="remarks"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="flex items-center gap-2 text-[10px] font-bold text-slate-400 ml-1 tracking-wider uppercase">
+                <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
                   <Scroll className="w-3 h-3" /> {t("remarks")}
                 </FormLabel>
                 <Textarea

@@ -35,6 +35,7 @@ pub fn init_db(db_path: &Path) -> Result<Connection> {
             description   TEXT,
             amount        REAL NOT NULL,
             date          TEXT NOT NULL,
+            day_of_week   INTEGER GENERATED ALWAYS AS (strftime('%w', date)) VIRTUAL,
             type          INTEGER NOT NULL, -- 0: Income, 1: Expense
             is_fixed      INTEGER NOT NULL DEFAULT 0, -- 0: Variable, 1: Fixed
             remarks       TEXT,
@@ -83,6 +84,7 @@ pub fn init_db(db_path: &Path) -> Result<Connection> {
         CREATE INDEX IF NOT EXISTS idx_transactions_account ON transactions(account_id);
         CREATE INDEX IF NOT EXISTS idx_transactions_date_fixed ON transactions(date, is_fixed);
         CREATE INDEX IF NOT EXISTS idx_goals_month ON goals(target_month);
+        CREATE INDEX IF NOT EXISTS idx_transactions_day_of_week ON transactions(day_of_week);
         ",
     )?;
 

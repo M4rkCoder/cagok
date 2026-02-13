@@ -33,7 +33,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const CategorySettings = () => {
   const { setHeader, resetHeader } = useHeaderStore();
-  const categories = useAppStore((s) => s.categories);
+  const categoryList = useAppStore((s) => s.categoryList);
   const {
     editingCategoryId,
     startEditCategory,
@@ -53,7 +53,7 @@ const CategorySettings = () => {
   }, [setHeader, resetHeader]);
 
   const { incomeCategories, expenseCategories } = useMemo(() => {
-    return categories.reduce(
+    return categoryList.reduce(
       (acc, category) => {
         if (category.type === 0) acc.incomeCategories.push(category);
         else acc.expenseCategories.push(category);
@@ -64,7 +64,7 @@ const CategorySettings = () => {
         expenseCategories: [] as Category[],
       }
     );
-  }, [categories]);
+  }, [categoryList]);
 
   const currentCategories =
     activeTab === "income" ? incomeCategories : expenseCategories;

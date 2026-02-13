@@ -7,7 +7,7 @@ import { toast } from "sonner";
 interface AppState {
   appName: string;
   language: string;
-  categories: Category[];
+  categoryList: Category[];
   isLoading: boolean;
 
   // Actions
@@ -20,7 +20,7 @@ interface AppState {
 export const useAppStore = create<AppState>((set, get) => ({
   appName: "C'agok",
   language: "ko",
-  categories: [],
+  categoryList: [],
   isLoading: true,
   setAppName: (name: string) => set({ appName: name }),
   initApp: async () => {
@@ -70,7 +70,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   fetchCategories: async () => {
     try {
       const fetched = await invoke<Category[]>("get_categories");
-      set({ categories: fetched });
+      set({ categoryList: fetched });
     } catch (error) {
       toast.error("카테고리를 불러오는데 실패했습니다.");
     }

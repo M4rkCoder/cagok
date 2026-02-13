@@ -76,42 +76,81 @@ export const formatCurrency = (amount: number) => {
 //날짜 변환기
 export const smartParseDate = (input: string): string => {
   if (!input) return "";
+
+  const clean = input.replace(/[^0-9]/g, "");
   const today = new Date();
   const year = today.getFullYear();
-  const clean = input.replace(/[^0-9]/g, "");
-  let res: Date;
-  if (clean.length === 8)
+  const currentYearPrefix = Math.floor(year / 100) * 100;
+
+  let res: Date | null = null;
+
+  if (clean.length === 8) {
     res = new Date(
       parseInt(clean.slice(0, 4)),
       parseInt(clean.slice(4, 6)) - 1,
       parseInt(clean.slice(6, 8))
     );
-  else if (clean.length === 4)
+  } else if (clean.length === 6) {
     res = new Date(
-      year,
-      parseInt(clean.slice(0, 2)) - 1,
-      parseInt(clean.slice(2, 4))
+      currentYearPrefix + parseInt(clean.slice(0, 2)),
+      parseInt(clean.slice(2, 4)) - 1,
+      parseInt(clean.slice(4, 6))
     );
-  else if (clean.length === 2 || clean.length === 1)
-    res = new Date(year, today.getMonth(), parseInt(clean));
-  else {
-    const p = input.split(/[-./]/);
-    if (p.length === 3)
-      res = new Date(parseInt(p[0]), parseInt(p[1]) - 1, parseInt(p[2]));
-    else return input;
+  } else if (clean.length === 5 && parseInt(clean) > 30000) {
+    const excelBase = new Date(1899, 11, 30);
+    excelBase.setDate(excelBase.getDate() + parseInt(clean));
+    return format(excelBase, "yyyy-MM-dd");
+  } else if (clean.length === 4 || clean.length === 3) {
+    // "0213" 또는 "213" 처리
+    const padded = clean.padStart(4, "0");
+    const m = parseInt(padded.slice(0, 2));
+    const d = parseInt(padded.slice(2, 4));
+    res = new Date(year, m - 1, d);
   }
-  return isNaN(res.getTime()) ? input : format(res, "yyyy-MM-dd");
+  // 5. 구분자 포함 (2026.2.13, 2/13 등)
+  else {
+    const parts = input.split(/[-./]/).filter((p) => p !== "");
+    if (parts.length === 3) {
+      const yStr = parts[0].trim();
+      const y =
+        yStr.length === 2 ? currentYearPrefix + parseInt(yStr) : parseInt(yStr);
+      res = new Date(y, parseInt(parts[1]) - 1, parseInt(parts[2]));
+    } else if (parts.length === 2) {
+      // "2/13" 같은 형태 대응
+      res = new Date(year, parseInt(parts[0]) - 1, parseInt(parts[1]));
+    }
+  }
+
+  if (res && !isNaN(res.getTime())) {
+    return format(res, "yyyy-MM-dd");
+  }
+
+  return input;
 };
 
 //사칙연산 셀
 export const evaluateExpression = (input: string): string => {
-  const cleanInput = input.replace(/[^0-9+\-*/.]/g, "");
-  if (!cleanInput) return "";
+  // 1. 숫자, 연산자, 소수점 외의 문자 제거 (콤마 등 제거)
+  const cleanInput = input.replace(/[^0-9+\-*/.]/g, "").trim();
+
+  // 입력값이 없거나 마지막이 연산자로 끝나는 경우 (예: "100+")
+  // 계산을 시도하면 에러가 나거나 NaN이 될 수 있으므로 빈 문자열 혹은 원본 반환
+  if (!cleanInput || /[+\-*/.]$/.test(cleanInput)) {
+    return "";
+  }
 
   try {
+    // 2. 수식 계산
     const result = new Function(`return ${cleanInput}`)();
-    return isFinite(result) ? String(result) : "";
+
+    // 3. 결과가 숫자이고, NaN이 아니며, 유한한 값인지 체크
+    if (typeof result === "number" && !isNaN(result) && isFinite(result)) {
+      return String(result);
+    }
+
+    return "";
   } catch {
-    return input; // 계산 실패 시 원본 반환
+    // 계산 도중 문법 오류 발생 시 (예: "100++5") 빈 문자열 반환
+    return "";
   }
 };

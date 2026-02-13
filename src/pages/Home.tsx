@@ -44,7 +44,6 @@ function Home({ children }: { children: React.ReactNode }) {
                   </button>
                   <Separator orientation="vertical" className="h-7 mx-1" />
                   <div className="flex flex-col">
-                    {/* <DynamicBreadcrumb /> */}
                     <h2 className="text-2xl font-bold tracking-tight">
                       {title || ""}
                     </h2>

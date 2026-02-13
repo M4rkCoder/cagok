@@ -8,6 +8,12 @@ import {
 } from "@/schemas/transaction";
 import { QuickEntryTransactionRow } from "@/types";
 import { smartParseDate } from "@/lib/utils";
+import { open, save } from "@tauri-apps/plugin-dialog";
+import { readTextFile, writeTextFile, readFile } from "@tauri-apps/plugin-fs";
+import Papa from "papaparse";
+import { useAppStore } from "@/store/useAppStore";
+import { invoke } from "@tauri-apps/api/core";
+import { useTranslation } from "react-i18next";
 
 const colKeys = [
   "date",
@@ -18,7 +24,34 @@ const colKeys = [
   "remarks",
 ];
 
+interface ExcelPreviewRow {
+  id: string;
+  date: string;
+  tx_type: number;
+  category_id: string;
+  category_name: string;
+  is_fixed: number;
+  description: string;
+  amount: string;
+  remarks: string;
+  is_valid: boolean;
+  error_msg?: string;
+}
+
+const isRowFilled = (row: QuickEntryTransactionRow) => {
+  return !!(
+    row.date ||
+    row.description ||
+    row.amount ||
+    row.category_id ||
+    row.remarks
+  );
+};
+
 export const useQuickEntry = (initialRows = 10, submitForm: any) => {
+  const { categoryList } = useAppStore();
+  const { i18n } = useTranslation();
+
   const createEmptyRow = (): QuickEntryTransactionRow => ({
     id: crypto.randomUUID(),
     date: "",
@@ -51,13 +84,14 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
           i === rowIndex ? { ...row, [columnId]: value } : row
         )
       );
-      setRowErrors((prev) => {
-        const newErrors = { ...prev };
-        if (newErrors[data[rowIndex].id]) {
-          delete newErrors[data[rowIndex].id][columnId];
-          if (Object.keys(newErrors[data[rowIndex].id]).length === 0) {
-            delete newErrors[data[rowIndex].id];
-          }
+
+      setRowErrors((prevErrors) => {
+        const newErrors = { ...prevErrors };
+        const rowId = data[rowIndex]?.id;
+        if (rowId && newErrors[rowId]) {
+          delete newErrors[rowId][columnId];
+          if (Object.keys(newErrors[rowId]).length === 0)
+            delete newErrors[rowId];
         }
         return newErrors;
       });
@@ -118,21 +152,19 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
     window.addEventListener("mouseup", onMouseUp);
   };
 
-  const handleSaveAll = async () => {
-    const currentBatchErrors: Record<
-      string,
-      Record<string, { message: string; timestamp: number }>
-    > = {};
+  const handleSaveAll = useCallback(async () => {
+    const currentBatchErrors: Record<string, any> = {};
     const transactionsToSubmit: TransactionFormValues[] = [];
+    console.log(data);
 
-    const filledData = data.filter(
-      (row) =>
-        row.date ||
-        row.description ||
-        row.amount ||
-        row.remarks ||
-        row.category_id
-    );
+    // [중요] 최신 데이터를 가져오기 위해 필터링 로직 확인
+    // 날짜, 내용, 금액 중 하나라도 '실제 값'이 있는 경우만 추출
+    const filledData = data.filter((row) => {
+      const hasDate = row.date && row.date.trim() !== "";
+      const hasDesc = row.description && row.description.trim() !== "";
+      const hasAmount = row.amount !== "" && row.amount !== null;
+      return hasDate || hasDesc || hasAmount;
+    });
 
     if (filledData.length === 0) {
       toast.info("저장할 거래 내역이 없습니다.");
@@ -140,17 +172,27 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
     }
 
     for (const row of filledData) {
-      const parsedAmount = parseFloat(row.amount.replace(/,/g, ""));
+      // 금액 처리: 문자열 콤마 제거 및 숫자 변환
+      let parsedAmount = 0;
+      if (typeof row.amount === "string") {
+        parsedAmount = parseFloat(row.amount.replace(/,/g, "")) || 0;
+      } else {
+        parsedAmount = Number(row.amount) || 0;
+      }
+
       const parsedCategoryId = parseInt(row.category_id);
 
       const transactionToValidate = {
-        type: row.type,
-        is_fixed: row.is_fixed,
-        amount: isNaN(parsedAmount) ? 0 : parsedAmount,
+        type: Number(row.type) || 1,
+        is_fixed: Number(row.is_fixed) || 0,
+        amount: parsedAmount,
         date: row.date,
-        description: row.description,
+        description: row.description || "",
         remarks: row.remarks || "",
-        category_id: isNaN(parsedCategoryId) ? 0 : parsedCategoryId,
+        category_id:
+          isNaN(parsedCategoryId) || parsedCategoryId === 0
+            ? null
+            : parsedCategoryId,
       };
 
       const result = transactionSchema.safeParse(transactionToValidate);
@@ -169,38 +211,35 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
       }
     }
 
-    setRowErrors(currentBatchErrors);
-
+    // 에러가 있다면 중단
     if (Object.keys(currentBatchErrors).length > 0) {
-      toast.error("입력한 내용에 오류가 있습니다. 확인해주세요.");
-
-      // Set timeouts to clear errors after 1 second
-      Object.entries(currentBatchErrors).forEach(([rowId, colErrors]) => {
-        Object.keys(colErrors).forEach((colId) => {
-          setTimeout(() => {
-            setRowErrors((prev) => {
-              const newErrors = { ...prev };
-              if (newErrors[rowId]) {
-                delete newErrors[rowId][colId];
-                if (Object.keys(newErrors[rowId]).length === 0) {
-                  delete newErrors[rowId];
-                }
-              }
-              return newErrors;
-            });
-          }, 1000);
-        });
-      });
+      setRowErrors(currentBatchErrors);
+      toast.error("입력한 내용에 오류가 있습니다.");
       return;
     }
 
-    for (const transaction of transactionsToSubmit) {
-      await submitForm(transaction);
+    // 벡엔드 전송
+    if (transactionsToSubmit.length > 0) {
+      const loadingId = toast.loading(
+        `${transactionsToSubmit.length}건 저장 중...`
+      );
+      try {
+        await invoke("bulk_create_transactions", {
+          transactions: transactionsToSubmit,
+        });
+
+        toast.dismiss(loadingId);
+        toast.success("성공적으로 저장되었습니다.");
+
+        // 저장 후 테이블 초기화
+        setData(Array.from({ length: initialRows }, createEmptyRow));
+        setRowErrors({});
+      } catch (error) {
+        toast.dismiss(loadingId);
+        toast.error(`저장 실패: ${error}`);
+      }
     }
-    toast.success("모든 거래 내역이 성공적으로 저장되었습니다!");
-    setData(Array.from({ length: 10 }, createEmptyRow));
-    setRowErrors({});
-  };
+  }, [data, invoke]);
 
   const batchUpdate = useCallback(
     (startRow: number, startCol: number, rows: string[][]) => {
@@ -278,6 +317,82 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
     [updateData]
   );
 
+  const handleDownloadTemplate = async () => {
+    try {
+      // 1. 파일 저장 다이얼로그 (확장자를 xlsx로 변경)
+      const filePath = await save({
+        defaultPath: "transactions_template.xlsx",
+        filters: [{ name: "Excel Files", extensions: ["xlsx"] }],
+      });
+
+      if (!filePath) return;
+
+      await invoke("generate_excel_template", {
+        filePath,
+        lang: i18n.language.startsWith("ko") ? "ko" : "en",
+      });
+
+      toast.success("엑셀 템플릿이 저장되었습니다.");
+    } catch (err) {
+      console.error(err);
+      toast.error("템플릿 생성 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleImportFile = async () => {
+    try {
+      // 1. 파일 선택 다이얼로그
+      const selected = await open({
+        filters: [
+          { name: "Transaction Files", extensions: ["xlsx", "xls", "csv"] },
+        ],
+      });
+
+      if (!selected || typeof selected !== "string") return;
+
+      // 2. 백엔드 호출
+      // 수정된 백엔드에 맞춰 'categories' 인자를 제거하고 'path'만 전달합니다.
+      const previewData = await invoke<ExcelPreviewRow[]>(
+        "parse_transaction_file",
+        { path: selected }
+      );
+
+      // 3. UI 데이터 업데이트
+      setData((prev) => {
+        // 이미 입력 중인 데이터 중 내용이 있는 것만 유지
+        const existingFilled = prev.filter(isRowFilled);
+
+        const mappedNewRows: QuickEntryTransactionRow[] = previewData.map(
+          (row) => ({
+            id: row.id,
+            date: smartParseDate(row.date),
+            type: row.tx_type, // 0: 수입, 1: 지출
+            category_id: row.category_id,
+            is_fixed: row.is_fixed, // 0: 변동, 1: 고정
+            description: row.description,
+            amount: row.amount,
+            remarks: row.remarks,
+          })
+        );
+
+        return [...existingFilled, ...mappedNewRows];
+      });
+
+      // 4. 결과 알림
+      const invalidCount = previewData.filter((r) => !r.is_valid).length;
+      if (invalidCount > 0) {
+        toast.warning(
+          `${invalidCount}건의 데이터에 확인(카테고리 등)이 필요합니다.`
+        );
+      } else {
+        toast.success(`${previewData.length}건을 성공적으로 읽어왔습니다.`);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("파일 처리 중 오류가 발생했습니다.");
+    }
+  };
+
   return {
     data,
     setData,
@@ -292,5 +407,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
     handlePaste,
     confirmUpdate,
     createEmptyRow,
+    handleDownloadTemplate,
+    handleImportFile,
   };
 };

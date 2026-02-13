@@ -21,6 +21,9 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         transaction::get_all_daily_summaries,
         transaction::get_all_monthly_total_trends,
         transaction::get_filtered_transactions_command,
+        transaction::parse_transaction_file,
+        transaction::generate_excel_template,
+        transaction::bulk_create_transactions,
         //category
         category::create_category,
         category::get_categories,

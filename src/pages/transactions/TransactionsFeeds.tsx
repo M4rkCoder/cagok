@@ -207,7 +207,7 @@ export default function TransactionsFeeds() {
         items.push(
           <div
             key={`header-${currentYearMonth}`}
-            className="sticky top-14 z-30 pt-0 pb-0 mb-2 group cursor-pointer"
+            className="sticky top-20 z-30 pt-0 pb-0 mb-2 group cursor-pointer"
             onClick={() => toggleMonth(currentYearMonth)}
           >
             <div className="relative flex items-center justify-between gap-4 pt-1 p-4 pl-0 bg-white/60 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-white/40 hover:bg-white/80 transition-all duration-300">

@@ -85,7 +85,7 @@ const MODE_CONFIG = {
 } as const;
 
 export function TransactionFilterPanel() {
-  const { categories } = useAppStore();
+  const { categoryList } = useAppStore();
   const { setFilters: setStoreFilters, fetchFilteredAll } =
     useTransactionStore();
 
@@ -102,26 +102,24 @@ export function TransactionFilterPanel() {
   };
 
   const filteredCategories = useMemo(() => {
-    if (filters.mode === "all") return categories;
+    if (filters.mode === "all") return categoryList;
     const targetType = filters.mode === "income" ? 0 : 1;
-    return categories.filter((c) => c.type === targetType);
-  }, [categories, filters.mode]);
+    return categoryList.filter((c) => c.type === targetType);
+  }, [categoryList, filters.mode]);
 
   const constructBackendFilters = (
     fs: FilterState = filters
   ): TransactionFilters => {
     return {
       keyword: fs.keyword || undefined,
-      tx_type:
-        fs.mode === "all" ? undefined : fs.mode === "income" ? 0 : 1,
+      tx_type: fs.mode === "all" ? undefined : fs.mode === "income" ? 0 : 1,
       is_fixed:
         fs.mode === "fixed_expense"
           ? true
           : fs.mode === "variable_expense"
             ? false
             : undefined,
-      category_ids:
-        fs.categoryIds.length > 0 ? fs.categoryIds : undefined,
+      category_ids: fs.categoryIds.length > 0 ? fs.categoryIds : undefined,
       start_date: fs.dateRange?.from
         ? format(fs.dateRange.from, "yyyy-MM-dd")
         : undefined,
@@ -166,7 +164,7 @@ export function TransactionFilterPanel() {
     await fetchFilteredAll({});
   };
 
-  const selectedCategories = categories.filter((c) =>
+  const selectedCategories = categoryList.filter((c) =>
     filters.categoryIds.includes(c.id)
   );
 
