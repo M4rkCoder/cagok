@@ -65,23 +65,27 @@ fn insert_default_categories(conn: &rusqlite::Connection, language: &str) -> rus
     // 언어별 카테고리 정의
     let categories = if language == "ko" {
         vec![
-            ("식비", "🍔", 1),
-            ("교통", "🚗", 1),
-            ("쇼핑", "🛍️", 1),
-            ("의료", "🏥", 1),
-            ("주거", "🏠", 1),
-            ("월급", "💰", 0),
-            ("용돈", "🎁", 0),
+          ("월급", "💼", 0),
+          ("부수입", "💰", 0),
+          ("용돈", "🎁", 0),
+          ("식비", "🍔", 1),
+          ("교통비", "🚇", 1),
+          ("카페", "☕", 1),
+          ("쇼핑", "🛍️", 1),
+          ("주거비", "🏠", 1),
+          ("의료비", "🏥", 1),
         ]
     } else {
         vec![
-            ("Food", "🍔", 1),
-            ("Transport", "🚗", 1),
-            ("Shopping", "🛍️", 1),
-            ("Medical", "🏥", 1),
-            ("Housing", "🏠", 1),
-            ("Salary", "💰", 0),
-            ("Allowance", "🎁", 0),
+          ("Salary", "💼", 0),
+          ("ExtraIncome", "💰", 0),
+          ("Allowance", "🎁", 0),
+          ("Food", "🍔", 1),
+          ("Transport", "🚇", 1),
+          ("Cafe", "☕", 1),
+          ("Shopping", "🛍️", 1),
+          ("Housing", "🏠", 1),
+          ("Medical", "🏥", 1),
         ]
     };
 

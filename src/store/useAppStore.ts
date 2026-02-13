@@ -42,7 +42,6 @@ export const useAppStore = create<AppState>((set, get) => ({
         language: lang || "ko",
       });
 
-      // 카테고리 로드도 함께 수행
       await get().fetchCategories();
     } catch (error) {
       console.error("앱 초기화 실패:", error);
@@ -71,6 +70,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const fetched = await invoke<Category[]>("get_categories");
       set({ categoryList: fetched });
+      console.log("페치 카테고리", fetched);
     } catch (error) {
       toast.error("카테고리를 불러오는데 실패했습니다.");
     }

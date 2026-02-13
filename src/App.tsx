@@ -18,7 +18,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useAppStore } from "@/store/useAppStore";
 import StatisticsPage from "@/pages/statistics/StatisticsPage";
 import QuickEntry from "@/pages/transactions/QuickEntry";
-import RecurringSettings from "@/pages/settings/RecurringSettings";
+import RecurringSettings from "@/pages/transactions/RecurringSettings";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
 
 type AppStage = "splash" | "onboarding" | "home";

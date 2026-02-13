@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, UseFormReturn, FieldError } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,7 +47,6 @@ import { useAppStore } from "@/store/useAppStore";
 import { useCategoryStore } from "@/store/useCategoryStore";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
 import { useConfirmStore } from "@/store/useConfirmStore";
 import {
   transactionSchema,
@@ -56,9 +55,33 @@ import {
 import { format, parseISO } from "date-fns";
 import { Calendar as CalendarPicker } from "@/components/ui/calendar";
 
+// 1.5초 동안만 에러를 보여주는 툴팁 내부 로직
+const TemporaryErrorTooltip = ({
+  children,
+  error,
+  show,
+  side = "top",
+}: {
+  children: React.ReactNode;
+  error?: FieldError;
+  show: boolean;
+  side?: "top" | "bottom" | "left" | "right";
+}) => {
+  return (
+    <Tooltip open={show && !!error}>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent
+        side={side}
+        className="bg-rose-500 text-white border-none text-xs font-bold px-3 py-1.5 rounded-lg shadow-xl mb-1 animate-in fade-in zoom-in duration-200"
+      >
+        {error?.message}
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
 const TransactionForm: React.FC = () => {
-  const { t } = useTranslation();
-  const { confirm, isOpen } = useConfirmStore();
+  const { confirm } = useConfirmStore();
   const {
     editingTransaction,
     submitForm,
@@ -66,21 +89,6 @@ const TransactionForm: React.FC = () => {
     deleteTransaction,
     defaultCategoryId,
   } = useTransactionStore();
-  const { categoryList: categories } = useAppStore();
-  const {
-    isAddingNewCategoryMode,
-    editingCategoryId,
-    newCategoryIcon,
-    newCategoryName,
-    isEmojiPickerOpen,
-    setCategoryState,
-    resetCategoryForm,
-    startEditCategory,
-    deleteCategory,
-    submitCategoryForm,
-  } = useCategoryStore();
-  const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
-  const [preview, setPreview] = useState<string>("0");
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -94,21 +102,182 @@ const TransactionForm: React.FC = () => {
       category_id: editingTransaction?.category_id,
     },
   });
+
   useEffect(() => {
     if (!editingTransaction && defaultCategoryId) {
       form.setValue("category_id", defaultCategoryId, {
-        shouldValidate: true, // 값이 바뀌면 유효성 검사도 수행
-        shouldDirty: true, // 폼이 변경되었음을 인지
+        shouldValidate: true,
+        shouldDirty: true,
       });
     }
   }, [defaultCategoryId, editingTransaction, form]);
 
-  const currentType = form.watch("type");
-  const selectedCategory =
-    categories.find((c: Category) => c.id === form.watch("category_id")) ||
-    null;
+  const handleDelete = () => {
+    confirm({
+      title: "내역 삭제",
+      description:
+        "이 내역을 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.",
+      onConfirm: async () => {
+        if (editingTransaction?.id) {
+          deleteTransaction(editingTransaction.id);
+          handleSheetClose();
+        }
+      },
+    });
+  };
 
-  // 카테고리 저장 (추가/수정 통합)
+  return (
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit(submitForm)}
+        className="flex flex-col h-[700px] px-2 pt-2 pb-2"
+      >
+        <div className="flex-1 space-y-7 scrollbar-hide pr-1">
+          <TransactionTypeSection form={form} />
+          <CategorySection form={form} />
+          <DescriptionSection form={form} />
+          <DateAmountSection form={form} />
+          <RemarksSection form={form} />
+        </div>
+
+        <ActionButtons
+          onCancel={handleSheetClose}
+          onDelete={editingTransaction ? handleDelete : undefined}
+        />
+      </form>
+    </Form>
+  );
+};
+
+/**
+ * 1. 타입 선택 (수입/지출) 및 고정 핀
+ */
+const TransactionTypeSection: React.FC<{
+  form: UseFormReturn<TransactionFormValues>;
+}> = ({ form }) => {
+  const currentType = form.watch("type");
+  const isFixed = form.watch("is_fixed");
+
+  return (
+    <div className="flex items-center gap-0 overflow-hidden">
+      <FormField
+        control={form.control}
+        name="type"
+        render={({ field }) => (
+          <FormItem className="flex-1 transition-all duration-500">
+            <div className="p-1.5 bg-slate-100/60 rounded-2xl flex gap-1">
+              {[
+                {
+                  id: 0,
+                  name: "수입",
+                  icon: CirclePlus,
+                  color: "text-emerald-500",
+                },
+                {
+                  id: 1,
+                  name: "지출",
+                  icon: CircleMinus,
+                  color: "text-blue-500",
+                },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    field.onChange(item.id);
+                    form.setValue("category_id", undefined);
+                    if (item.id === 0) form.setValue("is_fixed", 0);
+                  }}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all font-bold text-sm",
+                    field.value === item.id
+                      ? "bg-white shadow-sm"
+                      : "text-slate-400",
+                  )}
+                >
+                  <item.icon
+                    className={cn(
+                      "w-4 h-4",
+                      field.value === item.id ? item.color : "text-slate-300",
+                    )}
+                  />
+                  {item.name}
+                </button>
+              ))}
+            </div>
+          </FormItem>
+        )}
+      />
+      <div
+        className={cn(
+          "transition-all duration-500 flex items-center overflow-hidden",
+          currentType === 1
+            ? "w-[60px] opacity-100 ml-3"
+            : "w-0 opacity-0 ml-0",
+        )}
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => form.setValue("is_fixed", isFixed === 1 ? 0 : 1)}
+              className={cn(
+                "w-12 h-12 flex items-center justify-center rounded-2xl transition-all border shrink-0 active:scale-95",
+                isFixed === 1
+                  ? "bg-black border-black text-white shadow-md shadow-slate-200"
+                  : "bg-slate-50 border-slate-100 text-slate-300",
+              )}
+            >
+              <Pin
+                className={cn(
+                  "w-4 h-4 transition-transform",
+                  isFixed === 1 && "fill-white rotate-45",
+                )}
+              />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent
+            side="top"
+            className="bg-slate-800 text-white border-none text-xs font-bold"
+          >
+            고정 지출 설정
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    </div>
+  );
+};
+
+/**
+ * 2. 카테고리 선택 (항목)
+ */
+const CategorySection: React.FC<{
+  form: UseFormReturn<TransactionFormValues>;
+}> = ({ form }) => {
+  const { t } = useTranslation();
+  const { confirm, isOpen } = useConfirmStore();
+  const { categoryList: categories } = useAppStore();
+  const {
+    isAddingNewCategoryMode,
+    editingCategoryId,
+    newCategoryIcon,
+    newCategoryName,
+    isEmojiPickerOpen,
+    setCategoryState,
+    resetCategoryForm,
+    startEditCategory,
+    deleteCategory,
+    submitCategoryForm,
+  } = useCategoryStore();
+
+  const [isCategoryPopoverOpen, setIsCategoryPopoverOpen] = useState(false);
+  const [showVisualError, setShowVisualError] = useState(false);
+
+  const currentType = form.watch("type");
+  const selectedCategoryId = form.watch("category_id");
+  const selectedCategory =
+    categories.find((c: Category) => c.id === selectedCategoryId) || null;
+
   const handleSaveCategory = async () => {
     if (!newCategoryName.trim()) return;
     await submitCategoryForm({
@@ -128,7 +297,6 @@ const TransactionForm: React.FC = () => {
       description: `[${cat.name}] 카테고리를 삭제하시겠습니까? 관련 내역은 '미분류'로 변경됩니다.`,
       onConfirm: async () => {
         await deleteCategory(cat.id);
-        // 현재 폼에서 선택된 카테고리가 삭제된 것이라면 선택 해제
         if (form.getValues("category_id") === cat.id) {
           form.setValue("category_id", undefined);
         }
@@ -136,554 +304,545 @@ const TransactionForm: React.FC = () => {
     });
   };
 
-  const onInvalid = (errors: any) => {
-    // 첫 번째 에러 메시지만 토스트로 노출
-    const firstError = Object.values(errors)[0] as any;
-    if (firstError) {
-      toast.error(firstError.message, {
-        description: "입력 내용을 다시 확인해주세요.",
-      });
+  const { error } = form.getFieldState("category_id", form.formState);
+
+  useEffect(() => {
+    if (error) {
+      setShowVisualError(true);
+      const timer = setTimeout(() => setShowVisualError(false), 1500);
+      return () => clearTimeout(timer);
     }
-  };
+  }, [error]);
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(submitForm, onInvalid)}
-        className="flex flex-col h-[700px] px-2 pt-2 pb-2"
+    <div className="space-y-1.5">
+      <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
+        <Tag className="w-3 h-3" /> {t("category")}
+      </FormLabel>
+      <Popover
+        open={isCategoryPopoverOpen}
+        onOpenChange={(open) => {
+          if (isOpen) return;
+          setIsCategoryPopoverOpen(open);
+          if (!open) resetCategoryForm();
+        }}
+        modal={false}
       >
-        <div className="flex-1 space-y-7 scrollbar-hide pr-1">
-          {/* 1. 타입 선택 (수입/지출) 및 고정 핀 */}
-          <div className="flex items-center gap-0 overflow-hidden">
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem className="flex-1 transition-all duration-500">
-                  <div className="p-1.5 bg-slate-100/60 rounded-2xl flex gap-1">
-                    {[
-                      {
-                        id: 0,
-                        name: "수입",
-                        icon: CirclePlus,
-                        color: "text-emerald-500",
-                      },
-                      {
-                        id: 1,
-                        name: "지출",
-                        icon: CircleMinus,
-                        color: "text-blue-500",
-                      },
-                    ].map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => {
-                          field.onChange(item.id);
-                          form.setValue("category_id", undefined);
-                          if (item.id === 0) form.setValue("is_fixed", 0);
-                        }}
-                        className={cn(
-                          "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all font-bold text-sm",
-                          field.value === item.id
-                            ? "bg-white shadow-sm"
-                            : "text-slate-400"
-                        )}
-                      >
-                        <item.icon
-                          className={cn(
-                            "w-4 h-4",
-                            field.value === item.id
-                              ? item.color
-                              : "text-slate-300"
-                          )}
-                        />
-                        {item.name}
-                      </button>
-                    ))}
-                  </div>
-                </FormItem>
-              )}
-            />
-            <div
+        <TemporaryErrorTooltip error={error} show={showVisualError}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
               className={cn(
-                "transition-all duration-500 flex items-center overflow-hidden",
-                currentType === 1
-                  ? "w-[60px] opacity-100 ml-3"
-                  : "w-0 opacity-0 ml-0"
+                "w-full h-12 px-4 flex items-center justify-between rounded-2xl bg-slate-50 transition-all",
+                isCategoryPopoverOpen && "ring-1 ring-slate-200 shadow-sm",
+                showVisualError &&
+                  error &&
+                  "ring-2 ring-rose-500/50 bg-rose-50",
               )}
             >
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      form.setValue(
-                        "is_fixed",
-                        form.watch("is_fixed") === 1 ? 0 : 1
-                      )
-                    }
+              <div className="flex items-center gap-2">
+                {selectedCategory ? (
+                  <>
+                    <CategoryIcon
+                      icon={selectedCategory.icon}
+                      type={currentType}
+                      size="md"
+                    />
+                    <span className="font-bold text-md">
+                      {selectedCategory.name}
+                    </span>
+                  </>
+                ) : (
+                  <span
                     className={cn(
-                      "w-12 h-12 flex items-center justify-center rounded-2xl transition-all border shrink-0 active:scale-95",
-                      form.watch("is_fixed") === 1
-                        ? "bg-black border-black text-white shadow-md shadow-slate-200"
-                        : "bg-slate-50 border-slate-100 text-slate-300"
+                      "text-sm font-bold",
+                      showVisualError && error
+                        ? "text-rose-400"
+                        : "text-slate-400",
                     )}
                   >
-                    <Pin
-                      className={cn(
-                        "w-4 h-4 transition-transform",
-                        form.watch("is_fixed") === 1 && "fill-white rotate-45"
-                      )}
-                    />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="top"
-                  className="bg-slate-800 text-white border-none text-xs font-bold"
-                >
-                  고정 지출 설정
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
+                    카테고리 선택
+                  </span>
+                )}
+              </div>
+              <ChevronDown
+                className={cn(
+                  "w-4 h-4 text-slate-300 transition-transform",
+                  isCategoryPopoverOpen && "rotate-180",
+                )}
+              />
+            </button>
+          </PopoverTrigger>
+        </TemporaryErrorTooltip>
 
-          {/* 2. 카테고리 선택 (수정/삭제 기능 포함) */}
-          <div className="space-y-1.5">
-            <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
-              <Tag className="w-3 h-3" /> {t("category")}
-            </FormLabel>
-            <Popover
-              open={isCategoryPopoverOpen}
-              onOpenChange={(open) => {
-                if (isOpen) return;
-                setIsCategoryPopoverOpen(open);
-                if (!open) resetCategoryForm();
-              }}
-              modal={false}
-            >
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className={cn(
-                    "w-full h-12 px-4 flex items-center justify-between rounded-2xl bg-slate-50 transition-all",
-                    isCategoryPopoverOpen && "ring-1 ring-slate-200 shadow-sm"
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    {selectedCategory ? (
-                      <>
-                        <CategoryIcon
-                          icon={selectedCategory.icon}
-                          type={currentType}
-                          size="md"
-                        />
-                        <span className="font-bold text-md">
-                          {selectedCategory.name}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-slate-400 text-sm font-bold">
-                        카테고리 선택
-                      </span>
-                    )}
-                  </div>
-                  <ChevronDown
-                    className={cn(
-                      "w-4 h-4 text-slate-300 transition-transform",
-                      isCategoryPopoverOpen && "rotate-180"
-                    )}
+        <PopoverContent
+          className="w-[var(--radix-popover-trigger-width)] p-0"
+          align="start"
+          onWheel={(e) => e.stopPropagation()}
+        >
+          <Command className="bg-white overflow-hidden">
+            {isEmojiPickerOpen ? (
+              <div className="flex flex-col animate-in fade-in zoom-in duration-200">
+                <div className="flex items-center justify-between p-2 border-b">
+                  <span className="text-[10px] font-bold text-slate-400 ml-2">
+                    아이콘 선택
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0"
+                    onClick={() => setCategoryState("isEmojiPickerOpen", false)}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="w-full h-[300px]">
+                  <EmojiPicker
+                    onEmojiClick={(data) => {
+                      setCategoryState("newCategoryIcon", data.emoji);
+                      setCategoryState("isEmojiPickerOpen", false);
+                    }}
+                    height="100%"
+                    width="100%"
+                    emojiStyle={EmojiStyle.NATIVE}
+                    previewConfig={{ showPreview: false }}
+                    skinTonesDisabled
                   />
-                </button>
-              </PopoverTrigger>
+                </div>
+              </div>
+            ) : (
+              <>
+                <CommandInput placeholder="카테고리 검색..." className="h-11" />
+                <CommandList className="max-h-[350px] overflow-y-auto p-1 scrollbar-hide">
+                  <CommandEmpty className="py-6 text-center text-xs text-slate-400">
+                    결과가 없습니다.
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {categories
+                      .filter((cat) => cat.type === currentType)
+                      .map((cat) => (
+                        <CommandItem
+                          key={cat.id}
+                          className="flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer group mb-0.5"
+                          onSelect={() => {
+                            form.setValue("category_id", cat.id);
+                            setIsCategoryPopoverOpen(false);
+                          }}
+                        >
+                          <div className="flex items-center gap-3">
+                            <CategoryIcon
+                              icon={cat.icon}
+                              type={currentType}
+                              size="sm"
+                            />
+                            <span className="font-semibold text-slate-600 text-xs">
+                              {cat.name}
+                            </span>
+                          </div>
+                          <div
+                            className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                startEditCategory(cat);
+                              }}
+                              className="p-1.5 hover:bg-slate-200 rounded-md text-slate-400 hover:text-blue-500"
+                            >
+                              <SquarePen className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                onClickDeleteCategory(e, cat);
+                              }}
+                              className="p-1.5 hover:bg-slate-200 rounded-md text-slate-400 hover:text-rose-500"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                            {selectedCategoryId === cat.id && (
+                              <Check className="w-3.5 h-3.5 text-black ml-1" />
+                            )}
+                          </div>
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
 
-              <PopoverContent
-                className="w-[var(--radix-popover-trigger-width)] p-0"
-                align="start"
-                onWheel={(e) => e.stopPropagation()}
-              >
-                <Command className="bg-white overflow-hidden">
-                  {isEmojiPickerOpen ? (
-                    <div className="flex flex-col animate-in fade-in zoom-in duration-200">
-                      <div className="flex items-center justify-between p-2 border-b">
-                        <span className="text-[10px] font-bold text-slate-400 ml-2">
-                          아이콘 선택
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0"
-                          onClick={() =>
-                            setCategoryState("isEmojiPickerOpen", false)
+                  {isAddingNewCategoryMode && (
+                    <div className="flex items-center gap-2 px-2 py-2 bg-slate-50 rounded-xl mt-1 border border-dashed border-slate-300 mx-1">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCategoryState("isEmojiPickerOpen", true)
+                        }
+                        className="w-9 h-9 flex items-center justify-center bg-white border rounded-lg shadow-sm text-lg shrink-0 native-emoji"
+                      >
+                        {newCategoryIcon}
+                      </button>
+                      <Input
+                        autoFocus
+                        value={newCategoryName}
+                        onChange={(e) =>
+                          setCategoryState("newCategoryName", e.target.value)
+                        }
+                        placeholder={
+                          editingCategoryId ? "이름 수정..." : "새 이름..."
+                        }
+                        className="h-9 text-xs border-none bg-transparent focus-visible:ring-0 px-1 flex-1 font-bold"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleSaveCategory();
                           }
+                        }}
+                      />
+                      <div className="flex gap-1 shrink-0">
+                        <Button
+                          type="button"
+                          size="icon"
+                          className="w-7 h-7 bg-black text-white rounded-md"
+                          onClick={handleSaveCategory}
+                        >
+                          <Check className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="w-7 h-7 text-slate-400"
+                          onClick={resetCategoryForm}
                         >
                           <X className="w-4 h-4" />
                         </Button>
                       </div>
-                      <div className="w-full h-[300px]">
-                        <EmojiPicker
-                          onEmojiClick={(data) => {
-                            setCategoryState("newCategoryIcon", data.emoji);
-                            setCategoryState("isEmojiPickerOpen", false);
-                          }}
-                          height="100%"
-                          width="100%"
-                          emojiStyle={EmojiStyle.NATIVE}
-                          previewConfig={{ showPreview: false }}
-                          skinTonesDisabled
-                        />
-                      </div>
                     </div>
-                  ) : (
-                    <>
-                      <CommandInput
-                        placeholder="카테고리 검색..."
-                        className="h-11"
-                      />
-                      <CommandList className="max-h-[350px] overflow-y-auto p-1 scrollbar-hide">
-                        <CommandEmpty className="py-6 text-center text-xs text-slate-400">
-                          결과가 없습니다.
-                        </CommandEmpty>
-                        <CommandGroup>
-                          {categories
-                            .filter((cat) => cat.type === currentType)
-                            .map((cat) => (
-                              <CommandItem
-                                key={cat.id}
-                                className="flex items-center justify-between px-3 py-2.5 rounded-xl cursor-pointer group mb-0.5"
-                                onSelect={() => {
-                                  form.setValue("category_id", cat.id);
-                                  setIsCategoryPopoverOpen(false);
-                                }}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <CategoryIcon
-                                    icon={cat.icon}
-                                    type={currentType}
-                                    size="sm"
-                                  />
-                                  <span className="font-semibold text-slate-600 text-xs">
-                                    {cat.name}
-                                  </span>
-                                </div>
-                                <div
-                                  className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <button
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      startEditCategory(cat);
-                                    }}
-                                    className="p-1.5 hover:bg-slate-200 rounded-md text-slate-400 hover:text-blue-500"
-                                  >
-                                    <SquarePen className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      onClickDeleteCategory(e, cat);
-                                    }}
-                                    className="p-1.5 hover:bg-slate-200 rounded-md text-slate-400 hover:text-rose-500"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                  {form.watch("category_id") === cat.id && (
-                                    <Check className="w-3.5 h-3.5 text-black ml-1" />
-                                  )}
-                                </div>
-                              </CommandItem>
-                            ))}
-                        </CommandGroup>
-
-                        {isAddingNewCategoryMode && (
-                          <div className="flex items-center gap-2 px-2 py-2 bg-slate-50 rounded-xl mt-1 border border-dashed border-slate-300 mx-1">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setCategoryState("isEmojiPickerOpen", true)
-                              }
-                              className="w-9 h-9 flex items-center justify-center bg-white border rounded-lg shadow-sm text-lg shrink-0 native-emoji"
-                            >
-                              {newCategoryIcon}
-                            </button>
-                            <Input
-                              autoFocus
-                              value={newCategoryName}
-                              onChange={(e) =>
-                                setCategoryState(
-                                  "newCategoryName",
-                                  e.target.value
-                                )
-                              }
-                              placeholder={
-                                editingCategoryId
-                                  ? "이름 수정..."
-                                  : "새 이름..."
-                              }
-                              className="h-9 text-xs border-none bg-transparent focus-visible:ring-0 px-1 flex-1 font-bold"
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  handleSaveCategory();
-                                }
-                              }}
-                            />
-                            <div className="flex gap-1 shrink-0">
-                              <Button
-                                type="button"
-                                size="icon"
-                                className="w-7 h-7 bg-black text-white rounded-md"
-                                onClick={handleSaveCategory}
-                              >
-                                <Check className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="w-7 h-7 text-slate-400"
-                                onClick={resetCategoryForm}
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </CommandList>
-                      {!isAddingNewCategoryMode && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setCategoryState("isAddingNewCategoryMode", true)
-                          }
-                          className="w-full py-3 flex items-center justify-center gap-1.5 text-[10px] font-black text-emerald-500 border-t border-slate-50 hover:bg-slate-50 transition-colors uppercase"
-                        >
-                          <Plus className="w-3.5 h-3.5" /> 새 카테고리 추가
-                        </button>
-                      )}
-                    </>
                   )}
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
+                </CommandList>
+                {!isAddingNewCategoryMode && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCategoryState("isAddingNewCategoryMode", true)
+                    }
+                    className="w-full py-3 flex items-center justify-center gap-1.5 text-[10px] font-black text-emerald-500 border-t border-slate-50 hover:bg-slate-50 transition-colors uppercase"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> 새 카테고리 추가
+                  </button>
+                )}
+              </>
+            )}
+          </Command>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
 
-          {/* 3. 날짜 및 금액 */}
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
-                    <Calendar className="w-3 h-3" /> {t("date")}
-                  </FormLabel>
+/**
+ * 3. 내역 (Description)
+ */
+const DescriptionSection: React.FC<{
+  form: UseFormReturn<TransactionFormValues>;
+}> = ({ form }) => {
+  const { t } = useTranslation();
+  const [showError, setShowError] = useState(false);
 
-                  <div className="relative group">
+  return (
+    <FormField
+      control={form.control}
+      name="description"
+      render={({ field, fieldState }) => {
+        useEffect(() => {
+          if (fieldState.error) {
+            setShowError(true);
+            const timer = setTimeout(() => setShowError(false), 1500);
+            return () => clearTimeout(timer);
+          }
+        }, [fieldState.error]);
+
+        return (
+          <FormItem>
+            <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
+              <FileText className="w-3 h-3" /> {t("description")}
+            </FormLabel>
+            <TemporaryErrorTooltip error={fieldState.error} show={showError}>
+              <Input
+                className={cn(
+                  "h-12 bg-slate-50/80 border-none rounded-2xl text-sm font-bold placeholder:text-slate-300",
+                  showError &&
+                    fieldState.error &&
+                    "ring-2 ring-rose-500/50 bg-rose-50",
+                )}
+                placeholder="내용 입력"
+                {...field}
+              />
+            </TemporaryErrorTooltip>
+          </FormItem>
+        );
+      }}
+    />
+  );
+};
+
+/**
+ * 4. 금액 및 날짜
+ */
+const DateAmountSection: React.FC<{
+  form: UseFormReturn<TransactionFormValues>;
+}> = ({ form }) => {
+  const { t } = useTranslation();
+  const [preview, setPreview] = useState<string>("0");
+  const [showAmountError, setShowAmountError] = useState(false);
+  const [showDateError, setShowDateError] = useState(false);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* 금액 (Amount) */}
+      <FormField
+        control={form.control}
+        name="amount"
+        render={({ field, fieldState }) => {
+          useEffect(() => {
+            if (fieldState.error) {
+              setShowAmountError(true);
+              const timer = setTimeout(() => setShowAmountError(false), 1500);
+              return () => clearTimeout(timer);
+            }
+          }, [fieldState.error]);
+
+          const showMathPreview =
+            !!field.value && field.value.toString().match(/[+\-*/]/) !== null;
+
+          return (
+            <FormItem className="flex flex-col">
+              <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
+                <Banknote className="w-3 h-3" /> {t("amount")}
+              </FormLabel>
+
+              <Tooltip
+                open={
+                  showMathPreview || (showAmountError && !!fieldState.error)
+                }
+              >
+                <TooltipTrigger asChild>
+                  <div className="relative">
                     <Input
                       {...field}
-                      placeholder="YYYY-MM-DD 또는 '오늘', '어제'"
-                      className="h-12 bg-slate-50/80 border-none rounded-2xl text-xs font-bold pr-10 focus-visible:ring-2 focus-visible:ring-blue-500/20 transition-all"
-                      // 사용자가 입력을 마치고 나갈 때 스마트 파싱 적용
-                      onBlur={(e) => {
-                        const parsed = smartParseDate(e.target.value);
-                        field.onChange(parsed);
+                      type="text"
+                      placeholder="0"
+                      className={cn(
+                        "h-12 bg-slate-50/80 border-none rounded-2xl text-sm font-bold placeholder:text-slate-300 transition-all",
+                        showAmountError && fieldState.error
+                          ? "ring-2 ring-rose-500/50 bg-rose-50"
+                          : "focus-visible:ring-2 focus-visible:ring-blue-500/20",
+                      )}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => {
+                        let val = e.target.value;
+                        if (
+                          val.length > 1 &&
+                          val.startsWith("0") &&
+                          !val.startsWith("0.")
+                        ) {
+                          val = val.substring(1);
+                        }
+                        field.onChange(val);
+                        const result = evaluateExpression(val);
+                        if (result !== null) {
+                          setPreview(
+                            new Intl.NumberFormat().format(Number(result)),
+                          );
+                        }
                       }}
-                      // 엔터키 입력 시 즉시 파싱
+                      onBlur={() => {
+                        const result = evaluateExpression(
+                          field.value?.toString() || "",
+                        );
+                        if (result !== null) {
+                          const formatted = new Intl.NumberFormat().format(
+                            Number(result),
+                          );
+                          field.onChange(formatted);
+                        }
+                      }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
-                          const parsed = smartParseDate(
-                            (e.target as HTMLInputElement).value
-                          );
-                          field.onChange(parsed);
                           (e.target as HTMLInputElement).blur();
                         }
                       }}
                     />
-
-                    {/* 달력 팝오버 버튼 */}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 text-slate-400 hover:bg-transparent hover:text-blue-500 transition-colors"
-                        >
-                          <Calendar className="w-4 h-4" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0 z-50" align="end">
-                        <CalendarPicker
-                          mode="single"
-                          selected={
-                            field.value ? parseISO(field.value) : undefined
-                          }
-                          onSelect={(date) => {
-                            if (date) {
-                              field.onChange(format(date, "yyyy-MM-dd"));
-                            }
-                          }}
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
                   </div>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field, fieldState }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
-                    <Banknote className="w-3 h-3" /> {t("amount")}
-                  </FormLabel>
-
-                  <Tooltip
-                    open={
-                      !!field.value &&
-                      field.value.toString().match(/[+\-*/]/) !== null
-                    }
-                  >
-                    <TooltipTrigger asChild>
-                      <div className="relative">
-                        <Input
-                          {...field}
-                          type="text" // 수식 입력을 위해 text로 변경
-                          placeholder="0"
-                          className={cn(
-                            "h-12 bg-slate-50/80 border-none rounded-2xl text-sm font-bold placeholder:text-slate-300 transition-all",
-                            fieldState.error
-                              ? "ring-2 ring-rose-500"
-                              : "focus-visible:ring-2 focus-visible:ring-blue-500/20"
-                          )}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            field.onChange(val);
-
-                            // 실시간 계산 결과 업데이트
-                            const result = evaluateExpression(val);
-                            if (result !== null) {
-                              setPreview(
-                                new Intl.NumberFormat().format(Number(result))
-                              );
-                            }
-                          }}
-                          onBlur={() => {
-                            // 포커스 아웃 시 수식을 최종 결과값으로 변환
-                            const result = evaluateExpression(
-                              field.value?.toString() || ""
-                            );
-                            if (result !== null) {
-                              field.onChange(result); // 최종 숫자값 저장
-                            }
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              (e.target as HTMLInputElement).blur();
-                            }
-                          }}
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      side="top"
-                      className="bg-blue-600 text-white border-none text-xs font-bold px-3 py-1.5 rounded-lg shadow-xl mb-1"
-                    >
-                      {fieldState.error
-                        ? fieldState.error.message
-                        : `계산 결과: ${preview}원`}
-                    </TooltipContent>
-                  </Tooltip>
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* 4. 내용 및 메모 */}
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field, fieldState }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
-                  <FileText className="w-3 h-3" /> {t("description")}
-                </FormLabel>
-                <Input
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
                   className={cn(
-                    "h-12 bg-slate-50/80 border-none rounded-2xl text-sm font-bold placeholder:text-slate-300",
-                    fieldState.error && "ring-2 ring-rose-500"
+                    "border-none text-xs font-bold px-3 py-1.5 rounded-lg shadow-xl mb-1",
+                    showAmountError && fieldState.error
+                      ? "bg-rose-500 text-white"
+                      : "bg-blue-600 text-white",
                   )}
-                  placeholder="내용 입력"
-                  {...field}
-                />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="remarks"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
-                  <Scroll className="w-3 h-3" /> {t("remarks")}
-                </FormLabel>
-                <Textarea
-                  className="resize-none rounded-3xl border-none bg-slate-50/80 p-5 text-sm font-medium placeholder:text-slate-300 min-h-[100px]"
-                  placeholder="메모를 입력하세요"
-                  {...field}
-                />
-              </FormItem>
-            )}
-          />
-        </div>
+                >
+                  {showAmountError && fieldState.error
+                    ? fieldState.error.message
+                    : `계산 결과: ${preview}원`}
+                </TooltipContent>
+              </Tooltip>
+            </FormItem>
+          );
+        }}
+      />
 
-        {/* 5. 하단 버튼 영역 */}
-        <div className="shrink-0 pt-6 bg-white flex gap-3 mt-auto">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={handleSheetClose}
-            className="flex-1 h-14 text-slate-400 font-bold hover:bg-slate-50 rounded-2xl transition-colors"
-          >
-            취소
-          </Button>
-          {editingTransaction && (
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1 h-14 rounded-2xl border-slate-100 text-rose-500 hover:bg-rose-50"
-              onClick={() => {
-                confirm({
-                  title: "내역 삭제",
-                  description:
-                    "이 내역을 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.",
-                  onConfirm: async () => {
-                    if (editingTransaction.id) {
-                      deleteTransaction(editingTransaction.id);
-                      handleSheetClose();
-                    }
-                  },
-                });
-              }}
-            >
-              {t("delete")}
-            </Button>
-          )}
-          <Button
-            type="submit"
-            className="flex-[2] h-14 bg-black hover:bg-slate-800 text-white rounded-2xl font-black text-base transition-all shadow-xl shadow-slate-100 active:scale-[0.98]"
-          >
-            저장
-          </Button>
-        </div>
-      </form>
-    </Form>
+      {/* 날짜 (Date) */}
+      <FormField
+        control={form.control}
+        name="date"
+        render={({ field, fieldState }) => {
+          useEffect(() => {
+            if (fieldState.error) {
+              setShowDateError(true);
+              const timer = setTimeout(() => setShowDateError(false), 1500);
+              return () => clearTimeout(timer);
+            }
+          }, [fieldState.error]);
+
+          return (
+            <FormItem className="flex flex-col">
+              <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
+                <Calendar className="w-3 h-3" /> {t("date")}
+              </FormLabel>
+
+              <TemporaryErrorTooltip
+                error={fieldState.error}
+                show={showDateError}
+              >
+                <div className="relative group">
+                  <Input
+                    {...field}
+                    placeholder="YYYY-MM-DD 또는 '오늘', '어제'"
+                    className={cn(
+                      "h-12 bg-slate-50/80 border-none rounded-2xl text-xs font-bold pr-10 transition-all",
+                      showDateError && fieldState.error
+                        ? "ring-2 ring-rose-500/50 bg-rose-50"
+                        : "focus-visible:ring-2 focus-visible:ring-blue-500/20",
+                    )}
+                    onBlur={(e) => {
+                      const parsed = smartParseDate(e.target.value);
+                      field.onChange(parsed);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        const parsed = smartParseDate(
+                          (e.target as HTMLInputElement).value,
+                        );
+                        field.onChange(parsed);
+                        (e.target as HTMLInputElement).blur();
+                      }
+                    }}
+                  />
+
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-10 w-10 text-slate-400 hover:bg-transparent hover:text-blue-500 transition-colors"
+                      >
+                        <Calendar className="w-4 h-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 z-50" align="end">
+                      <CalendarPicker
+                        mode="single"
+                        selected={
+                          field.value ? parseISO(field.value) : undefined
+                        }
+                        onSelect={(date) => {
+                          if (date) {
+                            field.onChange(format(date, "yyyy-MM-dd"));
+                          }
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </TemporaryErrorTooltip>
+            </FormItem>
+          );
+        }}
+      />
+    </div>
+  );
+};
+
+/**
+ * 5. 메모 (Remarks)
+ */
+const RemarksSection: React.FC<{
+  form: UseFormReturn<TransactionFormValues>;
+}> = ({ form }) => {
+  const { t } = useTranslation();
+
+  return (
+    <FormField
+      control={form.control}
+      name="remarks"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
+            <Scroll className="w-3 h-3" /> {t("remarks")}
+          </FormLabel>
+          <Textarea
+            className="resize-none rounded-3xl border-none bg-slate-50/80 p-5 text-sm font-medium placeholder:text-slate-300 min-h-[80px]"
+            placeholder="메모를 입력하세요"
+            {...field}
+          />
+        </FormItem>
+      )}
+    />
+  );
+};
+
+/**
+ * 하단 버튼 영역
+ */
+const ActionButtons: React.FC<{
+  onCancel: () => void;
+  onDelete?: () => void;
+}> = ({ onCancel, onDelete }) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="shrink-0 pt-6 bg-white flex gap-3 mt-auto">
+      <Button
+        type="button"
+        variant="ghost"
+        onClick={onCancel}
+        className="flex-1 h-14 text-slate-400 font-bold hover:bg-slate-50 rounded-2xl transition-colors"
+      >
+        취소
+      </Button>
+      {onDelete && (
+        <Button
+          type="button"
+          variant="outline"
+          className="flex-1 h-14 rounded-2xl border-slate-100 text-rose-500 hover:bg-rose-50"
+          onClick={onDelete}
+        >
+          {t("delete")}
+        </Button>
+      )}
+      <Button
+        type="submit"
+        className="flex-[2] h-14 bg-black hover:bg-slate-800 text-white rounded-2xl font-black text-base transition-all shadow-xl shadow-slate-100 active:scale-[0.98]"
+      >
+        저장
+      </Button>
+    </div>
   );
 };
 

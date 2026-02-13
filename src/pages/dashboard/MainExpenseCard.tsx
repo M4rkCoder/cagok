@@ -73,7 +73,7 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
               </div>
             </div>
           </div>
-          <div className="mt-3">
+          <div className="mt-3 mb-6">
             <ComparisonCardFooter
               metric={comparison}
               expenseRate={expenseRate}

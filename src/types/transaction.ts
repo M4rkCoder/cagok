@@ -53,6 +53,8 @@ export interface QuickEntryTransactionRow {
   description: string;
   amount: string;
   remarks: string;
+  is_valid?: boolean;
+  error_msg?: string;
 }
 
 export interface CellProps extends CellContext<QuickEntryTransactionRow, any> {

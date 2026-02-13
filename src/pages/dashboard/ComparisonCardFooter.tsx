@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ComparisonMetric } from "@/types/dashboard";
 import { CardFooter } from "@/components/ui/card";
+import { Wallet, TrendingUp, TrendingDown, PieChart, Info } from "lucide-react";
 
 interface Props {
   metric: ComparisonMetric | null;
@@ -57,7 +58,11 @@ export function ComparisonCardFooter({
 
   if (hasDailyAverage) {
     sentences.push(
-      <div key="daily-avg" className="flex items-center gap-1">
+      <div
+        key="daily-avg"
+        className="flex items-center gap-1.5 whitespace-nowrap"
+      >
+        <Wallet className="w-3.5 h-3.5 text-slate-400" />
         <span>하루 평균</span>
         <span className="text-slate-900 font-extrabold bg-slate-100 px-1.5 py-0.5 rounded tracking-tighter">
           {formatKRW(dailyAverage!)}
@@ -70,36 +75,58 @@ export function ComparisonCardFooter({
   if (!isEmpty) {
     sentences.push(
       isSame ? (
-        <span key="same-month">지난 달과 동일함</span>
+        <div
+          key="same-month"
+          className="flex items-center gap-1.5 whitespace-nowrap"
+        >
+          <Info className="w-3.5 h-3.5 text-slate-400" />
+          <span>지난 달과 동일함</span>
+        </div>
       ) : (
-        <span key="month-comparison">
-          지난 달보다
+        <div
+          key="month-comparison"
+          className="flex items-center gap-1.5 whitespace-nowrap"
+        >
           {isIncrease ? (
-            <>
-              <span className="text-green-500 bg-slate-50 px-1 py-0.5 rounded">
-                {formatValue()}
-              </span>
-              늘었어요.
-            </>
+            <TrendingUp className="w-3.5 h-3.5 text-red-400" />
           ) : (
-            <>
-              <span className="text-red-500 bg-slate-50 px-1 py-0.5 rounded">
-                {formatValue()}
-              </span>
-              줄었어요.
-            </>
+            <TrendingDown className="w-3.5 h-3.5 text-blue-400" />
           )}
-        </span>
+          <span>
+            전월 대비
+            {isIncrease ? (
+              <>
+                <span className="text-green-500 bg-slate-50 px-1 py-0.5 rounded ml-1">
+                  {formatValue()}
+                </span>
+                늘었어요.
+              </>
+            ) : (
+              <>
+                <span className="text-red-500 bg-slate-50 px-1 py-0.5 rounded ml-1">
+                  {formatValue()}
+                </span>
+                줄었어요.
+              </>
+            )}
+          </span>
+        </div>
       ),
     );
   }
 
   if (hasExpenseRate) {
     sentences.push(
-      <span key="expense-rate">
-        수입의 <span className={expenseRateColor()}>{expenseRate}%</span>를
-        썼어요.
-      </span>,
+      <div
+        key="expense-rate"
+        className="flex items-center gap-1.5 whitespace-nowrap"
+      >
+        <PieChart className="w-3.5 h-3.5 text-slate-400" />
+        <span>
+          수입의 <span className={expenseRateColor()}>{expenseRate}%</span>를
+          썼어요.
+        </span>
+      </div>,
     );
   }
 
@@ -112,7 +139,7 @@ export function ComparisonCardFooter({
       setCurrentSentenceIndex(
         (prevIndex) => (prevIndex + 1) % sentences.length,
       );
-    }, 3500); // Roll every 4.5 seconds
+    }, 3500); // Roll every 3.5 seconds
 
     return () => clearInterval(interval);
   }, [isPaused, isExpanded, sentences.length]);
@@ -122,14 +149,14 @@ export function ComparisonCardFooter({
   const handleClick = () => setIsExpanded((prev) => !prev);
 
   const variants = {
-    enter: { opacity: 0, y: -10 }, // Adjusted to move slightly up
-    center: { opacity: 1, y: -10 }, // Adjusted to move up
-    exit: { opacity: 0, y: -10 }, // Adjusted to maintain relative movement
+    enter: { opacity: 0, y: 15 },
+    center: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -15 },
   };
 
   return (
     <CardFooter
-      className="pt-0 text-sm min-h-[40px] text-muted-foreground cursor-pointer relative overflow-hidden"
+      className="pt-0 pb-0 text-sm min-h-[40px] text-muted-foreground cursor-pointer relative overflow-hidden"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
@@ -137,15 +164,15 @@ export function ComparisonCardFooter({
       {sentences.length === 0 ? (
         <div className="w-full text-center">데이터가 없습니다.</div>
       ) : isExpanded ? (
-        <div className="flex flex-col gap-1 w-full">
+        <div className="flex flex-col gap-1 w-full py-2">
           {sentences.map((s, index) => (
-            <div key={`expanded-${index}`}>{s}</div>
+            <div key={`expanded-${index}`} className="whitespace-nowrap">
+              {s}
+            </div>
           ))}
         </div>
       ) : (
-        <div className="relative w-full h-full flex items-start justify-start">
-          {" "}
-          {/* Changed items-center to items-start */}
+        <div className="relative w-full h-full flex items-center justify-start">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={currentSentenceIndex}
@@ -154,7 +181,7 @@ export function ComparisonCardFooter({
               animate="center"
               exit="exit"
               transition={{ duration: 0.5 }}
-              className="absolute w-full"
+              className="absolute w-full flex items-center"
             >
               {sentences[currentSentenceIndex]}
             </motion.div>

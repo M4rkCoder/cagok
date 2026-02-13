@@ -63,6 +63,18 @@ export const AmountCell = ({
     }
   }, [isActive]);
 
+  useEffect(() => {
+    if (error && error.message && error.timestamp) {
+      setShowErrorVisuals(true);
+      const timer = setTimeout(() => {
+        setShowErrorVisuals(false);
+      }, 2000); // 2 second
+      return () => clearTimeout(timer);
+    } else {
+      setShowErrorVisuals(false);
+    }
+  }, [error]);
+
   const handleBlur = () => {
     // 1. 계산 전 콤마 제거
     const rawValue = String(value || "").replace(/,/g, "");

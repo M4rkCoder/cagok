@@ -9,8 +9,6 @@ import {
 import { QuickEntryTransactionRow } from "@/types";
 import { smartParseDate } from "@/lib/utils";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { readTextFile, writeTextFile, readFile } from "@tauri-apps/plugin-fs";
-import Papa from "papaparse";
 import { useAppStore } from "@/store/useAppStore";
 import { invoke } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
@@ -64,7 +62,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
   });
 
   const [data, setData] = useState<QuickEntryTransactionRow[]>(() =>
-    Array.from({ length: initialRows }, createEmptyRow)
+    Array.from({ length: initialRows }, createEmptyRow),
   );
   const [activeCell, setActiveCell] = useState<{
     rowIndex: number;
@@ -81,8 +79,8 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
     (rowIndex: number, columnId: string, value: any) => {
       setData((prev) =>
         prev.map((row, i) =>
-          i === rowIndex ? { ...row, [columnId]: value } : row
-        )
+          i === rowIndex ? { ...row, [columnId]: value } : row,
+        ),
       );
 
       setRowErrors((prevErrors) => {
@@ -96,13 +94,13 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
         return newErrors;
       });
     },
-    [data]
+    [data],
   );
 
   const onDragStart = (
     e: React.MouseEvent,
     startRow: number,
-    startCol: number
+    startCol: number,
   ) => {
     e.preventDefault();
     const colKeys = [
@@ -221,7 +219,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
     // 벡엔드 전송
     if (transactionsToSubmit.length > 0) {
       const loadingId = toast.loading(
-        `${transactionsToSubmit.length}건 저장 중...`
+        `${transactionsToSubmit.length}건 저장 중...`,
       );
       try {
         await invoke("bulk_create_transactions", {
@@ -251,7 +249,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
           const rowsToAdd = totalRowsNeeded - newData.length;
           const newEmptyRows = Array.from(
             { length: rowsToAdd },
-            createEmptyRow
+            createEmptyRow,
           );
           newData = [...newData, ...newEmptyRows];
         }
@@ -281,7 +279,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
         return newData;
       });
     },
-    [createEmptyRow]
+    [createEmptyRow],
   );
 
   const handlePaste = useCallback(
@@ -300,7 +298,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
         batchUpdate(rowIndex, colIdx, rows);
       }
     },
-    [batchUpdate]
+    [batchUpdate],
   );
   const confirmUpdate = useCallback(
     (rowIndex: number, columnId: string, value: any, initialValue: any) => {
@@ -314,14 +312,14 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
       // 3. 데이터 업데이트
       updateData(rowIndex, columnId, finalValue);
     },
-    [updateData]
+    [updateData],
   );
 
   const handleDownloadTemplate = async () => {
     try {
       // 1. 파일 저장 다이얼로그 (확장자를 xlsx로 변경)
       const filePath = await save({
-        defaultPath: "transactions_template.xlsx",
+        defaultPath: "template.xlsx",
         filters: [{ name: "Excel Files", extensions: ["xlsx"] }],
       });
 
@@ -354,7 +352,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
       // 수정된 백엔드에 맞춰 'categories' 인자를 제거하고 'path'만 전달합니다.
       const previewData = await invoke<ExcelPreviewRow[]>(
         "parse_transaction_file",
-        { path: selected }
+        { path: selected },
       );
 
       // 3. UI 데이터 업데이트
@@ -372,7 +370,9 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
             description: row.description,
             amount: row.amount,
             remarks: row.remarks,
-          })
+            is_valid: row.is_valid,
+            error_msg: row.error_msg,
+          }),
         );
 
         return [...existingFilled, ...mappedNewRows];
@@ -382,7 +382,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
       const invalidCount = previewData.filter((r) => !r.is_valid).length;
       if (invalidCount > 0) {
         toast.warning(
-          `${invalidCount}건의 데이터에 확인(카테고리 등)이 필요합니다.`
+          `${invalidCount}건의 데이터에 확인(카테고리 등)이 필요합니다.`,
         );
       } else {
         toast.success(`${previewData.length}건을 성공적으로 읽어왔습니다.`);

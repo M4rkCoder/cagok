@@ -14,15 +14,12 @@ import {
   ChartArea,
   Pencil,
   Zap,
-  Recycle,
-  CircleEqual,
   RefreshCw,
-  PlusIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FinanceModeRounded from "./FinanceModeRounded";
 import { useAppStore } from "@/store/useAppStore";
-import { Link, useLocation, NavLink } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import runSeed from "@/db/seed";
 import { cn } from "@/lib/utils";
 import {
@@ -32,8 +29,8 @@ import {
   AccordionTrigger,
 } from "./ui/accordion";
 import { useEffect, useState } from "react";
-import { Badge } from "./ui/badge";
-import { PlusBadge, ProIcon } from "./ui/PlusBadge";
+import { ProIcon } from "./ui/PlusBadge";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -113,9 +110,18 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
               <span className="text-[9px] font-black text-muted-foreground/50 tracking-[0.2em] leading-none mb-1 uppercase">
                 C'AGOK
               </span>
-              <span className="text-sm font-bold text-foreground leading-none truncate">
-                {appName || ""}
-              </span>
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={appName}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-sm font-bold text-foreground leading-none truncate block"
+                >
+                  {appName || ""}
+                </motion.span>
+              </AnimatePresence>
             </div>
           )}
         </Link>

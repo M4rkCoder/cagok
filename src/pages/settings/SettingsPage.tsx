@@ -2,7 +2,7 @@ import { useState } from "react";
 import GeneralSettings from "./GeneralSettings";
 import DbSettings from "./DbSettings";
 import CategorySettings from "./CategorySettings";
-import RecurringSettings from "./RecurringSettings";
+import RecurringSettings from "../transactions/RecurringSettings";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -50,7 +50,7 @@ const SettingsPage = () => {
                 "relative px-4 py-3 text-sm font-medium transition-colors outline-none",
                 activeSection === tab.id
                   ? "text-blue-600"
-                  : "text-slate-500 hover:text-slate-700"
+                  : "text-slate-500 hover:text-slate-700",
               )}
             >
               {tab.label}

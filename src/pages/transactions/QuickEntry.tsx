@@ -5,7 +5,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Save, Upload, Download } from "lucide-react"; // Added Icons
+import { Minus, Plus, Save, Upload, Download, AlertCircle } from "lucide-react"; // Added Icons
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
 import { useTransactionStore } from "@/store/useTransactionStore";
@@ -17,6 +17,12 @@ import { InputCell } from "./components/InputCell";
 import CategoryCell from "./components/CategoryCell";
 import { AmountCell } from "./components/AmountCell";
 import { useHeaderStore } from "@/store/useHeaderStore";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const QuickEntry: React.FC = () => {
   const { categoryList: categories } = useAppStore();
@@ -63,6 +69,32 @@ const QuickEntry: React.FC = () => {
 
   const columns = useMemo<ColumnDef<QuickEntryTransactionRow>[]>(
     () => [
+      {
+        id: "status",
+        header: "",
+        size: 30,
+        cell: ({ row }) => {
+          const isValid = row.original.is_valid !== false; // Default to true if undefined
+          const errorMsg = row.original.error_msg;
+
+          if (isValid) return null;
+
+          return (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex justify-center items-center w-full h-full">
+                    <AlertCircle className="w-4 h-4 text-red-500" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{errorMsg || "유효하지 않은 데이터입니다."}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          );
+        },
+      },
       {
         id: "rowNumber",
         header: "#",
@@ -232,7 +264,10 @@ const QuickEntry: React.FC = () => {
               {table.getRowModel().rows.map((row) => (
                 <tr
                   key={row.id}
-                  className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"
+                  className={cn(
+                    "border-b border-slate-100 last:border-0 hover:bg-slate-50/50",
+                    row.original.is_valid === false && "bg-red-50 hover:bg-red-100/50"
+                  )}
                 >
                   {row.getVisibleCells().map((cell, idx) => {
                     const colIdx = idx;

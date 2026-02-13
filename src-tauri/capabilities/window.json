@@ -14,6 +14,7 @@
     "core:window:allow-show",
     "core:window:allow-set-min-size",
     "core:window:allow-is-maximized",
+    "core:window:allow-internal-toggle-maximize",
     "core:event:allow-listen",
     "core:event:allow-emit",
     "dialog:allow-open",
