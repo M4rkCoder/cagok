@@ -10,6 +10,8 @@ import { CategoryMonthlyTrendSection } from "./CategoryMonthlyTrendSection";
 import { CategoryYearlyTreemap } from "./CategoryYearlyTreemap";
 import { useAppStore } from "@/store/useAppStore";
 import { useStatisticsStore } from "@/store/useStatisticsStore";
+import { BadgeStatistics } from "./BadgeStatistics";
+import { DayOfWeekChart } from "./DayOfWeekChart";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const COLORS = [
@@ -42,10 +44,10 @@ export default function StatisticsPage() {
 
   const [viewMode, setViewMode] = useState<"year" | "month">("month");
   const [selectedYear, setSelectedYear] = useState<number>(
-    new Date().getFullYear()
+    new Date().getFullYear(),
   );
   const [selectedMonth, setSelectedMonth] = useState<string>(
-    format(new Date(), "yyyy-MM")
+    format(new Date(), "yyyy-MM"),
   );
   const [dialogState, setDialogState] = useState<DialogState>({
     open: false,
@@ -64,8 +66,10 @@ export default function StatisticsPage() {
     monthlyFinancialSummary,
     financialSummaryStats,
     categoryMonthlyAmounts,
+    badgeStats,
     loadYearlyStatistics,
     loadCategoryTrend,
+    loadBadgeStatistics,
   } = useStatisticsStore();
 
   const { categoryList: categories } = useAppStore();
@@ -93,7 +97,7 @@ export default function StatisticsPage() {
               className={cn(
                 "h-full text-xs transition-all",
                 "data-[state=active]:bg-white data-[state=active]:text-slate-950 data-[state=active]:shadow-sm data-[state=active]:font-bold",
-                "text-slate-500"
+                "text-slate-500",
               )}
             >
               이번 달 기준
@@ -103,14 +107,14 @@ export default function StatisticsPage() {
               className={cn(
                 "h-full text-xs transition-all",
                 "data-[state=active]:bg-white data-[state=active]:text-slate-950 data-[state=active]:shadow-sm data-[state=active]:font-bold",
-                "text-slate-500"
+                "text-slate-500",
               )}
             >
               연도별
             </TabsTrigger>
           </TabsList>
         </Tabs>
-      </div>
+      </div>,
     );
     return () => resetHeader();
   }, [selectedYear, selectedMonth, viewMode, setHeader, resetHeader]);
@@ -124,6 +128,7 @@ export default function StatisticsPage() {
     // 2. 통합 데이터 로드 (최근 12개월 롤링)
     loadYearlyStatistics(baseMonth);
     loadCategoryTrend(baseMonth, null);
+    loadBadgeStatistics(baseMonth);
   }, [selectedYear, selectedMonth, viewMode]);
 
   const formatCurrency = (amount: number) => {
@@ -154,6 +159,9 @@ export default function StatisticsPage() {
 
   return (
     <div className="px-4 py-6 space-y-6">
+      {/* 0. 배지 통계 */}
+      <BadgeStatistics stats={badgeStats} formatCurrency={formatCurrency} />
+
       {/* 1. 요약 카드 */}
       <SummaryCards
         stats={financialSummaryStats ?? emptyFinancialSummaryStats}
@@ -166,6 +174,9 @@ export default function StatisticsPage() {
         symmetricMax={symmetricMax}
         formatCurrency={formatCurrency}
       />
+      <CategoryYearlyTreemap
+        baseMonth={viewMode === "year" ? `${selectedYear}-12` : selectedMonth}
+      />
 
       {/* 3. 월별 카테고리별 상세 추이 (필터 포함 - 분리 권장) */}
       <CategoryMonthlyTrendSection
@@ -175,13 +186,11 @@ export default function StatisticsPage() {
         categoryMonthlyAmounts={categoryMonthlyAmounts}
         formatCurrency={formatCurrency}
       />
-      <CategoryYearlyTreemap
+
+      {/* 4. 요일별 분석 차트 */}
+      <DayOfWeekChart
         baseMonth={viewMode === "year" ? `${selectedYear}-12` : selectedMonth}
       />
-
-      {/* 다이얼로그들 */}
-      {/* <TransactionListDialog />
-      <DailyTransactionsDialog /> */}
     </div>
   );
 }

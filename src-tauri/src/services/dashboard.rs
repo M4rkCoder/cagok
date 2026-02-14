@@ -2,7 +2,7 @@ use super::{ComparisonMetric, ComparisonType};
 use crate::db::repository::DashboardRepository;
 use crate::db::{
     CategoryExpense, CategoryMonthlyAmount, DailyExpense, FinancialSummaryStats, MetricStats,     MonthlyFinancialSummaryItem, MonthlyOverview, TransactionWithCategory, YearlySummaryItem,
-YearlyDashboardData, DailyCategoryTransaction, TreemapNode, CategoryFixedVariableSummary,
+YearlyDashboardData, DailyCategoryTransaction, TreemapNode, CategoryFixedVariableSummary, BadgeStats, DayOfWeekResponse,
 };
 use rusqlite::Connection;
 use chrono::{Local, NaiveDate, Duration, Datelike, Months};
@@ -242,6 +242,7 @@ impl DashboardService {
         let mut expense_totals: Vec<f64> = Vec::new();
         let mut fixed_expense_totals: Vec<f64> = Vec::new();
         let mut net_income_totals: Vec<f64> = Vec::new();
+        let mut months: Vec<String> = Vec::new();
     
         // 2. 날짜 타임라인 생성 (과거 11개월 전 ~ 현재 월까지)
         let end_date = NaiveDate::parse_from_str(&format!("{}-01", base_month), "%Y-%m-%d")
@@ -260,13 +261,14 @@ impl DashboardService {
             expense_totals.push(total_expense);
             fixed_expense_totals.push(fixed_expense);
             net_income_totals.push(total_income - total_expense);
+            months.push(year_month);
         }
     
         // 3. 통계 계산 (12개 데이터 포인트를 기반으로 최대/최소/평균 산출)
-        let income_stats = Self::calculate_metric_stats(&income_totals);
-        let expense_stats = Self::calculate_metric_stats(&expense_totals);
-        let fixed_expense_stats = Self::calculate_metric_stats(&fixed_expense_totals);
-        let net_income_stats = Self::calculate_metric_stats(&net_income_totals);
+        let income_stats = Self::calculate_metric_stats(&income_totals, &months);
+        let expense_stats = Self::calculate_metric_stats(&expense_totals, &months);
+        let fixed_expense_stats = Self::calculate_metric_stats(&fixed_expense_totals, &months);
+        let net_income_stats = Self::calculate_metric_stats(&net_income_totals, &months);
     
         Ok(FinancialSummaryStats {
             income: income_stats,
@@ -277,22 +279,54 @@ impl DashboardService {
     }
 
     // Helper function to calculate MetricStats for a given vector of monthly amounts
-    fn calculate_metric_stats(amounts: &Vec<f64>) -> MetricStats {
+    fn calculate_metric_stats(amounts: &Vec<f64>, months: &Vec<String>) -> MetricStats {
         if amounts.is_empty() {
             return MetricStats::default();
         }
 
         let total: f64 = amounts.iter().sum();
-        let count = amounts.len() as i32;
+        
+        // 0이 아닌 값들의 인덱스를 추출 (통계 왜곡 방지)
+        let non_zero_indices: Vec<usize> = amounts.iter()
+            .enumerate()
+            .filter(|(_, &val)| val.abs() > f64::EPSILON)
+            .map(|(i, _)| i)
+            .collect();
+
+        let count = non_zero_indices.len() as i32;
         let average = if count > 0 { total / count as f64 } else { 0.0 };
-        let max = *amounts.iter().max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)).unwrap_or(&0.0);
-        let min = *amounts.iter().min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)).unwrap_or(&0.0);
+        
+        let (max_val, min_val, max_month, min_month) = if count > 0 {
+            // 첫 번째 0이 아닌 값을 초기값으로 설정
+            let first_idx = non_zero_indices[0];
+            let mut max_v = amounts[first_idx];
+            let mut min_v = amounts[first_idx];
+            let mut max_m = months.get(first_idx).cloned();
+            let mut min_m = months.get(first_idx).cloned();
+
+            for &i in non_zero_indices.iter().skip(1) {
+                let val = amounts[i];
+                if val > max_v {
+                    max_v = val;
+                    max_m = months.get(i).cloned();
+                }
+                if val < min_v {
+                    min_v = val;
+                    min_m = months.get(i).cloned();
+                }
+            }
+            (max_v, min_v, max_m, min_m)
+        } else {
+            (0.0, 0.0, None, None)
+        };
         
         MetricStats {
             total,
             average,
-            max,
-            min,
+            max: max_val,
+            min: min_val,
+            max_month,
+            min_month,
         }
     }
 
@@ -501,5 +535,22 @@ impl DashboardService {
         });
 
         Ok(result)
+    }
+
+    pub fn get_badge_statistics(
+        conn: &Connection,
+        base_month: &str,
+    ) -> Result<BadgeStats, String> {
+        DashboardRepository::get_badge_stats(conn, base_month)
+            .map_err(|e| format!("Failed to get badge statistics: {}", e))
+    }
+
+    pub fn get_day_of_week_stats(
+        conn: &Connection,
+        base_month: &str,
+        tx_type: i32,
+    ) -> Result<DayOfWeekResponse, String> {
+        DashboardRepository::get_day_of_week_stats(conn, base_month, tx_type)
+            .map_err(|e| format!("Failed to get day of week stats: {}", e))
     }
 }

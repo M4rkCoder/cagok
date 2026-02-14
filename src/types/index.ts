@@ -34,4 +34,8 @@ export type {
   TreemapNode,
   DailyDetailResponse,
   CategoryFixedVariableSummary,
+  BadgeStats,
+  DayOfWeekCategoryStat,
+  DayOfWeekTotalStat,
+  DayOfWeekResponse,
 } from "./dashboard";

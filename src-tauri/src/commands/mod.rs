@@ -48,6 +48,8 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         dashboard::get_expense_treemap,
         dashboard::get_daily_chart_detail,
         dashboard::get_monthly_fixed_variable_transactions,
+        dashboard::get_badge_statistics_command,
+        dashboard::get_day_of_week_stats_command,
         //recurring
         recurring::get_recurring_transactions,
         recurring::create_recurring_transaction,

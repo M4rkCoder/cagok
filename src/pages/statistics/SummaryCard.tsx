@@ -204,12 +204,22 @@ function CombinedVerticalCard({
                             최대
                           </p>
                           <p>{formatCurrency(item.data.max)}</p>
+                          {item.data.maxMonth && (
+                            <p className="text-[9px] text-slate-400 font-medium">
+                              ({item.data.maxMonth})
+                            </p>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="text-slate-400 text-[9px] font-medium uppercase">
                             최소
                           </p>
                           <p>{formatCurrency(item.data.min)}</p>
+                          {item.data.minMonth && (
+                            <p className="text-[9px] text-slate-400 font-medium">
+                              ({item.data.minMonth})
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>

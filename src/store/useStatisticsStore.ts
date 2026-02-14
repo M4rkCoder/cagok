@@ -5,6 +5,7 @@ import {
   MonthlyFinancialSummaryItem,
   CategoryMonthlyAmount,
   MetricStats,
+  BadgeStats,
 } from "@/types";
 
 // 기본값 정의
@@ -27,6 +28,7 @@ interface StatisticsState {
   monthlyFinancialSummary: MonthlyFinancialSummaryItem[];
   financialSummaryStats: FinancialSummaryStats | null;
   categoryMonthlyAmounts: CategoryMonthlyAmount[];
+  badgeStats: BadgeStats | null;
   loading: boolean;
 
   // 액션
@@ -35,6 +37,7 @@ interface StatisticsState {
     selectedMonth: string,
     categoryId?: number | null
   ) => Promise<void>;
+  loadBadgeStatistics: (selectedMonth: string) => Promise<void>;
   resetStatistics: () => void;
 }
 
@@ -42,6 +45,7 @@ export const useStatisticsStore = create<StatisticsState>((set) => ({
   monthlyFinancialSummary: [],
   financialSummaryStats: null,
   categoryMonthlyAmounts: [],
+  badgeStats: null,
   loading: false,
 
   // 연간 요약 데이터 로드 (금융 요약 통계 + 월별 바 차트용 데이터)
@@ -90,12 +94,27 @@ export const useStatisticsStore = create<StatisticsState>((set) => ({
     }
   },
 
+  loadBadgeStatistics: async (selectedMonth: string) => {
+    try {
+      set({ loading: true });
+      const stats = await invoke<BadgeStats>("get_badge_statistics_command", {
+        baseMonth: selectedMonth,
+      });
+      set({ badgeStats: stats });
+    } catch (error) {
+      console.error("Failed to load badge statistics:", error);
+    } finally {
+      set({ loading: false });
+    }
+  },
+
   // 페이지 이탈 시 데이터 초기화 (필요한 경우)
   resetStatistics: () =>
     set({
       monthlyFinancialSummary: [],
       financialSummaryStats: null,
       categoryMonthlyAmounts: [],
+      badgeStats: null,
       loading: false,
     }),
 }));

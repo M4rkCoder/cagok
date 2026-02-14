@@ -153,11 +153,14 @@ pub struct TreemapNode {
 
 // 재무 요약 통계값 개별 항목
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct MetricStats {
     pub total: f64,
     pub average: f64,
     pub max: f64,
     pub min: f64,
+    pub max_month: Option<String>,
+    pub min_month: Option<String>,
 }
 
 impl Default for MetricStats {
@@ -167,6 +170,8 @@ impl Default for MetricStats {
             average: 0.0,
             max: f64::NEG_INFINITY,
             min: f64::INFINITY,
+            max_month: None,
+            min_month: None,
         }
     }
 }
@@ -200,6 +205,7 @@ pub struct CategoryMonthlyAmount {
     pub category_name: String,
     pub category_icon: String,
     pub total_amount: f64,
+    pub transaction_count: i64,
     pub r#type: i64, // 0: income, 1: expense
 }
 
@@ -282,6 +288,69 @@ pub struct CategoryFixedVariableSummary {
     pub variable_total: f64,
     pub fixed_items: Vec<TransactionWithCategory>,
     pub variable_items: Vec<TransactionWithCategory>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct MonthAmountStat {
+    pub month: String,
+    pub amount: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct CategoryStat {
+    pub name: String,
+    pub icon: String,
+    pub value: f64, // amount or count
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DayOfWeekStat {
+    pub day: String,
+    pub amount: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct BadgeStats {
+    pub max_expense_month: Option<MonthAmountStat>,
+    pub max_income_month: Option<MonthAmountStat>,
+    pub net_income_ratio: f64,
+    pub max_expense_category: Option<CategoryStat>,
+    pub most_frequent_category: Option<CategoryStat>,
+    pub max_expense_day_of_week: Option<DayOfWeekStat>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DayOfWeekCategoryStat {
+    pub day_of_week: i32, // 0: Sun, 1: Mon, ...
+    pub category_id: i64,
+    pub category_name: String,
+    pub category_icon: String,
+    pub total_amount: f64,
+    pub transaction_count: i64,
+    pub day_count: i64,
+    pub average_amount: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DayOfWeekTotalStat {
+    pub day_of_week: i32,
+    pub total_amount: f64,
+    pub transaction_count: i64,
+    pub day_count: i64, // 해당 요일에 거래가 있었던 일수 (일평균 계산용)
+    pub average_amount: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DayOfWeekResponse {
+    pub categories: Vec<DayOfWeekCategoryStat>,
+    pub totals: Vec<DayOfWeekTotalStat>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

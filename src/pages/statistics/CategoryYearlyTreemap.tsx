@@ -2,11 +2,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
-import { Treemap, ResponsiveContainer } from "recharts";
+import { Treemap, ResponsiveContainer, Tooltip } from "recharts";
 import { useTranslation } from "react-i18next";
-import { CategoryMonthlyAmount } from "@/types"; // 경로 확인 필요
-import { cn } from "@/lib/utils";
+import { CategoryMonthlyAmount } from "@/types";
+import { cn, getThemeColor } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("ko-KR", {
@@ -22,22 +23,14 @@ interface CategoryYearlyTreemapProps {
 
 interface TreemapData {
   name: string;
-  value: number;
+  value: number; // total amount
   fill: string;
   icon?: string;
   percentage: number;
+  average: number;
+  count: number;
   [key: string]: any;
 }
-
-const COLORS = [
-  "#8884d8",
-  "#83a6ed",
-  "#8dd1e1",
-  "#82ca9d",
-  "#a4de6c",
-  "#d0ed57",
-  "#ffc658",
-];
 
 export const CategoryYearlyTreemap: React.FC<CategoryYearlyTreemapProps> = ({
   baseMonth,
@@ -45,8 +38,8 @@ export const CategoryYearlyTreemap: React.FC<CategoryYearlyTreemapProps> = ({
   const { t } = useTranslation();
   const [treemapData, setTreemapData] = useState<TreemapData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewType, setViewType] = useState<"expense" | "income">("expense");
 
-  // 1. fetch 함수 수정: 의존성에서 year 제거, baseMonth 추가
   const fetchCategoryYearlyAmounts = useCallback(async () => {
     if (!baseMonth) return;
 
@@ -57,55 +50,87 @@ export const CategoryYearlyTreemap: React.FC<CategoryYearlyTreemapProps> = ({
         { baseMonth, categoryId: null }
       );
 
-      const aggregatedData: { [key: string]: { total: number; icon: string } } =
-        {};
-      let totalYearlyExpense = 0;
+      const targetType = viewType === "expense" ? 1 : 0;
+      const aggregatedData: {
+        [key: string]: {
+          total: number;
+          icon: string;
+          monthsWithData: number;
+          totalCount: number;
+        };
+      } = {};
+      let totalYearlyAmount = 0;
 
+      // 데이터 집계
       response.forEach((item) => {
-        if (item.type === 1) {
-          // 지출만 합산
+        if (item.type === targetType) {
           if (!aggregatedData[item.category_name]) {
             aggregatedData[item.category_name] = {
               total: 0,
               icon: item.category_icon || "",
+              monthsWithData: 0,
+              totalCount: 0,
             };
           }
           aggregatedData[item.category_name].total += item.total_amount;
-          totalYearlyExpense += item.total_amount;
+          aggregatedData[item.category_name].totalCount += item.transaction_count;
+          
+          if (item.total_amount !== 0) {
+            aggregatedData[item.category_name].monthsWithData += 1;
+          }
+          totalYearlyAmount += item.total_amount;
         }
       });
 
+      // 정렬 및 데이터 가공
       let sortedCategories = Object.entries(aggregatedData)
         .sort(([, dataA], [, dataB]) => dataB.total - dataA.total)
-        .map(([name, data]) => ({ name, value: data.total, icon: data.icon }));
+        .map(([name, data]) => {
+          const average =
+            data.monthsWithData > 0 ? data.total / data.monthsWithData : 0;
+          return {
+            name,
+            value: data.total,
+            icon: data.icon,
+            average,
+            count: data.totalCount,
+          };
+        });
 
+      const totalCategoriesCount = sortedCategories.length;
+      
       const topCategories = sortedCategories.slice(0, 7);
-      const otherCategoriesSum = sortedCategories
-        .slice(7)
-        .reduce((sum, item) => sum + item.value, 0);
+      const otherCategories = sortedCategories.slice(7);
+      
+      const otherTotal = otherCategories.reduce((sum, item) => sum + item.value, 0);
+      const otherCount = otherCategories.reduce((sum, item) => sum + item.count, 0);
 
       const finalTreemapData: TreemapData[] = topCategories.map(
         (item, index) => ({
           name: item.name,
           value: item.value,
-          fill: COLORS[index % COLORS.length],
+          fill: getThemeColor(viewType === "expense" ? "expense" : "income", index, totalCategoriesCount),
           icon: item.icon,
           percentage:
-            totalYearlyExpense > 0
-              ? (item.value / totalYearlyExpense) * 100
+            totalYearlyAmount > 0
+              ? (item.value / totalYearlyAmount) * 100
               : 0,
+          average: item.average,
+          count: item.count,
         })
       );
 
-      if (otherCategoriesSum > 0) {
+      if (otherTotal > 0) {
         finalTreemapData.push({
           name: t("common:other") || "기타",
-          value: otherCategoriesSum,
-          fill: COLORS[topCategories.length % COLORS.length],
+          value: otherTotal,
+          fill: getThemeColor(viewType === "expense" ? "expense" : "income", topCategories.length, totalCategoriesCount),
           percentage:
-            totalYearlyExpense > 0
-              ? (otherCategoriesSum / totalYearlyExpense) * 100
+            totalYearlyAmount > 0
+              ? (otherTotal / totalYearlyAmount) * 100
               : 0,
+          average: 0,
+          count: otherCount,
         });
       }
 
@@ -116,13 +141,12 @@ export const CategoryYearlyTreemap: React.FC<CategoryYearlyTreemapProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [baseMonth, t]); // year -> baseMonth로 변경
+  }, [baseMonth, t, viewType]);
 
   useEffect(() => {
     fetchCategoryYearlyAmounts();
   }, [fetchCategoryYearlyAmounts]);
 
-  // 2. 제목에 표시할 연도/월 가공
   const displayTitleDate = (() => {
     try {
       return format(parseISO(`${baseMonth}-01`), "yyyy년 M월");
@@ -132,10 +156,10 @@ export const CategoryYearlyTreemap: React.FC<CategoryYearlyTreemapProps> = ({
   })();
 
   const CustomizedTreemapContent = (props: any) => {
-    const { depth, x, y, width, height, name, value, fill, icon } = props;
+    const { depth, x, y, width, height, name, value, fill, icon, percentage, average, count } = props;
 
-    // 너무 작은 영역에는 텍스트를 표시하지 않음
-    if (width < 40 || height < 40)
+    // 영역이 너무 작으면 렌더링 생략
+    if (width < 60 || height < 60)
       return (
         <rect
           x={x}
@@ -160,39 +184,59 @@ export const CategoryYearlyTreemap: React.FC<CategoryYearlyTreemapProps> = ({
           }}
         />
         {depth === 1 && (
-          <>
-            <text
-              x={x + width / 2}
-              y={y + height / 2}
-              textAnchor="middle"
-              fill="#fff"
-              fontSize={width < 100 ? 10 : 14}
-              fontWeight="bold"
-            >
-              {icon} {name}
-            </text>
-            <text
-              x={x + width / 2}
-              y={y + height / 2 + 18}
-              textAnchor="middle"
-              fill="#fff"
-              fontSize={width < 100 ? 9 : 12}
-            >
-              {formatCurrency(value)}
-            </text>
-          </>
+          <foreignObject x={x} y={y} width={width} height={height}>
+            <div className="flex h-full w-full flex-col items-center justify-center p-1 text-center text-white overflow-hidden">
+              <div className="font-bold text-sm truncate w-full">
+                {icon} {name}
+              </div>
+              <div className="text-xs font-medium mt-1">
+                {percentage.toFixed(1)}% ({count}건)
+              </div>
+              <div className="text-[10px] opacity-90 mt-0.5">
+                총 {formatCurrency(value)}
+              </div>
+              {average > 0 && (
+                <div className="text-[9px] opacity-80">
+                  (평균 {formatCurrency(average)})
+                </div>
+              )}
+            </div>
+          </foreignObject>
         )}
       </g>
     );
   };
 
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-white p-3 border rounded shadow-lg text-sm z-50">
+          <p className="font-bold mb-1">{data.icon} {data.name}</p>
+          <p>총 금액: {formatCurrency(data.value)}</p>
+          <p>총 건수: {data.count}건</p>
+          <p>비중: {data.percentage.toFixed(1)}%</p>
+          {data.average > 0 && (
+            <p>월 평균: {formatCurrency(data.average)} (0원 제외)</p>
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <Card className={cn("overflow-hidden", loading && "animate-pulse")}>
-      <CardHeader>
-        <CardTitle>
-          {/* year 대신 가공된 날짜 텍스트 사용 */}
-          {displayTitleDate} 기준 1년 지출 분포
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-base font-semibold">
+          {displayTitleDate} 기준 1년 {viewType === "expense" ? "지출" : "수입"} 분포
         </CardTitle>
+        <Tabs value={viewType} onValueChange={(v) => setViewType(v as "expense" | "income")} className="w-auto">
+          <TabsList className="grid w-32 grid-cols-2 h-8">
+            <TabsTrigger value="expense" className="text-xs">지출</TabsTrigger>
+            <TabsTrigger value="income" className="text-xs">수입</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </CardHeader>
       <CardContent className="h-[400px]">
         {loading ? (
@@ -207,7 +251,9 @@ export const CategoryYearlyTreemap: React.FC<CategoryYearlyTreemapProps> = ({
               aspectRatio={4 / 3}
               stroke="#fff"
               content={<CustomizedTreemapContent />}
-            />
+            >
+               <Tooltip content={<CustomTooltip />} />
+            </Treemap>
           </ResponsiveContainer>
         ) : (
           <div className="flex h-full items-center justify-center">

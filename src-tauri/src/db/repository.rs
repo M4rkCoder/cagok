@@ -1,5 +1,5 @@
-use super::{Category, CategoryExpense, CategoryMonthlyAmount, DailyExpense, MonthlyOverview, RecurringFrequency, RecurringTransaction, Transaction, TransactionWithCategory, MonthlyTransactionRaw, DailyCategoryTransaction, DailySummary, MonthlyTotalSummary, DailyDetailResponse, TransactionFilters};
-use rusqlite::{params, Connection, Result, ToSql};
+use super::{Category, CategoryExpense, CategoryMonthlyAmount, DailyExpense, MonthlyOverview, RecurringFrequency, RecurringTransaction, Transaction, TransactionWithCategory, MonthlyTransactionRaw, DailyCategoryTransaction, DailySummary, MonthlyTotalSummary, DailyDetailResponse, TransactionFilters, BadgeStats, MonthAmountStat, CategoryStat, DayOfWeekStat, DayOfWeekCategoryStat, DayOfWeekTotalStat, DayOfWeekResponse};
+use rusqlite::{params, Connection, Result, ToSql, OptionalExtension};
 
 pub fn get_setting(conn: &Connection, key: &str) -> Result<Option<String>> {
     let mut stmt = conn.prepare("SELECT value FROM app_settings WHERE key = ?1")?;
@@ -786,6 +786,7 @@ impl DashboardRepository {
                 c.name as category_name,
                 c.icon as category_icon,
                 SUM(t.amount) as total_amount,
+                COUNT(t.id) as transaction_count,
                 t.type
             FROM transactions t
             INNER JOIN categories c ON t.category_id = c.id
@@ -817,7 +818,8 @@ impl DashboardRepository {
                 category_name: row.get(2)?,
                 category_icon: row.get(3)?,
                 total_amount: row.get(4)?,
-                r#type: row.get(5)?,
+                transaction_count: row.get(5)?,
+                r#type: row.get(6)?,
             })
         })?;
     
@@ -919,6 +921,245 @@ category_icon: row.get::<_, Option<String>>(9).unwrap_or(Some("❓".to_string())
         })?;
 
         rows.collect()
+    }
+
+    pub fn get_badge_stats(conn: &Connection, base_month: &str) -> Result<BadgeStats> {
+        let start_date_sql = "date(?1 || '-01', '-11 months')";
+        let end_date_sql = "date(?1 || '-01', '+1 month', '-1 day')";
+
+        // 1. Max Expense Month
+        let max_expense_month_query = format!(
+            "SELECT strftime('%Y-%m', date) as m, SUM(amount) as total
+             FROM transactions
+             WHERE type = 1 AND date BETWEEN {} AND {}
+             GROUP BY m
+             ORDER BY total DESC
+             LIMIT 1",
+            start_date_sql, end_date_sql
+        );
+        let max_expense_month: Option<MonthAmountStat> = conn.query_row(
+            &max_expense_month_query,
+            params![base_month],
+            |row| Ok(MonthAmountStat {
+                month: row.get(0)?,
+                amount: row.get(1)?,
+            })
+        ).optional()?;
+
+        // 2. Max Income Month
+        let max_income_month_query = format!(
+            "SELECT strftime('%Y-%m', date) as m, SUM(amount) as total
+             FROM transactions
+             WHERE type = 0 AND date BETWEEN {} AND {}
+             GROUP BY m
+             ORDER BY total DESC
+             LIMIT 1",
+            start_date_sql, end_date_sql
+        );
+        let max_income_month: Option<MonthAmountStat> = conn.query_row(
+            &max_income_month_query,
+            params![base_month],
+            |row| Ok(MonthAmountStat {
+                month: row.get(0)?,
+                amount: row.get(1)?,
+            })
+        ).optional()?;
+
+        // 3. Net Income Ratio
+        // Total Income in period
+        let total_income: f64 = conn.query_row(
+            &format!("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 0 AND date BETWEEN {} AND {}", start_date_sql, end_date_sql),
+            params![base_month],
+            |row| row.get(0)
+        )?;
+        // Total Expense in period
+        let total_expense: f64 = conn.query_row(
+            &format!("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 1 AND date BETWEEN {} AND {}", start_date_sql, end_date_sql),
+            params![base_month],
+            |row| row.get(0)
+        )?;
+        
+        let net_income_ratio = if total_income > 0.0 {
+            ((total_income - total_expense) / total_income) * 100.0
+        } else {
+            0.0
+        };
+
+        // 4. Max Expense Category
+        let max_expense_cat_query = format!(
+            "SELECT c.name, c.icon, SUM(t.amount) as total
+             FROM transactions t
+             JOIN categories c ON t.category_id = c.id
+             WHERE t.type = 1 AND t.date BETWEEN {} AND {}
+             GROUP BY c.id
+             ORDER BY total DESC
+             LIMIT 1",
+            start_date_sql, end_date_sql
+        );
+        let max_expense_category: Option<CategoryStat> = conn.query_row(
+            &max_expense_cat_query,
+            params![base_month],
+            |row| Ok(CategoryStat {
+                name: row.get(0)?,
+                icon: row.get(1)?,
+                value: row.get(2)?,
+            })
+        ).optional()?;
+
+        // 5. Most Frequent Expense Category
+        let most_freq_cat_query = format!(
+            "SELECT c.name, c.icon, COUNT(t.id) as cnt
+             FROM transactions t
+             JOIN categories c ON t.category_id = c.id
+             WHERE t.type = 1 AND t.date BETWEEN {} AND {}
+             GROUP BY c.id
+             ORDER BY cnt DESC
+             LIMIT 1",
+            start_date_sql, end_date_sql
+        );
+        let most_frequent_category: Option<CategoryStat> = conn.query_row(
+            &most_freq_cat_query,
+            params![base_month],
+            |row| Ok(CategoryStat {
+                name: row.get(0)?,
+                icon: row.get(1)?,
+                value: row.get::<_, i64>(2)? as f64,
+            })
+        ).optional()?;
+
+        // 6. Max Expense Day of Week
+        let max_dow_query = format!(
+            "SELECT day_of_week, SUM(amount) as total
+             FROM transactions
+             WHERE type = 1 AND date BETWEEN {} AND {}
+             GROUP BY day_of_week
+             ORDER BY total DESC
+             LIMIT 1",
+            start_date_sql, end_date_sql
+        );
+
+        let max_expense_day_of_week: Option<DayOfWeekStat> = conn.query_row(
+            &max_dow_query,
+            params![base_month],
+            |row| {
+                let dow_int: i32 = row.get(0)?;
+                let dow_str = match dow_int {
+                    0 => "일요일",
+                    1 => "월요일",
+                    2 => "화요일",
+                    3 => "수요일",
+                    4 => "목요일",
+                    5 => "금요일",
+                    6 => "토요일",
+                    _ => "알 수 없음",
+                };
+                Ok(DayOfWeekStat {
+                    day: dow_str.to_string(),
+                    amount: row.get(1)?,
+                })
+            }
+        ).optional()?;
+
+        Ok(BadgeStats {
+            max_expense_month,
+            max_income_month,
+            net_income_ratio,
+            max_expense_category,
+            most_frequent_category,
+            max_expense_day_of_week,
+        })
+    }
+
+    pub fn get_day_of_week_stats(
+        conn: &Connection,
+        base_month: &str,
+        tx_type: i32,
+    ) -> Result<DayOfWeekResponse> {
+        let start_date_sql = "date(?1 || '-01', '-11 months')";
+        let end_date_sql = "date(?1 || '-01', '+1 month', '-1 day')";
+
+        // 1. Category Stats
+        let cat_query = format!(
+            "SELECT 
+                day_of_week,
+                c.id, c.name, c.icon,
+                SUM(t.amount) as total_amount,
+                COUNT(t.id) as tx_count,
+                COUNT(DISTINCT t.date) as day_count
+            FROM transactions t
+            JOIN categories c ON t.category_id = c.id
+            WHERE t.date BETWEEN {} AND {}
+            AND t.type = ?2
+            AND c.type = ?2
+            GROUP BY day_of_week, c.id
+            ORDER BY day_of_week ASC, total_amount DESC",
+            start_date_sql, end_date_sql
+        );
+
+        let mut stmt = conn.prepare(&cat_query)?;
+        let categories = stmt.query_map(params![base_month, tx_type], |row| {
+            let total_amount: f64 = row.get(4)?;
+            let transaction_count: i64 = row.get(5)?;
+            let day_count: i64 = row.get(6)?;
+            let average_amount = if transaction_count > 0 {
+                total_amount / transaction_count as f64
+            } else {
+                0.0
+            };
+
+            Ok(DayOfWeekCategoryStat {
+                day_of_week: row.get(0)?,
+                category_id: row.get(1)?,
+                category_name: row.get(2)?,
+                category_icon: row.get(3)?,
+                total_amount,
+                transaction_count,
+                day_count,
+                average_amount,
+            })
+        })?.collect::<Result<Vec<_>>>()?;
+
+        // 2. Daily Total Stats
+        let total_query = format!(
+            "SELECT 
+                day_of_week,
+                SUM(t.amount) as total_amount,
+                COUNT(t.id) as tx_count,
+                COUNT(DISTINCT t.date) as day_count
+            FROM transactions t
+            WHERE t.date BETWEEN {} AND {}
+            AND t.type = ?2
+            GROUP BY day_of_week
+            ORDER BY day_of_week ASC",
+            start_date_sql, end_date_sql
+        );
+
+        let mut stmt = conn.prepare(&total_query)?;
+        let totals = stmt.query_map(params![base_month, tx_type], |row| {
+            let total_amount: f64 = row.get(1)?;
+            let transaction_count: i64 = row.get(2)?;
+            let day_count: i64 = row.get(3)?;
+            
+            // 전체 통계의 평균은 "일평균" (해당 요일의 총액 / 해당 요일의 유효 일수)
+            let average_amount = if day_count > 0 {
+                total_amount / day_count as f64
+            } else {
+                0.0
+            };
+
+            Ok(DayOfWeekTotalStat {
+                day_of_week: row.get(0)?,
+                total_amount,
+                transaction_count,
+                day_count,
+                average_amount,
+            })
+        })?.collect::<Result<Vec<_>>>()?;
+
+        Ok(DayOfWeekResponse {
+            categories,
+            totals,
+        })
     }
 }
 

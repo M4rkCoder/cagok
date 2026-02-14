@@ -1,6 +1,6 @@
 use crate::db::{
     CategoryExpense, DailyExpense, DbConnection, MonthlyFinancialSummaryItem,
-    MonthlyOverview, TransactionWithCategory, YearlySummaryItem, FinancialSummaryStats, CategoryMonthlyAmount, YearlyDashboardData, DailyCategoryTransaction, TreemapNode, DailyDetailResponse, CategoryFixedVariableSummary,
+    MonthlyOverview, TransactionWithCategory, YearlySummaryItem, FinancialSummaryStats, CategoryMonthlyAmount, YearlyDashboardData, DailyCategoryTransaction, TreemapNode, DailyDetailResponse, CategoryFixedVariableSummary, BadgeStats, DayOfWeekResponse,
 };
 use crate::db::repository::DashboardRepository;
 use crate::services::dashboard::DashboardService;
@@ -201,4 +201,23 @@ pub fn get_monthly_fixed_variable_transactions(
         .map_err(|e| format!("데이터 분석 중 오류 발생: {}", e))?;
 
     Ok(result)
+}
+
+#[tauri::command]
+pub fn get_badge_statistics_command(
+    db: State<'_, DbConnection>,
+    base_month: String,
+) -> Result<BadgeStats, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardService::get_badge_statistics(&conn, &base_month)
+}
+
+#[tauri::command]
+pub fn get_day_of_week_stats_command(
+    db: State<'_, DbConnection>,
+    base_month: String,
+    tx_type: i32,
+) -> Result<DayOfWeekResponse, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardService::get_day_of_week_stats(&conn, &base_month, tx_type)
 }

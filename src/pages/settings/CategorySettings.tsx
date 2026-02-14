@@ -10,6 +10,7 @@ import {
   CirclePlus,
   CircleMinus,
   Shapes,
+  LayoutGrid,
 } from "lucide-react";
 import {
   Sheet,
@@ -43,7 +44,7 @@ const CategorySettings = () => {
   const { confirm } = useConfirmStore();
   const { t } = useTranslation();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"income" | "expense">("expense");
+  const [activeTab, setActiveTab] = useState<"all" | "income" | "expense">("all");
 
   useEffect(() => {
     setHeader("설정");
@@ -65,8 +66,13 @@ const CategorySettings = () => {
   }, [categoryList]);
 
   const currentCategories =
-    activeTab === "income" ? incomeCategories : expenseCategories;
-  const currentType = activeTab === "income" ? 0 : 1;
+    activeTab === "all"
+      ? categoryList
+      : activeTab === "income"
+      ? incomeCategories
+      : expenseCategories;
+      
+  const currentType = activeTab === "income" ? 0 : 1; // Default to expense if 'all'
 
   const handleNew = () => {
     startEditCategory({ id: 0, name: "", icon: "➕", type: currentType });
@@ -106,6 +112,14 @@ const CategorySettings = () => {
           <div className="flex border-b border-slate-200 dark:border-slate-800 w-full relative">
             {[
               {
+                id: "all",
+                label: "전체",
+                icon: LayoutGrid,
+                color: "text-slate-600",
+                bg: "bg-slate-600",
+                count: categoryList.length,
+              },
+              {
                 id: "income",
                 label: "수입",
                 icon: CirclePlus,
@@ -124,7 +138,7 @@ const CategorySettings = () => {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as "income" | "expense")}
+                onClick={() => setActiveTab(tab.id as "all" | "income" | "expense")}
                 className={cn(
                   "relative px-6 py-4 text-sm font-bold transition-all flex items-center gap-2 outline-none",
                   activeTab === tab.id
@@ -209,9 +223,9 @@ const CategorySettings = () => {
                       <div
                         className={cn(
                           "absolute inset-0 opacity-40 transition-opacity group-hover:opacity-50",
-                          activeTab === "income"
+                          cat.type === 0 // Income
                             ? "bg-emerald-100"
-                            : "bg-indigo-100",
+                            : "bg-indigo-100", // Expense
                         )}
                       />
 
@@ -224,7 +238,7 @@ const CategorySettings = () => {
                       <div
                         className={cn(
                           "w-full py-2 flex items-center justify-center z-10",
-                          activeTab === "income"
+                          cat.type === 0
                             ? "bg-emerald-200/80 text-emerald-900"
                             : "bg-indigo-200/80 text-indigo-900",
                         )}

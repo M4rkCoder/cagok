@@ -68,6 +68,7 @@ export interface CategoryMonthlyAmount {
   category_name: string;
   category_icon: string;
   total_amount: number;
+  transaction_count: number;
   type: number; // 0: income, 1: expense
 }
 
@@ -76,6 +77,8 @@ export interface MetricStats {
   average: number;
   max: number;
   min: number;
+  maxMonth?: string;
+  minMonth?: string;
 }
 
 export interface FinancialSummaryStats {
@@ -141,4 +144,53 @@ export interface CategoryFixedVariableSummary {
   variable_total: number;
   fixed_items: TransactionWithCategory[];
   variable_items: TransactionWithCategory[];
+}
+
+export interface MonthAmountStat {
+  month: string;
+  amount: number;
+}
+
+export interface CategoryStat {
+  name: string;
+  icon: string;
+  value: number; // amount or count
+}
+
+export interface DayOfWeekStat {
+  day: string;
+  amount: number;
+}
+
+export interface BadgeStats {
+  maxExpenseMonth?: MonthAmountStat;
+  maxIncomeMonth?: MonthAmountStat;
+  netIncomeRatio: number;
+  maxExpenseCategory?: CategoryStat;
+  mostFrequentCategory?: CategoryStat;
+  maxExpenseDayOfWeek?: DayOfWeekStat;
+}
+
+export interface DayOfWeekCategoryStat {
+  dayOfWeek: number; // 0: Sun, 1: Mon, ...
+  categoryId: number;
+  categoryName: string;
+  categoryIcon: string;
+  totalAmount: number;
+  transactionCount: number;
+  dayCount: number;
+  averageAmount: number;
+}
+
+export interface DayOfWeekTotalStat {
+  dayOfWeek: number;
+  totalAmount: number;
+  transactionCount: number;
+  dayCount: number;
+  averageAmount: number;
+}
+
+export interface DayOfWeekResponse {
+  categories: DayOfWeekCategoryStat[];
+  totals: DayOfWeekTotalStat[];
 }
