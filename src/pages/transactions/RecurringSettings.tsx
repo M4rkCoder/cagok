@@ -28,6 +28,18 @@ interface RecurringTransaction {
   remarks?: string;
 }
 
+interface RecurringHistoryItem {
+  id: number;
+  recurring_id: number;
+  transaction_id: number;
+  created_at: string;
+  amount: number;
+  description: string;
+  category_name?: string;
+  category_icon?: string;
+  category_type?: number;
+}
+
 const emptyForm: RecurringTransaction = {
   description: "",
   amount: 0,
@@ -50,6 +62,7 @@ export default function RecurringSettings() {
     []
   );
   const [categories, setCategories] = useState<Category[]>([]);
+  const [history, setHistory] = useState<RecurringHistoryItem[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<RecurringTransaction | null>(null);
@@ -88,12 +101,14 @@ export default function RecurringSettings() {
 
   const loadData = async () => {
     try {
-      const [recurring, cats] = await Promise.all([
+      const [recurring, cats, hist] = await Promise.all([
         invoke<RecurringTransaction[]>("get_recurring_transactions"),
         invoke<Category[]>("get_categories"),
+        invoke<RecurringHistoryItem[]>("get_recurring_history", { limit: 5 }),
       ]);
       setRecurringList(recurring);
       setCategories(cats);
+      setHistory(hist);
     } catch (error) {
       console.error("Failed to load data:", error);
       toast.error("데이터를 불러오는 데 실패했습니다.");
@@ -219,6 +234,41 @@ export default function RecurringSettings() {
           새 반복 추가
         </Button>
       </div>
+
+      {/* History Section */}
+      {history.length > 0 && (
+        <Card className="mb-6 border-slate-200 bg-slate-50/50">
+          <CardContent className="p-4">
+            <h2 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
+              <RefreshCw className="w-4 h-4 text-slate-400" />
+              최근 실행 이력
+            </h2>
+            <div className="space-y-2">
+              {history.map((item) => (
+                <div key={item.id} className="flex items-center justify-between text-sm bg-white p-3 rounded-lg shadow-sm border border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="text-xs text-slate-400 font-medium bg-slate-100 px-2 py-1 rounded">
+                      {item.created_at}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">
+                        {item.category_icon || (item.category_type === 0 ? "💰" : "💳")}
+                      </span>
+                      <span className="font-medium text-slate-700">{item.description}</span>
+                    </div>
+                  </div>
+                  <div className={cn(
+                    "font-bold",
+                    item.category_type === 0 ? "text-emerald-600" : "text-rose-600"
+                  )}>
+                    {item.category_type === 0 ? "+" : "-"}{item.amount.toLocaleString()}원
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* 탭 버튼 */}
       <div className="flex border-b border-slate-200 w-full relative mb-6">

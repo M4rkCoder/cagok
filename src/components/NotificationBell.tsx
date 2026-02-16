@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Link } from "react-router-dom";
 
 export const NotificationBell = () => {
   const { notifications, markAsRead, markAllAsRead, clearAll } =
@@ -74,37 +75,42 @@ export const NotificationBell = () => {
           ) : (
             <div className="flex flex-col">
               {notifications.map((n) => (
-                <div
-                  key={n.id}
-                  onClick={() => markAsRead(n.id)}
-                  className={`relative flex flex-col gap-0.5 p-3 border-b border-zinc-50 cursor-pointer transition-colors hover:bg-zinc-50/80 ${
-                    !n.isRead ? "bg-amber-50/30" : ""
-                  }`}
+                <Link
+                  to="/transactions/recurring"
+                  className="flex items-center flex-nowrap w-full group outline-none select-none"
                 >
-                  {/* 읽지 않음 표시 사이드 바 */}
-                  {!n.isRead && (
-                    <div className="absolute left-2 top-2 bottom-2 w-0.5 bg-amber-500" />
-                  )}
+                  <div
+                    key={n.id}
+                    onClick={() => markAsRead(n.id)}
+                    className={`relative flex flex-col gap-0.5 p-3 border-b border-zinc-50 cursor-pointer transition-colors hover:bg-zinc-50/80 ${
+                      !n.isRead ? "bg-amber-50/30" : ""
+                    }`}
+                  >
+                    {/* 읽지 않음 표시 사이드 바 */}
+                    {!n.isRead && (
+                      <div className="absolute left-2 top-2 bottom-2 w-0.5 bg-amber-500" />
+                    )}
 
-                  <div className="flex justify-between items-center pl-2">
-                    <span
-                      className={`text-[10px] font-semibold tracking-tight ${
-                        !n.isRead ? "text-amber-600" : "text-zinc-400"
-                      }`}
-                    >
-                      정기 내역 처리
-                    </span>
-                    <span className="text-[11px] text-zinc-400 font-medium">
-                      {new Date(n.timestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </span>
+                    <div className="flex justify-between items-center pl-2">
+                      <span
+                        className={`text-[10px] font-semibold tracking-tight ${
+                          !n.isRead ? "text-amber-600" : "text-zinc-400"
+                        }`}
+                      >
+                        정기 내역 처리
+                      </span>
+                      <span className="text-[11px] text-zinc-400 font-medium">
+                        {new Date(n.timestamp).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-sm text-zinc-600 leading-normal line-clamp-2 pl-2">
+                      {n.message}
+                    </p>
                   </div>
-                  <p className="text-sm text-zinc-600 leading-normal line-clamp-2 pl-2">
-                    {n.message}
-                  </p>
-                </div>
+                </Link>
               ))}
             </div>
           )}

@@ -78,6 +78,15 @@ pub fn init_db(db_path: &Path) -> Result<Connection> {
             FOREIGN KEY (account_id) REFERENCES accounts(id) ON DELETE SET NULL
         );
 
+        CREATE TABLE IF NOT EXISTS recurring_history (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            recurring_id      INTEGER NOT NULL,
+            transaction_id    INTEGER NOT NULL,
+            created_at        TEXT NOT NULL,
+            FOREIGN KEY (recurring_id) REFERENCES recurring_transactions(id) ON DELETE CASCADE,
+            FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
+        );
+
         CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
         CREATE INDEX IF NOT EXISTS idx_date_amount ON transactions(date, amount DESC);
         CREATE INDEX IF NOT EXISTS idx_transactions_category ON transactions(category_id);

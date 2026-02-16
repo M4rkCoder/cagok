@@ -18,21 +18,19 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Wallet, Lock, Globe, Coins } from "lucide-react"; // 아이콘 추가
+import { Wallet, Globe, Coins } from "lucide-react"; // 아이콘 추가
 import FinanceModeRounded from "@/components/FinanceModeRounded";
 
 export default function Onboarding() {
   const [appName, setAppName] = useState("");
   const [language, setLanguage] = useState("ko");
   const [currency, setCurrency] = useState("KRW");
-  const [password, setPassword] = useState("");
 
   const handleStart = async () => {
     await invoke("initialize_app", {
       appName,
       language,
       currency,
-      password: password || null, // 비밀번호는 없으면 null로 전송
     });
     window.location.reload();
   };
@@ -105,27 +103,6 @@ export default function Onboarding() {
               </Select>
             </div>
           </div>
-
-          {/* 비밀번호 설정 */}
-          <div className="space-y-2">
-            <Label
-              htmlFor="pass"
-              className="text-sm font-medium flex items-center gap-2"
-            >
-              <Lock className="w-4 h-4" /> 보안 비밀번호 (선택)
-            </Label>
-            <Input
-              id="pass"
-              type="password"
-              className="h-12 text-lg"
-              placeholder="미입력 시 잠금 없이 사용"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              앱 시작 시 본인 확인을 위해 사용됩니다.
-            </p>
-          </div>
         </CardContent>
 
         <CardFooter className="px-8 pb-8">
@@ -141,3 +118,4 @@ export default function Onboarding() {
     </div>
   );
 }
+

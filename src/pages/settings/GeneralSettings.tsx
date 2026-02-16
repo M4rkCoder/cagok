@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Settings, Coins, Lock } from "lucide-react"; // 아이콘 추가
+import { Settings, Coins, LayoutTemplate } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { invoke } from "@tauri-apps/api/core";
@@ -25,9 +25,9 @@ const GeneralSettings = () => {
   }, []);
 
   const [localAppName, setLocalAppName] = useState("");
-  const [localLanguage, setLocalLanguage] = useState(""); // Local state for language
+  const [localLanguage, setLocalLanguage] = useState("");
   const [currency, setCurrency] = useState("");
-  const [password, setPassword] = useState("");
+  const [localDefaultView, setLocalDefaultView] = useState("timeline");
 
   const {
     language: globalLanguage,
@@ -35,7 +35,6 @@ const GeneralSettings = () => {
     setAppName: updateGlobalAppName,
   } = useAppStore();
 
-  // 설정 로드 함수
   const loadSettings = async () => {
     const name = await invoke<string | null>("get_setting_command", {
       key: "app_name",
@@ -43,15 +42,19 @@ const GeneralSettings = () => {
     const curr = await invoke<string | null>("get_setting_command", {
       key: "currency",
     });
+    const defaultView = await invoke<string | null>("get_setting_command", {
+      key: "default_view",
+    });
 
     setLocalAppName(name || "C'agok");
-    setLocalLanguage(globalLanguage); // Initialize local language from global store
+    setLocalLanguage(globalLanguage);
     setCurrency(curr || "KRW");
+    setLocalDefaultView(defaultView || "timeline");
   };
 
   useEffect(() => {
     loadSettings();
-  }, [globalLanguage]); // Re-run if global language changes
+  }, [globalLanguage]);
 
   const handleSaveSettings = async () => {
     try {
@@ -60,15 +63,11 @@ const GeneralSettings = () => {
         value: localAppName,
       });
       await invoke("set_setting_command", { key: "currency", value: currency });
-      await updateSetting("language", localLanguage); // Update global language on save
-
-      if (password.trim() !== "") {
-        await invoke("set_setting_command", {
-          key: "password_hash",
-          value: password,
-        });
-        setPassword("");
-      }
+      await invoke("set_setting_command", {
+        key: "default_view",
+        value: localDefaultView,
+      });
+      await updateSetting("language", localLanguage);
 
       updateGlobalAppName(localAppName);
       toast.success("설정이 저장되었습니다.");
@@ -131,18 +130,24 @@ const GeneralSettings = () => {
             </Select>
           </div>
 
-          {/* 비밀번호 변경 */}
+          {/* 기본 보기 설정 */}
           <div className="space-y-2">
-            <Label htmlFor="pass" className="flex items-center gap-2">
-              <Lock className="w-4 h-4" /> 보안 비밀번호 변경
+            <Label htmlFor="defaultView" className="flex items-center gap-2">
+              <LayoutTemplate className="w-4 h-4" /> 내역 기본 보기
             </Label>
-            <Input
-              id="pass"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="변경할 비밀번호 입력 (공백 시 유지)"
-            />
+            <Select
+              value={localDefaultView}
+              onValueChange={setLocalDefaultView}
+            >
+              <SelectTrigger id="defaultView">
+                <SelectValue placeholder="보기 방식 선택" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="timeline">타임라인 (기본)</SelectItem>
+                <SelectItem value="calendar">달력 보기</SelectItem>
+                <SelectItem value="board">표로 보기</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

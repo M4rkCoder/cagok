@@ -253,6 +253,19 @@ pub struct RecurringTransaction {
     pub remarks: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RecurringHistoryItem {
+    pub id: i64,
+    pub recurring_id: i64,
+    pub transaction_id: i64,
+    pub created_at: String,
+    pub amount: f64,
+    pub description: String,
+    pub category_name: Option<String>,
+    pub category_icon: Option<String>,
+    pub category_type: Option<i64>, // 0: Income, 1: Expense
+}
+
 #[derive(Clone, Serialize)]
 pub struct RecurringPayload {
     pub count: i32,

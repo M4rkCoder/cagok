@@ -119,6 +119,14 @@ function CombinedVerticalCard({
               >
                 {formatCurrency(item.data.total)}
               </p>
+              <div className="flex items-center gap-1.5 pt-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                  월 평균
+                </span>
+                <span className="text-sm font-bold text-slate-500 tracking-tight">
+                  {formatCurrency(item.data.average)}
+                </span>
+              </div>
             </div>
           ))}
         </div>

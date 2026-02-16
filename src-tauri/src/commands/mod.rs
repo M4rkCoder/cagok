@@ -52,6 +52,7 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         dashboard::get_day_of_week_stats_command,
         //recurring
         recurring::get_recurring_transactions,
+        recurring::get_recurring_history,
         recurring::create_recurring_transaction,
         recurring::update_recurring_transaction,
         recurring::delete_recurring_transaction,

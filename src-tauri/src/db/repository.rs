@@ -1,4 +1,4 @@
-use super::{Category, CategoryExpense, CategoryMonthlyAmount, DailyExpense, MonthlyOverview, RecurringFrequency, RecurringTransaction, Transaction, TransactionWithCategory, MonthlyTransactionRaw, DailyCategoryTransaction, DailySummary, MonthlyTotalSummary, DailyDetailResponse, TransactionFilters, BadgeStats, MonthAmountStat, CategoryStat, DayOfWeekStat, DayOfWeekCategoryStat, DayOfWeekTotalStat, DayOfWeekResponse};
+use super::{Category, CategoryExpense, CategoryMonthlyAmount, DailyExpense, MonthlyOverview, RecurringFrequency, RecurringTransaction, Transaction, TransactionWithCategory, MonthlyTransactionRaw, DailyCategoryTransaction, DailySummary, MonthlyTotalSummary, DailyDetailResponse, TransactionFilters, BadgeStats, MonthAmountStat, CategoryStat, DayOfWeekStat, DayOfWeekCategoryStat, DayOfWeekTotalStat, DayOfWeekResponse, RecurringHistoryItem};
 use rusqlite::{params, Connection, Result, ToSql, OptionalExtension};
 
 pub fn get_setting(conn: &Connection, key: &str) -> Result<Option<String>> {
@@ -1349,5 +1349,43 @@ impl RecurringTransactionRepository {
             params![date, id],
         )?;
         Ok(())
+    }
+
+    // 반복 지출 실행 이력 조회
+    pub fn get_history(conn: &Connection, limit: i32) -> Result<Vec<RecurringHistoryItem>> {
+        let query = "
+            SELECT 
+                rh.id,
+                rh.recurring_id,
+                rh.transaction_id,
+                rh.created_at,
+                t.amount,
+                t.description,
+                c.name,
+                c.icon,
+                COALESCE(c.type, t.type)
+            FROM recurring_history rh
+            JOIN transactions t ON rh.transaction_id = t.id
+            LEFT JOIN categories c ON t.category_id = c.id
+            ORDER BY rh.created_at DESC, rh.id DESC
+            LIMIT ?1
+        ";
+
+        let mut stmt = conn.prepare(query)?;
+        let rows = stmt.query_map(params![limit], |row| {
+            Ok(RecurringHistoryItem {
+                id: row.get(0)?,
+                recurring_id: row.get(1)?,
+                transaction_id: row.get(2)?,
+                created_at: row.get(3)?,
+                amount: row.get(4)?,
+                description: row.get(5)?,
+                category_name: row.get(6)?,
+                category_icon: row.get(7)?,
+                category_type: row.get(8)?,
+            })
+        })?;
+
+        rows.collect()
     }
 }

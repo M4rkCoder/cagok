@@ -1,5 +1,5 @@
 use crate::db::repository::RecurringTransactionRepository;
-use crate::db::{DbConnection, RecurringTransaction};
+use crate::db::{DbConnection, RecurringTransaction, RecurringHistoryItem};
 use crate::services::RecurringService;
 use tauri::State;
 
@@ -10,6 +10,16 @@ pub fn get_recurring_transactions(
     let conn = db.0.lock().unwrap();
     RecurringTransactionRepository::get_all(&conn)
         .map_err(|e| format!("Failed to get recurring transactions: {}", e))
+}
+
+#[tauri::command]
+pub fn get_recurring_history(
+    db: State<'_, DbConnection>,
+    limit: i32,
+) -> Result<Vec<RecurringHistoryItem>, String> {
+    let conn = db.0.lock().unwrap();
+    RecurringTransactionRepository::get_history(&conn, limit)
+        .map_err(|e| format!("Failed to get recurring history: {}", e))
 }
 
 #[tauri::command]

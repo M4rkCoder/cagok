@@ -138,17 +138,45 @@ impl RecurringService {
         recurring: &RecurringTransaction,
         date: &NaiveDate,
     ) -> Result<(), String> {
+        // 1. Get category type
+        let category_type: i64 = if let Some(cat_id) = recurring.category_id {
+             conn.query_row(
+                "SELECT type FROM categories WHERE id = ?1",
+                params![cat_id],
+                |row| row.get(0),
+            ).unwrap_or(1) // Default to Expense if not found
+        } else {
+            1 // Default to Expense if no category
+        };
+
+        // 2. Insert transaction
         conn.execute(
             "INSERT INTO transactions (description, amount, date, type, is_fixed, category_id, remarks)
-            VALUES (?1, ?2, ?3, 1, 1, ?4, ?5)",
+            VALUES (?1, ?2, ?3, ?4, 1, ?5, ?6)",
             params![
                 recurring.description,
                 recurring.amount,
                 date.format("%Y-%m-%d").to_string(),
+                category_type,
                 recurring.category_id,
                 recurring.remarks,
             ],
         ).map_err(|e| format!("Failed to create transaction: {}", e))?;
+
+        let transaction_id = conn.last_insert_rowid();
+
+        // 3. Insert history
+        if let Some(recurring_id) = recurring.id {
+             conn.execute(
+                "INSERT INTO recurring_history (recurring_id, transaction_id, created_at)
+                VALUES (?1, ?2, ?3)",
+                params![
+                    recurring_id,
+                    transaction_id,
+                    date.format("%Y-%m-%d").to_string(),
+                ],
+            ).map_err(|e| format!("Failed to create history: {}", e))?;
+        }
 
         Ok(())
     }
