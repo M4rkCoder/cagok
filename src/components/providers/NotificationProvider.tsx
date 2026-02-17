@@ -1,4 +1,5 @@
 import { useRecurringListener } from "@/hooks/useRecurringListener";
+import { useAutoBackupNotification } from "@/hooks/useAutoBackupNotification";
 
 export const NotificationProvider = ({
   children,
@@ -6,6 +7,7 @@ export const NotificationProvider = ({
   children: React.ReactNode;
 }) => {
   useRecurringListener();
+  useAutoBackupNotification();
 
   return <>{children}</>;
 };

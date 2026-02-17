@@ -15,12 +15,16 @@ import {
 import { useState, useMemo } from "react";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import { getThemeColor } from "@/lib/utils";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"; // shadcn/ui 탭 사용 가정
 import CategoryTransactionChart from "./CategoryTransactionChart";
 
 type ViewMode = "expense" | "income";
 
-export default function DailyTransactionCard() {
+interface DailyTransactionCardProps {
+  embedded?: boolean;
+  viewMode?: ViewMode;
+}
+
+export default function DailyTransactionCard({ embedded = false, viewMode = "expense" }: DailyTransactionCardProps) {
   const {
     selectedMonth,
     dailyCategoryExpenses,
@@ -31,15 +35,13 @@ export default function DailyTransactionCard() {
     openDialog,
   } = useDashboardStore();
 
-  const [viewMode, setViewMode] = useState<ViewMode>("expense");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
+  
   const handleDateClick = (date: string) => {
     const txType = viewMode === "expense" ? 1 : 0;
     const catId =
       selectedCategoryId === "all" ? null : parseInt(selectedCategoryId);
-    console.log(date, "viewMode:", viewMode, txType, catId);
     openDialog(date, txType, catId);
-
     loadChartDetail(date, txType, catId);
   };
 
@@ -97,120 +99,96 @@ export default function DailyTransactionCard() {
     return data;
   }, [selectedMonth, currentDailyData]);
 
-  // 탭 변경 시 선택된 카테고리 초기화
-  const handleTabChange = (value: string) => {
-    setViewMode(value as ViewMode);
-    setSelectedCategoryId("all");
-  };
+  const content = (
+    <div className="flex flex-col md:grid md:grid-cols-3 items-start gap-4">
+      <div className="md:col-span-2 w-full">
+        {/* 헤더 제거: 상위 컴포넌트(AnalysisTabs)에서 제어 */}
+        
+        <div className="h-[240px] w-full mt-4">
+          <ChartContainer config={categoryConfig} className="h-full w-full">
+            <ResponsiveContainer>
+              <BarChart data={chartData}>
+                <CartesianGrid
+                  vertical={false}
+                  strokeDasharray="3 3"
+                  stroke="#e2e8f0"
+                />
+                <XAxis
+                  dataKey="displayDate"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  interval={4}
+                  minTickGap={10}
+                />
+                <YAxis hide />
+                <ChartTooltip
+                  cursor={{ fill: "rgba(226, 232, 240, 0.4)" }}
+                  content={
+                    <ChartTooltipContent
+                      formatter={(value, name) => (
+                        <div className="flex items-center justify-between gap-8 w-full">
+                          <span className="text-slate-500 text-xs">
+                            {name}
+                          </span>
+                          <span className="font-bold text-xs">
+                            {Number(value).toLocaleString()}원
+                          </span>
+                        </div>
+                      )}
+                    />
+                  }
+                />
 
-  return (
-    <Card className="pt-5 pb-0 px-5">
-      <div className="flex flex-col md:grid md:grid-cols-3 items-start gap-4">
-        <div className="md:col-span-2 w-full">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-semibold text-slate-400">
-              일일 {viewMode === "expense" ? "지출" : "수입"} 현황
-            </span>
-
-            {/* 지출/수입 전환 탭 */}
-            <Tabs
-              value={viewMode}
-              onValueChange={handleTabChange}
-              className="h-8 w-[140px]"
-            >
-              <TabsList className="grid w-full grid-cols-2 h-8">
-                <TabsTrigger
-                  value="expense"
-                  className="text-xs transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
-                >
-                  지출
-                </TabsTrigger>
-                <TabsTrigger
-                  value="income"
-                  className="text-xs transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-medium"
-                >
-                  수입
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-
-          <div className="h-[240px] w-full">
-            <ChartContainer config={categoryConfig} className="h-full w-full">
-              <ResponsiveContainer>
-                <BarChart data={chartData}>
-                  <CartesianGrid
-                    vertical={false}
-                    strokeDasharray="3 3"
-                    stroke="#e2e8f0"
+                {selectedCategoryId === "all" ? (
+                  <Bar
+                    dataKey="total"
+                    name={viewMode === "expense" ? "총 지출" : "총 수입"}
+                    fill={categoryConfig["total"].color}
+                    radius={[4, 4, 0, 0]}
+                    onClick={(data) => handleDateClick(data.payload.date)}
+                    className="cursor-pointer"
                   />
-                  <XAxis
-                    dataKey="displayDate"
-                    fontSize={11}
-                    tickLine={false}
-                    axisLine={false}
-                    interval={4}
-                    minTickGap={10}
-                  />
-                  <YAxis hide />
-                  <ChartTooltip
-                    cursor={{ fill: "rgba(226, 232, 240, 0.4)" }}
-                    content={
-                      <ChartTooltipContent
-                        formatter={(value, name) => (
-                          <div className="flex items-center justify-between gap-8 w-full">
-                            <span className="text-slate-500 text-xs">
-                              {name}
-                            </span>
-                            <span className="font-bold text-xs">
-                              {Number(value).toLocaleString()}원
-                            </span>
-                          </div>
-                        )}
-                      />
-                    }
-                  />
-
-                  {selectedCategoryId === "all" ? (
+                ) : (
+                  currentCategories.map((cat) => (
                     <Bar
-                      dataKey="total"
-                      name={viewMode === "expense" ? "총 지출" : "총 수입"}
-                      fill={categoryConfig["total"].color}
-                      radius={[4, 4, 0, 0]}
+                      key={cat.category_id || cat.income_category_id}
+                      dataKey={cat.category_name}
+                      stackId="a"
+                      fill={categoryConfig[cat.category_name]?.color}
+                      hide={
+                        selectedCategoryId !==
+                        (cat.category_id || cat.income_category_id).toString()
+                      }
                       onClick={(data) => handleDateClick(data.payload.date)}
                       className="cursor-pointer"
                     />
-                  ) : (
-                    currentCategories.map((cat) => (
-                      <Bar
-                        key={cat.category_id || cat.income_category_id}
-                        dataKey={cat.category_name}
-                        stackId="a"
-                        fill={categoryConfig[cat.category_name]?.color}
-                        hide={
-                          selectedCategoryId !==
-                          (cat.category_id || cat.income_category_id).toString()
-                        }
-                        onClick={(data) => handleDateClick(data.payload.date)}
-                        className="cursor-pointer"
-                      />
-                    ))
-                  )}
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </div>
-        </div>
-
-        <div className="w-full h-full pl-2 hidden md:block">
-          <CategoryTransactionChart
-            mode={viewMode} // 모드 전달 (해당 컴포넌트에서 수입/지출 카테고리 목록을 렌더링하도록 수정 필요)
-            activeId={selectedCategoryId}
-            selectedCategoryId={selectedCategoryId}
-            setSelectedCategoryId={setSelectedCategoryId}
-          />
+                  ))
+                )}
+              </BarChart>
+            </ResponsiveContainer>
+          </ChartContainer>
         </div>
       </div>
+
+      <div className="w-full h-full pl-2 hidden md:block">
+        <CategoryTransactionChart
+          mode={viewMode}
+          activeId={selectedCategoryId}
+          selectedCategoryId={selectedCategoryId}
+          setSelectedCategoryId={setSelectedCategoryId}
+        />
+      </div>
+    </div>
+  );
+
+  if (embedded) {
+    return <div className="px-1">{content}</div>;
+  }
+
+  return (
+    <Card className="pt-5 pb-0 px-5">
+      {content}
     </Card>
   );
 }

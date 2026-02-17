@@ -32,7 +32,38 @@ pub fn run() {
             app.manage(DbConnection(Mutex::new(conn)));
             Ok(())
         });
-    commands::register_handler(builder)
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+    let app = commands::register_handler(builder)
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|app_handle, event| {
+        if let tauri::RunEvent::ExitRequested { .. } = event {
+            let state = app_handle.state::<DbConnection>();
+            let mut should_backup = false;
+
+            // 1. Check if backup is enabled
+            if let Ok(conn) = state.0.lock() {
+                should_backup = match crate::db::repository::get_setting(&conn, "auto_backup_enabled") {
+                    Ok(Some(val)) => val == "true",
+                    _ => false,
+                };
+            }
+
+            // 2. Perform backup if enabled
+            if should_backup {
+                match crate::db::backup::perform_auto_backup(app_handle) {
+                    Ok(_) => {
+                        println!("Auto backup completed successfully.");
+                        // 3. Update last backup date
+                        if let Ok(conn) = state.0.lock() {
+                            let now = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+                            let _ = crate::db::repository::set_setting(&conn, "last_auto_backup_date", &now);
+                            let _ = crate::db::repository::set_setting(&conn, "backup_notification_pending", "true");
+                        }
+                    }
+                    Err(e) => eprintln!("Auto backup failed: {}", e),
+                }
+            }
+        }
+    });
 }

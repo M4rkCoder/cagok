@@ -17,21 +17,7 @@ pub fn get_db_path<R: Runtime>(window: Window<R>) -> Result<String, String> {
 #[tauri::command]
 pub fn backup_db<R: Runtime>(window: Window<R>) -> Result<String, String> {
     let app = window.app_handle();
-    let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
-
-    let db_path = app_dir.join("cagok.db");
-
-    let backup_dir = app_dir.join("backups");
-    std::fs::create_dir_all(&backup_dir).map_err(|e| e.to_string())?;
-
-    let filename = format!(
-        "cagok_backup_{}.db",
-        chrono::Local::now().format("%Y%m%d_%H%M%S")
-    );
-
-    let backup_path = backup_dir.join(filename);
-    std::fs::copy(&db_path, &backup_path).map_err(|e| e.to_string())?;
-
+    let backup_path = crate::db::backup::perform_backup(app)?;
     Ok(backup_path.to_string_lossy().to_string())
 }
 
@@ -85,6 +71,20 @@ pub fn open_db_folder<R: Runtime>(window: Window<R>) -> Result<(), String> {
     let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
 
     open_path(dir, None::<String>).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn open_backup_folder<R: Runtime>(window: Window<R>) -> Result<(), String> {
+    let app = window.app_handle();
+    let app_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let backup_dir = app_dir.join("backups");
+    
+    if !backup_dir.exists() {
+        return Err("백업 폴더가 존재하지 않습니다.".to_string());
+    }
+
+    open_path(backup_dir, None::<String>).map_err(|e| e.to_string())?;
     Ok(())
 }
 

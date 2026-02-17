@@ -1,5 +1,6 @@
 pub mod init;
 pub mod repository;
+pub mod backup;
 
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};

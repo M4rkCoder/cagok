@@ -31,6 +31,8 @@ export const useRecurringListener = () => {
               count,
               message,
               timestamp: new Date().toISOString(),
+              type: "recurring" as const,
+              link: "/transactions/recurring",
             };
 
             // 2. 스토어 추가 시도 후 결과에 따라 토스트 실행

@@ -1161,6 +1161,96 @@ category_icon: row.get::<_, Option<String>>(9).unwrap_or(Some("❓".to_string())
             totals,
         })
     }
+
+    pub fn get_day_of_week_stats_monthly(
+        conn: &Connection,
+        year_month: &str,
+        tx_type: i32,
+    ) -> Result<DayOfWeekResponse> {
+        let start_date = format!("{}-01", year_month);
+        let end_date = format!("{}-31", year_month);
+
+        // 1. Category Stats
+        let cat_query = "
+            SELECT 
+                day_of_week,
+                c.id, c.name, c.icon,
+                SUM(t.amount) as total_amount,
+                COUNT(t.id) as tx_count,
+                COUNT(DISTINCT t.date) as day_count
+            FROM transactions t
+            JOIN categories c ON t.category_id = c.id
+            WHERE t.date BETWEEN ?1 AND ?2
+            AND t.type = ?3
+            AND c.type = ?3
+            GROUP BY day_of_week, c.id
+            ORDER BY day_of_week ASC, total_amount DESC
+        ";
+
+        let mut stmt = conn.prepare(cat_query)?;
+        let categories = stmt.query_map(params![start_date, end_date, tx_type], |row| {
+            let total_amount: f64 = row.get(4)?;
+            let transaction_count: i64 = row.get(5)?;
+            let day_count: i64 = row.get(6)?;
+            let average_amount = if transaction_count > 0 {
+                total_amount / transaction_count as f64
+            } else {
+                0.0
+            };
+
+            Ok(DayOfWeekCategoryStat {
+                day_of_week: row.get(0)?,
+                category_id: row.get(1)?,
+                category_name: row.get(2)?,
+                category_icon: row.get(3)?,
+                total_amount,
+                transaction_count,
+                day_count,
+                average_amount,
+            })
+        })?.collect::<Result<Vec<_>>>()?;
+
+        // 2. Daily Total Stats
+        let total_query = "
+            SELECT 
+                day_of_week,
+                SUM(t.amount) as total_amount,
+                COUNT(t.id) as tx_count,
+                COUNT(DISTINCT t.date) as day_count
+            FROM transactions t
+            WHERE t.date BETWEEN ?1 AND ?2
+            AND t.type = ?3
+            GROUP BY day_of_week
+            ORDER BY day_of_week ASC
+        ";
+
+        let mut stmt = conn.prepare(total_query)?;
+        let totals = stmt.query_map(params![start_date, end_date, tx_type], |row| {
+            let total_amount: f64 = row.get(1)?;
+            let transaction_count: i64 = row.get(2)?;
+            let day_count: i64 = row.get(3)?;
+            
+            // 전체 통계의 평균은 "일평균" (해당 요일의 총액 / 해당 요일의 유효 일수)
+            let average_amount = if day_count > 0 {
+                total_amount / day_count as f64
+            } else {
+                0.0
+            };
+
+            Ok(DayOfWeekTotalStat {
+                day_of_week: row.get(0)?,
+                total_amount,
+                transaction_count,
+                day_count,
+                average_amount,
+            })
+        })?.collect::<Result<Vec<_>>>()?;
+
+        Ok(DayOfWeekResponse {
+            categories,
+            totals,
+        })
+    }
 }
 
 pub struct RecurringTransactionRepository;

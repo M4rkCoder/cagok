@@ -553,4 +553,13 @@ impl DashboardService {
         DashboardRepository::get_day_of_week_stats(conn, base_month, tx_type)
             .map_err(|e| format!("Failed to get day of week stats: {}", e))
     }
+
+    pub fn get_day_of_week_stats_monthly(
+        conn: &Connection,
+        year_month: &str,
+        tx_type: i32,
+    ) -> Result<DayOfWeekResponse, String> {
+        DashboardRepository::get_day_of_week_stats_monthly(conn, year_month, tx_type)
+            .map_err(|e| format!("Failed to get monthly day of week stats: {}", e))
+    }
 }

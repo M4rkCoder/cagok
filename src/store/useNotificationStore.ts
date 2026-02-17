@@ -8,6 +8,8 @@ export interface Notification {
   message: string;
   timestamp: string;
   isRead: boolean;
+  type?: "recurring" | "backup" | "info";
+  link?: string;
 }
 
 // 새로운 알림을 받을 때의 타입 (id와 isRead는 제외)
@@ -45,6 +47,8 @@ export const useNotificationStore = create<NotificationState>()(
           message: notif.message,
           timestamp: notif.timestamp,
           isRead: false,
+          type: notif.type || "info",
+          link: notif.link,
         };
 
         // 3. 상태 업데이트

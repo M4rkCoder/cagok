@@ -50,6 +50,7 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         dashboard::get_monthly_fixed_variable_transactions,
         dashboard::get_badge_statistics_command,
         dashboard::get_day_of_week_stats_command,
+        dashboard::get_day_of_week_stats_monthly_command,
         //recurring
         recurring::get_recurring_transactions,
         recurring::get_recurring_history,
@@ -63,6 +64,7 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         db::get_db_path,
         db::backup_db,
         db::open_db_folder,
+        db::open_backup_folder,
         db::list_backups,
         db::restore_backup,
         db::delete_backup,

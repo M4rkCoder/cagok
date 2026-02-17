@@ -221,3 +221,13 @@ pub fn get_day_of_week_stats_command(
     let conn = db.0.lock().unwrap();
     DashboardService::get_day_of_week_stats(&conn, &base_month, tx_type)
 }
+
+#[tauri::command]
+pub fn get_day_of_week_stats_monthly_command(
+    db: State<'_, DbConnection>,
+    base_month: String,
+    tx_type: i32,
+) -> Result<DayOfWeekResponse, String> {
+    let conn = db.0.lock().unwrap();
+    DashboardService::get_day_of_week_stats_monthly(&conn, &base_month, tx_type)
+}

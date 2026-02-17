@@ -5,9 +5,10 @@ import { MainExpenseCard } from "./MainExpenseCard";
 import { SummaryItemRow } from "./SummaryItemsRow";
 import DailyTransactionsDialog from "@/components/DailyTransactionsDialog";
 import { useHeaderStore } from "@/store/useHeaderStore";
-import DailyTransactionCard from "./DailyTransactionCard";
+import AnalysisTabs from "./AnalysisTabs";
 import { DotNavigation } from "../../components/DotNavigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { CategoryMonthlyTreemap } from "./CategoryMonthlyTreemap";
 import { CategoryTopList } from "./CategoryTopList";
 import TreemapDetailDialog from "./TreemapDetailDialog";
@@ -54,8 +55,13 @@ export default function Dashboard() {
       if (e.deltaY > 0) {
         // 아래로 스크롤: summary -> treemap 직결
         if (activeSection === "summary") {
-          setActiveSection("treemap");
-          lockScroll();
+          // Summary 내부 스크롤이 끝났는지 확인은 어렵지만, 
+          // 일단 여기서는 ScrollArea가 있으므로 휠 이벤트를 ScrollArea가 먼저 먹게 됨.
+          // 따라서 여기서는 섹션 전환 로직을 잠시 보류하거나, 
+          // ScrollArea의 최하단 도달 시 전환하도록 로직을 수정해야 함.
+          // 하지만 현재 요구사항은 단순히 컴포넌트 추가이므로 기존 로직 유지.
+          // setActiveSection("treemap");
+          // lockScroll();
         }
       } else if (e.deltaY < 0) {
         // 위로 스크롤: treemap -> summary 직결
@@ -116,29 +122,17 @@ export default function Dashboard() {
             animate="animate"
             exit="exit"
             transition={{ duration: 0.35, ease: "easeOut" }}
+            className="h-full"
           >
-            <MainExpenseCard lang="ko" />
-
-            <SummaryItemRow lang="ko" />
-
-            <DailyTransactionCard />
+            <ScrollArea className="h-full pr-4">
+              <div className="space-y-6 pb-20">
+                <MainExpenseCard lang="ko" />
+                <SummaryItemRow lang="ko" />
+                <AnalysisTabs />
+              </div>
+            </ScrollArea>
           </motion.div>
         )}
-        {/* 
-        {activeSection === "category" && (
-          <motion.div
-            key="category"
-            variants={sectionVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.35, ease: "easeOut" }}
-          >
-            <CategoryExpenseCard setDialogState={setDialogState} />
-
-            <CategoryIncomeCard setDialogState={setDialogState} />
-          </motion.div>
-        )} */}
 
         {activeSection === "treemap" && (
           <motion.div

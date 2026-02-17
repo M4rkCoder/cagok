@@ -129,6 +129,7 @@ function App() {
                       />
                       <Route path="/statistics" element={<StatisticsPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
+                      <Route path="/settings/db" element={<SettingsPage defaultSection="database" />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </Home>

@@ -5,9 +5,9 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   FolderOpen,
   Database,
@@ -17,9 +17,8 @@ import {
   Trash2,
   RotateCcw,
   ShieldCheck,
-  ExternalLink,
-  File,
   Save,
+  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -44,14 +43,45 @@ export default function DbSettings() {
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  
+  const [autoBackupEnabled, setAutoBackupEnabled] = useState(false);
+  const [lastAutoBackupDate, setLastAutoBackupDate] = useState<string | null>(null);
 
   useEffect(() => {
     setHeader("데이터베이스 설정");
     invoke<string>("get_db_path").then(setDbPath);
     invoke<string>("get_export_path").then(setExportPath);
     fetchBackups();
+    fetchAutoBackupSettings();
     return () => resetHeader();
   }, []);
+
+  const fetchAutoBackupSettings = async () => {
+    try {
+      const enabled = await invoke<string | null>("get_setting_command", { key: "auto_backup_enabled" });
+      setAutoBackupEnabled(enabled === "true");
+      
+      const lastDate = await invoke<string | null>("get_setting_command", { key: "last_auto_backup_date" });
+      setLastAutoBackupDate(lastDate);
+    } catch (e) {
+      console.error("Failed to fetch settings", e);
+    }
+  };
+
+  const handleAutoBackupToggle = async (checked: boolean) => {
+    setAutoBackupEnabled(checked);
+    try {
+      await invoke("set_setting_command", { key: "auto_backup_enabled", value: checked ? "true" : "false" });
+      if (checked) {
+        toast.success("자동 백업이 활성화되었습니다.");
+      } else {
+        toast.info("자동 백업이 비활성화되었습니다.");
+      }
+    } catch (e) {
+      toast.error("설정 저장 실패");
+      setAutoBackupEnabled(!checked); // revert
+    }
+  };
 
   const fetchBackups = async () => {
     try {
@@ -175,8 +205,53 @@ export default function DbSettings() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* 2. 자동 백업 설정 */}
+      <Card className="border-none shadow-md overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <div className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-primary" />
+            <CardTitle className="text-lg font-bold">
+              자동 백업 설정
+            </CardTitle>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-2"
+            onClick={() => invoke("open_backup_folder")}
+          >
+            <FolderOpen className="w-4 h-4" />
+            백업 폴더 열기
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-xl border bg-card shadow-sm">
+            <div className="space-y-1">
+              <label htmlFor="auto-backup" className="font-medium text-sm cursor-pointer">
+                프로그램 종료 시 자동 백업
+              </label>
+              <p className="text-xs text-muted-foreground">
+                앱을 닫을 때마다 'cagok_auto.db' 파일로 백업합니다. (이전 자동 백업 덮어쓰기)
+              </p>
+            </div>
+            <Switch 
+              id="auto-backup" 
+              checked={autoBackupEnabled}
+              onCheckedChange={handleAutoBackupToggle}
+            />
+          </div>
+          
+          {lastAutoBackupDate && (
+             <div className="flex items-center gap-2 px-2">
+               <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">최근 자동 백업:</span>
+               <span className="text-sm font-mono text-foreground">{lastAutoBackupDate}</span>
+             </div>
+          )}
+        </CardContent>
+      </Card>
 
-      {/* 2. 백업 기록 관리 카드 (백업 생성 버튼 포함) */}
+      {/* 3. 백업 기록 관리 카드 (백업 생성 버튼 포함) */}
       <Card className="border-none shadow-md overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div className="space-y-1">

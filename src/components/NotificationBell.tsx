@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { Bell, CheckCircle2, Trash2, Info } from "lucide-react";
 import {
@@ -14,9 +15,15 @@ export const NotificationBell = () => {
   const { notifications, markAsRead, markAllAsRead, clearAll } =
     useNotificationStore();
   const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const [open, setOpen] = useState(false);
+
+  const handleLinkClick = (id: string) => {
+    markAsRead(id);
+    setOpen(false);
+  };
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button className="relative p-1.5 text-slate-200 hover:text-amber-600 transition-colors focus:outline-none group">
           <Bell
@@ -74,44 +81,61 @@ export const NotificationBell = () => {
             </div>
           ) : (
             <div className="flex flex-col">
-              {notifications.map((n) => (
-                <Link
-                  to="/transactions/recurring"
-                  className="flex items-center flex-nowrap w-full group outline-none select-none"
-                >
-                  <div
-                    key={n.id}
-                    onClick={() => markAsRead(n.id)}
-                    className={`relative flex flex-col gap-0.5 p-3 border-b border-zinc-50 cursor-pointer transition-colors hover:bg-zinc-50/80 ${
-                      !n.isRead ? "bg-amber-50/30" : ""
-                    }`}
-                  >
-                    {/* 읽지 않음 표시 사이드 바 */}
-                    {!n.isRead && (
-                      <div className="absolute left-2 top-2 bottom-2 w-0.5 bg-amber-500" />
-                    )}
+              {notifications.map((n) => {
+                // 링크 생성 로직: 명시적 링크 -> 타입 기반 -> 메시지 키워드 기반 -> 기본값
+                let linkTarget = n.link;
+                if (!linkTarget) {
+                  if (n.type === "recurring") linkTarget = "/transactions/recurring";
+                  else if (n.type === "backup") linkTarget = "/settings/db";
+                  // 레거시 지원: 메시지 내용으로 추론
+                  else if (n.message.includes("정기") || n.message.includes("Recurring")) linkTarget = "/transactions/recurring";
+                  else if (n.message.includes("백업") || n.message.includes("Backup")) linkTarget = "/settings/db";
+                  else linkTarget = "/";
+                }
 
-                    <div className="flex justify-between items-center pl-2">
-                      <span
-                        className={`text-[10px] font-semibold tracking-tight ${
-                          !n.isRead ? "text-amber-600" : "text-zinc-400"
-                        }`}
-                      >
-                        정기 내역 처리
-                      </span>
-                      <span className="text-[11px] text-zinc-400 font-medium">
-                        {new Date(n.timestamp).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
+                return (
+                  <Link
+                    key={n.id}
+                    to={linkTarget}
+                    onClick={() => handleLinkClick(n.id)}
+                    className="flex flex-col w-full group outline-none select-none no-underline"
+                  >
+                    <div
+                      className={`relative flex flex-col gap-0.5 p-3 border-b border-zinc-50 cursor-pointer transition-colors hover:bg-zinc-50/80 ${
+                        !n.isRead ? "bg-amber-50/30" : ""
+                      }`}
+                    >
+                      {/* 읽지 않음 표시 사이드 바 */}
+                      {!n.isRead && (
+                        <div className="absolute left-2 top-2 bottom-2 w-0.5 bg-amber-500" />
+                      )}
+  
+                      <div className="flex justify-between items-center pl-2">
+                        <span
+                          className={`text-[10px] font-semibold tracking-tight ${
+                            !n.isRead ? "text-amber-600" : "text-zinc-400"
+                          }`}
+                        >
+                          {n.type === "recurring" 
+                            ? "정기 내역 처리" 
+                            : n.type === "backup" 
+                              ? "자동 백업 완료" 
+                              : "알림"}
+                        </span>
+                        <span className="text-[11px] text-zinc-400 font-medium">
+                          {new Date(n.timestamp).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-sm text-zinc-600 leading-normal line-clamp-2 pl-2">
+                        {n.message}
+                      </p>
                     </div>
-                    <p className="text-sm text-zinc-600 leading-normal line-clamp-2 pl-2">
-                      {n.message}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </ScrollArea>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import GeneralSettings from "./GeneralSettings";
 import DbSettings from "./DbSettings";
 import CategorySettings from "./CategorySettings";
@@ -6,10 +6,14 @@ import RecurringSettings from "../transactions/RecurringSettings";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-const SettingsPage = () => {
+const SettingsPage = ({ defaultSection = "general" }: { defaultSection?: string }) => {
   type SettingsSection = "general" | "category" | "database" | "recurring";
   const [activeSection, setActiveSection] =
-    useState<SettingsSection>("general");
+    useState<SettingsSection>(defaultSection as SettingsSection);
+
+  useEffect(() => {
+    setActiveSection(defaultSection as SettingsSection);
+  }, [defaultSection]);
 
   // 탭 메뉴 구성
   const tabs = [
