@@ -1,5 +1,6 @@
 import { DailySummary } from "@/types";
 import { ExpenseBadge, IncomeBadge, TrendBadge } from "./TransactionBadge";
+import { MinusCircle, PlusCircle } from "lucide-react";
 
 interface Props {
   summary: DailySummary;
@@ -53,9 +54,20 @@ export function DailySummaryCard({ summary, isSelected, onClick }: Props) {
 
           <div className="h-3 w-[1px] bg-slate-200" />
 
-          <span className="text-xs font-medium text-slate-500">
-            <span className="text-slate-700">{summary.total_count}</span>건
-          </span>
+          <div className="flex items-center gap-2.5 text-[11px] font-medium text-slate-500">
+            {summary.income_count > 0 && (
+              <div className="flex items-center gap-1 hover:text-emerald-600 transition-colors">
+                <PlusCircle size={12} className="text-emerald-500" />
+                <span>{summary.income_count}건</span>
+              </div>
+            )}
+            {summary.expense_count > 0 && (
+              <div className="flex items-center gap-1 hover:text-blue-600 transition-colors">
+                <MinusCircle size={12} className="text-blue-500" />
+                <span>{summary.expense_count}건</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* 오른쪽: 요약 금액 (배지 + 금액 인라인 배치) */}

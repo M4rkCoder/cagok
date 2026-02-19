@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getThemeColor } from "@/lib/utils"; // 유틸 함수 임포트
+import { AllIcon } from "@/components/CategoryIcon";
 
 interface CategoryChartProps {
   mode: "expense" | "income"; // 모드 추가
@@ -67,7 +68,7 @@ export default function CategoryTransactionChart({
   // 중앙 텍스트용 선택된 아이템 정보
   const selectedItem = React.useMemo(
     () => chartData.find((item) => item.id === activeId),
-    [chartData, activeId],
+    [chartData, activeId]
   );
 
   const formatCurrency = (amount: number) => {
@@ -81,11 +82,14 @@ export default function CategoryTransactionChart({
   return (
     <div className="flex flex-col h-full w-full items-center justify-between">
       <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-        <SelectTrigger className="w-[140px] h-8 text-sm">
+        <SelectTrigger className="w-[150px] h-8 text-sm">
           <SelectValue placeholder="카테고리 선택" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">전체 카테고리</SelectItem>
+          <SelectItem value="all">
+            <AllIcon />
+            전체 카테고리
+          </SelectItem>
           {categories.map((cat) => {
             const id = (cat.category_id || cat.income_category_id).toString();
             return (

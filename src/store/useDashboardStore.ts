@@ -5,14 +5,14 @@ import {
   MonthlyOverview,
   CategoryExpense,
   DailyExpense,
-  MonthlyExpense,
-  ComparisonType,
-  ComparisonMetric,
   TransactionWithCategory,
   DailyCategoryTransaction,
   TreemapNode,
   DailyDetailResponse,
   CategoryFixedVariableSummary,
+  DayOfWeekResponse,
+  ComparisonType,
+  ComparisonMetric,
 } from "@/types";
 import { format } from "date-fns";
 
@@ -43,6 +43,8 @@ interface DashboardState {
   };
   fixedVariableTransactions: CategoryFixedVariableSummary[];
   treemapDialogOpen: boolean;
+  dayOfWeekExpense: DayOfWeekResponse | null;
+  dayOfWeekIncome: DayOfWeekResponse | null;
   setTreemapDialogOpen: (open: boolean) => void;
   loadChartDetail: (
     date: string,
@@ -108,13 +110,16 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   dialogState: { isOpen: false, date: null, categoryId: null, txType: 1 },
   fixedVariableTransactions: [],
   treemapDialogOpen: false,
+  dayOfWeekExpense: null,
+  dayOfWeekIncome: null,
+
   setTreemapDialogOpen: (open: boolean) => set({ treemapDialogOpen: open }),
   openDialog: (date, txType, categoryId = null) =>
     set({ dialogState: { isOpen: true, date, txType, categoryId } }),
   closeDialog: () =>
     set((state) => ({
       dialogState: { ...state.dialogState, isOpen: false },
-      detailData: { items: [], total_amount: 0, categoryId: null }, // 데이터 초기화
+      detailData: { items: [], total_amount: 0, categoryId: null },
     })),
   setDetailData: (data) => set({ detailData: data }),
   setActiveTreemapNode: (node) => set({ activeTreemapNode: node }),
@@ -126,16 +131,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   loadChartDetail: async (date, txType, categoryId = null) => {
     try {
       set({ detailLoading: true });
-
       const response = await invoke<DailyDetailResponse>(
         "get_daily_chart_detail",
-        {
-          date,
-          txType,
-          categoryId, // Option<i64>는 JS의 number | null과 매칭됩니다.
-        }
+        { date, txType, categoryId }
       );
-
       set({ detailData: response });
     } catch (error) {
       console.error("Failed to load chart detail:", error);
@@ -144,6 +143,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       set({ detailLoading: false });
     }
   },
+
   loadDashboardData: async () => {
     const { selectedMonth } = get();
     if (!selectedMonth) return;
@@ -151,7 +151,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
       set({ loading: true });
 
       const { current, previous } = getMonthRange(selectedMonth);
-
       const types: ComparisonType[] = [
         "Income",
         "Expense",
@@ -172,9 +171,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         topIncomesData,
         topFixedData,
         topVariableData,
-        comparisonData,
+        comparisonResults,
         treemapData,
         fixedVariableData,
+        dayOfWeekExpData, // 요일별 지출 추가
+        dayOfWeekIncData, // 요일별 수입 추가
       ] = await Promise.all([
         invoke<MonthlyOverview>("get_monthly_overview", {
           yearMonth: selectedMonth,
@@ -185,7 +186,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         }),
         invoke<CategoryExpense[]>("get_category_transactions", {
           yearMonth: selectedMonth,
-          txType: 0, //income
+          txType: 0,
         }),
         invoke<DailyExpense[]>("get_daily_expenses", {
           yearMonth: selectedMonth,
@@ -195,11 +196,11 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         }),
         invoke<DailyCategoryTransaction[]>("get_daily_category_transactions", {
           yearMonth: selectedMonth,
-          txType: 1, // 지출 기준
+          txType: 1,
         }),
         invoke<DailyCategoryTransaction[]>("get_daily_category_transactions", {
           yearMonth: selectedMonth,
-          txType: 0, // 수입 기준
+          txType: 0,
         }),
         invoke<TransactionWithCategory[]>("get_recent_transactions", {
           yearMonth: selectedMonth,
@@ -233,13 +234,19 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         }),
         invoke<CategoryFixedVariableSummary[]>(
           "get_monthly_fixed_variable_transactions",
-          {
-            yearMonth: selectedMonth,
-          }
+          { yearMonth: selectedMonth }
         ),
+        invoke<DayOfWeekResponse>("get_day_of_week_stats_monthly_command", {
+          baseMonth: selectedMonth,
+          txType: 1,
+        }),
+        invoke<DayOfWeekResponse>("get_day_of_week_stats_monthly_command", {
+          baseMonth: selectedMonth,
+          txType: 0,
+        }),
       ]);
 
-      const comparisonMap = comparisonData.reduce(
+      const comparisonMap = comparisonResults.reduce(
         (acc, { type, data }) => {
           acc[type] = data;
           return acc;
@@ -249,8 +256,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
       set({
         overview: overviewData,
-        categoriesExpense: categoriesExpense,
-        categoriesIncome: categoriesIncome,
+        categoriesExpense,
+        categoriesIncome,
         dailyExpenses: dailyData,
         daily7Expenses: daily7Data,
         dailyCategoryExpenses: dailyCategoryExpense,
@@ -262,6 +269,8 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         expenseTreemap: treemapData,
         comparisons: comparisonMap,
         fixedVariableTransactions: fixedVariableData,
+        dayOfWeekExpense: dayOfWeekExpData,
+        dayOfWeekIncome: dayOfWeekIncData,
       });
     } catch (error) {
       console.error("Failed to load dashboard data:", error);

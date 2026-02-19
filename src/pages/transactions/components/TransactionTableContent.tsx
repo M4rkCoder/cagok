@@ -49,7 +49,7 @@ const TransactionTableContent: React.FC<TransactionTableContentProps> = ({
                   colSpan={header.colSpan}
                   style={{ width: header.getSize(), position: "relative" }}
                   data-size={header.getSize()}
-                  className="relative h-12 px-4 text-left align-middle font-bold text-foreground [&:has([role=checkbox])]:pr-0 group/table-head bg-muted"
+                  className="relative h-12 text-left align-middle font-bold text-foreground [&:has([role=checkbox])]:pr-0 group/table-head bg-muted"
                 >
                   {header.isPlaceholder
                     ? null
@@ -91,7 +91,7 @@ const TransactionTableContent: React.FC<TransactionTableContentProps> = ({
                 className="group"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell key={cell.id} className="py-3">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}

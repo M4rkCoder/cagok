@@ -2,6 +2,7 @@ import React from "react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { formatCurrency } from "@/lib/utils";
 import { useDashboardStore } from "@/store/useDashboardStore";
+import { DashboardTitle } from "./components/DashboardTitle";
 
 interface ExpenseItem {
   id: string | number;
@@ -14,18 +15,11 @@ interface ExpenseItem {
 export const CategoryTopList: React.FC = () => {
   const { topFixedExpenses: topFixed, topVariableExpenses: topVariable } =
     useDashboardStore();
-  const renderList = (
-    title: string,
-    data: ExpenseItem[],
-    accentColor: string
-  ) => (
+  const renderList = (title: string, data: ExpenseItem[]) => (
     <div className="flex-1 flex flex-col min-w-0">
       {/* 헤더 섹션 */}
       <div className="flex items-center gap-1 mb-1">
-        <div className={`w-1 h-3 rounded-full ${accentColor}`} />
-        <span className="text-sm font-black text-slate-500 uppercase tracking-tight">
-          {title} (TOP 5)
-        </span>
+        <DashboardTitle title={`${title} (TOP 5)`} />
       </div>
 
       {/* 리스트 섹션 */}
@@ -65,12 +59,12 @@ export const CategoryTopList: React.FC = () => {
 
   return (
     <div className="flex gap-8 w-full mt-0 border-t pt-2 px-3">
-      {renderList("고정 지출", topFixed, "bg-slate-400")}
+      {renderList("고정 지출", topFixed)}
 
       {/* 구분선 */}
       <div className="w-px bg-gradient-to-b from-transparent via-slate-300 to-transparent self-stretch" />
 
-      {renderList("변동 지출", topVariable, "bg-orange-400")}
+      {renderList("변동 지출", topVariable)}
     </div>
   );
 };

@@ -76,7 +76,7 @@ export function TransactionDetailTable({
                             {tx.category_name}
                           </span>
                           {tx.is_fixed === 1 && (
-                            <Pin className="h-3 w-3 text-slate-400 fill-slate-400 rotate-45 shrink-0" />
+                            <span className="text-[10px] native-emoji">📌</span>
                           )}
                         </div>
                       </div>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   Check,
@@ -86,8 +86,11 @@ const MODE_CONFIG = {
 
 export function TransactionFilterPanel() {
   const { categoryList } = useAppStore();
-  const { setFilters: setStoreFilters, fetchFilteredAll } =
-    useTransactionStore();
+  const {
+    filters: storeFilters,
+    setFilters: setStoreFilters,
+    fetchFilteredAll,
+  } = useTransactionStore();
 
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [localKeyword, setLocalKeyword] = useState(filters.keyword);
@@ -96,6 +99,43 @@ export function TransactionFilterPanel() {
   const [tempAmount, setTempAmount] = useState({ min: "", max: "" });
   const [openPrice, setOpenPrice] = useState(false);
   const current = MODE_CONFIG[filters.mode];
+
+  useEffect(() => {
+    if (storeFilters) {
+      // 스토어의 백엔드 필터 형식을 로컬 FilterState 형식으로 역변환
+      const restoredFilters: FilterState = {
+        keyword: storeFilters.keyword || "",
+        categoryIds: storeFilters.category_ids || [],
+        dateRange: storeFilters.start_date
+          ? {
+              from: new Date(storeFilters.start_date),
+              to: storeFilters.end_date
+                ? new Date(storeFilters.end_date)
+                : undefined,
+            }
+          : undefined,
+        minAmount: storeFilters.min_amount?.toString() || "",
+        maxAmount: storeFilters.max_amount?.toString() || "",
+        mode:
+          storeFilters.tx_type === 0
+            ? "income"
+            : storeFilters.is_fixed === true
+              ? "fixed_expense"
+              : storeFilters.is_fixed === false
+                ? "variable_expense"
+                : storeFilters.tx_type === 1
+                  ? "total_expense"
+                  : "all",
+      };
+
+      setFilters(restoredFilters);
+      setLocalKeyword(restoredFilters.keyword);
+      setTempAmount({
+        min: restoredFilters.minAmount,
+        max: restoredFilters.maxAmount,
+      });
+    }
+  }, []);
 
   const updateFilter = (key: keyof FilterState, value: any) => {
     setFilters((prev) => ({ ...prev, [key]: value }));

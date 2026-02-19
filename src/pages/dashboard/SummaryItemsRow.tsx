@@ -1,4 +1,4 @@
-import { DiffBadge } from "./DiffBadge";
+import { DiffBadge } from "./components/DiffBadge";
 import { CurrencyIcon } from "@/components/ui/CurrencyIcon";
 import CountUp from "@/components/CountUp";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";

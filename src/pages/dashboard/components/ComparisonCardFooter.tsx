@@ -68,7 +68,7 @@ export function ComparisonCardFooter({
           {formatKRW(dailyAverage!)}
         </span>
         <span>썼어요</span>
-      </div>,
+      </div>
     );
   }
 
@@ -111,7 +111,7 @@ export function ComparisonCardFooter({
             )}
           </span>
         </div>
-      ),
+      )
     );
   }
 
@@ -126,7 +126,7 @@ export function ComparisonCardFooter({
           수입의 <span className={expenseRateColor()}>{expenseRate}%</span>를
           썼어요.
         </span>
-      </div>,
+      </div>
     );
   }
 
@@ -137,7 +137,7 @@ export function ComparisonCardFooter({
 
     const interval = setInterval(() => {
       setCurrentSentenceIndex(
-        (prevIndex) => (prevIndex + 1) % sentences.length,
+        (prevIndex) => (prevIndex + 1) % sentences.length
       );
     }, 3500); // Roll every 3.5 seconds
 
@@ -146,7 +146,6 @@ export function ComparisonCardFooter({
 
   const handleMouseEnter = () => setIsPaused(true);
   const handleMouseLeave = () => setIsPaused(false);
-  const handleClick = () => setIsExpanded((prev) => !prev);
 
   const variants = {
     enter: { opacity: 0, y: 15 },
@@ -159,7 +158,6 @@ export function ComparisonCardFooter({
       className="pt-0 pb-0 text-sm min-h-[40px] text-muted-foreground cursor-pointer relative overflow-hidden"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
     >
       {sentences.length === 0 ? (
         <div className="w-full text-center">데이터가 없습니다.</div>

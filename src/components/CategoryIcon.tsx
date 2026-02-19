@@ -37,7 +37,7 @@ export const CategoryIcon = ({
         // rounded-full로 완전한 원형 구현
         "rounded-full flex items-center justify-center shrink-0 transition-all duration-300 overflow-hidden",
         sizeClasses[size],
-        className,
+        className
       )}
       style={{ backgroundColor: selected.bg }}
     >
@@ -56,5 +56,13 @@ export const CategoryIcon = ({
         {icon}
       </span>
     </div>
+  );
+};
+
+export const AllIcon = () => {
+  return (
+    <span className="w-4 h-4 flex items-center justify-center text-[8px] font-bold bg-slate-100 rounded-full">
+      ALL
+    </span>
   );
 };

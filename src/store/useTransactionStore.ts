@@ -38,6 +38,7 @@ interface TransactionState {
   handleSheetClose: () => void;
   submitForm: (values: TransactionFormValues) => Promise<void>;
   deleteTransaction: (id: number) => Promise<void>;
+  deleteBulkTransactions: (ids: number[]) => Promise<void>;
   setDefaultCategoryId: (id: number | null) => void;
   setFilters: (filters: TransactionFilters) => void;
   fetchFilteredAll: (filters?: TransactionFilters) => Promise<void>;
@@ -64,7 +65,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     set({ loading: true });
     try {
       const summaries = await invoke<MonthlyTotalSummary[]>(
-        "get_all_monthly_total_trends",
+        "get_all_monthly_total_trends"
       );
       set({ monthlySummaries: summaries });
     } catch (error) {
@@ -96,7 +97,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     try {
       const details = await invoke<TransactionWithCategory[]>(
         "get_transactions_by_date",
-        { date },
+        { date }
       );
       set({ dateTransactions: details });
     } catch (error) {
@@ -143,7 +144,23 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
       toast.error("삭제에 실패했습니다.");
     }
   },
+  deleteBulkTransactions: async (ids: number[]) => {
+    if (ids.length === 0) return;
 
+    set({ loading: true });
+
+    try {
+      const message = await invoke<string>("delete_bulk_transactions", { ids });
+      toast.success(message);
+
+      await get().fetchTransactions();
+    } catch (error) {
+      console.error(error);
+      toast.error("삭제 오류");
+    } finally {
+      set({ loading: false });
+    }
+  },
   setDefaultCategoryId: (id) => set({ defaultCategoryId: id }),
   setFilters: (newFilters) => set({ filters: newFilters }),
   fetchFilteredAll: async (filters) => {
@@ -153,7 +170,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
     try {
       const results = await invoke<TransactionWithCategory[]>(
         "get_filtered_transactions_command",
-        { filters: currentFilters },
+        { filters: currentFilters }
       );
 
       set({ transactions: results });
@@ -227,10 +244,10 @@ function processSummaries(data: TransactionWithCategory[]) {
 
   return {
     daily: Array.from(dailyMap.values()).sort((a, b) =>
-      b.date.localeCompare(a.date),
+      b.date.localeCompare(a.date)
     ),
     monthly: Array.from(monthlyMap.values()).sort((a, b) =>
-      b.year_month.localeCompare(a.year_month),
+      b.year_month.localeCompare(a.year_month)
     ),
   };
 }

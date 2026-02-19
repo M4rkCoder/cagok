@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useTransactionStore } from "@/store/useTransactionStore";
 import { TransactionFilterPanel } from "./components/TransactionFilterPanel";
 import { Calendar } from "@/components/ui/calendar";
@@ -14,7 +14,16 @@ import { ko } from "date-fns/locale";
 import { useConfirmStore } from "@/store/useConfirmStore";
 import { Transaction, TransactionWithCategory } from "@/types";
 import { CategoryIcon } from "@/components/CategoryIcon";
-import { Pin, Pencil, Trash2, ReceiptText } from "lucide-react";
+import {
+  Pin,
+  Pencil,
+  Trash2,
+  ReceiptText,
+  MinusCircle,
+  PlusCircle,
+  X,
+  Filter,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,28 +31,81 @@ import { MonthYearPicker } from "@/components/MonthYearPicker";
 
 export default function TransactionsCalendar() {
   const {
+    filters,
     dailySummaries,
-    fetchFilteredAll,
-    setFilters,
-    loading,
     fetchTransactionsByDate,
     dateTransactions,
     deleteTransaction,
     setEditingTransaction,
     setSheetOpen,
+    fetchFilteredAll,
   } = useTransactionStore();
 
   const { confirm } = useConfirmStore();
+  const filterRef = useRef<HTMLDivElement>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
 
+  // 1. 필터 활성화 여부 계산
+  const isFilterActive = useMemo(() => {
+    return (
+      (filters.keyword && filters.keyword.trim() !== "") ||
+      filters.tx_type !== undefined ||
+      filters.is_fixed !== undefined ||
+      (filters.category_ids && filters.category_ids.length > 0) ||
+      filters.start_date !== undefined ||
+      filters.end_date !== undefined ||
+      filters.min_amount !== undefined ||
+      filters.max_amount !== undefined
+    );
+  }, [filters]);
+
+  // 2. ESC 키 및 외부 클릭 이벤트 처리
   useEffect(() => {
-    setFilters({});
-    fetchFilteredAll({});
-  }, []);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsFilterVisible(false);
+    };
 
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+
+      // 1. 필터 패널 자체 내부를 클릭한 경우 무시
+      if (filterRef.current && filterRef.current.contains(target)) {
+        return;
+      }
+
+      // 2. 토글 버튼을 클릭한 경우 무시 (토글 버튼의 onClick에서 처리하므로)
+      if (target.closest(".filter-toggle-button")) {
+        return;
+      }
+
+      // 3. (중요) Radix UI나 Shadcn UI의 Portal 요소(Select, Popover 등) 내부 클릭인지 확인
+      // 보통 data-radix-popper-content-wrapper 속성을 가집니다.
+      const isInsidePortal = target.closest(
+        "[data-radix-popper-content-wrapper]"
+      );
+      if (isInsidePortal) {
+        return;
+      }
+
+      // 위 조건들에 해당하지 않는 "진짜 외부" 클릭 시에만 닫기
+      setIsFilterVisible(false);
+    };
+
+    if (isFilterVisible) {
+      // mousedown 대신 pointerdown을 사용하면 터치 환경에서도 더 정확합니다.
+      window.addEventListener("mousedown", handleClickOutside);
+      window.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isFilterVisible]);
   const dailyMap = useMemo(() => {
     const map = new Map<string, { income: number; expense: number }>();
     dailySummaries.forEach((day) => {
@@ -57,9 +119,17 @@ export default function TransactionsCalendar() {
 
   const monthlySummary = useMemo(() => {
     const yearMonth = format(currentMonth, "yyyy-MM");
-    const daysInMonth = dailySummaries.filter((d) => d.date.startsWith(yearMonth));
-    const income = daysInMonth.reduce((acc, curr) => acc + curr.income_total, 0);
-    const expense = daysInMonth.reduce((acc, curr) => acc + curr.expense_total, 0);
+    const daysInMonth = dailySummaries.filter((d) =>
+      d.date.startsWith(yearMonth)
+    );
+    const income = daysInMonth.reduce(
+      (acc, curr) => acc + curr.income_total,
+      0
+    );
+    const expense = daysInMonth.reduce(
+      (acc, curr) => acc + curr.expense_total,
+      0
+    );
     const total = income - expense;
     return { income, expense, total };
   }, [dailySummaries, currentMonth]);
@@ -80,7 +150,8 @@ export default function TransactionsCalendar() {
   const handleDelete = (id: number) => {
     confirm({
       title: "가계부 기록 삭제",
-      description: "이 거래 내역을 정말 삭제하시겠습니까? \n 삭제 후에는 복구할 수 없습니다.",
+      description:
+        "이 거래 내역을 정말 삭제하시겠습니까? \n 삭제 후에는 복구할 수 없습니다.",
       onConfirm: async () => {
         await deleteTransaction(id);
         if (selectedDate) {
@@ -96,18 +167,58 @@ export default function TransactionsCalendar() {
   };
 
   return (
-    <div className="flex flex-col h-auto max-h-[calc(100vh-80px)] bg-transparent relative px-4 py-1 overflow-hidden">
-      <div className="sticky top-0 z-40 -mx-4 px-4 pb-2 pt-2 bg-background backdrop-blur supports-[backdrop-filter]:bg-slate-50/60 mb-1 shrink-0">
-        <div className="max-w-full mx-auto">
+    <div className="flex flex-col h-full bg-transparent relative px-4 py-1 overflow-hidden">
+      {/* 1. 플로팅 필터 패널 */}
+      {isFilterVisible && (
+        <motion.div
+          ref={filterRef}
+          initial={false}
+          animate={{
+            opacity: isFilterVisible ? 1 : 0,
+            y: isFilterVisible ? 0 : 20,
+            scale: isFilterVisible ? 1 : 0.95,
+            pointerEvents: isFilterVisible ? "auto" : "none", // 닫혔을 때 클릭 방지
+          }}
+          transition={{ duration: 0.2 }}
+          className="fixed bottom-24 right-8 z-[50] w-[80%] bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-4 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800"
+        >
           <TransactionFilterPanel />
-        </div>
+        </motion.div>
+      )}
+
+      {/* 2. 플로팅 실행 버튼 */}
+      <div className="fixed bottom-8 right-8 z-[50]">
+        <Button
+          onClick={() => setIsFilterVisible(!isFilterVisible)}
+          className={cn(
+            "filter-toggle-button w-14 h-14 rounded-full shadow-2xl transition-all duration-300 relative",
+            isFilterVisible ? "bg-slate-800" : "bg-blue-600 hover:bg-blue-700"
+          )}
+        >
+          {isFilterVisible ? (
+            <X className="w-6 h-6 text-white" />
+          ) : (
+            <Filter className="w-6 h-6 text-white" />
+          )}
+
+          {/* 필터 활성화 시 배지 표시 */}
+          {isFilterActive && !isFilterVisible && (
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 border-2 border-white dark:border-slate-950 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
+            >
+              !
+            </motion.span>
+          )}
+        </Button>
       </div>
 
-      <div className="flex-1 w-full max-w-full mx-auto flex flex-col gap-2 pb-4 overflow-hidden">
+      <div className="flex-1 w-full max-w-full mx-auto flex flex-col gap-2 pb-4 h-full mt-3">
         <div className="flex-1 bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-4 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between mb-4 px-2 shrink-0">
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
                 <span className="text-2xl font-black text-slate-800 dark:text-slate-100">
                   {format(currentMonth, "M")}월
                 </span>
@@ -118,31 +229,42 @@ export default function TransactionsCalendar() {
               <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 mx-2" />
               <div className="flex gap-4 text-sm">
                 <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-blue-500" />
+                  <span className="text-slate-500 font-medium">지출</span>
+                  <span className="font-bold text-blue-600">
+                    {monthlySummary.expense.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-emerald-500" />
                   <span className="text-slate-500 font-medium">수입</span>
-                  <span className="font-bold text-emerald-600">{monthlySummary.income.toLocaleString()}</span>
+                  <span className="font-bold text-emerald-600">
+                    {monthlySummary.income.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-rose-500" />
-                  <span className="text-slate-500 font-medium">지출</span>
-                  <span className="font-bold text-rose-600">{monthlySummary.expense.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-slate-500 font-medium">합계</span>
-                  <span className={cn("font-bold", monthlySummary.total >= 0 ? "text-slate-700 dark:text-slate-200" : "text-rose-600")}>
+                  <span className="text-slate-500 font-medium">순수입</span>
+                  <span
+                    className={cn(
+                      "font-bold",
+                      monthlySummary.total >= 0
+                        ? "text-slate-700 dark:text-slate-200"
+                        : "text-rose-600"
+                    )}
+                  >
                     {monthlySummary.total.toLocaleString()}
                   </span>
                 </div>
               </div>
             </div>
 
-            <MonthYearPicker 
-              selectedMonth={format(currentMonth, "yyyy-MM")} 
-              onMonthChange={handleMonthYearChange} 
+            <MonthYearPicker
+              selectedMonth={format(currentMonth, "yyyy-MM")}
+              onMonthChange={handleMonthYearChange}
             />
           </div>
 
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden mt-2">
             <Calendar
               mode="single"
               locale={ko}
@@ -156,10 +278,12 @@ export default function TransactionsCalendar() {
                 months: "flex-1 flex flex-col w-full h-full",
                 month: "flex-1 flex flex-col w-full h-full space-y-0",
                 table: "flex-1 w-full border-collapse table-fixed h-full",
-                head_row: "flex w-full border-b border-slate-100 dark:border-slate-800 pb-2 shrink-0",
-                head_cell: "text-slate-400 rounded-md w-full font-bold text-[0.8rem] uppercase tracking-wider text-center",
+                head_row:
+                  "flex w-full border-b border-slate-100 dark:border-slate-800 pb-2 shrink-0",
+                head_cell:
+                  "text-slate-400 rounded-md w-full font-bold text-[0.8rem] uppercase tracking-wider text-center",
                 row: "flex w-full flex-1 border-b last:border-0 border-slate-50 dark:border-slate-900 min-h-0",
-                cell: "flex-1 w-full text-center text-sm p-0 relative focus-within:relative focus-within:z-20 h-full",
+                cell: "flex-1 w-full text-center text-sm p-0 relative border-r last:border-r-0 border-slate-100 dark:border-slate-800/50 focus-within:relative focus-within:z-20 h-full",
                 day: "h-full w-full p-0 font-normal transition-colors flex flex-col items-start justify-start hover:bg-slate-50 dark:hover:bg-slate-900/50",
                 month_caption: "hidden", // Hide default caption
                 nav: "hidden", // Hide default navigation buttons
@@ -176,36 +300,47 @@ export default function TransactionsCalendar() {
                     <button
                       {...props}
                       className={cn(
-                        "h-full w-full p-1.5 font-normal transition-all flex flex-col items-start justify-start gap-1 group min-h-[85px]",
-                        modifiers.selected && "bg-slate-100/80 dark:bg-slate-800/80 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]",
-                        modifiers.today && "bg-slate-50/50 dark:bg-slate-900/30",
+                        "h-full w-full p-1 font-normal transition-all flex flex-col items-start justify-start gap-1 group min-h-[100px] min-2xl:h-[130px]",
+                        modifiers.selected &&
+                          "bg-slate-100/80 dark:bg-slate-800/80 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]",
+                        modifiers.today &&
+                          "bg-slate-50/50 dark:bg-slate-900/30",
                         isOutside && "opacity-30",
-                        !modifiers.selected && !isOutside && "hover:bg-slate-50 dark:hover:bg-slate-900"
+                        !modifiers.selected &&
+                          !isOutside &&
+                          "hover:bg-slate-50 dark:hover:bg-slate-900"
                       )}
                     >
-                      <span className={cn(
-                        "text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full transition-colors shrink-0",
-                        isSunday && "text-rose-500",
-                        isSaturday && "text-blue-500",
-                        modifiers.today && "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm",
-                        !modifiers.today && !isSunday && !isSaturday && "text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100"
-                      )}>
+                      <span
+                        className={cn(
+                          "text-sm font-bold w-6 h-6 flex items-center justify-center rounded-full shrink-0",
+                          "transition-all duration-300 ease-in-out group-hover:text-lg",
+                          isSunday && "text-rose-500",
+                          isSaturday && "text-blue-500",
+                          modifiers.today &&
+                            "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm",
+                          !modifiers.today &&
+                            !isSunday &&
+                            !isSaturday &&
+                            "text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100"
+                        )}
+                      >
                         {day.date.getDate()}
                       </span>
-                      
-                      <div className="flex flex-col w-full gap-0.5 mt-auto pb-1 min-h-[32px]">
+
+                      <div className="flex flex-col w-full gap-0.5 mt-auto pb-1 min-h-[50px] items-center">
                         {data && (
                           <>
-                            {data.income > 0 && (
-                              <div className="flex items-center justify-between w-full px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-[10px] text-emerald-700 dark:text-emerald-400 font-bold truncate">
-                                <span>+</span>
-                                <span>{data.income.toLocaleString()}</span>
+                            {data.expense > 0 && (
+                              <div className="flex items-center justify-between w-[80%] px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/30 text-[11px] text-blue-700 dark:text-blue-400 font-bold truncate min-2xl:text-[13px]">
+                                <MinusCircle className="w-3 h-3" />
+                                <span>{data.expense.toLocaleString()}</span>
                               </div>
                             )}
-                            {data.expense > 0 && (
-                              <div className="flex items-center justify-between w-full px-1.5 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/30 text-[10px] text-rose-700 dark:text-rose-400 font-bold truncate">
-                                <span>-</span>
-                                <span>{data.expense.toLocaleString()}</span>
+                            {data.income > 0 && (
+                              <div className="flex items-center justify-between w-[80%] px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-[11px] text-emerald-700 dark:text-emerald-400 font-bold truncate min-2xl:text-[13px]">
+                                <PlusCircle className="w-3 h-3" />
+                                <span>{data.income.toLocaleString()}</span>
                               </div>
                             )}
                           </>
@@ -213,57 +348,107 @@ export default function TransactionsCalendar() {
                       </div>
                     </button>
                   );
-                }
+                },
               }}
             />
           </div>
         </div>
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg p-0 overflow-hidden border-none bg-transparent shadow-none">
-          <AnimatePresence>
-            {isDialogOpen && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-white dark:bg-slate-950 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh]"
-              >
-                <DialogHeader className="p-5 border-b border-slate-100 dark:border-slate-900 bg-slate-50/50 dark:bg-slate-900/50 flex-shrink-0">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 rounded-2xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-lg shadow-slate-200 dark:shadow-none">
-                        <ReceiptText className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <DialogTitle className="text-xl font-black text-slate-800 dark:text-slate-100">
-                          {selectedDate && format(selectedDate, "M월 d일", { locale: ko })}
-                        </DialogTitle>
-                        <p className="text-xs text-slate-400 font-medium mt-0.5">
-                          {selectedDate && format(selectedDate, "eeee", { locale: ko })} • 상세 내역 {dateTransactions.length}건
-                        </p>
-                      </div>
+      <TransactionDetailDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        selectedDate={selectedDate}
+        transactions={dateTransactions}
+        summary={
+          selectedDate
+            ? dailyMap.get(format(selectedDate, "yyyy-MM-dd"))
+            : undefined
+        }
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
+    </div>
+  );
+}
+
+interface TransactionDetailDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedDate: Date | undefined;
+  transactions: TransactionWithCategory[];
+  summary: { income: number; expense: number } | undefined;
+  onEdit: (tx: Transaction) => void;
+  onDelete: (id: number) => void;
+}
+
+function TransactionDetailDialog({
+  isOpen,
+  onOpenChange,
+  selectedDate,
+  transactions,
+  summary,
+  onEdit,
+  onDelete,
+}: TransactionDetailDialogProps) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg p-0 overflow-hidden border-none bg-transparent shadow-none">
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-slate-950 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[85vh]"
+            >
+              <DialogHeader className="p-5 border-b border-slate-100 dark:border-slate-900 bg-slate-50/50 dark:bg-slate-900/50 flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-2xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-lg shadow-slate-200 dark:shadow-none">
+                      <ReceiptText className="w-5 h-5" />
                     </div>
-                    <div className="text-right">
-                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">일일 합계</p>
-                       <span className={cn(
-                         "text-xl font-black tabular-nums tracking-tight",
-                         (dateTransactions.reduce((acc, curr) => acc + (curr.type === 0 ? curr.amount : -curr.amount), 0)) >= 0 
-                           ? "text-emerald-600" 
-                           : "text-rose-600"
-                       )}>
-                         {(dateTransactions.reduce((acc, curr) => acc + (curr.type === 0 ? curr.amount : -curr.amount), 0)).toLocaleString()}
-                         <small className="text-xs ml-0.5 font-bold opacity-70">원</small>
-                       </span>
+                    <div>
+                      <DialogTitle className="text-xl font-black text-slate-800 dark:text-slate-100">
+                        {selectedDate &&
+                          format(selectedDate, "M월 d일", { locale: ko })}
+                      </DialogTitle>
+                      <p className="text-xs text-slate-400 font-medium mt-0.5">
+                        {selectedDate &&
+                          format(selectedDate, "eeee", { locale: ko })}{" "}
+                        • 상세 {transactions.length}건
+                      </p>
                     </div>
                   </div>
-                </DialogHeader>
 
-                <ScrollArea className="flex-1 overflow-y-auto min-h-[300px]">
-                  <div className="p-4 space-y-3">
-                    {dateTransactions.length > 0 ? (
-                      dateTransactions.sort((a,b) => a.type - b.type).map((tx, idx) => (
+                  {/* 요청사항: 일일 합계 대신 수입/지출 합계 표시 */}
+                  <div className="flex flex-col items-end gap-1 mr-5">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-blue-500/80 uppercase">
+                        지출
+                      </span>
+                      <span className="text-sm font-black text-blue-600 tabular-nums">
+                        {summary?.expense.toLocaleString() || 0}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-emerald-500/80 uppercase">
+                        수입
+                      </span>
+                      <span className="text-sm font-black text-emerald-600 tabular-nums">
+                        {summary?.income.toLocaleString() || 0}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <ScrollArea className="flex-1 overflow-y-auto min-h-[300px]">
+                <div className="p-4 space-y-3">
+                  {transactions.length > 0 ? (
+                    transactions
+                      .sort((a, b) => a.type - b.type)
+                      .map((tx, idx) => (
                         <motion.div
                           key={tx.id}
                           initial={{ opacity: 0, x: -10 }}
@@ -273,11 +458,15 @@ export default function TransactionsCalendar() {
                         >
                           <div className="flex items-center gap-4">
                             <div className="relative">
-                              <CategoryIcon type={tx.type} icon={tx.category_icon} size="md" />
+                              <CategoryIcon
+                                type={tx.type}
+                                icon={tx.category_icon}
+                                size="md"
+                              />
                               {tx.is_fixed === 1 && (
-                                <div className="absolute -top-1 -right-1 p-1 bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700">
-                                  <Pin className="w-2.5 h-2.5 text-slate-400 fill-slate-400 rotate-45" />
-                                </div>
+                                <span className="absolute -top-1 -right-1 rounded-full bg-slate-100 p-1 text-[10px] native-emoji">
+                                  📌
+                                </span>
                               )}
                             </div>
                             <div className="flex flex-col">
@@ -287,39 +476,37 @@ export default function TransactionsCalendar() {
                               <span className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate max-w-[150px]">
                                 {tx.description || tx.category_name}
                               </span>
-                              {tx.remarks && (
-                                <span className="text-[11px] text-slate-400 italic mt-0.5 line-clamp-1">
-                                  "{tx.remarks}"
-                                </span>
-                              )}
                             </div>
                           </div>
 
                           <div className="flex items-center gap-4">
-                            <div className="text-right flex flex-col">
-                              <span className={cn(
+                            <span
+                              className={cn(
                                 "text-base font-black tabular-nums tracking-tight",
-                                tx.type === 0 ? "text-emerald-600" : "text-blue-600"
-                              )}>
-                                {tx.type === 0 ? "+" : "-"}{tx.amount.toLocaleString()}
-                                <small className="text-xs ml-0.5 font-bold">원</small>
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                                tx.type === 0
+                                  ? "text-emerald-600"
+                                  : "text-blue-600"
+                              )}
+                            >
+                              {tx.amount.toLocaleString()}
+                              <small className="text-xs ml-0.5 font-bold">
+                                원
+                              </small>
+                            </span>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-900"
-                                onClick={() => handleEdit(tx)}
+                                className="h-8 w-8 rounded-full"
+                                onClick={() => onEdit(tx)}
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 rounded-full hover:bg-rose-50 dark:hover:bg-rose-900/30 text-slate-400 hover:text-rose-600"
-                                onClick={() => handleDelete(tx.id)}
+                                className="h-8 w-8 rounded-full hover:text-rose-600"
+                                onClick={() => onDelete(tx.id)}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </Button>
@@ -327,29 +514,30 @@ export default function TransactionsCalendar() {
                           </div>
                         </motion.div>
                       ))
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-20 text-slate-300">
-                        <ReceiptText className="w-12 h-12 mb-4 opacity-20" />
-                        <p className="text-sm font-medium">기록된 내역이 없습니다</p>
-                      </div>
-                    )}
-                  </div>
-                </ScrollArea>
-
-                <div className="p-4 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-900 shrink-0">
-                   <Button 
-                    variant="ghost" 
-                    className="w-full h-12 rounded-2xl font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all"
-                    onClick={() => setIsDialogOpen(false)}
-                   >
-                     닫기
-                   </Button>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-20 text-slate-300">
+                      <ReceiptText className="w-12 h-12 mb-4 opacity-20" />
+                      <p className="text-sm font-medium">
+                        기록된 내역이 없습니다
+                      </p>
+                    </div>
+                  )}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </DialogContent>
-      </Dialog>
-    </div>
+              </ScrollArea>
+
+              <div className="p-4 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-900 shrink-0">
+                <Button
+                  variant="ghost"
+                  className="w-full h-12 rounded-2xl font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900"
+                  onClick={() => onOpenChange(false)}
+                >
+                  닫기
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,14 +1,15 @@
 import { Card } from "@/components/ui/card";
-import { DiffBadge } from "./DiffBadge";
+import { DiffBadge } from "./components/DiffBadge";
 import { CurrencyIcon } from "@/components/ui/CurrencyIcon";
 import CountUp from "@/components/CountUp";
-import { ComparisonCardFooter } from "./ComparisonCardFooter";
+import { ComparisonCardFooter } from "./components/ComparisonCardFooter";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 import TransactionSheet from "../transactions/TrasactionSheet";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
+import { DashboardTitle } from "./components/DashboardTitle";
 
 interface MainExpenseCardProps {
   lang: "ko" | "en";
@@ -55,12 +56,14 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
     <Card className="overflow-hidden border-none shadow-md bg-white mb-2">
       <div className="grid grid-cols-1 lg:grid-cols-12">
         {/* 1. 지출 요약부 (좌측) */}
-        <div className="lg:col-span-4 p-5 flex flex-col justify-between">
+        <div className="lg:col-span-4 p-4 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-8">
-              <span className="text-sm font-semibold text-slate-400 tracking-widest uppercase">
-                {lang === "ko" ? "이번 달 지출" : "Monthly Expense"}
-              </span>
+            <div className="flex items-center justify-between pb-8">
+              <div className="flex items-center gap-2">
+                <DashboardTitle
+                  title={lang === "ko" ? "이달의 지출" : "Monthly Expense"}
+                />
+              </div>
               <DiffBadge metric={comparison} />
             </div>
             <div className="flex items-baseline gap-1">
@@ -73,7 +76,7 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
               </div>
             </div>
           </div>
-          <div className="mt-3 mb-6">
+          <div className="mt-3 pb-5">
             <ComparisonCardFooter
               metric={comparison}
               expenseRate={expenseRate}
@@ -82,17 +85,15 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
           </div>
         </div>
         {/* 2. 상세 정보부 (우측) */}
-        <div className="lg:col-span-8 p-5 bg-slate-50/30">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
+        <div className="lg:col-span-8 p-4 bg-slate-50/30">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* 2-1. 최근 지출 내역 리스트 (초슬림 & 컴팩트 버전) */}
-            <div className="flex flex-col h-full">
-              <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">
-                최근 지출
-              </h4>
+            <div className="flex flex-col">
+              <DashboardTitle title={"최근 지출"} />
 
-              <div className="flex-1 min-h-0">
+              <div className="flex-1 min-h-0 mt-2">
                 {/* max-h를 조절하고 내부 여백을 줄였습니다 */}
-                <div className="divide-y divide-slate-100/50 overflow-y-auto max-h-[200px] custom-scrollbar pr-3">
+                <div className="divide-y divide-slate-100/50 overflow-y-auto max-h-[160px] custom-scrollbar pr-3">
                   {recentTransactions && recentTransactions.length > 0 ? (
                     recentTransactions.map((tx) => {
                       const [_, month, day] = tx.date.split("-");
@@ -101,7 +102,7 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
                         <div
                           key={tx.id}
                           className={cn(
-                            "flex items-center justify-between py-1.5 px-2 transition-all duration-200 ease-out",
+                            "flex items-center justify-between py-1 px-2 transition-all duration-200 ease-out",
                             "hover:bg-white hover:scale-[1.03] hover:shadow-sm hover:z-10 hover:rounded-md",
                             "group cursor-default"
                           )}
@@ -142,10 +143,8 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
             </div>
             {/* 2-2. 바로 입력 부분 */}
             <div className="space-y-4 flex flex-col">
-              <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-                바로 입력
-              </h4>
-              <div className="flex-1 min-h-[180px] w-full flex flex-col items-center justify-center gap-6">
+              <DashboardTitle title={"바로 입력"} />
+              <div className="flex-1 min-h-[150px] w-full flex flex-col items-center justify-center gap-6">
                 {/* 상단: 메인 입력 버튼 */}
                 <TransactionSheet />
 

@@ -124,6 +124,24 @@ impl TransactionRepository {
         Ok(())
     }
 
+    pub fn delete_bulk(conn: &Connection, ids: Vec<i64>) -> Result<()> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+
+        let placeholders: Vec<String> = ids.iter().map(|_| "?".to_string()).collect();
+        let query = format!(
+            "DELETE FROM transactions WHERE id IN ({})",
+            placeholders.join(",")
+        );
+
+        let params_refs: Vec<&dyn ToSql> = ids.iter().map(|id| id as &dyn ToSql).collect();
+
+        conn.execute(&query, &params_refs[..])?;
+
+        Ok(())
+    }
+
     pub fn get_by_date_with_category(
         conn: &Connection,
         date: &str,

@@ -18,6 +18,9 @@ import { cn } from "@/lib/utils";
 import { useConfirmStore } from "@/store/useConfirmStore";
 import { Transaction, TransactionWithCategory } from "@/types";
 import { FeedsSkeleton } from "./components/FeedsSkeleton";
+import { Toggle } from "@/components/ui/toggle";
+import { Tooltip } from "@/components/ui/tooltip";
+import { TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip";
 
 export default function TransactionsFeeds() {
   const {
@@ -265,25 +268,29 @@ export default function TransactionsFeeds() {
                     </div>
                   )}
                   {/* 월별 상세 펼치기/접기 버튼 */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 rounded-full hover:bg-slate-200 text-slate-400"
-                    onClick={(e) => toggleMonthDetails(e, currentYearMonth)}
-                    title={
-                      isAllDetailsExpanded
-                        ? "상세 내역 접기"
-                        : "상세 내역 펼치기"
-                    }
-                  >
-                    <ListTree
-                      size={14}
-                      className={cn(
-                        "transition-colors",
-                        isAllDetailsExpanded && "text-slate-800"
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 rounded-full hover:bg-slate-200 text-slate-400"
+                        onClick={(e) => toggleMonthDetails(e, currentYearMonth)}
+                      >
+                        {isAllDetailsExpanded ? (
+                          <ChevronsDown size={14} />
+                        ) : (
+                          <ChevronsUp size={14} />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-white bg-black rounded text-xs p-1">
+                      {isAllDetailsExpanded ? (
+                        <span>상세 접기</span>
+                      ) : (
+                        <span>상세 펼치기</span>
                       )}
-                    />
-                  </Button>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             </div>

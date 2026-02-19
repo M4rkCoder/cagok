@@ -2,14 +2,13 @@ import React, { useMemo } from "react";
 import { Treemap, ResponsiveContainer, Tooltip } from "recharts";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import { getFixedColor, getVariableColor } from "@/lib/utils";
-import { CategoryIcon } from "@/components/CategoryIcon";
+import { DashboardTitle } from "./components/DashboardTitle";
 
 export const CategoryMonthlyTreemap: React.FC = () => {
   const {
     expenseTreemap,
     loading,
     fixedVariableTransactions,
-    selectedMonth,
     setDetailData,
     setTreemapDialogOpen,
   } = useDashboardStore();
@@ -186,9 +185,9 @@ export const CategoryMonthlyTreemap: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-[380px] bg-white p-2 border-none flex flex-col">
+    <div className="w-full h-[380px] min-2xl:h-[600px] bg-white p-2 border-none flex flex-col">
       <div className="flex justify-between items-end mb-2">
-        <h3 className="text-xl font-black text-slate-800">지출 한눈에 보기</h3>
+        <DashboardTitle title="지출 한눈에 보기" />
         <div className="flex gap-4 pb-1">
           <LegendItem color="bg-slate-400" label="고정 지출" />
           <LegendItem color="bg-orange-300" label="변동 지출" />

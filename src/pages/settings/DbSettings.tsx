@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -43,9 +38,11 @@ export default function DbSettings() {
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  
+
   const [autoBackupEnabled, setAutoBackupEnabled] = useState(false);
-  const [lastAutoBackupDate, setLastAutoBackupDate] = useState<string | null>(null);
+  const [lastAutoBackupDate, setLastAutoBackupDate] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     setHeader("데이터베이스 설정");
@@ -58,10 +55,14 @@ export default function DbSettings() {
 
   const fetchAutoBackupSettings = async () => {
     try {
-      const enabled = await invoke<string | null>("get_setting_command", { key: "auto_backup_enabled" });
+      const enabled = await invoke<string | null>("get_setting_command", {
+        key: "auto_backup_enabled",
+      });
       setAutoBackupEnabled(enabled === "true");
-      
-      const lastDate = await invoke<string | null>("get_setting_command", { key: "last_auto_backup_date" });
+
+      const lastDate = await invoke<string | null>("get_setting_command", {
+        key: "last_auto_backup_date",
+      });
       setLastAutoBackupDate(lastDate);
     } catch (e) {
       console.error("Failed to fetch settings", e);
@@ -71,7 +72,10 @@ export default function DbSettings() {
   const handleAutoBackupToggle = async (checked: boolean) => {
     setAutoBackupEnabled(checked);
     try {
-      await invoke("set_setting_command", { key: "auto_backup_enabled", value: checked ? "true" : "false" });
+      await invoke("set_setting_command", {
+        key: "auto_backup_enabled",
+        value: checked ? "true" : "false",
+      });
       if (checked) {
         toast.success("자동 백업이 활성화되었습니다.");
       } else {
@@ -106,6 +110,26 @@ export default function DbSettings() {
     const match = name.match(/(\d{8})_(\d{6})/);
     if (!match) return name;
     return `${match[1].slice(0, 4)}-${match[1].slice(4, 6)}-${match[1].slice(6, 8)} ${match[2].slice(0, 2)}:${match[2].slice(2, 4)}:${match[2].slice(4, 6)}`;
+  };
+
+  const sortedBackups = [...backups].sort((a, b) => {
+    if (a === "cagok_auto.db") return -1;
+    if (b === "cagok_auto.db") return 1;
+    return b.localeCompare(a); // 최신 날짜순
+  });
+
+  const renderBackupTime = (backup: string) => {
+    if (backup === "cagok_auto.db") {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-primary">[자동 백업]</span>
+          <span className="text-muted-foreground">
+            {lastAutoBackupDate || "기록 없음"}
+          </span>
+        </div>
+      );
+    }
+    return parseBackupName(backup);
   };
 
   return (
@@ -205,132 +229,144 @@ export default function DbSettings() {
           </div>
         </CardContent>
       </Card>
-      
-      {/* 2. 자동 백업 설정 */}
+
+      {/* 2. 통합된 백업 관리 카드 */}
       <Card className="border-none shadow-md overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-primary" />
+            <History className="w-5 h-5 text-primary" />
             <CardTitle className="text-lg font-bold">
-              자동 백업 설정
+              데이터베이스 백업
             </CardTitle>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-2"
-            onClick={() => invoke("open_backup_folder")}
-          >
-            <FolderOpen className="w-4 h-4" />
-            백업 폴더 열기
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-2"
+              onClick={() => invoke("open_backup_folder")}
+            >
+              <FolderOpen className="w-4 h-4" />
+              백업 폴더
+            </Button>
+            <Button size="sm" onClick={handleBackup} className="h-8 shadow-sm">
+              <ShieldCheck className="w-4 h-4 mr-2" />
+              지금 백업
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-xl border bg-card shadow-sm">
+
+        <CardContent className="space-y-6">
+          {/* 자동 백업 설정 영역 (카드 상단에 배치) */}
+          <div
+            onClick={() => handleAutoBackupToggle(!autoBackupEnabled)}
+            className={`
+    flex items-center justify-between p-4 rounded-xl border transition-all duration-200 cursor-pointer select-none
+    ${
+      autoBackupEnabled
+        ? "border-primary bg-primary/[0.08] shadow-[0_0_15px_-5px_rgba(var(--primary),0.1)]"
+        : "border-muted bg-muted/10 hover:bg-muted/20"
+    }
+  `}
+          >
             <div className="space-y-1">
-              <label htmlFor="auto-backup" className="font-medium text-sm cursor-pointer">
-                프로그램 종료 시 자동 백업
-              </label>
-              <p className="text-xs text-muted-foreground">
-                앱을 닫을 때마다 'cagok_auto.db' 파일로 백업합니다. (이전 자동 백업 덮어쓰기)
+              <div className="flex items-center gap-2">
+                <label
+                  className={`font-bold text-sm transition-colors ${autoBackupEnabled ? "text-primary" : "text-foreground"}`}
+                >
+                  종료 시 자동 백업 활성화
+                </label>
+                {autoBackupEnabled && (
+                  <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse" />
+                )}
+              </div>
+              <p
+                className={`text-xs transition-colors ${autoBackupEnabled ? "text-primary/80" : "text-muted-foreground"}`}
+              >
+                앱을 닫을 때 'cagok_auto.db' 파일로 자동 저장합니다.
               </p>
             </div>
-            <Switch 
-              id="auto-backup" 
-              checked={autoBackupEnabled}
-              onCheckedChange={handleAutoBackupToggle}
-            />
-          </div>
-          
-          {lastAutoBackupDate && (
-             <div className="flex items-center gap-2 px-2">
-               <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">최근 자동 백업:</span>
-               <span className="text-sm font-mono text-foreground">{lastAutoBackupDate}</span>
-             </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* 3. 백업 기록 관리 카드 (백업 생성 버튼 포함) */}
-      <Card className="border-none shadow-md overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <History className="w-5 h-5 text-primary" />
-              <CardTitle className="text-lg font-bold">
-                데이터베이스 백업
-              </CardTitle>
+            <div onClick={(e) => e.stopPropagation()}>
+              {/* 스위치 자체 클릭 시 이벤트 버블링 방지 */}
+              <Switch
+                id="auto-backup"
+                checked={autoBackupEnabled}
+                onCheckedChange={handleAutoBackupToggle}
+                className="data-[state=checked]:bg-primary"
+              />
             </div>
           </div>
-          <Button size="sm" onClick={handleBackup} className="shadow-sm">
-            <ShieldCheck className="w-4 h-4 mr-2" />
-            지금 백업 생성
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-xl border border-muted bg-background overflow-hidden">
-            <Table>
-              <TableHeader className="bg-muted/30">
-                <TableRow>
-                  <TableHead className="py-3 text-[11px] font-bold uppercase tracking-wider pl-6">
-                    백업 시점
-                  </TableHead>
-                  <TableHead className="text-right py-3 text-[11px] font-bold uppercase tracking-wider pr-6">
-                    관리 작업
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {backups.length > 0 ? (
-                  backups.map((backup) => (
-                    <TableRow
-                      key={backup}
-                      className="group transition-colors hover:bg-muted/10"
-                    >
-                      <TableCell className="py-3 pl-6 font-medium text-sm italic text-muted-foreground group-hover:text-foreground">
-                        {parseBackupName(backup)}
-                      </TableCell>
-                      <TableCell className="py-3 pr-6 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 px-3 text-primary hover:bg-primary/10 font-semibold"
-                            onClick={() => {
-                              setSelectedBackup(backup);
-                              setRestoreConfirmOpen(true);
-                            }}
-                          >
-                            <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-                            복원
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 px-3 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                            onClick={() => {
-                              setSelectedBackup(backup);
-                              setDeleteConfirmOpen(true);
-                            }}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
+
+          {/* 백업 목록 테이블 */}
+          <div className="space-y-3">
+            <div className="rounded-xl border border-muted bg-background overflow-hidden">
+              <Table>
+                <TableHeader className="bg-muted/30">
+                  <TableRow>
+                    <TableHead className="py-3 text-[11px] font-bold pl-6">
+                      백업 시점
+                    </TableHead>
+                    <TableHead className="text-right py-3 text-[11px] font-bold pr-6">
+                      관리
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedBackups.length > 0 ? (
+                    sortedBackups.map((backup) => (
+                      <TableRow
+                        key={backup}
+                        className={`group transition-colors ${backup === "cagok_auto.db" ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/5"}`}
+                      >
+                        <TableCell className="py-3 pl-6 font-medium text-sm text-muted-foreground group-hover:text-foreground">
+                          {renderBackupTime(backup)}
+                        </TableCell>
+                        <TableCell className="py-3 pr-6 text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 text-primary hover:bg-primary/10"
+                              onClick={() => {
+                                setSelectedBackup(backup);
+                                setRestoreConfirmOpen(true);
+                              }}
+                            >
+                              <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                              복원
+                            </Button>
+                            {/* 자동 백업 파일은 삭제 버튼을 숨기거나 비활성화 (권장) */}
+                            {backup !== "cagok_auto.db" && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 px-2 text-destructive/70 hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => {
+                                  setSelectedBackup(backup);
+                                  setDeleteConfirmOpen(true);
+                                }}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={2}
+                        className="h-24 text-center text-sm text-muted-foreground"
+                      >
+                        보관된 백업 기록이 없습니다.
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={2}
-                      className="h-32 text-center text-sm text-muted-foreground"
-                    >
-                      보관된 백업 기록이 없습니다.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -46,6 +46,19 @@ pub fn delete_transaction(id: i64, db: State<'_, DbConnection>) -> Result<(), St
 }
 
 #[tauri::command]
+pub fn delete_bulk_transactions(
+    ids: Vec<i64>, 
+    db: State<'_, DbConnection>
+) -> Result<String, String> {
+    let conn = db.0.lock().unwrap();
+
+    TransactionRepository::delete_bulk(&conn, ids.clone())
+        .map_err(|e| format!("다중 삭제 실패: {}", e))?;
+
+    Ok(format!("{}건의 내역이 삭제되었습니다.", ids.len()))
+}
+
+#[tauri::command]
 pub fn get_transactions_by_date(
     db: State<'_, DbConnection>,
     date: String,
