@@ -64,6 +64,28 @@ pub fn run() {
                     Err(e) => eprintln!("Auto backup failed: {}", e),
                 }
             }
+
+            // OneDrive Backup
+            let app_handle_clone = app_handle.clone();
+            tauri::async_runtime::block_on(async move {
+                // Check if OneDrive backup is enabled (defaulting to false for safety unless explicitly enabled)
+                let state = app_handle_clone.state::<DbConnection>();
+                let should_onedrive_backup = if let Ok(conn) = state.0.lock() {
+                    match crate::db::repository::get_setting(&conn, "auto_onedrive_backup") {
+                        Ok(Some(val)) => val == "true",
+                        _ => false, // Default to false until enabled in settings
+                    }
+                } else {
+                    false
+                };
+
+                if should_onedrive_backup {
+                     match crate::services::onedrive::backup_db(app_handle_clone.clone()).await {
+                        Ok(_) => println!("OneDrive backup completed successfully."),
+                        Err(e) => eprintln!("OneDrive backup failed: {}", e),
+                     }
+                }
+            });
         }
     });
 }

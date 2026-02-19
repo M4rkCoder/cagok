@@ -5,11 +5,17 @@ import CategorySettings from "./CategorySettings";
 import RecurringSettings from "../transactions/RecurringSettings";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import SyncSettings from "./SyncSettings";
 
-const SettingsPage = ({ defaultSection = "general" }: { defaultSection?: string }) => {
-  type SettingsSection = "general" | "category" | "database" | "recurring";
-  const [activeSection, setActiveSection] =
-    useState<SettingsSection>(defaultSection as SettingsSection);
+const SettingsPage = ({
+  defaultSection = "general",
+}: {
+  defaultSection?: string;
+}) => {
+  type SettingsSection = "general" | "category" | "database" | "sync";
+  const [activeSection, setActiveSection] = useState<SettingsSection>(
+    defaultSection as SettingsSection,
+  );
 
   useEffect(() => {
     setActiveSection(defaultSection as SettingsSection);
@@ -20,6 +26,7 @@ const SettingsPage = ({ defaultSection = "general" }: { defaultSection?: string 
     { id: "general", label: "일반 설정" },
     { id: "category", label: "카테고리 관리" },
     { id: "database", label: "데이터베이스 관리" },
+    { id: "sync", label: "동기화 설정" },
   ];
 
   const sectionVariants = {
@@ -36,6 +43,8 @@ const SettingsPage = ({ defaultSection = "general" }: { defaultSection?: string 
         return <CategorySettings />;
       case "database":
         return <DbSettings />;
+      case "sync":
+        return <SyncSettings />;
       default:
         return <GeneralSettings />;
     }

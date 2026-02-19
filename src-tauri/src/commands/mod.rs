@@ -5,11 +5,18 @@ pub mod db;
 pub mod recurring;
 pub mod settings;
 pub mod transaction;
+pub mod onedrive;
 
 use tauri::Runtime;
 
 pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builder<R> {
     builder.invoke_handler(tauri::generate_handler![
+        //onedrive
+        onedrive::onedrive_login,
+        onedrive::onedrive_logout,
+        onedrive::onedrive_backup,
+        onedrive::onedrive_restore,
+        onedrive::onedrive_check_status,
         //transaction
         transaction::create_transaction,
         transaction::get_transactions,

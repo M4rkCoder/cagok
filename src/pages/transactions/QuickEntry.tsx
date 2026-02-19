@@ -62,7 +62,7 @@ const QuickEntry: React.FC = () => {
       >
         <Save className="mr-1 w-20 h-20" />
         데이터 저장
-      </Button>
+      </Button>,
     );
     return () => resetHeader();
   }, [handleSaveAll]);
@@ -200,7 +200,7 @@ const QuickEntry: React.FC = () => {
         ),
       },
     ],
-    [updateData, data.length, rowErrors]
+    [updateData, data.length, rowErrors],
   );
 
   const table = useReactTable({
@@ -220,7 +220,7 @@ const QuickEntry: React.FC = () => {
   });
 
   return (
-    <div className="p-6 bg-slate-50 h-full">
+    <div className="p-6 h-full">
       <div className="max-w-[1250px] mx-auto space-y-4">
         <div className="flex gap-2 justify-end">
           <Button
@@ -266,7 +266,8 @@ const QuickEntry: React.FC = () => {
                   key={row.id}
                   className={cn(
                     "border-b border-slate-100 last:border-0 hover:bg-slate-50/50",
-                    row.original.is_valid === false && "bg-red-50 hover:bg-red-100/50"
+                    row.original.is_valid === false &&
+                      "bg-red-50 hover:bg-red-100/50",
                   )}
                 >
                   {row.getVisibleCells().map((cell, idx) => {
@@ -285,7 +286,7 @@ const QuickEntry: React.FC = () => {
                           isSelectedByDrag && "bg-blue-100/40",
                           activeCell?.rowIndex === row.index &&
                             activeCell?.colIdx === idx &&
-                            "bg-white z-20 outline-2 outline-blue-500 outline-offset-[-1px]"
+                            "bg-white z-20 outline-2 outline-blue-500 outline-offset-[-1px]",
                         )}
                         onClick={() =>
                           setActiveCell({ rowIndex: row.index, colIdx: idx })
@@ -293,7 +294,7 @@ const QuickEntry: React.FC = () => {
                       >
                         {React.createElement(
                           cell.column.columnDef.cell as any,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                         {isSelectedByDrag && (
                           <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
@@ -310,7 +311,7 @@ const QuickEntry: React.FC = () => {
               setData((p) => [...p, createEmptyRow()]);
               setTimeout(
                 () => setActiveCell({ rowIndex: data.length, colIdx: 1 }),
-                50
+                50,
               );
             }}
             className="w-full py-3 flex items-center justify-center gap-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all border-t border-dashed"

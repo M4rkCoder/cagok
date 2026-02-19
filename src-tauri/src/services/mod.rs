@@ -1,6 +1,7 @@
 pub mod dashboard;
 pub mod recurring;
-//pub use dashboard::DashboardService;
+pub mod onedrive;
+
 pub use recurring::RecurringService;
 
 #[derive(Debug, serde::Serialize)]
