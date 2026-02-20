@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { ReactNode } from "react";
 
 interface HeaderState {
-  title: string;
+  title: ReactNode | null;
   actions: ReactNode | null;
   activeSection: string | null;
   setHeader: (title: string, actions?: ReactNode) => void;

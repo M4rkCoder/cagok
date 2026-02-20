@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Category } from "@/types";
 import i18n from "@/i18n";
 import { toast } from "sonner";
+import { useSyncStore } from "./useSyncStore";
 
 interface AppState {
   appName: string;
@@ -26,21 +27,20 @@ export const useAppStore = create<AppState>((set, get) => ({
   initApp: async () => {
     set({ isLoading: true });
     try {
-      // 설정값 병렬 로드
-      const [name, lang] = await Promise.all([
-        invoke<string>("get_setting_command", { key: "app_name" }),
-        invoke<string>("get_setting_command", { key: "language" }),
+      await Promise.all([
+        (async () => {
+          const name = await invoke<string>("get_setting_command", {
+            key: "app_name",
+          });
+          const lang = await invoke<string>("get_setting_command", {
+            key: "language",
+          });
+          if (lang) i18n.changeLanguage(lang);
+          set({ appName: name || "C'agok", language: lang || "ko" });
+        })(),
+        useSyncStore.getState().checkStatus(), // 타이틀바 상태용
+        useSyncStore.getState().loadSettings(), // 자동 백업 설정용
       ]);
-
-      // i18next 언어 적용
-      if (lang) {
-        i18n.changeLanguage(lang);
-      }
-
-      set({
-        appName: name || "C'agok",
-        language: lang || "ko",
-      });
 
       await get().fetchCategories();
     } catch (error) {
@@ -70,7 +70,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     try {
       const fetched = await invoke<Category[]>("get_categories");
       set({ categoryList: fetched });
-      console.log("페치 카테고리", fetched);
     } catch (error) {
       toast.error("카테고리를 불러오는데 실패했습니다.");
     }

@@ -27,8 +27,8 @@ export const NotificationBell = () => {
       <PopoverTrigger asChild>
         <button className="relative p-1.5 text-slate-200 hover:text-amber-600 transition-colors focus:outline-none group">
           <Bell
-            size={18}
-            className="group-hover:scale-105 transition-transform"
+            size={20}
+            className="group-hover:scale-110 transition-transform"
           />
           {unreadCount > 0 && (
             <span className="absolute top-1 right-1 bg-amber-500 text-white text-[9px] min-w-[14px] h-[14px] flex items-center justify-center rounded-full font-bold border border-white">
@@ -85,11 +85,20 @@ export const NotificationBell = () => {
                 // 링크 생성 로직: 명시적 링크 -> 타입 기반 -> 메시지 키워드 기반 -> 기본값
                 let linkTarget = n.link;
                 if (!linkTarget) {
-                  if (n.type === "recurring") linkTarget = "/transactions/recurring";
+                  if (n.type === "recurring")
+                    linkTarget = "/transactions/recurring";
                   else if (n.type === "backup") linkTarget = "/settings/db";
                   // 레거시 지원: 메시지 내용으로 추론
-                  else if (n.message.includes("정기") || n.message.includes("Recurring")) linkTarget = "/transactions/recurring";
-                  else if (n.message.includes("백업") || n.message.includes("Backup")) linkTarget = "/settings/db";
+                  else if (
+                    n.message.includes("정기") ||
+                    n.message.includes("Recurring")
+                  )
+                    linkTarget = "/transactions/recurring";
+                  else if (
+                    n.message.includes("백업") ||
+                    n.message.includes("Backup")
+                  )
+                    linkTarget = "/settings/db";
                   else linkTarget = "/";
                 }
 
@@ -109,17 +118,17 @@ export const NotificationBell = () => {
                       {!n.isRead && (
                         <div className="absolute left-2 top-2 bottom-2 w-0.5 bg-amber-500" />
                       )}
-  
+
                       <div className="flex justify-between items-center pl-2">
                         <span
                           className={`text-[10px] font-semibold tracking-tight ${
                             !n.isRead ? "text-amber-600" : "text-zinc-400"
                           }`}
                         >
-                          {n.type === "recurring" 
-                            ? "정기 내역 처리" 
-                            : n.type === "backup" 
-                              ? "자동 백업 완료" 
+                          {n.type === "recurring"
+                            ? "정기 내역 처리"
+                            : n.type === "backup"
+                              ? "자동 백업 완료"
                               : "알림"}
                         </span>
                         <span className="text-[11px] text-zinc-400 font-medium">

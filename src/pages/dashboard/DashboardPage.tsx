@@ -11,8 +11,10 @@ import { CategoryMonthlyTreemap } from "./CategoryMonthlyTreemap";
 import { CategoryTopList } from "./CategoryTopList";
 import TreemapDetailDialog from "@/pages/dashboard/components/TreemapDetailDialog";
 import ChartSelection from "./ChartSelection";
+import { useTranslation } from "react-i18next";
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   type DashboardSection = "summary" | "treemap";
   const [activeSection, setActiveSection] =
     useState<DashboardSection>("summary");
@@ -34,7 +36,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     setHeader(
-      "대시보드",
+      t("menu.dashboard"),
       <MonthYearPicker
         selectedMonth={selectedMonth}
         onMonthChange={setSelectedMonth}

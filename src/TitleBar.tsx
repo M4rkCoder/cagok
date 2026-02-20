@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { NotificationBell } from "./components/NotificationBell";
+import { SyncNotifier } from "./components/SyncNotifier";
 
 export default function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
@@ -108,6 +109,7 @@ export default function TitleBar() {
         className="flex items-center gap-1" // 간격을 살짝 줄임
         onDoubleClick={(e) => e.stopPropagation()}
       >
+        <SyncNotifier />
         <NotificationBell />
 
         <button

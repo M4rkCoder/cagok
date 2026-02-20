@@ -1,4 +1,12 @@
 {
+  "menu": {
+    "dashbaord": "Dashboard",
+    "transaction": "Transactions",
+    "quick_entry": "Quick Entry",
+    "recurring": "Recurring",
+    "statistics": "Statistics",
+    "settings": "Settings"
+  },
   "description": "Description",
   "description_required": "Description is required",
   "transaction_description_placeholder": "e.g., Groceries, Salary",

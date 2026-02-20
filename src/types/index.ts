@@ -39,3 +39,5 @@ export type {
   DayOfWeekTotalStat,
   DayOfWeekResponse,
 } from "./dashboard";
+
+export type { OneDriveStatus } from "./sync";

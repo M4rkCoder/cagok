@@ -31,48 +31,50 @@ import {
 import { useEffect, useState } from "react";
 import { ProIcon } from "./ui/PlusBadge";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "react-i18next";
 
 interface AppSidebarProps {
   collapsed: boolean;
 }
-const items = {
-  MainMenu: [
-    { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-    {
-      title: "Transaction",
-      url: "/transactions",
-      icon: SquareLibrary,
-      subMenu: [
-        // 서브메뉴 추가
-        {
-          title: "Quick Entry",
-          url: "/transactions/quickentry",
-          icon: Zap,
-          plus: true,
-        },
-        {
-          title: "Recurring",
-          url: "/transactions/recurring",
-          icon: RefreshCw,
-          plus: true,
-        },
-      ],
-    },
-    { title: "Statistics", url: "/statistics", icon: ChartArea },
-    { title: "Settings", url: "/settings", icon: Settings },
-  ],
-};
-
 const SIDEBAR_WIDTH = 180;
-const SIDEBAR_COLLAPSED_WIDTH = 50;
+const SIDEBAR_COLLAPSED_WIDTH = 60;
 
 export function AppSidebar({ collapsed }: AppSidebarProps) {
+  const { t } = useTranslation();
   const { appName } = useAppStore();
 
   const location = useLocation();
   const [openItem, setOpenItem] = useState<string | undefined>("");
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const items = {
+    MainMenu: [
+      { title: t("menu.dashboard"), url: "/dashboard", icon: LayoutDashboard },
+      {
+        title: t("menu.transaction"),
+        url: "/transactions",
+        icon: SquareLibrary,
+        subMenu: [
+          // 서브메뉴 추가
+          {
+            title: t("menu.quick_entry"),
+            url: "/transactions/quickentry",
+            icon: Zap,
+            plus: true,
+          },
+          {
+            title: t("menu.recurring"),
+            url: "/transactions/recurring",
+            icon: RefreshCw,
+            plus: true,
+          },
+        ],
+      },
+      { title: t("menu.statistics"), url: "/statistics", icon: ChartArea },
+      { title: t("menu.settings"), url: "/settings", icon: Settings },
+    ],
   };
 
   useEffect(() => {
@@ -99,7 +101,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
         >
           <div
             className={cn(
-              "shrink-0 flex items-center justify-center rounded-lg bg-black p-1.5 shadow-md transition-all duration-300",
+              "shrink-0 flex items-center justify-center rounded-lg bg-blue-700 p-1.5 shadow-md transition-all duration-300",
               collapsed ? "w-8 h-8 scale-110" : "w-7 h-7" // 3. 축소 시 로고 크기 확대
             )}
           >
@@ -151,15 +153,32 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                           value={item.title}
                           className="border-none"
                         >
-                          {/* Trigger 내부에 Link를 배치하여 이동과 펼침을 동시에 처리 */}
-                          <AccordionTrigger className="py-0 hover:no-underline [&>svg]:ml-auto">
+                          <AccordionTrigger
+                            className={cn(
+                              "py-1 px-2 hover:no-underline border-none rounded-md transition-colors hover:bg-sidebar-accent group",
+                              // ✅ 전체 배경은 투명하게 유지, 활성화 시 글자만 검정색으로 강조
+                              isSubActive
+                                ? "text-black font-bold"
+                                : "text-sidebar-foreground"
+                            )}
+                          >
                             <SidebarMenuButton
                               asChild
                               isActive={isSubActive}
-                              className="w-full"
+                              className="w-full bg-transparent hover:bg-transparent data-[active=true]:bg-transparent p-0"
                             >
-                              <Link to={item.url}>
-                                <item.icon className="h-6 w-6 shrink-0" />
+                              <Link
+                                to={item.url}
+                                className="flex items-center gap-2"
+                              >
+                                {/* ✅ 아이콘: 활성화 시 파란색 둥근 박스 + 흰색 아이콘 */}
+                                <item.icon
+                                  className={cn(
+                                    "h-6 w-6 shrink-0 transition-all duration-300",
+                                    isSubActive &&
+                                      "bg-blue-700 text-white rounded-md p-1.5"
+                                  )}
+                                />
                                 <span>{item.title}</span>
                               </Link>
                             </SidebarMenuButton>
@@ -174,7 +193,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                                   className={cn(
                                     "text-[13px] py-1.5 px-2 rounded-md transition-colors hover:bg-sidebar-accent flex items-center min-w-0 whitespace-nowrap overflow-hidden",
                                     isActive(sub.url)
-                                      ? "text-foreground font-semibold bg-sidebar-accent/50"
+                                      ? "text-blue-700 font-bold" // ✅ 서브메뉴는 텍스트만 파란색 포인트
                                       : "text-muted-foreground"
                                   )}
                                 >
