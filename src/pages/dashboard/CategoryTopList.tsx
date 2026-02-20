@@ -3,6 +3,7 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import { formatCurrency } from "@/lib/utils";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import { DashboardTitle } from "./components/DashboardTitle";
+import { Card } from "@/components/ui/card";
 
 interface ExpenseItem {
   id: string | number;
@@ -10,6 +11,7 @@ interface ExpenseItem {
   category_name: string;
   category_icon: string;
   amount: number;
+  date: string;
 }
 
 export const CategoryTopList: React.FC = () => {
@@ -36,8 +38,8 @@ export const CategoryTopList: React.FC = () => {
                   <div className="font-bold text-[13px] truncate text-slate-700 group-hover:text-blue-600 transition-colors">
                     {item.description}
                   </div>
-                  <div className="text-[10px] text-slate-400 font-medium">
-                    {item.category_name}
+                  <div className="text-[10px] text-slate-400 font-medium gap-2">
+                    {item.category_name} · {item.date.slice(-2)}일
                   </div>
                 </div>
               </div>
@@ -58,13 +60,15 @@ export const CategoryTopList: React.FC = () => {
   );
 
   return (
-    <div className="flex gap-8 w-full mt-0 border-t pt-2 px-3">
-      {renderList("고정 지출", topFixed)}
+    <Card className="pt-4 pb-0 px-5 border-none shadow-md">
+      <div className="flex gap-8 w-full mt-0 px-3 pb-3">
+        {renderList("고정 지출", topFixed)}
 
-      {/* 구분선 */}
-      <div className="w-px bg-gradient-to-b from-transparent via-slate-300 to-transparent self-stretch" />
+        {/* 구분선 */}
+        <div className="w-px bg-gradient-to-b from-transparent via-slate-300 to-transparent self-stretch" />
 
-      {renderList("변동 지출", topVariable)}
-    </div>
+        {renderList("변동 지출", topVariable)}
+      </div>
+    </Card>
   );
 };

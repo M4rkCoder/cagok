@@ -62,7 +62,7 @@ export const DayOfWeekCard: React.FC = () => {
 
   const data = useMemo(
     () => (viewMode === "expense" ? dayOfWeekExpense : dayOfWeekIncome),
-    [viewMode, dayOfWeekExpense, dayOfWeekIncome]
+    [viewMode, dayOfWeekExpense, dayOfWeekIncome],
   );
 
   const {
@@ -118,13 +118,13 @@ export const DayOfWeekCard: React.FC = () => {
           txAvg: info.txCount > 0 ? info.total / info.txCount : 0,
           fill: "",
         };
-      }
+      },
     );
 
     processedCategories.sort((a, b) => b.value - a.value);
     const grandTotal = processedCategories.reduce(
       (sum, item) => sum + item.value,
-      0
+      0,
     );
 
     const donutDataWithColor = processedCategories.map((cat, index) => ({
@@ -194,7 +194,7 @@ export const DayOfWeekCard: React.FC = () => {
     "data-[state=active]:bg-slate-900 data-[state=active]:text-white shadow-sm";
 
   return (
-    <Card className="pt-5 pb-0 px-5 border-none shadow-md bg-white">
+    <Card className="pt-4 pb-0 px-5 border-none shadow-md bg-white">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* 왼쪽: 바 차트 영역 (2/3 차지) */}
         <div className="md:col-span-2 flex flex-col space-y-4">
@@ -392,7 +392,7 @@ export const DayOfWeekCard: React.FC = () => {
                       }}
                       onClick={() =>
                         setSelectedCategory(
-                          entry.id === selectedCategory ? "all" : entry.id
+                          entry.id === selectedCategory ? "all" : entry.id,
                         )
                       }
                     />
@@ -429,7 +429,7 @@ export const DayOfWeekCard: React.FC = () => {
                                 ? metricType === "total"
                                   ? selectedDonutItem.value
                                   : selectedDonutItem.txAvg
-                                : totalMetricValue
+                                : totalMetricValue,
                             )}
                           </tspan>
                           <tspan

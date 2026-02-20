@@ -105,7 +105,7 @@ export default function DailyTransactionCard() {
   };
 
   return (
-    <Card className="pt-5 pb-0 px-5 border-none shadow-md">
+    <Card className="pt-4 pb-0 px-5 border-none shadow-md">
       <div className="flex flex-col md:grid md:grid-cols-3 items-start gap-4">
         <div className="md:col-span-2 w-full">
           <div className="flex items-center justify-between mb-4">

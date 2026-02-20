@@ -1,24 +1,17 @@
 import { useEffect, useState } from "react";
 import { getCurrentWindow, Window } from "@tauri-apps/api/window";
 import FinanceModeRounded from "@/components/FinanceModeRounded";
-import { Globe, Minus, Minimize2, Square, X } from "lucide-react";
+import { Minus, Minimize2, Square, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAppStore } from "@/store/useAppStore";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
 import { NotificationBell } from "./components/NotificationBell";
 import { SyncNotifier } from "./components/SyncNotifier";
 
 export default function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false);
   const [window, setWindow] = useState<Window | null>(null);
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false); // Add state for popover
   const { i18n } = useTranslation();
-  const { language, updateSetting } = useAppStore();
+  const { language } = useAppStore();
 
   useEffect(() => {
     const initWindow = async () => {
@@ -31,10 +24,10 @@ export default function TitleBar() {
 
       // 이벤트 등록
       const unlistenMax = await win.listen("tauri://maximize", () =>
-        setIsMaximized(true)
+        setIsMaximized(true),
       );
       const unlistenUnmax = await win.listen("tauri://unmaximize", () =>
-        setIsMaximized(false)
+        setIsMaximized(false),
       );
       const unlistenResize = await win.listen("tauri://resize", async () => {
         const max = await win.isMaximized();
@@ -58,10 +51,6 @@ export default function TitleBar() {
     setIsMaximized(maximized);
   };
 
-  const handleLogoDoubleClick = async () => {
-    toggleMax();
-  };
-
   const minimizeWindow = async () => {
     if (!window) return;
     await window.minimize();
@@ -72,11 +61,7 @@ export default function TitleBar() {
     await window.close();
   };
 
-  const handleLanguageChange = (lng: string) => {
-    updateSetting("language", lng);
-    setIsPopoverOpen(false); // Close popover after selection
-  };
-
+  const lang = language === "ko" ? "ko-KR" : "en-EN";
   return (
     <div
       data-tauri-drag-region
@@ -95,7 +80,7 @@ export default function TitleBar() {
 
       <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 select-none pointer-events-none">
         <span className="text-[12px] tracking-[0.2em] font-semibold text-blue-100/80 uppercase">
-          {new Date().toLocaleDateString("ko-KR", {
+          {new Date().toLocaleDateString(lang, {
             year: "numeric",
             month: "long",
             day: "numeric",

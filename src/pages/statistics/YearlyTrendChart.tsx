@@ -24,7 +24,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -32,12 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface YearlyTrendChartProps {
-  data: MonthlyFinancialSummaryItem[];
-  symmetricMax: number;
-  formatCurrency: (amount: number) => string;
-}
+import { useStatisticsStore } from "@/store/useStatisticsStore";
 
 const chartConfig = {
   totalIncome: {
@@ -118,11 +113,8 @@ const CustomBarShape = (props: any) => {
 
 type ViewMode = "all" | "income" | "expense" | "netIncome";
 
-export function YearlyTrendChart({
-  data,
-  symmetricMax,
-  formatCurrency,
-}: YearlyTrendChartProps) {
+export function YearlyTrendChart() {
+  const { monthlyFinancialSummary: data } = useStatisticsStore();
   const [viewMode, setViewMode] = useState<ViewMode>("all");
 
   const legendOrder =
@@ -135,21 +127,28 @@ export function YearlyTrendChart({
           : ["netIncome"];
 
   // 고정 지출 범례 아이콘을 위한 헬퍼 컴포넌트
-      const FixedExpenseLegendIcon = ({ color }: { color?: string }) => (
-        <svg
-          width="12"
-          height="12"
-          viewBox="0 0 12 12"
-          className="h-3 w-3 rounded-sm"
-        >
-          <rect width="12" height="12" fill={color} />
-          <path
-            d="M-2 2 L2 -2 M-2 6 L6 -2 M-2 10 L10 -2 M0 14 L14 0 M4 18 L18 4"
-            stroke="rgba(0, 0, 0, 0.7)"
-            strokeWidth="2.5"
-          />
-        </svg>
-      );
+  const FixedExpenseLegendIcon = ({ color }: { color?: string }) => (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+      className="h-3 w-3 rounded-sm"
+    >
+      <rect width="12" height="12" fill={color} />
+      <path
+        d="M-2 2 L2 -2 M-2 6 L6 -2 M-2 10 L10 -2 M0 14 L14 0 M4 18 L18 4"
+        stroke="rgba(0, 0, 0, 0.7)"
+        strokeWidth="2.5"
+      />
+    </svg>
+  );
+
+  // Calculate min and max for net income to center the Y-axis at 0
+  const allNetIncomes = data.map((item) => item.netIncome); // Use camelCase
+  const maxNetIncome = Math.max(0, ...allNetIncomes, 1); // Ensure at least 1 to prevent division by zero
+  const minNetIncome = Math.min(0, ...allNetIncomes, -1); // Ensure at least -1
+  const symmetricMax = Math.max(Math.abs(maxNetIncome), Math.abs(minNetIncome));
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -259,7 +258,11 @@ export function YearlyTrendChart({
                     labelFormatter={(value) =>
                       format(new Date(value), "yyyy년 M월")
                     }
-                    formatter={(value, name: keyof typeof chartConfig, props) => {
+                    formatter={(
+                      value,
+                      name: keyof typeof chartConfig,
+                      props,
+                    ) => {
                       const config = chartConfig[name];
                       if (!config) return null;
 

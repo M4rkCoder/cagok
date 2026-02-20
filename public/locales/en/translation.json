@@ -1,6 +1,6 @@
 {
   "menu": {
-    "dashbaord": "Dashboard",
+    "dashboard": "Dashboard",
     "transaction": "Transactions",
     "quick_entry": "Quick Entry",
     "recurring": "Recurring",

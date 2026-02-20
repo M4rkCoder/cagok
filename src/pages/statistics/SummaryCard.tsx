@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FinancialSummaryStats } from "@/types";
+import { FinancialSummaryStats, MetricStats } from "@/types";
 import { cn } from "@/lib/utils";
 import { LandmarkIcon, ReceiptTextIcon } from "lucide-react";
 import {
@@ -8,13 +8,27 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { formatCurrency } from "@/lib/utils";
+import { useStatisticsStore } from "@/store/useStatisticsStore";
 
-interface SummaryCardsProps {
-  stats: FinancialSummaryStats;
-  formatCurrency: (amount: number) => string;
-}
+const emptyMetricStats: MetricStats = {
+  total: 0,
+  average: 0,
+  max: 0,
+  min: 0,
+};
 
-export function SummaryCards({ stats, formatCurrency }: SummaryCardsProps) {
+const emptyFinancialSummaryStats: FinancialSummaryStats = {
+  income: emptyMetricStats,
+  expense: emptyMetricStats,
+  netIncome: emptyMetricStats,
+  fixedExpense: emptyMetricStats,
+};
+
+export function SummaryCards() {
+  const { financialSummaryStats } = useStatisticsStore();
+  const stats = financialSummaryStats ?? emptyFinancialSummaryStats;
+
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
       <CombinedVerticalCard
@@ -95,7 +109,7 @@ function CombinedVerticalCard({
       className={cn(
         "rounded-2xl border shadow-sm overflow-hidden flex flex-col",
         borderColor,
-        bgColor
+        bgColor,
       )}
     >
       <CardHeader className="flex flex-row items-center justify-between pb-1 border-b border-dashed border-muted-foreground/10">
@@ -114,7 +128,7 @@ function CombinedVerticalCard({
               <p
                 className={cn(
                   "text-3xl font-black tracking-tighter leading-none",
-                  item.textColor
+                  item.textColor,
                 )}
               >
                 {formatCurrency(item.data.total)}
@@ -144,7 +158,7 @@ function CombinedVerticalCard({
                 <div
                   className={cn(
                     "absolute w-3.5 h-0.5 -left-[5px] rounded-full opacity-60 transition-all group-hover:opacity-100",
-                    item.color
+                    item.color,
                   )}
                   style={{ bottom: `${getPos(item.data.max)}%` }}
                 />
@@ -153,7 +167,7 @@ function CombinedVerticalCard({
                 <div
                   className={cn(
                     "absolute w-3.5 h-0.5 -left-[5px] rounded-full opacity-60 transition-all group-hover:opacity-100",
-                    item.color
+                    item.color,
                   )}
                   style={{ bottom: `${getPos(item.data.min)}%` }}
                 />
@@ -162,7 +176,7 @@ function CombinedVerticalCard({
                 <div
                   className={cn(
                     "absolute w-full opacity-20 transition-opacity group-hover:opacity-30",
-                    item.color
+                    item.color,
                   )}
                   style={{
                     bottom: `${getPos(item.data.min)}%`,
@@ -176,7 +190,7 @@ function CombinedVerticalCard({
                     <div
                       className={cn(
                         "absolute w-6 h-2 -left-[9.5px] z-30 cursor-pointer shadow-md rounded-full transition-all hover:scale-150 active:scale-95",
-                        item.color
+                        item.color,
                       )}
                       style={{
                         bottom: `${getPos(item.data.average)}%`,
@@ -200,7 +214,7 @@ function CombinedVerticalCard({
                         <p
                           className={cn(
                             "text-2xl font-black tracking-tight",
-                            item.textColor
+                            item.textColor,
                           )}
                         >
                           {formatCurrency(item.data.average)}

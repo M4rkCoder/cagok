@@ -3,6 +3,7 @@ import { Treemap, ResponsiveContainer, Tooltip } from "recharts";
 import { useDashboardStore } from "@/store/useDashboardStore";
 import { getFixedColor, getVariableColor } from "@/lib/utils";
 import { DashboardTitle } from "./components/DashboardTitle";
+import { Card } from "@/components/ui/card";
 
 export const CategoryMonthlyTreemap: React.FC = () => {
   const {
@@ -48,7 +49,7 @@ export const CategoryMonthlyTreemap: React.FC = () => {
 
         // 금액순 정렬
         const sortedChildren = [...mainChildren].sort(
-          (a, b) => (b.value || 0) - (a.value || 0)
+          (a, b) => (b.value || 0) - (a.value || 0),
         );
         const totalItems = sortedChildren.length;
 
@@ -79,7 +80,7 @@ export const CategoryMonthlyTreemap: React.FC = () => {
     if (!categoryId || !fixedVariableTransactions) return;
 
     const categoryDetail = fixedVariableTransactions.find(
-      (item) => item.category_id === categoryId
+      (item) => item.category_id === categoryId,
     );
 
     if (categoryDetail) {
@@ -185,32 +186,34 @@ export const CategoryMonthlyTreemap: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-[380px] min-2xl:h-[600px] bg-white p-2 border-none flex flex-col">
-      <div className="flex justify-between items-end mb-2">
-        <DashboardTitle title="지출 한눈에 보기" />
-        <div className="flex gap-4 pb-1">
-          <LegendItem color="bg-slate-400" label="고정 지출" />
-          <LegendItem color="bg-orange-300" label="변동 지출" />
+    <Card className="pt-4 pb-0 px-5 border-none shadow-md">
+      <div className="w-full h-[290px] min-2xl:h-[380px] bg-white border-none flex flex-col">
+        <div className="flex justify-between items-end mb-1">
+          <DashboardTitle title="고정·변동 지출" />
+          <div className="flex gap-4 mr-4">
+            <LegendItem color="bg-slate-400" label="고정 지출" />
+            <LegendItem color="bg-orange-300" label="변동 지출" />
+          </div>
+        </div>
+
+        <div className="flex-1 w-full bg-slate-50 rounded-3xl overflow-hidden p-2">
+          {displayData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <Treemap
+                data={displayData}
+                dataKey="value"
+                content={renderCustomizedContent}
+                isAnimationActive={false}
+              >
+                <Tooltip content={<CustomTooltip />} />
+              </Treemap>
+            </ResponsiveContainer>
+          ) : (
+            <EmptyState loading={loading} />
+          )}
         </div>
       </div>
-
-      <div className="flex-1 w-full bg-slate-50 rounded-3xl overflow-hidden p-2">
-        {displayData.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <Treemap
-              data={displayData}
-              dataKey="value"
-              content={renderCustomizedContent}
-              isAnimationActive={false}
-            >
-              <Tooltip content={<CustomTooltip />} />
-            </Treemap>
-          </ResponsiveContainer>
-        ) : (
-          <EmptyState loading={loading} />
-        )}
-      </div>
-    </div>
+    </Card>
   );
 };
 

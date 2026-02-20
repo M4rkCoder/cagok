@@ -728,7 +728,7 @@ impl DashboardRepository {
         let end_date = format!("{}-31", year_month);
 
         // 고정 항목 필터 조건 동적 생성
-        let fixed_filter = if only_fixed { "AND t.is_fixed = 1" } else { "" };
+        let fixed_filter = if only_fixed { "AND t.is_fixed = 1" } else { "AND t.is_fixed = 0" };
 
         let query = format!("
         SELECT 

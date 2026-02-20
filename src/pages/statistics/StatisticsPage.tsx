@@ -8,36 +8,18 @@ import { SummaryCards } from "./SummaryCard";
 import { YearlyTrendChart } from "./YearlyTrendChart";
 import { CategoryMonthlyTrendSection } from "./CategoryMonthlyTrendSection";
 import { CategoryYearlyTreemap } from "./CategoryYearlyTreemap";
-import { useAppStore } from "@/store/useAppStore";
 import { useStatisticsStore } from "@/store/useStatisticsStore";
 import { BadgeStatistics } from "./BadgeStatistics";
 import { DayOfWeekChart } from "./DayOfWeekChart";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-const COLORS = [
-  "#8b5cf6",
-  "#ec4899",
-  "#f59e0b",
-  "#10b981",
-  "#3b82f6",
-  "#6366f1",
-];
-
-// Default empty MetricStats for safe access
-const emptyMetricStats: MetricStats = {
-  total: 0,
-  average: 0,
-  max: 0,
-  min: 0,
-};
-
-// Default empty FinancialSummaryStats for safe access
-const emptyFinancialSummaryStats: FinancialSummaryStats = {
-  income: emptyMetricStats,
-  expense: emptyMetricStats,
-  netIncome: emptyMetricStats,
-  fixedExpense: emptyMetricStats,
-};
+import {
+  Activity,
+  BarChart3,
+  ChartNoAxesCombined,
+  ChartPie,
+  ChartSpline,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function StatisticsPage() {
   const { setHeader, resetHeader } = useHeaderStore();
@@ -49,30 +31,27 @@ export default function StatisticsPage() {
   const [selectedMonth, setSelectedMonth] = useState<string>(
     format(new Date(), "yyyy-MM"),
   );
-  const [dialogState, setDialogState] = useState<DialogState>({
-    open: false,
-    title: "",
-    transactions: [],
-    showDate: false,
-  });
-  const [showDailyTransactionsDialog, setShowDailyTransactionsDialog] =
-    useState(false);
-  const [selectedDateForDialog, setSelectedDateForDialog] = useState<
-    string | null
-  >(null);
+  const [activeTab, setActiveTab] = useState<
+    "summary" | "yearly" | "treemap" | "monthly" | "dayofweek"
+  >("summary");
+
+  const tabs = [
+    { id: "summary", label: "수입 및 지출", icon: Activity },
+    { id: "yearly", label: "연간 통계", icon: ChartNoAxesCombined },
+    { id: "treemap", label: "지출 분포", icon: ChartPie },
+    { id: "monthly", label: "월별 통계", icon: ChartSpline },
+    { id: "dayofweek", label: "요일 통계", icon: BarChart3 },
+  ];
 
   const {
     loading,
     monthlyFinancialSummary,
-    financialSummaryStats,
     categoryMonthlyAmounts,
     badgeStats,
     loadYearlyStatistics,
     loadCategoryTrend,
     loadBadgeStatistics,
   } = useStatisticsStore();
-
-  const { categoryList: categories } = useAppStore();
 
   useEffect(() => {
     setHeader(
@@ -131,14 +110,6 @@ export default function StatisticsPage() {
     loadBadgeStatistics(baseMonth);
   }, [selectedYear, selectedMonth, viewMode]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("ko-KR", {
-      style: "currency",
-      currency: "KRW",
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
-
   if (
     loading &&
     !categoryMonthlyAmounts.length &&
@@ -150,47 +121,123 @@ export default function StatisticsPage() {
       </div>
     );
   }
-
-  // Calculate min and max for net income to center the Y-axis at 0
-  const allNetIncomes = monthlyFinancialSummary.map((item) => item.netIncome); // Use camelCase
-  const maxNetIncome = Math.max(0, ...allNetIncomes, 1); // Ensure at least 1 to prevent division by zero
-  const minNetIncome = Math.min(0, ...allNetIncomes, -1); // Ensure at least -1
-  const symmetricMax = Math.max(Math.abs(maxNetIncome), Math.abs(minNetIncome));
-
+  const renderContent = () => {
+    switch (activeTab) {
+      case "summary":
+        return <SummaryCards />;
+      case "yearly":
+        return <YearlyTrendChart />;
+      case "treemap":
+        return (
+          <CategoryYearlyTreemap
+            baseMonth={
+              viewMode === "year" ? `${selectedYear}-12` : selectedMonth
+            }
+          />
+        );
+      case "monthly":
+        return (
+          <CategoryMonthlyTrendSection
+            baseMonth={
+              viewMode === "year" ? `${selectedYear}-12` : selectedMonth
+            }
+            loadCategoryMonthlyAmounts={loadCategoryTrend}
+            categoryMonthlyAmounts={categoryMonthlyAmounts}
+          />
+        );
+      case "dayofweek":
+        return (
+          <DayOfWeekChart
+            baseMonth={
+              viewMode === "year" ? `${selectedYear}-12` : selectedMonth
+            }
+          />
+        );
+      default:
+        return <SummaryCards />;
+    }
+  };
   return (
     <div className="px-4 py-6 space-y-6">
       {/* 0. 배지 통계 */}
-      <BadgeStatistics stats={badgeStats} formatCurrency={formatCurrency} />
+      <BadgeStatistics stats={badgeStats} />
+      <div className="w-full">
+        {/* 탭 헤더: 창이 작을 때만 표시 (1440px 미만) */}
+        <div
+          className={cn(
+            "flex border-b border-slate-200 dark:border-slate-800 w-full relative",
+            "min-2xl:hidden", // 1440px 이상에선 숨김
+          )}
+        >
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as "summary")}
+              className={cn(
+                "relative px-6 py-2 text-sm font-bold transition-all flex items-center gap-2 outline-none",
+                activeTab === tab.id
+                  ? "text-blue-600"
+                  : "text-slate-400 hover:text-slate-600",
+              )}
+            >
+              <tab.icon
+                className={cn(
+                  "w-4 h-4",
+                  activeTab === tab.id ? "text-blue-600" : "text-slate-300",
+                )}
+              />
+              {tab.label}
+              {activeTab === tab.id && (
+                <motion.div
+                  layoutId="categoryTabUnderline"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
 
-      {/* 1. 요약 카드 */}
-      <SummaryCards
-        stats={financialSummaryStats ?? emptyFinancialSummaryStats}
-        formatCurrency={formatCurrency}
-      />
+        <div className="mt-4">
+          {/* 일반 모드 (창이 작을 때) */}
+          <div className="min-2xl:hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+              >
+                {renderContent()}
+              </motion.div>
+            </AnimatePresence>
+          </div>
 
-      {/* 2. 연간 추이 차트 */}
-      <YearlyTrendChart
-        data={monthlyFinancialSummary}
-        symmetricMax={symmetricMax}
-        formatCurrency={formatCurrency}
-      />
-      <CategoryYearlyTreemap
-        baseMonth={viewMode === "year" ? `${selectedYear}-12` : selectedMonth}
-      />
-
-      {/* 3. 월별 카테고리별 상세 추이 (필터 포함 - 분리 권장) */}
-      <CategoryMonthlyTrendSection
-        baseMonth={viewMode === "year" ? `${selectedYear}-12` : selectedMonth}
-        categories={categories}
-        loadCategoryMonthlyAmounts={loadCategoryTrend}
-        categoryMonthlyAmounts={categoryMonthlyAmounts}
-        formatCurrency={formatCurrency}
-      />
-
-      {/* 4. 요일별 분석 차트 */}
-      <DayOfWeekChart
-        baseMonth={viewMode === "year" ? `${selectedYear}-12` : selectedMonth}
-      />
+          {/* 확장 모드 (창이 1440px 이상으로 커졌을 때) */}
+          <div className="hidden min-2xl:flex min-2xl:flex-col min-2xl:gap-2">
+            <SummaryCards />
+            <YearlyTrendChart />
+            <CategoryYearlyTreemap
+              baseMonth={
+                viewMode === "year" ? `${selectedYear}-12` : selectedMonth
+              }
+            />
+            <CategoryMonthlyTrendSection
+              baseMonth={
+                viewMode === "year" ? `${selectedYear}-12` : selectedMonth
+              }
+              loadCategoryMonthlyAmounts={loadCategoryTrend}
+              categoryMonthlyAmounts={categoryMonthlyAmounts}
+            />
+            <DayOfWeekChart
+              baseMonth={
+                viewMode === "year" ? `${selectedYear}-12` : selectedMonth
+              }
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

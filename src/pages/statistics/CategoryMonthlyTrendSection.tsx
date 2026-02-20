@@ -24,41 +24,40 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { formatCurrency } from "@/lib/utils";
+import { useAppStore } from "@/store/useAppStore";
 
 interface CategoryMonthlyTrendSectionProps {
   baseMonth: string; // "YYYY-MM" 형식
-  categories: Category[];
   loadCategoryMonthlyAmounts: (
     baseMonth: string,
-    categoryId: number | null
+    categoryId: number | null,
   ) => Promise<void>;
   categoryMonthlyAmounts: CategoryMonthlyAmount[];
-  formatCurrency: (amount: number) => string;
 }
 
 export const CategoryMonthlyTrendSection = memo(
   function CategoryMonthlyTrendSection({
     baseMonth,
-    categories,
     loadCategoryMonthlyAmounts,
     categoryMonthlyAmounts,
-    formatCurrency,
   }: CategoryMonthlyTrendSectionProps) {
     const [activeType, setActiveType] = useState<"income" | "expense">(
-      "expense"
+      "expense",
     );
     const [internalCategoryId, setInternalCategoryId] = useState<number | null>(
-      null
+      null,
     );
+    const { categoryList: categories } = useAppStore();
 
     // 1. 카테고리 분리 (수입: 0, 지출: 1)
     const expenseCategories = useMemo(
       () => categories.filter((c) => c.type === 1),
-      [categories]
+      [categories],
     );
     const incomeCategories = useMemo(
       () => categories.filter((c) => c.type === 0),
-      [categories]
+      [categories],
     );
     // 현재 탭에 맞는 카테고리 목록
     const currentCategories =
@@ -110,7 +109,7 @@ export const CategoryMonthlyTrendSection = memo(
           .filter(
             (item) =>
               item.year_month === monthObj.key &&
-              (activeType === "income" ? item.type === 0 : item.type === 1)
+              (activeType === "income" ? item.type === 0 : item.type === 1),
           )
           .forEach((item) => {
             row[item.category_name] = item.total_amount;
@@ -291,5 +290,5 @@ export const CategoryMonthlyTrendSection = memo(
         </CardContent>
       </Card>
     );
-  }
+  },
 );

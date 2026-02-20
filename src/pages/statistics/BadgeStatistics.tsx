@@ -11,16 +11,13 @@ import {
   Award,
   CalendarCheck,
 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 
 interface BadgeStatisticsProps {
   stats: BadgeStats | null;
-  formatCurrency: (amount: number) => string;
 }
 
-export function BadgeStatistics({
-  stats,
-  formatCurrency,
-}: BadgeStatisticsProps) {
+export function BadgeStatistics({ stats }: BadgeStatisticsProps) {
   if (!stats) return null;
 
   const formatMonth = (monthStr: string) => {
