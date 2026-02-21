@@ -4,7 +4,6 @@ import { Card } from "@/components/ui/card";
 import { Settings, Coins, LayoutTemplate } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { invoke } from "@tauri-apps/api/core";
 import {
   Select,
   SelectContent,
@@ -12,69 +11,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
 import { useAppStore } from "@/store/useAppStore";
 import { useHeaderStore } from "@/store/useHeaderStore";
+import { useSettingStore } from "@/store/useSettingStore";
 
 const GeneralSettings = () => {
   const { resetHeader, setHeader } = useHeaderStore();
-
-  useEffect(() => {
-    setHeader("설정");
-    return () => resetHeader();
-  }, []);
+  const { language: globalLanguage } = useAppStore();
+  const {
+    appName: storeAppName,
+    currency: storeCurrency,
+    defaultView: storeDefaultView,
+    fetchGeneralSettings,
+    saveGeneralSettings,
+  } = useSettingStore();
 
   const [localAppName, setLocalAppName] = useState("");
   const [localLanguage, setLocalLanguage] = useState("");
-  const [currency, setCurrency] = useState("");
+  const [localCurrency, setLocalCurrency] = useState("");
   const [localDefaultView, setLocalDefaultView] = useState("timeline");
 
-  const {
-    language: globalLanguage,
-    updateSetting,
-    setAppName: updateGlobalAppName,
-  } = useAppStore();
-
-  const loadSettings = async () => {
-    const name = await invoke<string | null>("get_setting_command", {
-      key: "app_name",
-    });
-    const curr = await invoke<string | null>("get_setting_command", {
-      key: "currency",
-    });
-    const defaultView = await invoke<string | null>("get_setting_command", {
-      key: "default_view",
-    });
-
-    setLocalAppName(name || "C'agok");
-    setLocalLanguage(globalLanguage);
-    setCurrency(curr || "KRW");
-    setLocalDefaultView(defaultView || "timeline");
-  };
-
   useEffect(() => {
-    loadSettings();
+    setHeader("설정");
+    fetchGeneralSettings();
+    return () => resetHeader();
+  }, []);
+
+  // Sync local state with store state when store updates
+  useEffect(() => {
+    setLocalAppName(storeAppName);
+    setLocalCurrency(storeCurrency);
+    setLocalDefaultView(storeDefaultView);
+  }, [storeAppName, storeCurrency, storeDefaultView]);
+
+  // Sync local language with global app store
+  useEffect(() => {
+    setLocalLanguage(globalLanguage);
   }, [globalLanguage]);
 
   const handleSaveSettings = async () => {
-    try {
-      await invoke("set_setting_command", {
-        key: "app_name",
-        value: localAppName,
-      });
-      await invoke("set_setting_command", { key: "currency", value: currency });
-      await invoke("set_setting_command", {
-        key: "default_view",
-        value: localDefaultView,
-      });
-      await updateSetting("language", localLanguage);
-
-      updateGlobalAppName(localAppName);
-      toast.success("설정이 저장되었습니다.");
-    } catch (error) {
-      console.error(error);
-      toast.error("설정 저장에 실패했습니다.");
-    }
+    await saveGeneralSettings({
+      appName: localAppName,
+      currency: localCurrency,
+      defaultView: localDefaultView,
+      language: localLanguage,
+    });
   };
 
   return (
@@ -117,7 +98,7 @@ const GeneralSettings = () => {
             <Label htmlFor="currency" className="flex items-center gap-2">
               <Coins className="w-4 h-4" /> 통화 단위
             </Label>
-            <Select value={currency} onValueChange={setCurrency}>
+            <Select value={localCurrency} onValueChange={setLocalCurrency}>
               <SelectTrigger id="currency">
                 <SelectValue placeholder="통화 선택" />
               </SelectTrigger>

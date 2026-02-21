@@ -9,6 +9,8 @@ import TreemapDetailDialog from "@/pages/dashboard/components/TreemapDetailDialo
 import CardSelection from "./CardSelection";
 import { useTranslation } from "react-i18next";
 
+import DashboardSkeleton from "./DashboardSkeleton";
+
 export default function Dashboard() {
   const { t } = useTranslation();
   const {
@@ -38,11 +40,7 @@ export default function Dashboard() {
   }, [selectedMonth]);
 
   if (loading || !overview) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-lg">{t("common.loading")}</div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

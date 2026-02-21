@@ -7,6 +7,7 @@ import {
   MetricStats,
   BadgeStats,
 } from "@/types";
+import { format } from "date-fns";
 
 // 기본값 정의
 const emptyMetricStats: MetricStats = {
@@ -25,6 +26,11 @@ const defaultFinancialSummaryStats: FinancialSummaryStats = {
 
 interface StatisticsState {
   // 상태
+  viewMode: "year" | "month";
+  selectedYear: number;
+  selectedMonth: string;
+  baseMonth: string; // viewMode와 selectedYear/Month에 의해 계산됨
+
   monthlyFinancialSummary: MonthlyFinancialSummaryItem[];
   financialSummaryStats: FinancialSummaryStats | null;
   categoryMonthlyAmounts: CategoryMonthlyAmount[];
@@ -32,31 +38,73 @@ interface StatisticsState {
   loading: boolean;
 
   // 액션
-  loadYearlyStatistics: (selectedMonth: string) => Promise<void>;
-  loadCategoryTrend: (
-    selectedMonth: string,
-    categoryId?: number | null
-  ) => Promise<void>;
-  loadBadgeStatistics: (selectedMonth: string) => Promise<void>;
+  setViewMode: (viewMode: "year" | "month") => void;
+  setSelectedYear: (year: number) => void;
+  setSelectedMonth: (month: string) => void;
+
+  loadYearlyStatistics: () => Promise<void>;
+  loadCategoryTrend: () => Promise<void>;
+  loadBadgeStatistics: () => Promise<void>;
+  loadAllStatistics: () => Promise<void>;
   resetStatistics: () => void;
 }
 
-export const useStatisticsStore = create<StatisticsState>((set) => ({
+const calculateBaseMonth = (
+  viewMode: "year" | "month",
+  selectedYear: number,
+  selectedMonth: string,
+) => {
+  return viewMode === "year" ? `${selectedYear}-12` : selectedMonth;
+};
+
+export const useStatisticsStore = create<StatisticsState>((set, get) => ({
+  // 초기 상태
+  viewMode: "month",
+  selectedYear: new Date().getFullYear(),
+  selectedMonth: format(new Date(), "yyyy-MM"),
+  baseMonth: format(new Date(), "yyyy-MM"),
+
   monthlyFinancialSummary: [],
   financialSummaryStats: null,
   categoryMonthlyAmounts: [],
   badgeStats: null,
   loading: false,
 
-  // 연간 요약 데이터 로드 (금융 요약 통계 + 월별 바 차트용 데이터)
-  loadYearlyStatistics: async (selectedMonth: string) => {
+  // 액션
+  setViewMode: (viewMode) => {
+    const { selectedYear, selectedMonth } = get();
+    set({
+      viewMode,
+      baseMonth: calculateBaseMonth(viewMode, selectedYear, selectedMonth),
+    });
+  },
+
+  setSelectedYear: (selectedYear) => {
+    const { viewMode, selectedMonth } = get();
+    set({
+      selectedYear,
+      baseMonth: calculateBaseMonth(viewMode, selectedYear, selectedMonth),
+    });
+  },
+
+  setSelectedMonth: (selectedMonth) => {
+    const { viewMode, selectedYear } = get();
+    set({
+      selectedMonth,
+      baseMonth: calculateBaseMonth(viewMode, selectedYear, selectedMonth),
+    });
+  },
+
+  // 연간 요약 데이터 로드
+  loadYearlyStatistics: async () => {
+    const { baseMonth } = get();
     try {
       set({ loading: true });
       const yearlyData = await invoke<{
         financialSummaryStats: FinancialSummaryStats;
         monthlyFinancialSummary: MonthlyFinancialSummaryItem[];
       } | null>("get_yearly_dashboard_data_command", {
-        baseMonth: selectedMonth,
+        baseMonth,
       });
 
       set({
@@ -71,19 +119,17 @@ export const useStatisticsStore = create<StatisticsState>((set) => ({
     }
   },
 
-  // 카테고리별 월간 추이 로드 (트리맵 또는 카테고리별 시계열 차트용)
-  loadCategoryTrend: async (
-    selectedMonth: string,
-    categoryId?: number | null
-  ) => {
+  // 카테고리별 월간 추이 로드
+  loadCategoryTrend: async () => {
+    const { baseMonth } = get();
     try {
       set({ loading: true });
       const amounts = await invoke<CategoryMonthlyAmount[]>(
         "get_monthly_category_amounts_command",
         {
-          baseMonth: selectedMonth,
-          categoryId: categoryId ?? null,
-        }
+          baseMonth,
+          categoryId: null,
+        },
       );
 
       set({ categoryMonthlyAmounts: amounts ?? [] });
@@ -94,11 +140,12 @@ export const useStatisticsStore = create<StatisticsState>((set) => ({
     }
   },
 
-  loadBadgeStatistics: async (selectedMonth: string) => {
+  loadBadgeStatistics: async () => {
+    const { baseMonth } = get();
     try {
       set({ loading: true });
       const stats = await invoke<BadgeStats>("get_badge_statistics_command", {
-        baseMonth: selectedMonth,
+        baseMonth,
       });
       set({ badgeStats: stats });
     } catch (error) {
@@ -108,9 +155,25 @@ export const useStatisticsStore = create<StatisticsState>((set) => ({
     }
   },
 
-  // 페이지 이탈 시 데이터 초기화 (필요한 경우)
+  loadAllStatistics: async () => {
+    const {
+      loadYearlyStatistics,
+      loadCategoryTrend,
+      loadBadgeStatistics,
+    } = get();
+    await Promise.all([
+      loadYearlyStatistics(),
+      loadCategoryTrend(),
+      loadBadgeStatistics(),
+    ]);
+  },
+
   resetStatistics: () =>
     set({
+      viewMode: "month",
+      selectedYear: new Date().getFullYear(),
+      selectedMonth: format(new Date(), "yyyy-MM"),
+      baseMonth: format(new Date(), "yyyy-MM"),
       monthlyFinancialSummary: [],
       financialSummaryStats: null,
       categoryMonthlyAmounts: [],

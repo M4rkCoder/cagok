@@ -16,6 +16,7 @@ interface CategoryState {
   editingCategoryId: number | null;
   newCategoryName: string;
   newCategoryIcon: string;
+  newCategoryType: number;
   isEmojiPickerOpen: boolean;
 
   // 액션
@@ -38,6 +39,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
   editingCategoryId: null,
   newCategoryName: "",
   newCategoryIcon: "😀",
+  newCategoryType: 1,
   isEmojiPickerOpen: false,
 
   // 단순 상태 변경
@@ -51,6 +53,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
       editingCategoryId: null,
       newCategoryName: "",
       newCategoryIcon: "😀",
+      newCategoryType: 1,
       isEmojiPickerOpen: false,
     }),
 
@@ -60,6 +63,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
       editingCategoryId: cat.id,
       newCategoryName: cat.name,
       newCategoryIcon: cat.icon,
+      newCategoryType: cat.type,
       isAddingNewCategoryMode: true,
     }),
 

@@ -18,20 +18,31 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { ExpenseBadge, IncomeBadge } from "../TransactionBadge";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface Props {
   transactions: TransactionWithCategory[];
+  selectedIds: number[];
   onEdit?: (tx: TransactionWithCategory) => void;
   onDelete?: (id: number) => void;
+  onToggleSelect: (id: number) => void;
+  onToggleSelectAll: (ids: number[], checked: boolean) => void;
 }
 
 export function TransactionDetailTable({
   transactions,
+  selectedIds,
   onEdit,
   onDelete,
+  onToggleSelect,
+  onToggleSelectAll,
 }: Props) {
   // 1. 수입(0) -> 지출(1) 순으로 정렬
   const sortedTransactions = [...transactions].sort((a, b) => a.type - b.type);
+
+  const allSelected =
+    sortedTransactions.length > 0 &&
+    sortedTransactions.every((tx) => selectedIds.includes(tx.id));
 
   return (
     <div className="ml-16 mt-2 mb-3 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -40,6 +51,20 @@ export function TransactionDetailTable({
           <Table>
             <TableHeader className="bg-slate-50/80">
               <TableRow className="hover:bg-transparent">
+                <TableHead className="w-[50px]">
+                  <div className="flex justify-center items-center">
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={(checked) =>
+                        onToggleSelectAll(
+                          sortedTransactions.map((t) => t.id),
+                          !!checked,
+                        )
+                      }
+                      className="border-slate-300 data-[state=checked]:bg-black data-[state=checked]:text-white"
+                    />
+                  </div>
+                </TableHead>
                 <TableHead className="pl-5 w-[80px] font-bold">유형</TableHead>
                 <TableHead className="w-[150px] font-bold">카테고리</TableHead>
                 <TableHead className="w-[150px] font-bold">상세 내역</TableHead>
@@ -55,6 +80,15 @@ export function TransactionDetailTable({
                     key={tx.id}
                     className="group hover:bg-slate-50/50 transition-colors"
                   >
+                    <TableCell>
+                      <div className="flex justify-center items-center">
+                        <Checkbox
+                          checked={selectedIds.includes(tx.id)}
+                          onCheckedChange={() => onToggleSelect(tx.id)}
+                          className="border-slate-300 data-[state=checked]:bg-black data-[state=checked]:text-white"
+                        />
+                      </div>
+                    </TableCell>
                     {/* 수입 지출 유형 */}
                     <TableCell>
                       <div className="pl-1 flex items-center gap-2.5">

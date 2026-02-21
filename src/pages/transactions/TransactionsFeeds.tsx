@@ -12,6 +12,7 @@ import {
   ChevronsDown,
   ChevronsUp,
   ListTree,
+  Trash2,
 } from "lucide-react";
 import { TrendBadge } from "./TransactionBadge";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ export default function TransactionsFeeds() {
     filters,
     loading,
     deleteTransaction,
+    deleteBulkTransactions,
     setEditingTransaction,
     setSheetOpen,
   } = useTransactionStore();
@@ -40,6 +42,7 @@ export default function TransactionsFeeds() {
 
   const [expandedMonths, setExpandedMonths] = useState<string[]>([]);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   // 필터 활성화 여부
   const isFiltering = useMemo(() => {
@@ -148,6 +151,37 @@ export default function TransactionsFeeds() {
         "이 거래 내역을 정말 삭제하시겠습니까? \n 삭제 후에는 복구할 수 없습니다.",
       onConfirm: async () => {
         await deleteTransaction(id);
+      },
+    });
+  };
+
+  const handleToggleSelect = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleToggleSelectAll = (ids: number[], checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => {
+        if (checked) next.add(id);
+        else next.delete(id);
+      });
+      return next;
+    });
+  };
+
+  const handleBulkDelete = () => {
+    confirm({
+      title: "선택 항목 삭제",
+      description: `${selectedIds.size}개의 내역을 정말 삭제하시겠습니까?`,
+      onConfirm: async () => {
+        await deleteBulkTransactions(Array.from(selectedIds));
+        setSelectedIds(new Set());
       },
     });
   };
@@ -313,8 +347,11 @@ export default function TransactionsFeeds() {
               <div className="mt-4 mb-2">
                 <TransactionDetailTable
                   transactions={dayTransactions}
+                  selectedIds={Array.from(selectedIds)}
                   onEdit={handleEdit}
                   onDelete={handleDelete}
+                  onToggleSelect={handleToggleSelect}
+                  onToggleSelectAll={handleToggleSelectAll}
                 />
               </div>
             )}
@@ -338,6 +375,7 @@ export default function TransactionsFeeds() {
     setEditingTransaction,
     setSheetOpen,
     confirm,
+    selectedIds,
   ]);
 
   return (
@@ -389,6 +427,20 @@ export default function TransactionsFeeds() {
           )}
         </div>
       </div>
+
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+          <Button
+            variant="destructive"
+            size="lg"
+            onClick={handleBulkDelete}
+            className="rounded-full shadow-lg gap-2 pl-4 pr-6 h-12"
+          >
+            <Trash2 className="h-5 w-5" />
+            <span className="font-bold">{selectedIds.size}개 삭제</span>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

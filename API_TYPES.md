@@ -82,6 +82,17 @@ struct RecurringHistoryItem {
 }
 ```
 
+### `OneDriveStatus`
+Represents the connection status with OneDrive.
+```rust
+struct OneDriveStatus {
+    is_connected: bool,
+    last_synced: Option<String>,
+    account_name: Option<String>,
+    account_email: Option<String>,
+}
+```
+
 ## Enums
 
 ### `RecurringFrequency`
@@ -90,6 +101,14 @@ Enum for recurring transaction frequency.
 - `Weekly` (1)
 - `Monthly` (2)
 - `Yearly` (3)
+
+### `ComparisonType`
+Enum for dashboard comparison metrics.
+- `Expense`
+- `Income`
+- `NetIncome`
+- `Fixed`
+- `FixedRatio`
 
 ## Dashboard & Statistics Models
 
@@ -265,6 +284,17 @@ struct CategoryFixedVariableSummary {
     variable_total: f64,
     fixed_items: Vec<TransactionWithCategory>,
     variable_items: Vec<TransactionWithCategory>,
+}
+```
+
+### `ComparisonMetric`
+Comparison result between two periods.
+```rust
+struct ComparisonMetric {
+    current: i64,
+    previous: i64,
+    diff: i64,
+    diff_rate: f64,
 }
 ```
 

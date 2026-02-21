@@ -74,26 +74,49 @@ const QuickEntry: React.FC = () => {
         header: "#",
         size: 40,
         cell: ({ row }) => {
-          const isValid = row.original.is_valid !== false; // Default to true if undefined
-          const errorMsg = row.original.error_msg;
+          const rowError = rowErrors[row.original.id];
+          const errorMessages = new Set<string>();
 
-          if (isValid) {
+          if (rowError) {
+            Object.values(rowError).forEach((e: any) => {
+              if (e?.message) errorMessages.add(e.message);
+            });
+          }
+
+          if (row.original.error_msg) {
+            errorMessages.add(row.original.error_msg);
+          }
+
+          if (row.original.is_valid === false && errorMessages.size === 0) {
+            errorMessages.add("유효하지 않은 데이터입니다.");
+          }
+
+          const hasError = errorMessages.size > 0;
+
+          if (!hasError) {
             return (
               <span className="text-slate-400 text-[11px] flex justify-center">
                 {row.index + 1}
               </span>
             );
           }
+
+          const messageList = Array.from(errorMessages);
+
           return (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="flex justify-center items-center w-full h-full">
+                  <div className="flex justify-center items-center w-full h-full cursor-help">
                     <AlertCircle className="w-4 h-4 text-red-500" />
                   </div>
                 </TooltipTrigger>
-                <TooltipContent>
-                  <p>{errorMsg || "유효하지 않은 데이터입니다."}</p>
+                <TooltipContent className="bg-red-500 text-white border-red-600">
+                  <ul className="list-disc list-inside text-xs">
+                    {messageList.map((msg, idx) => (
+                      <li key={idx}>{msg}</li>
+                    ))}
+                  </ul>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

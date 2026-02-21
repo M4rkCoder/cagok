@@ -34,7 +34,7 @@ export const IncomeBadge: React.FC = () => {
     "
     >
       <CirclePlus className="h-4 w-4 mr-0.5 text-white" />
-      {t("income")}
+      {t("common.in")}
     </Badge>
   );
 };
@@ -55,7 +55,7 @@ export const ExpenseBadge: React.FC = () => {
     "
     >
       <CircleMinus className="w-4 h-4 mr-0.5 text-white" />
-      {t("expense")}
+      {t("common.out")}
     </Badge>
   );
 };
@@ -76,7 +76,7 @@ export const FixedExpenseBadge: React.FC = () => {
     "
     >
       <PinIcon className="w-4 h-4 mr-0.5 text-black" />
-      {t("fixed")}
+      {t("common.fixed")}
     </Badge>
   );
 };
@@ -97,7 +97,7 @@ export const VariableExpenseBadge: React.FC = () => {
     "
     >
       <TrendingUpDownIcon className="w-4 h-4 mr-0.5 text-black" />
-      {t("variable")}
+      {t("common.variable")}
     </Badge>
   );
 };
@@ -130,7 +130,7 @@ export function TrendBadge({
         "flex items-center gap-2 px-3 py-1.5 rounded-lg min-w-[140px] justify-between border",
         config.baseClass,
         isSimple && "min-w-[110px] justify-start",
-        className
+        className,
       )}
     >
       <div className="flex items-center gap-1.5">

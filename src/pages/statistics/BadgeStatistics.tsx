@@ -1,6 +1,5 @@
 import React from "react";
-import { BadgeStats } from "@/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
   TrendingUp,
@@ -12,12 +11,11 @@ import {
   CalendarCheck,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { useStatisticsStore } from "@/store/useStatisticsStore";
 
-interface BadgeStatisticsProps {
-  stats: BadgeStats | null;
-}
+export function BadgeStatistics() {
+  const { badgeStats: stats } = useStatisticsStore();
 
-export function BadgeStatistics({ stats }: BadgeStatisticsProps) {
   if (!stats) return null;
 
   const formatMonth = (monthStr: string) => {

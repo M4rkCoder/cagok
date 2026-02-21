@@ -181,7 +181,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
       const parsedCategoryId = parseInt(row.category_id);
 
       const transactionToValidate = {
-        type: Number(row.type) || 1,
+        type: row.type !== undefined && row.type !== null ? Number(row.type) : 1,
         is_fixed: Number(row.is_fixed) || 0,
         amount: parsedAmount,
         date: row.date,

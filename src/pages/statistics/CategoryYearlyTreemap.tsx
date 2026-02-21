@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { invoke } from "@tauri-apps/api/core";
-import { toast } from "sonner";
 import { Treemap, ResponsiveContainer, Tooltip } from "recharts";
 import { useTranslation } from "react-i18next";
 import { CategoryMonthlyAmount } from "@/types";
 import { cn, getThemeColor } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useStatisticsStore } from "@/store/useStatisticsStore";
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat("ko-KR", {
@@ -16,10 +15,6 @@ const formatCurrency = (amount: number) => {
     maximumFractionDigits: 0,
   }).format(amount);
 };
-
-interface CategoryYearlyTreemapProps {
-  baseMonth: string;
-}
 
 interface TreemapData {
   name: string;
@@ -32,120 +27,100 @@ interface TreemapData {
   [key: string]: any;
 }
 
-export const CategoryYearlyTreemap: React.FC<CategoryYearlyTreemapProps> = ({
-  baseMonth,
-}) => {
+export const CategoryYearlyTreemap: React.FC = () => {
   const { t } = useTranslation();
-  const [treemapData, setTreemapData] = useState<TreemapData[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { baseMonth, categoryMonthlyAmounts, loading: storeLoading } = useStatisticsStore();
   const [viewType, setViewType] = useState<"expense" | "income">("expense");
 
-  const fetchCategoryYearlyAmounts = useCallback(async () => {
-    if (!baseMonth) return;
+  const treemapData = useMemo(() => {
+    if (!categoryMonthlyAmounts.length) return [];
 
-    setLoading(true);
-    try {
-      const response = await invoke<CategoryMonthlyAmount[]>(
-        "get_monthly_category_amounts_command",
-        { baseMonth, categoryId: null }
-      );
+    const targetType = viewType === "expense" ? 1 : 0;
+    const aggregatedData: {
+      [key: string]: {
+        total: number;
+        icon: string;
+        monthsWithData: number;
+        totalCount: number;
+      };
+    } = {};
+    let totalYearlyAmount = 0;
 
-      const targetType = viewType === "expense" ? 1 : 0;
-      const aggregatedData: {
-        [key: string]: {
-          total: number;
-          icon: string;
-          monthsWithData: number;
-          totalCount: number;
-        };
-      } = {};
-      let totalYearlyAmount = 0;
-
-      // 데이터 집계
-      response.forEach((item) => {
-        if (item.type === targetType) {
-          if (!aggregatedData[item.category_name]) {
-            aggregatedData[item.category_name] = {
-              total: 0,
-              icon: item.category_icon || "",
-              monthsWithData: 0,
-              totalCount: 0,
-            };
-          }
-          aggregatedData[item.category_name].total += item.total_amount;
-          aggregatedData[item.category_name].totalCount += item.transaction_count;
-          
-          if (item.total_amount !== 0) {
-            aggregatedData[item.category_name].monthsWithData += 1;
-          }
-          totalYearlyAmount += item.total_amount;
+    // 데이터 집계
+    categoryMonthlyAmounts.forEach((item) => {
+      if (item.type === targetType) {
+        if (!aggregatedData[item.category_name]) {
+          aggregatedData[item.category_name] = {
+            total: 0,
+            icon: item.category_icon || "",
+            monthsWithData: 0,
+            totalCount: 0,
+          };
         }
+        aggregatedData[item.category_name].total += item.total_amount;
+        aggregatedData[item.category_name].totalCount += item.transaction_count;
+        
+        if (item.total_amount !== 0) {
+          aggregatedData[item.category_name].monthsWithData += 1;
+        }
+        totalYearlyAmount += item.total_amount;
+      }
+    });
+
+    // 정렬 및 데이터 가공
+    let sortedCategories = Object.entries(aggregatedData)
+      .sort(([, dataA], [, dataB]) => dataB.total - dataA.total)
+      .map(([name, data]) => {
+        const average =
+          data.monthsWithData > 0 ? data.total / data.monthsWithData : 0;
+        return {
+          name,
+          value: data.total,
+          icon: data.icon,
+          average,
+          count: data.totalCount,
+        };
       });
 
-      // 정렬 및 데이터 가공
-      let sortedCategories = Object.entries(aggregatedData)
-        .sort(([, dataA], [, dataB]) => dataB.total - dataA.total)
-        .map(([name, data]) => {
-          const average =
-            data.monthsWithData > 0 ? data.total / data.monthsWithData : 0;
-          return {
-            name,
-            value: data.total,
-            icon: data.icon,
-            average,
-            count: data.totalCount,
-          };
-        });
+    const totalCategoriesCount = sortedCategories.length;
+    
+    const topCategories = sortedCategories.slice(0, 7);
+    const otherCategories = sortedCategories.slice(7);
+    
+    const otherTotal = otherCategories.reduce((sum, item) => sum + item.value, 0);
+    const otherCount = otherCategories.reduce((sum, item) => sum + item.count, 0);
 
-      const totalCategoriesCount = sortedCategories.length;
-      
-      const topCategories = sortedCategories.slice(0, 7);
-      const otherCategories = sortedCategories.slice(7);
-      
-      const otherTotal = otherCategories.reduce((sum, item) => sum + item.value, 0);
-      const otherCount = otherCategories.reduce((sum, item) => sum + item.count, 0);
+    const finalTreemapData: TreemapData[] = topCategories.map(
+      (item, index) => ({
+        name: item.name,
+        value: item.value,
+        fill: getThemeColor(viewType === "expense" ? "expense" : "income", index, totalCategoriesCount),
+        icon: item.icon,
+        percentage:
+          totalYearlyAmount > 0
+            ? (item.value / totalYearlyAmount) * 100
+            : 0,
+        average: item.average,
+        count: item.count,
+      })
+    );
 
-      const finalTreemapData: TreemapData[] = topCategories.map(
-        (item, index) => ({
-          name: item.name,
-          value: item.value,
-          fill: getThemeColor(viewType === "expense" ? "expense" : "income", index, totalCategoriesCount),
-          icon: item.icon,
-          percentage:
-            totalYearlyAmount > 0
-              ? (item.value / totalYearlyAmount) * 100
-              : 0,
-          average: item.average,
-          count: item.count,
-        })
-      );
-
-      if (otherTotal > 0) {
-        finalTreemapData.push({
-          name: t("common:other") || "기타",
-          value: otherTotal,
-          fill: getThemeColor(viewType === "expense" ? "expense" : "income", topCategories.length, totalCategoriesCount),
-          percentage:
-            totalYearlyAmount > 0
-              ? (otherTotal / totalYearlyAmount) * 100
-              : 0,
-          average: 0,
-          count: otherCount,
-        });
-      }
-
-      setTreemapData(finalTreemapData);
-    } catch (error) {
-      toast.error("데이터를 불러오지 못했습니다.");
-      console.error("Failed to fetch treemap data:", error);
-    } finally {
-      setLoading(false);
+    if (otherTotal > 0) {
+      finalTreemapData.push({
+        name: t("common:other") || "기타",
+        value: otherTotal,
+        fill: getThemeColor(viewType === "expense" ? "expense" : "income", topCategories.length, totalCategoriesCount),
+        percentage:
+          totalYearlyAmount > 0
+            ? (otherTotal / totalYearlyAmount) * 100
+            : 0,
+        average: 0,
+        count: otherCount,
+      });
     }
-  }, [baseMonth, t, viewType]);
 
-  useEffect(() => {
-    fetchCategoryYearlyAmounts();
-  }, [fetchCategoryYearlyAmounts]);
+    return finalTreemapData;
+  }, [categoryMonthlyAmounts, viewType, t]);
 
   const displayTitleDate = (() => {
     try {
@@ -226,7 +201,7 @@ export const CategoryYearlyTreemap: React.FC<CategoryYearlyTreemapProps> = ({
   };
 
   return (
-    <Card className={cn("overflow-hidden", loading && "animate-pulse")}>
+    <Card className={cn("overflow-hidden", storeLoading && "animate-pulse")}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-base font-semibold">
           {displayTitleDate} 기준 1년 {viewType === "expense" ? "지출" : "수입"} 분포
@@ -239,7 +214,7 @@ export const CategoryYearlyTreemap: React.FC<CategoryYearlyTreemapProps> = ({
         </Tabs>
       </CardHeader>
       <CardContent className="h-[400px]">
-        {loading ? (
+        {storeLoading ? (
           <div className="flex h-full items-center justify-center">
             <span className="text-muted-foreground">{t("common:loading")}</span>
           </div>

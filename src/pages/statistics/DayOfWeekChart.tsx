@@ -37,10 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CategoryIcon } from "@/components/CategoryIcon";
-
-interface DayOfWeekChartProps {
-  baseMonth: string;
-}
+import { useStatisticsStore } from "@/store/useStatisticsStore";
 
 interface ProcessedData {
   dayName: string;
@@ -51,10 +48,9 @@ interface ProcessedData {
 
 const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
-export const DayOfWeekChart: React.FC<DayOfWeekChartProps> = ({
-  baseMonth,
-}) => {
+export const DayOfWeekChart: React.FC = () => {
   const { t } = useTranslation();
+  const { baseMonth } = useStatisticsStore();
   const [data, setData] = useState<DayOfWeekResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [txType, setTxType] = useState<"expense" | "income">("expense");

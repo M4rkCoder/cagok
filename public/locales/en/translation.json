@@ -1,4 +1,20 @@
 {
+  "common": {
+    "income": "Income",
+    "expense": "Expense",
+    "all": "All",
+    "in": "IN",
+    "out": "OUT",
+    "variable": "VARIABLE",
+    "fixed": "FIX",
+    "fixed_expense": "Fixed Expense",
+    "net_income": "Net Income",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "loading": "Loading..."
+  },
   "menu": {
     "dashboard": "Dashboard",
     "transaction": "Transactions",

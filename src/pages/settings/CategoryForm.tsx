@@ -34,6 +34,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
   const {
     newCategoryName,
     newCategoryIcon,
+    newCategoryType,
     editingCategoryId,
     setCategoryState,
   } = useCategoryStore();
@@ -54,17 +55,17 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
       form.reset({
         name: newCategoryName,
         icon: newCategoryIcon,
-        type: "1", // ⚠️ type도 store에 있으면 거기서 가져오면 더 좋음
+        type: newCategoryType.toString() as "0" | "1",
       });
     } else {
       // 신규 모드
       form.reset({
         name: "",
         icon: "➕",
-        type: "1",
+        type: newCategoryType.toString() as "0" | "1",
       });
     }
-  }, [editingCategoryId, newCategoryName, newCategoryIcon, form]);
+  }, [editingCategoryId, newCategoryName, newCategoryIcon, newCategoryType, form]);
 
   // 현재 선택된 타입을 실시간으로 감시
   const currentType = form.watch("type");

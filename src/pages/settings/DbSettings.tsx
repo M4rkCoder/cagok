@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -13,7 +12,6 @@ import {
   RotateCcw,
   ShieldCheck,
   Save,
-  Clock,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -26,85 +24,42 @@ import {
 } from "@/components/ui/table";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useHeaderStore } from "@/store/useHeaderStore";
+import { useSettingStore } from "@/store/useSettingStore";
 
 export default function DbSettings() {
   const resetHeader = useHeaderStore((state) => state.resetHeader);
   const setHeader = useHeaderStore((state) => state.setHeader);
 
-  const [dbPath, setDbPath] = useState("");
-  const [exportPath, setExportPath] = useState("");
-  const [backups, setBackups] = useState<string[]>([]);
+  const {
+    dbPath,
+    exportPath,
+    backups,
+    autoBackupEnabled,
+    lastAutoBackupDate,
+    fetchDbPaths,
+    fetchBackups,
+    fetchAutoBackupSettings,
+    toggleAutoBackup,
+    createBackup,
+    restoreBackup,
+    deleteBackup,
+    openFolder,
+    exportCsv,
+    restartApp,
+  } = useSettingStore();
+
   const [restoreConfirmOpen, setRestoreConfirmOpen] = useState(false);
   const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
-  const [autoBackupEnabled, setAutoBackupEnabled] = useState(false);
-  const [lastAutoBackupDate, setLastAutoBackupDate] = useState<string | null>(
-    null
-  );
-
   useEffect(() => {
     setHeader("데이터베이스 설정");
-    invoke<string>("get_db_path").then(setDbPath);
-    invoke<string>("get_export_path").then(setExportPath);
+    fetchDbPaths();
     fetchBackups();
     fetchAutoBackupSettings();
     return () => resetHeader();
   }, []);
-
-  const fetchAutoBackupSettings = async () => {
-    try {
-      const enabled = await invoke<string | null>("get_setting_command", {
-        key: "auto_backup_enabled",
-      });
-      setAutoBackupEnabled(enabled === "true");
-
-      const lastDate = await invoke<string | null>("get_setting_command", {
-        key: "last_auto_backup_date",
-      });
-      setLastAutoBackupDate(lastDate);
-    } catch (e) {
-      console.error("Failed to fetch settings", e);
-    }
-  };
-
-  const handleAutoBackupToggle = async (checked: boolean) => {
-    setAutoBackupEnabled(checked);
-    try {
-      await invoke("set_setting_command", {
-        key: "auto_backup_enabled",
-        value: checked ? "true" : "false",
-      });
-      if (checked) {
-        toast.success("자동 백업이 활성화되었습니다.");
-      } else {
-        toast.info("자동 백업이 비활성화되었습니다.");
-      }
-    } catch (e) {
-      toast.error("설정 저장 실패");
-      setAutoBackupEnabled(!checked); // revert
-    }
-  };
-
-  const fetchBackups = async () => {
-    try {
-      const backupFiles = await invoke<string[]>("list_backups");
-      setBackups(backupFiles);
-    } catch (e) {
-      toast.error("백업 목록을 불러오지 못했습니다.");
-    }
-  };
-
-  const handleBackup = async () => {
-    try {
-      await invoke("backup_db");
-      toast.success("백업이 성공적으로 생성되었습니다.");
-      fetchBackups();
-    } catch (e) {
-      toast.error(`백업 실패: ${e}`);
-    }
-  };
 
   const parseBackupName = (name: string) => {
     const match = name.match(/(\d{8})_(\d{6})/);
@@ -162,7 +117,7 @@ export default function DbSettings() {
                   variant="ghost"
                   size="sm"
                   className="h-9 px-3 hover:bg-muted text-muted-foreground flex gap-2"
-                  onClick={() => invoke("open_db_folder")}
+                  onClick={() => openFolder("db")}
                 >
                   <FolderOpen className="w-4 h-4" />
                   <span className="text-[11px] font-medium">폴더 열기</span>
@@ -200,7 +155,7 @@ export default function DbSettings() {
                   variant="ghost"
                   size="sm"
                   className="h-9 px-3 hover:bg-muted text-muted-foreground flex gap-2"
-                  onClick={() => invoke("open_export_folder")}
+                  onClick={() => openFolder("export")}
                 >
                   <FolderOpen className="w-4 h-4" />
                   <span className="text-[11px] font-medium">폴더 열기</span>
@@ -209,15 +164,7 @@ export default function DbSettings() {
                   variant="ghost"
                   size="sm"
                   className="h-9 px-3 hover:bg-muted text-muted-foreground flex gap-2"
-                  onClick={async () => {
-                    try {
-                      await invoke("export_transactions_csv");
-                      toast.success("CSV 추출 완료");
-                      await invoke("open_export_folder");
-                    } catch (e) {
-                      toast.error("실패");
-                    }
-                  }}
+                  onClick={exportCsv}
                 >
                   <Download className="w-4 h-4" />
                   <span className="text-[11px] font-medium uppercase tracking-tighter">
@@ -244,12 +191,12 @@ export default function DbSettings() {
               variant="outline"
               size="sm"
               className="h-8 gap-2"
-              onClick={() => invoke("open_backup_folder")}
+              onClick={() => openFolder("backup")}
             >
               <FolderOpen className="w-4 h-4" />
               백업 폴더
             </Button>
-            <Button size="sm" onClick={handleBackup} className="h-8 shadow-sm">
+            <Button size="sm" onClick={createBackup} className="h-8 shadow-sm">
               <ShieldCheck className="w-4 h-4 mr-2" />
               지금 백업
             </Button>
@@ -259,7 +206,7 @@ export default function DbSettings() {
         <CardContent className="space-y-6">
           {/* 자동 백업 설정 영역 (카드 상단에 배치) */}
           <div
-            onClick={() => handleAutoBackupToggle(!autoBackupEnabled)}
+            onClick={() => toggleAutoBackup(!autoBackupEnabled)}
             className={`
     flex items-center justify-between p-4 rounded-xl border transition-all duration-200 cursor-pointer select-none
     ${
@@ -292,7 +239,7 @@ export default function DbSettings() {
               <Switch
                 id="auto-backup"
                 checked={autoBackupEnabled}
-                onCheckedChange={handleAutoBackupToggle}
+                onCheckedChange={toggleAutoBackup}
                 className="data-[state=checked]:bg-primary"
               />
             </div>
@@ -395,11 +342,11 @@ export default function DbSettings() {
         onConfirm={async () => {
           if (!selectedBackup) return;
           try {
-            await invoke("restore_backup", { filename: selectedBackup });
+            await restoreBackup(selectedBackup);
             setRestoreConfirmOpen(false);
             setRestoreDialogOpen(true);
           } catch (e) {
-            toast.error("복원 실패");
+            // Toast handled in store
           }
         }}
       />
@@ -409,7 +356,7 @@ export default function DbSettings() {
         title="복원 완료"
         description="성공적으로 복원되었습니다. 적용을 위해 앱을 다시 시작합니다."
         confirmText="앱 재시작"
-        onConfirm={() => invoke("restart_app")}
+        onConfirm={restartApp}
       />
       <ConfirmDialog
         open={deleteConfirmOpen}
@@ -420,12 +367,10 @@ export default function DbSettings() {
         onConfirm={async () => {
           if (!selectedBackup) return;
           try {
-            await invoke("delete_backup", { filename: selectedBackup });
-            toast.success("백업 삭제 완료");
+            await deleteBackup(selectedBackup);
             setDeleteConfirmOpen(false);
-            fetchBackups();
           } catch (e) {
-            toast.error("삭제 실패");
+            // Toast handled in store
           }
         }}
       />

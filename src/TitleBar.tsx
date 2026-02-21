@@ -91,7 +91,7 @@ export default function TitleBar() {
 
       {/* 우측 버튼 세트 */}
       <div
-        className="flex items-center gap-1" // 간격을 살짝 줄임
+        className="flex items-center gap-1"
         onDoubleClick={(e) => e.stopPropagation()}
       >
         <SyncNotifier />

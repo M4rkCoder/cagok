@@ -93,7 +93,7 @@ export const AmountCell = ({
       className="relative w-full h-full flex flex-col justify-center bg-transparent group"
       onPaste={(e) => onPaste(e, row.index, colIdx)}
     >
-      <Tooltip open={showErrorVisuals || (isActive && preview !== "")}>
+      <Tooltip open={isActive && preview !== ""}>
         <TooltipTrigger asChild>
           <div className="relative flex items-center h-full">
             <input
@@ -121,12 +121,9 @@ export const AmountCell = ({
         </TooltipTrigger>
         <TooltipContent
           side="top"
-          className={cn(
-            "text-xs font-sans px-2 py-1",
-            showErrorVisuals ? "bg-red-500" : "bg-blue-600 text-white"
-          )}
+          className="text-xs font-sans px-2 py-1 bg-blue-600 text-white"
         >
-          {showErrorVisuals ? error?.message : `계산 결과: ${preview}`}
+          {`계산 결과: ${preview}`}
         </TooltipContent>
       </Tooltip>
       <div

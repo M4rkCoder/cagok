@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, memo } from "react";
+import React, { useState, useMemo, memo } from "react";
 import {
   Card,
   CardContent,
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryIcon } from "@/components/CategoryIcon";
-import { Category, CategoryMonthlyAmount } from "@/types";
+import { Category } from "@/types";
 import {
   ChartConfig,
   ChartContainer,
@@ -26,22 +26,15 @@ import {
 } from "@/components/ui/chart";
 import { formatCurrency } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
-
-interface CategoryMonthlyTrendSectionProps {
-  baseMonth: string; // "YYYY-MM" 형식
-  loadCategoryMonthlyAmounts: (
-    baseMonth: string,
-    categoryId: number | null,
-  ) => Promise<void>;
-  categoryMonthlyAmounts: CategoryMonthlyAmount[];
-}
+import { useStatisticsStore } from "@/store/useStatisticsStore";
 
 export const CategoryMonthlyTrendSection = memo(
-  function CategoryMonthlyTrendSection({
-    baseMonth,
-    loadCategoryMonthlyAmounts,
-    categoryMonthlyAmounts,
-  }: CategoryMonthlyTrendSectionProps) {
+  function CategoryMonthlyTrendSection() {
+    const {
+      baseMonth,
+      categoryMonthlyAmounts,
+    } = useStatisticsStore();
+
     const [activeType, setActiveType] = useState<"income" | "expense">(
       "expense",
     );
@@ -62,10 +55,6 @@ export const CategoryMonthlyTrendSection = memo(
     // 현재 탭에 맞는 카테고리 목록
     const currentCategories =
       activeType === "income" ? incomeCategories : expenseCategories;
-
-    useEffect(() => {
-      loadCategoryMonthlyAmounts(baseMonth, internalCategoryId);
-    }, [baseMonth, internalCategoryId, loadCategoryMonthlyAmounts]);
 
     // 2. 데이터 가공 및 차트 설정
     const { chartData, chartConfig, displayCategoryNames } = useMemo(() => {
@@ -109,7 +98,8 @@ export const CategoryMonthlyTrendSection = memo(
           .filter(
             (item) =>
               item.year_month === monthObj.key &&
-              (activeType === "income" ? item.type === 0 : item.type === 1),
+              (activeType === "income" ? item.type === 0 : item.type === 1) &&
+              (internalCategoryId === null || item.category_id === internalCategoryId),
           )
           .forEach((item) => {
             row[item.category_name] = item.total_amount;
@@ -129,6 +119,7 @@ export const CategoryMonthlyTrendSection = memo(
       baseMonth,
       expenseCategories,
       incomeCategories,
+      internalCategoryId,
     ]);
 
     return (

@@ -294,7 +294,10 @@ const CategorySettings = () => {
             </SheetDescription>
           </SheetHeader>
           <CategoryForm
-            onSubmit={() => setSheetOpen(false)}
+            onSubmit={async (values) => {
+              await submitCategoryForm(values);
+              setSheetOpen(false);
+            }}
             onCancel={() => {
               setSheetOpen(false);
               resetCategoryForm();

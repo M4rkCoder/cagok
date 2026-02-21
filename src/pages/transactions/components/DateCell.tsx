@@ -72,58 +72,46 @@ const DateCell: React.FC<CellProps> = ({
       className="relative w-full h-full flex flex-col justify-center bg-transparent group"
       onPaste={(e) => onPaste(e, row.index, colIdx)}
     >
-      <Tooltip open={showErrorVisuals}>
-        <TooltipTrigger asChild>
-          <div className="relative flex items-center h-full">
-            <input
-              ref={inputRef}
-              value={value ?? ""}
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={onKeyDown}
-              onBlur={handleBlur}
-              className={cn(
-                "w-full h-full bg-transparent border-none focus-visible:ring-0 pr-10 pl-2 text-sm rounded-none",
-                isActive && "z-20 bg-blue-50/50",
-                showErrorVisuals && "border-red-500 outline-2 outline-red-500"
-              )}
+      <div className="relative flex items-center h-full">
+        <input
+          ref={inputRef}
+          value={value ?? ""}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={onKeyDown}
+          onBlur={handleBlur}
+          className={cn(
+            "w-full h-full bg-transparent border-none focus-visible:ring-0 pr-10 pl-2 text-sm rounded-none",
+            isActive && "z-20 bg-blue-50/50",
+            showErrorVisuals && "border-red-500 outline-2 outline-red-500"
+          )}
+        />
+        <Popover open={openCombo} onOpenChange={setOpenCombo}>
+          <PopoverTrigger asChild>
+            <button
+              className="absolute right-0 top-0 size-10 z-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => setOpenCombo(true)}
+              tabIndex={-1}
+            >
+              <CalendarIcon className="size-4 text-slate-400" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0 z-50" align="start">
+            <Calendar
+              mode="single"
+              selected={value ? parseISO(value) : undefined}
+              onSelect={(date) => {
+                if (date) {
+                  const formattedDate = format(date, "yyyy-MM-dd");
+                  updateData(row.index, column.id, formattedDate);
+                  setValue(formattedDate);
+                  setOpenCombo(false);
+                  inputRef.current?.focus();
+                }
+              }}
             />
-            <Popover open={openCombo} onOpenChange={setOpenCombo}>
-              <PopoverTrigger asChild>
-                <button
-                  className="absolute right-0 top-0 size-10 z-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  onClick={() => setOpenCombo(true)}
-                  tabIndex={-1}
-                >
-                  <CalendarIcon className="size-4 text-slate-400" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0 z-50" align="start">
-                <Calendar
-                  mode="single"
-                  selected={value ? parseISO(value) : undefined}
-                  onSelect={(date) => {
-                    if (date) {
-                      const formattedDate = format(date, "yyyy-MM-dd");
-                      updateData(row.index, column.id, formattedDate);
-                      setValue(formattedDate);
-                      setOpenCombo(false);
-                      inputRef.current?.focus();
-                    }
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </TooltipTrigger>
-        {showErrorVisuals && error?.message && (
-          <TooltipContent
-            side="bottom"
-            className="bg-red-500 text-white text-xs p-1 px-2"
-          >
-            {error.message}
-          </TooltipContent>
-        )}
-      </Tooltip>
+          </PopoverContent>
+        </Popover>
+      </div>
 
       {/* 드래그 핸들 */}
       <div

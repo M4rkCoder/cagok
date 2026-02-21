@@ -58,41 +58,29 @@ export const InputCell = ({
       className="relative w-full h-full flex flex-col justify-center bg-transparent group"
       onPaste={(e) => onPaste(e, row.index, colIdx)}
     >
-      <Tooltip open={showErrorVisuals}>
-        <TooltipTrigger asChild>
-          <div className="relative flex items-center h-full">
-            <input
-              ref={inputRef}
-              value={value ?? ""}
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={(e) =>
-                handleTableKeyDown(
-                  e,
-                  row.index,
-                  colIdx,
-                  column.id,
-                  row.original.type ?? 1
-                )
-              }
-              onBlur={handleBlur}
-              className={cn(
-                "w-full h-full bg-transparent border-none focus-visible:ring-0 px-2 text-[13px]",
-                (column.columnDef.meta as any)?.type === "number" &&
-                  "text-right font-mono",
-                showErrorVisuals && "border-red-500 outline-2 outline-red-500"
-              )}
-            />
-          </div>
-        </TooltipTrigger>
-        {showErrorVisuals && error?.message && (
-          <TooltipContent
-            side="bottom"
-            className="bg-red-500 text-white text-xs"
-          >
-            {error.message}
-          </TooltipContent>
-        )}
-      </Tooltip>
+      <div className="relative flex items-center h-full">
+        <input
+          ref={inputRef}
+          value={value ?? ""}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) =>
+            handleTableKeyDown(
+              e,
+              row.index,
+              colIdx,
+              column.id,
+              row.original.type ?? 1
+            )
+          }
+          onBlur={handleBlur}
+          className={cn(
+            "w-full h-full bg-transparent border-none focus-visible:ring-0 px-2 text-[13px]",
+            (column.columnDef.meta as any)?.type === "number" &&
+              "text-right font-mono",
+            showErrorVisuals && "border-red-500 outline-2 outline-red-500"
+          )}
+        />
+      </div>
       <div
         onMouseDown={(e) => onDragStart(e, row.index, colIdx)}
         className="absolute bottom-0 right-0 w-2 h-2 bg-blue-600 cursor-crosshair hidden group-hover:block z-20"
