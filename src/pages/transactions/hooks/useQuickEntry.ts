@@ -1,4 +1,3 @@
-// hooks/useQuickEntry.ts
 import { useState, useCallback } from "react";
 import { parseISO, addDays, format, isValid } from "date-fns";
 import { toast } from "sonner";
@@ -49,6 +48,7 @@ const isRowFilled = (row: QuickEntryTransactionRow) => {
 export const useQuickEntry = (initialRows = 10, submitForm: any) => {
   const { categoryList } = useAppStore();
   const { i18n } = useTranslation();
+  const [isLoading, setIsLoading] = useState(false);
 
   const createEmptyRow = (): QuickEntryTransactionRow => ({
     id: crypto.randomUUID(),
@@ -62,7 +62,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
   });
 
   const [data, setData] = useState<QuickEntryTransactionRow[]>(() =>
-    Array.from({ length: initialRows }, createEmptyRow),
+    Array.from({ length: initialRows }, createEmptyRow)
   );
   const [activeCell, setActiveCell] = useState<{
     rowIndex: number;
@@ -79,8 +79,8 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
     (rowIndex: number, columnId: string, value: any) => {
       setData((prev) =>
         prev.map((row, i) =>
-          i === rowIndex ? { ...row, [columnId]: value } : row,
-        ),
+          i === rowIndex ? { ...row, [columnId]: value } : row
+        )
       );
 
       setRowErrors((prevErrors) => {
@@ -94,13 +94,13 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
         return newErrors;
       });
     },
-    [data],
+    [data]
   );
 
   const onDragStart = (
     e: React.MouseEvent,
     startRow: number,
-    startCol: number,
+    startCol: number
   ) => {
     e.preventDefault();
     const colKeys = [
@@ -181,7 +181,8 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
       const parsedCategoryId = parseInt(row.category_id);
 
       const transactionToValidate = {
-        type: row.type !== undefined && row.type !== null ? Number(row.type) : 1,
+        type:
+          row.type !== undefined && row.type !== null ? Number(row.type) : 1,
         is_fixed: Number(row.is_fixed) || 0,
         amount: parsedAmount,
         date: row.date,
@@ -219,7 +220,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
     // 벡엔드 전송
     if (transactionsToSubmit.length > 0) {
       const loadingId = toast.loading(
-        `${transactionsToSubmit.length}건 저장 중...`,
+        `${transactionsToSubmit.length}건 저장 중...`
       );
       try {
         await invoke("bulk_create_transactions", {
@@ -249,7 +250,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
           const rowsToAdd = totalRowsNeeded - newData.length;
           const newEmptyRows = Array.from(
             { length: rowsToAdd },
-            createEmptyRow,
+            createEmptyRow
           );
           newData = [...newData, ...newEmptyRows];
         }
@@ -279,7 +280,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
         return newData;
       });
     },
-    [createEmptyRow],
+    [createEmptyRow]
   );
 
   const handlePaste = useCallback(
@@ -298,7 +299,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
         batchUpdate(rowIndex, colIdx, rows);
       }
     },
-    [batchUpdate],
+    [batchUpdate]
   );
   const confirmUpdate = useCallback(
     (rowIndex: number, columnId: string, value: any, initialValue: any) => {
@@ -312,7 +313,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
       // 3. 데이터 업데이트
       updateData(rowIndex, columnId, finalValue);
     },
-    [updateData],
+    [updateData]
   );
 
   const handleDownloadTemplate = async () => {
@@ -339,7 +340,6 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
 
   const handleImportFile = async () => {
     try {
-      // 1. 파일 선택 다이얼로그
       const selected = await open({
         filters: [
           { name: "Transaction Files", extensions: ["xlsx", "xls", "csv"] },
@@ -348,18 +348,16 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
 
       if (!selected || typeof selected !== "string") return;
 
-      // 2. 백엔드 호출
-      // 수정된 백엔드에 맞춰 'categories' 인자를 제거하고 'path'만 전달합니다.
+      setIsLoading(true);
+
       const previewData = await invoke<ExcelPreviewRow[]>(
         "parse_transaction_file",
-        { path: selected },
+        { path: selected }
       );
 
       // 3. UI 데이터 업데이트
       setData((prev) => {
-        // 이미 입력 중인 데이터 중 내용이 있는 것만 유지
         const existingFilled = prev.filter(isRowFilled);
-
         const mappedNewRows: QuickEntryTransactionRow[] = previewData.map(
           (row) => ({
             id: row.id,
@@ -372,7 +370,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
             remarks: row.remarks,
             is_valid: row.is_valid,
             error_msg: row.error_msg,
-          }),
+          })
         );
 
         return [...existingFilled, ...mappedNewRows];
@@ -382,7 +380,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
       const invalidCount = previewData.filter((r) => !r.is_valid).length;
       if (invalidCount > 0) {
         toast.warning(
-          `${invalidCount}건의 데이터에 확인(카테고리 등)이 필요합니다.`,
+          `${invalidCount}건의 데이터에 확인(카테고리 등)이 필요합니다.`
         );
       } else {
         toast.success(`${previewData.length}건을 성공적으로 읽어왔습니다.`);
@@ -390,12 +388,15 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
     } catch (err) {
       console.error(err);
       toast.error("파일 처리 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return {
     data,
     setData,
+    isLoading,
     activeCell,
     setActiveCell,
     dragRange,

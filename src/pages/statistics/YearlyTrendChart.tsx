@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Bar,
   ComposedChart,
@@ -15,7 +9,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { MonthlyFinancialSummaryItem } from "@/types";
 import { format } from "date-fns";
 import {
   ChartConfig,
@@ -24,51 +17,40 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { formatCurrency } from "@/lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { cn, formatCurrency } from "@/lib/utils";
 import { useStatisticsStore } from "@/store/useStatisticsStore";
+import { TitleText } from "./components/TitleText";
 
+// 색상 체계 업데이트
 const chartConfig = {
   totalIncome: {
     label: "수입",
-    color: "hsl(142, 71%, 45%)",
-    negativeColor: "hsl(0, 70%, 95%)", // very light red
+    color: "#10b981", // Emerald
+    negativeColor: "#ef4444",
   },
   variableExpense: {
     label: "변동지출",
-    color: "hsl(217, 91%, 60%)",
-    negativeColor: "hsl(0, 84%, 60%)", // red
+    color: "#2563eb", // Blue (총지출 계열)
+    negativeColor: "#ef4444",
   },
   fixedExpense: {
     label: "고정지출",
-    color: "hsl(217, 91%, 60%)",
-    negativeColor: "hsl(0, 84%, 60%)", // red
-  },
-  totalExpense: {
-    label: "총지출",
-    color: "hsl(217, 91%, 60%)",
-    negativeColor: "hsl(0, 84%, 60%)",
+    color: "#475569", // Slate-600
+    negativeColor: "#ef4444",
   },
   netIncome: {
     label: "순수입",
-    color: "hsl(215, 16%, 47%)",
-    negativeColor: "hsl(0, 84%, 60%)", // red
+    color: "#8b5cf6", // Violet
+    negativeColor: "#ef4444",
   },
 } satisfies ChartConfig;
 
-// 막대의 둥근 모서리 처리를 위한 Path 생성 함수
 const getPath = (
   x: number,
   y: number,
   width: number,
   height: number,
-  radius: number[],
+  radius: number[]
 ) => {
   const [tr, tl, br, bl] = radius;
   return `
@@ -85,28 +67,21 @@ const getPath = (
   `;
 };
 
-// 조건부 색상 및 빗금 처리를 위한 커스텀 Shape
 const CustomBarShape = (props: any) => {
-  const {
-    x,
-    y,
-    width,
-    height,
-    radius,
-    payload,
-    fillVariable,
-    isStriped = false,
-  } = props;
-
-  const isNegative = payload.netIncome < 0; // Use camelCase
+  const { x, y, width, height, radius, payload, fillVariable } = props;
+  const isNegative = payload.netIncome < 0;
   const fillConfig = chartConfig[fillVariable as keyof typeof chartConfig];
-  const finalFill = isNegative ? fillConfig.negativeColor : fillConfig.color;
+
+  // 빗금 패턴(isStriped) 로직 제거 및 단순 색상 채우기
+  const finalFill =
+    isNegative && fillVariable === "netIncome"
+      ? fillConfig.negativeColor
+      : fillConfig.color;
   const path = getPath(x, y, width, height, radius);
 
   return (
     <g>
-      <path d={path} fill={finalFill} opacity={isStriped ? 1 : 0.8} />
-      {isStriped && <path d={path} fill="url(#pattern-stripe)" />}
+      <path d={path} fill={finalFill} opacity={0.8} />
     </g>
   );
 };
@@ -117,6 +92,13 @@ export function YearlyTrendChart() {
   const { monthlyFinancialSummary: data } = useStatisticsStore();
   const [viewMode, setViewMode] = useState<ViewMode>("all");
 
+  const tabs: { id: ViewMode; label: string }[] = [
+    { id: "all", label: "전체" },
+    { id: "income", label: "수입" },
+    { id: "expense", label: "지출" },
+    { id: "netIncome", label: "순수입" },
+  ];
+
   const legendOrder =
     viewMode === "all"
       ? ["totalIncome", "variableExpense", "fixedExpense", "netIncome"]
@@ -126,50 +108,29 @@ export function YearlyTrendChart() {
           ? ["variableExpense", "fixedExpense"]
           : ["netIncome"];
 
-  // 고정 지출 범례 아이콘을 위한 헬퍼 컴포넌트
-  const FixedExpenseLegendIcon = ({ color }: { color?: string }) => (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 12 12"
-      className="h-3 w-3 rounded-sm"
-    >
-      <rect width="12" height="12" fill={color} />
-      <path
-        d="M-2 2 L2 -2 M-2 6 L6 -2 M-2 10 L10 -2 M0 14 L14 0 M4 18 L18 4"
-        stroke="rgba(0, 0, 0, 0.7)"
-        strokeWidth="2.5"
-      />
-    </svg>
-  );
-
-  // Calculate min and max for net income to center the Y-axis at 0
-  const allNetIncomes = data.map((item) => item.netIncome); // Use camelCase
-  const maxNetIncome = Math.max(0, ...allNetIncomes, 1); // Ensure at least 1 to prevent division by zero
-  const minNetIncome = Math.min(0, ...allNetIncomes, -1); // Ensure at least -1
-  const symmetricMax = Math.max(Math.abs(maxNetIncome), Math.abs(minNetIncome));
+  const allNetIncomes = data.map((item) => item.netIncome);
+  const symmetricMax = Math.max(...allNetIncomes.map(Math.abs), 10000);
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div className="space-y-1.5">
-          <CardTitle>연간 월별 추이</CardTitle>
-          <CardDescription>수입/지출 비교 및 순수입 흐름</CardDescription>
+    <Card className="border-slate-200 shadow-none">
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <TitleText title="연간 통계" />
+        <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setViewMode(tab.id)}
+              className={cn(
+                "px-4 py-1.5 text-xs font-bold transition-all rounded-md",
+                viewMode === tab.id
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
-        <Select
-          value={viewMode}
-          onValueChange={(value) => setViewMode(value as ViewMode)}
-        >
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="조회 모드" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체보기</SelectItem>
-            <SelectItem value="income">수입만</SelectItem>
-            <SelectItem value="expense">지출만</SelectItem>
-            <SelectItem value="netIncome">순수입만</SelectItem>
-          </SelectContent>
-        </Select>
       </CardHeader>
 
       <CardContent>
@@ -177,47 +138,35 @@ export function YearlyTrendChart() {
           <ChartContainer config={chartConfig} className="h-[400px] w-full">
             <ComposedChart
               data={data}
-              barGap={-20} // 막대 겹침 정도 조정
+              barGap={-20}
               margin={{ top: 20, right: 10, left: 10, bottom: 20 }}
             >
-              {/* 빗금 패턴 정의 */}
-              <defs>
-                <pattern
-                  id="pattern-stripe"
-                  width="6"
-                  height="6"
-                  patternUnits="userSpaceOnUse"
-                  patternTransform="rotate(45)"
-                >
-                  <rect
-                    width="2.5"
-                    height="6"
-                    transform="translate(0,0)"
-                    fill="hsl(var(--primary-foreground) / 0.5)"
-                  />
-                </pattern>
-              </defs>
-
               <CartesianGrid
                 vertical={false}
-                horizontal={true}
                 strokeDasharray="3 3"
                 stroke="hsl(var(--border))"
               />
-
               <XAxis
                 dataKey="yearMonth"
                 tickLine={false}
-                axisLine={true}
-                tickMargin={8}
-                minTickGap={32}
+                axisLine={false}
+                tickMargin={12}
                 tickFormatter={(v) => format(new Date(v), "M월")}
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={13}
+                fontSize={12}
+                className="font-bold text-slate-400"
               />
-
               <YAxis
                 yAxisId="left"
+                domain={
+                  viewMode === "netIncome"
+                    ? [-symmetricMax, symmetricMax]
+                    : [0, "auto"]
+                }
+                ticks={
+                  viewMode === "netIncome"
+                    ? [-symmetricMax, 0, symmetricMax]
+                    : undefined
+                }
                 tickFormatter={(v) =>
                   new Intl.NumberFormat("ko-KR", {
                     notation: "compact",
@@ -226,176 +175,123 @@ export function YearlyTrendChart() {
                 }
                 tickLine={false}
                 axisLine={false}
-                tickMargin={8}
+                fontSize={12}
+                tick={{ fill: "#94a3b8", fontWeight: 600 }}
                 width={60}
-                fontSize={13}
-                tick={{ fill: "hsl(var(--muted-foreground))" }}
               />
-
               <YAxis
                 yAxisId="right"
-                orientation="right"
                 domain={[-symmetricMax, symmetricMax]}
+                ticks={[-symmetricMax, 0, symmetricMax]}
+                orientation="right"
                 hide
               />
 
               {(viewMode === "all" || viewMode === "netIncome") && (
                 <ReferenceLine
-                  yAxisId="right"
+                  yAxisId="left"
                   y={0}
-                  stroke="#000"
-                  strokeWidth={1}
-                  strokeOpacity={0.5}
-                  strokeDasharray="3 3"
+                  stroke="#e2e8f0"
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
                 />
               )}
 
               <ChartTooltip
                 cursor={false}
-                content={
-                  <ChartTooltipContent
-                    className="w-[200px]"
-                    labelFormatter={(value) =>
-                      format(new Date(value), "yyyy년 M월")
-                    }
-                    formatter={(
-                      value,
-                      name: keyof typeof chartConfig,
-                      props,
-                    ) => {
-                      const config = chartConfig[name];
-                      if (!config) return null;
+                content={({ active, payload, label }) => {
+                  if (!active || !payload || !payload.length) return null;
 
-                      // Filter tooltip based on viewMode
-                      if (viewMode === "income" && name !== "totalIncome")
-                        return null;
-                      if (
-                        viewMode === "expense" &&
-                        name !== "variableExpense" &&
-                        name !== "fixedExpense"
-                      )
-                        return null;
-                      if (viewMode === "netIncome" && name !== "netIncome")
-                        return null;
-
-                      const customName =
-                        name === "fixedExpense"
-                          ? "  - 고정지출"
-                          : name === "variableExpense"
-                            ? "총지출"
-                            : config.label;
-
-                      if (name === "variableExpense") {
-                        const payload = props.payload || {};
-                        const totalExpense = payload.totalExpense || 0;
-                        return (
-                          <div className="flex w-full items-center justify-between gap-2 text-xs">
-                            <div className="flex items-center gap-1">
-                              <div
-                                className="h-2 w-2 rounded-full"
-                                style={{ backgroundColor: config.color }}
-                              />
-                              {customName}
-                            </div>
-                            <span className="font-medium text-foreground">
-                              {formatCurrency(Number(totalExpense))}
-                            </span>
-                          </div>
-                        );
-                      }
-
-                      if (name === "totalExpense") return null;
-
-                      return (
-                        <div className="flex w-full items-center justify-between gap-2 text-xs">
-                          <div className="flex items-center gap-1">
-                            <div
-                              className="h-2 w-2 rounded-full"
-                              style={{ backgroundColor: config.color }}
-                            />
-                            {customName}
-                          </div>
-                          <span className="font-medium text-foreground">
-                            {formatCurrency(Number(value))}
-                          </span>
-                        </div>
-                      );
-                    }}
-                  />
-                }
-              />
-
-              <ChartLegend
-                content={() => {
                   return (
-                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 pt-4">
-                      {legendOrder.map((key) => {
-                        const itemConfig =
-                          chartConfig[key as keyof typeof chartConfig];
-                        const color = itemConfig.color;
-                        const label = itemConfig.label;
+                    <div className="bg-white border border-slate-200 p-0 shadow-xl rounded-2xl overflow-hidden min-w-[180px] animate-in fade-in zoom-in duration-200">
+                      {/* 툴팁 헤더: 화이트 테마에 맞춘 연한 배경 */}
+                      <div className="bg-slate-50/80 px-4 py-2 border-b border-slate-100">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                          {format(new Date(label), "yyyy년 M월")} 분석
+                        </p>
+                      </div>
 
-                        return (
-                          <div
-                            key={key}
-                            className="flex items-center gap-2 text-sm font-medium"
-                          >
-                            {key === "fixedExpense" ? (
-                              <FixedExpenseLegendIcon color={color} />
-                            ) : key === "netIncome" ? (
-                              <div className="relative flex items-center">
+                      {/* 데이터 리스트 영역 */}
+                      <div className="p-3 space-y-2.5">
+                        {payload.map((entry: any) => {
+                          const id = entry.dataKey;
+                          const config =
+                            chartConfig[id as keyof typeof chartConfig];
+                          if (!config) return null;
+
+                          return (
+                            <div
+                              key={id}
+                              className="flex items-center justify-between gap-4"
+                            >
+                              <div className="flex items-center gap-2">
+                                {/* 색상 아이콘 (점) 강제 표시 */}
                                 <div
-                                  className="h-[2px] w-3"
-                                  style={{ backgroundColor: color }}
+                                  className="w-2 h-2 rounded-full"
+                                  style={{ backgroundColor: config.color }}
                                 />
-                                <div
-                                  className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full"
-                                  style={{ backgroundColor: color }}
-                                />
+                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">
+                                  {config.label}
+                                </span>
                               </div>
-                            ) : (
-                              <div
-                                className="h-3 w-3 rounded-sm"
-                                style={{ backgroundColor: color }}
-                              />
-                            )}
-                            <span className="text-muted-foreground">
-                              {label}
-                            </span>
-                          </div>
-                        );
-                      })}
+                              <span className="text-sm font-black text-slate-900 tabular-nums">
+                                {formatCurrency(Number(entry.value))}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 }}
+              />
+
+              <ChartLegend
+                content={() => (
+                  <div className="flex flex-wrap justify-center gap-6 pt-6">
+                    {legendOrder.map((key) => {
+                      const config =
+                        chartConfig[key as keyof typeof chartConfig];
+                      return (
+                        <div key={key} className="flex items-center gap-2">
+                          <div
+                            className="h-3 w-3 rounded-sm"
+                            style={{ backgroundColor: config.color }}
+                          />
+                          <span className="text-xs font-bold text-slate-500">
+                            {config.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               />
 
               {(viewMode === "all" || viewMode === "income") && (
                 <Bar
                   yAxisId="left"
                   dataKey="totalIncome"
-                  barSize={viewMode === "income" ? 60 : 40}
+                  barSize={40}
                   shape={
                     <CustomBarShape
-                      radius={[2, 2, 2, 2]}
                       fillVariable="totalIncome"
+                      radius={[4, 4, 0, 0]}
                     />
                   }
                 />
               )}
-
               {(viewMode === "all" || viewMode === "expense") && (
                 <>
                   <Bar
                     yAxisId="left"
                     dataKey="fixedExpense"
                     stackId="expense"
-                    barSize={viewMode === "expense" ? 60 : 40}
+                    barSize={40}
                     shape={
                       <CustomBarShape
-                        radius={[0, 0, 2, 2]}
                         fillVariable="fixedExpense"
-                        isStriped
+                        radius={[0, 0, 4, 4]}
                       />
                     }
                   />
@@ -403,64 +299,35 @@ export function YearlyTrendChart() {
                     yAxisId="left"
                     dataKey="variableExpense"
                     stackId="expense"
-                    barSize={viewMode === "expense" ? 60 : 40}
+                    barSize={40}
                     shape={
                       <CustomBarShape
-                        radius={[2, 2, 0, 0]}
                         fillVariable="variableExpense"
+                        radius={[4, 4, 0, 0]}
                       />
                     }
                   />
                 </>
               )}
-
               {(viewMode === "all" || viewMode === "netIncome") && (
                 <Line
-                  yAxisId="right"
+                  yAxisId={viewMode === "netIncome" ? "left" : "right"}
                   type="monotone"
                   dataKey="netIncome"
-                  stroke="var(--color-netIncome)"
-                  strokeWidth={2}
-                  dot={(props: any) => {
-                    const { cx, cy, payload } = props;
-                    const isNegative = payload.netIncome < 0;
-                    return (
-                      <circle
-                        cx={cx}
-                        cy={cy}
-                        r={isNegative ? 4 : 3}
-                        fill={
-                          isNegative
-                            ? chartConfig.netIncome.negativeColor
-                            : chartConfig.netIncome.color
-                        }
-                      />
-                    );
-                  }}
-                  activeDot={(props: any) => {
-                    const { cx, cy, payload } = props;
-                    const isNegative = payload.netIncome < 0;
-                    return (
-                      <circle
-                        cx={cx}
-                        cy={cy}
-                        r={isNegative ? 7 : 5}
-                        fill={
-                          isNegative
-                            ? chartConfig.netIncome.negativeColor
-                            : chartConfig.netIncome.color
-                        }
-                        strokeWidth={2}
-                        stroke="var(--background)"
-                      />
-                    );
+                  stroke={chartConfig.netIncome.color}
+                  strokeWidth={3}
+                  dot={{
+                    r: 4,
+                    fill: chartConfig.netIncome.color,
+                    stroke: "#fff",
+                    strokeWidth: 2,
                   }}
                 />
               )}
             </ComposedChart>
           </ChartContainer>
         ) : (
-          <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+          <div className="flex items-center justify-center h-[400px] text-muted-foreground font-medium">
             데이터가 없습니다.
           </div>
         )}

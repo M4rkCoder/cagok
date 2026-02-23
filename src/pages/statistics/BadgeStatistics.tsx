@@ -1,20 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import {
   TrendingUp,
-  TrendingDown,
   Wallet,
   CalendarDays,
   PieChart,
   Award,
   CalendarCheck,
 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
 import { useStatisticsStore } from "@/store/useStatisticsStore";
+import { motion, AnimatePresence } from "framer-motion";
+import { TitleText } from "./components/TitleText";
 
 export function BadgeStatistics() {
   const { badgeStats: stats } = useStatisticsStore();
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   if (!stats) return null;
 
@@ -22,126 +23,176 @@ export function BadgeStatistics() {
     if (!monthStr || monthStr === "-" || !monthStr.includes("-"))
       return monthStr;
     const [year, month] = monthStr.split("-");
-    return `${year}년 ${month}월`;
+    const monthNumber = parseInt(month, 10);
+    return `${year}년 ${monthNumber}월`;
   };
 
   const items = [
     {
-      label: "최대 지출 월",
+      label: "많이 쓴 달",
       value: stats.maxExpenseMonth
         ? formatMonth(stats.maxExpenseMonth.month)
         : "-",
       subValue: stats.maxExpenseMonth
         ? formatCurrency(stats.maxExpenseMonth.amount)
         : "-",
-      icon: <CalendarDays className="h-5 w-5 text-rose-500" />,
-      color: "bg-rose-50 text-rose-500",
-      borderColor: "border-rose-100",
-      hoverColor: "hover:border-rose-200 hover:bg-rose-50/50",
+      icon: <CalendarDays className="h-4 w-4" />,
     },
     {
-      label: "최대 수입 월",
+      label: "많이 번 달",
       value: stats.maxIncomeMonth
         ? formatMonth(stats.maxIncomeMonth.month)
         : "-",
       subValue: stats.maxIncomeMonth
         ? formatCurrency(stats.maxIncomeMonth.amount)
         : "-",
-      icon: <TrendingUp className="h-5 w-5 text-emerald-500" />,
-      color: "bg-emerald-50 text-emerald-500",
-      borderColor: "border-emerald-100",
-      hoverColor: "hover:border-emerald-200 hover:bg-emerald-50/50",
+      icon: <TrendingUp className="h-4 w-4" />,
     },
     {
-      label: "순수익률",
-      value: `${stats.netIncomeRatio.toFixed(1)}%`,
-      subValue: "수입 대비 순수입",
-      icon: <Wallet className="h-5 w-5 text-indigo-500" />,
-      color: "bg-indigo-50 text-indigo-500",
-      borderColor: "border-indigo-100",
-      hoverColor: "hover:border-indigo-200 hover:bg-indigo-50/50",
+      label: "순수입률",
+      value: stats.netIncomeRatio ? `${stats.netIncomeRatio.toFixed(1)}%` : "-",
+      subValue: stats.netIncomeRatio ? "(수입 대비 순수입)" : "-",
+      icon: <Wallet className="h-4 w-4" />,
     },
     {
-      label: "최대 지출 종목",
+      label: "많이 쓴 항목",
       value: stats.maxExpenseCategory ? stats.maxExpenseCategory.name : "-",
       subValue: stats.maxExpenseCategory
         ? formatCurrency(stats.maxExpenseCategory.value)
         : "-",
-      icon: stats.maxExpenseCategory ? (
-        <span className="text-xl native-emoji">
-          {stats.maxExpenseCategory.icon}
-        </span>
-      ) : (
-        <PieChart className="h-5 w-5 text-amber-500" />
-      ),
-      color: "bg-amber-50 text-amber-500",
-      borderColor: "border-amber-100",
-      hoverColor: "hover:border-amber-200 hover:bg-amber-50/50",
+      icon: <PieChart className="h-4 w-4" />, // 기본 아이콘으로 고정
+      categoryIcon: stats.maxExpenseCategory?.icon, // 큰 아이콘용 데이터
     },
     {
-      label: "최다 빈도 지출",
+      label: "자주 쓴 항목",
       value: stats.mostFrequentCategory ? stats.mostFrequentCategory.name : "-",
       subValue: stats.mostFrequentCategory
         ? `${stats.mostFrequentCategory.value}회`
         : "-",
-      icon: stats.mostFrequentCategory ? (
-        <span className="text-xl native-emoji">
-          {stats.mostFrequentCategory.icon}
-        </span>
-      ) : (
-        <Award className="h-5 w-5 text-violet-500" />
-      ),
-      color: "bg-violet-50 text-violet-500",
-      borderColor: "border-violet-100",
-      hoverColor: "hover:border-violet-200 hover:bg-violet-50/50",
+      icon: <Award className="h-4 w-4" />, // 기본 아이콘으로 고정
+      categoryIcon: stats.mostFrequentCategory?.icon, // 큰 아이콘용 데이터
     },
     {
-      label: "최대 지출 요일",
+      label: "많이 쓴 요일",
       value: stats.maxExpenseDayOfWeek ? stats.maxExpenseDayOfWeek.day : "-",
       subValue: stats.maxExpenseDayOfWeek
         ? formatCurrency(stats.maxExpenseDayOfWeek.amount)
         : "-",
-      icon: <CalendarCheck className="h-5 w-5 text-pink-500" />,
-      color: "bg-pink-50 text-pink-500",
-      borderColor: "border-pink-100",
-      hoverColor: "hover:border-pink-200 hover:bg-pink-50/50",
+      icon: <CalendarCheck className="h-4 w-4" />,
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-      {items.map((item, index) => (
-        <Card
-          key={index}
-          className={cn(
-            "group relative overflow-hidden border shadow-none transition-all duration-300",
-            item.borderColor,
-            item.hoverColor,
-          )}
-        >
-          <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-            <div
-              className={cn(
-                "p-2.5 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110 duration-300",
-                item.color,
-              )}
+    <>
+      <TitleText title="연간 요약" />
+      <div
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 group/stats-container"
+        onMouseLeave={() => setHoveredIndex(null)}
+      >
+        {items.map((item, index) => {
+          const isHovered = hoveredIndex === index;
+          const isAnythingHovered = hoveredIndex !== null;
+
+          return (
+            <motion.div
+              key={index}
+              onMouseEnter={() => setHoveredIndex(index)}
+              animate={{
+                scale: isHovered ? 1.05 : isAnythingHovered ? 0.95 : 1,
+                opacity: isHovered ? 1 : isAnythingHovered ? 0.6 : 1,
+                zIndex: isHovered ? 10 : 1,
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
             >
-              {item.icon}
-            </div>
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                {item.label}
-              </p>
-              <p className="text-sm font-black text-slate-800 line-clamp-1 leading-tight">
-                {item.value}
-              </p>
-              <p className="text-[11px] font-semibold text-slate-500 tracking-tight">
-                {item.subValue}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+              <Card
+                className={cn(
+                  "relative overflow-hidden border transition-all duration-300 shadow-none h-full bg-white",
+                  isHovered ? "border-blue-500 shadow-lg" : "border-slate-200"
+                )}
+              >
+                <CardContent className="p-0 flex flex-col h-full">
+                  {/* 상단 Label 영역 */}
+                  <div
+                    className={cn(
+                      "px-3 py-2 border-b flex items-center justify-between transition-colors",
+                      isHovered
+                        ? "bg-blue-50/50 border-blue-100"
+                        : "bg-slate-50/50 border-slate-100"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "text-[11px] font-black uppercase tracking-widest transition-colors",
+                        isHovered ? "text-blue-600" : "text-slate-500"
+                      )}
+                    >
+                      {item.label}
+                    </span>
+                    <div
+                      className={cn(
+                        "transition-colors",
+                        isHovered ? "text-blue-600" : "text-slate-400"
+                      )}
+                    >
+                      {item.icon}
+                    </div>
+                  </div>
+
+                  {/* 하단 Value 영역 */}
+                  <div className="p-4 relative flex-1 flex flex-col justify-center overflow-hidden">
+                    <div className="relative z-10 space-y-0.5">
+                      <motion.p
+                        animate={{ color: isHovered ? "#1d4ed8" : "#0f172a" }}
+                        className="text-base font-black truncate tracking-tight"
+                      >
+                        {item.value}
+                      </motion.p>
+                      <p
+                        className={cn(
+                          "text-xs font-bold transition-colors",
+                          isHovered ? "text-blue-400" : "text-slate-400"
+                        )}
+                      >
+                        {item.subValue}
+                      </p>
+                    </div>
+
+                    {/* 카테고리 대형 아이콘 (우측 배경) */}
+                    {item.categoryIcon && (
+                      <motion.div
+                        initial={{ opacity: 0.1, scale: 0.8, x: 20 }}
+                        animate={{
+                          opacity: isHovered ? 0.2 : 0.1,
+                          scale: isHovered ? 1.2 : 1,
+                          x: 0,
+                        }}
+                        className="absolute right-[-5px] bottom-[-5px] pointer-events-none select-none"
+                      >
+                        <span className="text-5xl leading-none native-emoji">
+                          {item.categoryIcon}
+                        </span>
+                      </motion.div>
+                    )}
+                  </div>
+                </CardContent>
+
+                {/* 하단 강조 선 애니메이션 */}
+                <AnimatePresence>
+                  {isHovered && (
+                    <motion.div
+                      initial={{ scaleX: 0 }}
+                      animate={{ scaleX: 1 }}
+                      exit={{ scaleX: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 origin-left"
+                    />
+                  )}
+                </AnimatePresence>
+              </Card>
+            </motion.div>
+          );
+        })}
+      </div>
+    </>
   );
 }

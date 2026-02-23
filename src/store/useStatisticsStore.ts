@@ -7,7 +7,14 @@ import {
   MetricStats,
   BadgeStats,
 } from "@/types";
-import { format } from "date-fns";
+import {
+  format,
+  startOfMonth,
+  endOfMonth,
+  startOfYear,
+  endOfYear,
+  subMonths,
+} from "date-fns";
 
 // 기본값 정의
 const emptyMetricStats: MetricStats = {
@@ -29,7 +36,7 @@ interface StatisticsState {
   viewMode: "year" | "month";
   selectedYear: number;
   selectedMonth: string;
-  baseMonth: string; // viewMode와 selectedYear/Month에 의해 계산됨
+  baseMonth: string;
 
   monthlyFinancialSummary: MonthlyFinancialSummaryItem[];
   financialSummaryStats: FinancialSummaryStats | null;
@@ -42,6 +49,9 @@ interface StatisticsState {
   setSelectedYear: (year: number) => void;
   setSelectedMonth: (month: string) => void;
 
+  // 추가된 계산 기능: 현재 설정된 기간을 문자열로 반환
+  getFormattedPeriod: () => string;
+
   loadYearlyStatistics: () => Promise<void>;
   loadCategoryTrend: () => Promise<void>;
   loadBadgeStatistics: () => Promise<void>;
@@ -52,13 +62,12 @@ interface StatisticsState {
 const calculateBaseMonth = (
   viewMode: "year" | "month",
   selectedYear: number,
-  selectedMonth: string,
+  selectedMonth: string
 ) => {
   return viewMode === "year" ? `${selectedYear}-12` : selectedMonth;
 };
 
 export const useStatisticsStore = create<StatisticsState>((set, get) => ({
-  // 초기 상태
   viewMode: "month",
   selectedYear: new Date().getFullYear(),
   selectedMonth: format(new Date(), "yyyy-MM"),
@@ -70,7 +79,6 @@ export const useStatisticsStore = create<StatisticsState>((set, get) => ({
   badgeStats: null,
   loading: false,
 
-  // 액션
   setViewMode: (viewMode) => {
     const { selectedYear, selectedMonth } = get();
     set({
@@ -95,7 +103,29 @@ export const useStatisticsStore = create<StatisticsState>((set, get) => ({
     });
   },
 
-  // 연간 요약 데이터 로드
+  getFormattedPeriod: () => {
+    const { viewMode, selectedMonth, selectedYear } = get();
+
+    if (viewMode === "month") {
+      // 선택된 월의 Date 객체 (예: 2026-02-01)
+      const endDateObj = new Date(`${selectedMonth}-01`);
+
+      // 현재월 포함 12개월 전의 시작일 (예: 2025-03-01)
+      const startDateObj = startOfMonth(subMonths(endDateObj, 11));
+
+      // 선택된 월의 마지막 날 (예: 2026-02-28)
+      const end = endOfMonth(endDateObj);
+
+      return `${format(startDateObj, "yyyy.M.d")} - ${format(end, "yyyy.M.d")}`;
+    } else {
+      // 연간 모드는 기존과 동일하게 해당 연도 1월 1일 ~ 12월 31일
+      const date = new Date(selectedYear, 0, 1);
+      const start = startOfYear(date);
+      const end = endOfYear(date);
+      return `${format(start, "yyyy.MM.dd")} - ${format(end, "yyyy.MM.dd")}`;
+    }
+  },
+
   loadYearlyStatistics: async () => {
     const { baseMonth } = get();
     try {
@@ -103,9 +133,7 @@ export const useStatisticsStore = create<StatisticsState>((set, get) => ({
       const yearlyData = await invoke<{
         financialSummaryStats: FinancialSummaryStats;
         monthlyFinancialSummary: MonthlyFinancialSummaryItem[];
-      } | null>("get_yearly_dashboard_data_command", {
-        baseMonth,
-      });
+      } | null>("get_yearly_dashboard_data_command", { baseMonth });
 
       set({
         financialSummaryStats:
@@ -119,7 +147,6 @@ export const useStatisticsStore = create<StatisticsState>((set, get) => ({
     }
   },
 
-  // 카테고리별 월간 추이 로드
   loadCategoryTrend: async () => {
     const { baseMonth } = get();
     try {
@@ -129,9 +156,8 @@ export const useStatisticsStore = create<StatisticsState>((set, get) => ({
         {
           baseMonth,
           categoryId: null,
-        },
+        }
       );
-
       set({ categoryMonthlyAmounts: amounts ?? [] });
     } catch (error) {
       console.error("Failed to load category trend amounts:", error);
@@ -156,11 +182,8 @@ export const useStatisticsStore = create<StatisticsState>((set, get) => ({
   },
 
   loadAllStatistics: async () => {
-    const {
-      loadYearlyStatistics,
-      loadCategoryTrend,
-      loadBadgeStatistics,
-    } = get();
+    const { loadYearlyStatistics, loadCategoryTrend, loadBadgeStatistics } =
+      get();
     await Promise.all([
       loadYearlyStatistics(),
       loadCategoryTrend(),

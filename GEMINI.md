@@ -1,4 +1,4 @@
-# 프로젝트 컨텍스트: 개인용 로컬 가계부 (Finkro)
+# 프로젝트 컨텍스트: 개인용 로컬 가계부 (C`AGOK)
 
 ## 1. 기술 스택 (Tech Stack)
 
@@ -10,7 +10,9 @@
 
 - 개인용 로컬 가계부 애플리케이션 개발
 - 수입/지출 내역 관리
+- 월간/연간 통계 조회
 - 카테고리별 내역 분류
+- 대량 입력, 반복 입력, 클라우드 동기화 기능(PRO 기능)
 
 ## 3. 데이터베이스 구조
 
@@ -83,48 +85,39 @@
 ## 4. 화면 구성
 
 - 홈(Dashboard): 월별 일별 통계 누적 합계 등 표기
-- 가계부(Transaction): 수입 지출 내역 표기
+- 가계부(Transaction): 수입 지출 내역 표기 (3가지 뷰모드: 타임라인, 캘린더, 테이블)
+  - 빠른 입력 기능(테이블 형태 대량 입력기능, 엑셀 업로드) / PRO 기능
+  - 반복 입력 기능(정기 수입 지출 내역 자동 입력 기능) / PRO 기능
+- 통계(Statistics): 연단위 통계 표시
 - 설정(Setting):
+  - 기본 앱 설정 (가계부 이름, 언어, 통화, 가계부 내역 보기)
   - 카테고리 설정
-  - 언어 설정
-  - db 백업, 동기화, csv다운로드/업로드
-  - 고정지출 설정
+  - db 백업, csv파일 다운로드
+  - MS OneDrive 동기화 기능 / PRO 기능
 
-## 5. 현재 개발 상황 (Current Status)
+## 5. 향후 개발 계획 (Roadmap)
 
-- **백엔드 (Rust):**
-  - Tauri 프로젝트 초기 설정 및 의존성 설치 완료.
-  - SQLite 데이터베이스 초기화 및 `categories`, `transactions` 테이블 생성 로직 구현 완료.
-  - `categories` 및 `transactions` 테이블에 대한 CRUD (생성, 조회, 수정, 삭제) Tauri 명령 구현 완료.
-  - db(init, repository), commands 구조 분리 완료. dashboard services 추가
-  - 대시보드 통계를 위한 월별 카테고리 지출합계, 일별 지출 합계 등 services 추가
-- **프론트엔드 (React):**
-  - 바닐라 React 기반으로 UI 구현.
-  - `CategoriesPage`: 카테고리 CRUD 기능 및 UI 구현 완료.
-  - `TransactionsPage`: 트랜잭션 CRUD 기능 및 UI 구현 완료.
-  - `DashboardPage`: 지출수입요약, 카테고리별 지출, 월별일별지출 기능 구현 완료
-  - `DashboardPage`: 컴포넌트 분리, 차트 클릭시 일별 지출 내역 Dialog 팝업, 카테고리별 지출내역 팝업 구현 완료
-  - `SplashPage` 및 처음 등록시 가계부 이름, 사용언어 입력받는 `OnboardingPage` 구현 완료, 타이틀바 구현 완료
-  -
+1.  **Error Handling(상시):** 실 사용하면서 사용자가 경험할수 있는 에러로 인해 앱이 크래시나는 경우 없도록 Error handling
+2.  **INVOKE함수를 FE에서 별도 API훅으로 총괄 관리**
+3.  **다국어 기능 추가:** 기본 언어 영어로 하고 한글 등 기타 언어 변경 가능하도록 기능 설정
+4.  **MS Store 업로드 및 PRO 인앱구매 기능 추가:** MS에 업로드하고 인앱구매 기능으로 구매자만 해당 메뉴에 접근할 수 있도록 설정
+5.  **(장기) 예산 관리(Goal 테이블) 기능 추가**
+6.  **(장기) 결제수단 관리 기능 추가**
 
-## 6. 향후 개발 계획 (Roadmap)
+## 6. 코딩 가이드라인 (Constraints & Style)
 
-5.  **DB관리 기능 추가:** db 백업/동기화(구글 연동), csv파일로 내려받기/업로드
-1.  **UI/UX 개선:** Tailwind CSS/shadcn/ui 적용
-1.  **다크모드 구현:** 토글 버튼으로 다크/라이트 모드 변경 기능 구현 (프론트엔드 전환으로 인해 재검토 필요)
-1.  **데이터 동기화:** 구글 인증(OAuth) 연동을 통한 SQLite DB 파일 클라우드 동기화 기능
-1.  **다국어 기능 추가:** 기본 언어 영어로 하고 한글 등 기타 언어 변경 가능하도록 기능 설정 (프론트엔드 전환으로 인해 재검토 필요)
-
-## 7. 코딩 가이드라인 (Constraints & Style)
-
-- **Icon System:** 카테고리 아이콘은 **이모지(Emoji)**를 사용함. icon 컬럼에 이모지 입력 향후 shadcn-iconpicker 사용
+- **Icon System:** 카테고리 아이콘은 **이모지(Emoji)**를 사용함.
 - **Type Safety:** TypeScript 인터페이스를 정의하여 프론트엔드와 백엔드 간 데이터 구조 일치시킬 것.
-- **Rust-TS 통신:** Tauri의 `invoke` 함수를 사용하여 DB 명령을 처리하고, 에러 핸들링을 철저히 할 것.
+- **Rust-TS 통신:** Tauri의 `invoke` 함수를 사용하여 DB 명령을 처리하고 zustand Store기능으로 상태 및 함수를 관리할것
+  - **API 함수 스펙:** [API_SPEC.md 참고](API_SPEC.md)
+  - **API 리턴 타입:** [API_TYPES.md 참고](API_TYPES.md)
+
   **Rust 관련 반드시 숙지할 사항**
+  - 백엔드는 레포지토리/서비스/커맨드 3개 레이어 구조로 관리중 (계산이 간단할시 서비스 레이어는 생략 가능)
+    (1. db/repository.rs에 레포지토리 2. services 폴더에 서비스 레이어 3. commands 폴더에 command 레이어)
   - Tauri v2 사용중. 문법 사용에 유의할것!!!
   - permission은 capabilities/window.json에 설정됨
   - Db connection은 src-tauri/db/mod.rs 에 `pub struct DbConnection(pub Mutex<Connection>);`로 사용
-- **데이터 구조:** 수입/지출 내역과 자산 내역 간의 관계형 DB 정규화 유지.
 
 ---
 

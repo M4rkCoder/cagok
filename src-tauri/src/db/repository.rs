@@ -365,7 +365,7 @@ impl CategoryRepository {
     }
 
     pub fn get_all(conn: &Connection) -> Result<Vec<Category>, rusqlite::Error> {
-        let mut stmt = conn.prepare("SELECT id, name, icon, type FROM categories")?;
+        let mut stmt = conn.prepare("SELECT id, name, icon, type FROM categories ORDER BY type ASC, id ASC")?;
         let rows = stmt.query_map([], |row| {
             Ok(Category {
                 id: row.get(0)?,

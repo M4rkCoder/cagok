@@ -5,7 +5,15 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Save, Upload, Download, AlertCircle } from "lucide-react"; // Added Icons
+import {
+  Minus,
+  Plus,
+  Save,
+  Upload,
+  Download,
+  AlertCircle,
+  Loader2,
+} from "lucide-react"; // Added Icons
 import { useAppStore } from "@/store/useAppStore";
 import { cn } from "@/lib/utils";
 import { useTransactionStore } from "@/store/useTransactionStore";
@@ -32,6 +40,7 @@ const QuickEntry: React.FC = () => {
   const {
     data,
     setData,
+    isLoading,
     activeCell,
     setActiveCell,
     dragRange,
@@ -238,7 +247,7 @@ const QuickEntry: React.FC = () => {
   });
 
   return (
-    <div className="p-6 h-full">
+    <div className="p-6 h-full relative">
       <div className="max-w-[1250px] mx-auto space-y-4">
         <div className="flex gap-2 justify-end">
           <Button
@@ -255,13 +264,28 @@ const QuickEntry: React.FC = () => {
             size="sm"
             className="bg-slate-700 hover:bg-slate-600 text-white border-none"
             onClick={handleImportFile}
+            disabled={isLoading}
           >
-            <Upload size={16} className="mr-2" />
+            {isLoading ? (
+              <Loader2 className="animate-spin mr-2" size={16} />
+            ) : (
+              <Upload className="mr-2" size={16} />
+            )}
             엑셀 업로드
           </Button>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="relative bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          {isLoading && (
+            <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-white/40 backdrop-blur-[1px] transition-all">
+              <div className="flex flex-col items-center p-6 bg-white/90 shadow-lg rounded-xl border border-slate-100">
+                <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-3" />
+                <p className="text-slate-700 font-medium text-sm">
+                  데이터 분석 중...
+                </p>
+              </div>
+            </div>
+          )}
           <table className="w-full text-sm border-collapse table-fixed select-none">
             <thead className="bg-slate-50 border-b">
               {table.getHeaderGroups().map((hg) => (
@@ -332,6 +356,7 @@ const QuickEntry: React.FC = () => {
                 50
               );
             }}
+            disabled={isLoading}
             className="w-full py-3 flex items-center justify-center gap-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all border-t border-dashed"
           >
             <Plus size={16} />행 추가

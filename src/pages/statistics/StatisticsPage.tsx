@@ -33,13 +33,16 @@ export default function StatisticsPage() {
     setSelectedYear,
     loadAllStatistics,
   } = useStatisticsStore();
+  const getFormattedPeriod = useStatisticsStore(
+    (state) => state.getFormattedPeriod
+  );
 
   const [activeTab, setActiveTab] = useState<
     "summary" | "yearly" | "treemap" | "monthly" | "dayofweek"
   >("summary");
 
   const tabs = [
-    { id: "summary", label: "수입 및 지출", icon: Activity },
+    { id: "summary", label: "개요", icon: Activity },
     { id: "yearly", label: "연간 통계", icon: ChartNoAxesCombined },
     { id: "monthly", label: "월별 통계", icon: ChartSpline },
     { id: "treemap", label: "카테고리 통계", icon: ChartPie },
@@ -50,6 +53,17 @@ export default function StatisticsPage() {
     setHeader(
       "통계 및 분석",
       <div className="flex items-center gap-2">
+        {viewMode === "month" && (
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md shadow-sm">
+            <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+              기간
+            </span>
+            <span className="text-sm font-medium text-slate-700 tabular-nums">
+              {getFormattedPeriod()}
+            </span>
+          </div>
+        )}
+
         {/* 선택된 모드에 따른 피커 노출 */}
         {viewMode === "year" && (
           <YearPicker
@@ -69,7 +83,7 @@ export default function StatisticsPage() {
               className={cn(
                 "h-full text-xs transition-all",
                 "data-[state=active]:bg-white data-[state=active]:text-slate-950 data-[state=active]:shadow-sm data-[state=active]:font-bold",
-                "text-slate-500",
+                "text-slate-500"
               )}
             >
               이번 달 기준
@@ -79,17 +93,25 @@ export default function StatisticsPage() {
               className={cn(
                 "h-full text-xs transition-all",
                 "data-[state=active]:bg-white data-[state=active]:text-slate-950 data-[state=active]:shadow-sm data-[state=active]:font-bold",
-                "text-slate-500",
+                "text-slate-500"
               )}
             >
               연도별
             </TabsTrigger>
           </TabsList>
         </Tabs>
-      </div>,
+      </div>
     );
     return () => resetHeader();
-  }, [selectedYear, selectedMonth, viewMode, setHeader, resetHeader, setSelectedYear, setViewMode]);
+  }, [
+    selectedYear,
+    selectedMonth,
+    viewMode,
+    setHeader,
+    resetHeader,
+    setSelectedYear,
+    setViewMode,
+  ]);
 
   useEffect(() => {
     loadAllStatistics();
@@ -110,7 +132,7 @@ export default function StatisticsPage() {
     switch (activeTab) {
       case "summary":
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <BadgeStatistics />
             <SummaryCards />
           </div>
@@ -138,7 +160,7 @@ export default function StatisticsPage() {
       <div
         className={cn(
           "flex border-b border-slate-200 dark:border-slate-800 w-full relative",
-          "min-2xl:hidden", // 1440px 이상에선 숨김
+          "min-2xl:hidden" // 1440px 이상에선 숨김
         )}
       >
         {tabs.map((tab) => (
@@ -149,13 +171,13 @@ export default function StatisticsPage() {
               "relative px-6 py-2 text-sm font-bold transition-all flex items-center gap-2 outline-none",
               activeTab === tab.id
                 ? "text-blue-600"
-                : "text-slate-400 hover:text-slate-600",
+                : "text-slate-400 hover:text-slate-600"
             )}
           >
             <tab.icon
               className={cn(
                 "w-4 h-4",
-                activeTab === tab.id ? "text-blue-600" : "text-slate-300",
+                activeTab === tab.id ? "text-blue-600" : "text-slate-300"
               )}
             />
             {tab.label}
