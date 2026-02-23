@@ -23,26 +23,19 @@ import { TitleText } from "./components/TitleText";
 
 // 색상 체계 업데이트
 const chartConfig = {
-  totalIncome: {
-    label: "수입",
-    color: "#10b981", // Emerald
-    negativeColor: "#ef4444",
-  },
+  totalIncome: { label: "수입", color: "#10b981", negativeColor: "#ef4444" },
+  totalExpense: { label: "총지출", color: "#ef4444", negativeColor: "#ef4444" },
   variableExpense: {
     label: "변동지출",
-    color: "#2563eb", // Blue (총지출 계열)
+    color: "#2563eb",
     negativeColor: "#ef4444",
   },
   fixedExpense: {
     label: "고정지출",
-    color: "#475569", // Slate-600
+    color: "#475569",
     negativeColor: "#ef4444",
   },
-  netIncome: {
-    label: "순수입",
-    color: "#8b5cf6", // Violet
-    negativeColor: "#ef4444",
-  },
+  netIncome: { label: "순수입", color: "#8b5cf6", negativeColor: "#ef4444" },
 } satisfies ChartConfig;
 
 const getPath = (
@@ -50,7 +43,7 @@ const getPath = (
   y: number,
   width: number,
   height: number,
-  radius: number[]
+  radius: number[],
 ) => {
   const [tr, tl, br, bl] = radius;
   return `
@@ -124,7 +117,7 @@ export function YearlyTrendChart() {
                 "px-4 py-1.5 text-xs font-bold transition-all rounded-md",
                 viewMode === tab.id
                   ? "bg-white text-blue-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  : "text-slate-500 hover:text-slate-700",
               )}
             >
               {tab.label}
@@ -138,7 +131,7 @@ export function YearlyTrendChart() {
           <ChartContainer config={chartConfig} className="h-[400px] w-full">
             <ComposedChart
               data={data}
-              barGap={-20}
+              barGap={0}
               margin={{ top: 20, right: 10, left: 10, bottom: 20 }}
             >
               <CartesianGrid
@@ -154,6 +147,7 @@ export function YearlyTrendChart() {
                 tickFormatter={(v) => format(new Date(v), "M월")}
                 fontSize={12}
                 className="font-bold text-slate-400"
+                tick={{ fill: "#94a3b8", fontWeight: 600 }}
               />
               <YAxis
                 yAxisId="left"
@@ -189,10 +183,10 @@ export function YearlyTrendChart() {
 
               {(viewMode === "all" || viewMode === "netIncome") && (
                 <ReferenceLine
-                  yAxisId="left"
+                  yAxisId={viewMode === "all" ? "right" : "left"}
                   y={0}
-                  stroke="#e2e8f0"
-                  strokeWidth={2}
+                  stroke="#8b5cf6"
+                  strokeWidth={1}
                   strokeDasharray="4 4"
                 />
               )}
@@ -202,40 +196,95 @@ export function YearlyTrendChart() {
                 content={({ active, payload, label }) => {
                   if (!active || !payload || !payload.length) return null;
 
+                  const currentData = data.find((d) => d.yearMonth === label);
+                  if (!currentData) return null;
+
+                  const tooltipItems = [
+                    {
+                      id: "totalIncome",
+                      value: currentData.totalIncome,
+                      type: "income",
+                    },
+                    {
+                      id: "totalExpense",
+                      value: currentData.totalExpense,
+                      type: "expense",
+                    },
+                    {
+                      id: "variableExpense",
+                      value: currentData.variableExpense,
+                      type: "expense",
+                    },
+                    {
+                      id: "fixedExpense",
+                      value: currentData.fixedExpense,
+                      type: "expense",
+                    },
+                    {
+                      id: "netIncome",
+                      value: currentData.netIncome,
+                      type: "netIncome",
+                    },
+                  ];
+
                   return (
-                    <div className="bg-white border border-slate-200 p-0 shadow-xl rounded-2xl overflow-hidden min-w-[180px] animate-in fade-in zoom-in duration-200">
-                      {/* 툴팁 헤더: 화이트 테마에 맞춘 연한 배경 */}
+                    <div className="bg-white border border-slate-200 p-0 shadow-xl rounded-2xl overflow-hidden min-w-[200px] animate-in fade-in zoom-in duration-200">
                       <div className="bg-slate-50/80 px-4 py-2 border-b border-slate-100">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                        <p className="text-[12px] font-black text-slate-500 uppercase tracking-widest">
                           {format(new Date(label), "yyyy년 M월")} 분석
                         </p>
                       </div>
 
-                      {/* 데이터 리스트 영역 */}
                       <div className="p-3 space-y-2.5">
-                        {payload.map((entry: any) => {
-                          const id = entry.dataKey;
+                        {tooltipItems.map((item) => {
                           const config =
-                            chartConfig[id as keyof typeof chartConfig];
+                            chartConfig[item.id as keyof typeof chartConfig];
                           if (!config) return null;
+
+                          const isHighlighted =
+                            viewMode === "all" ||
+                            viewMode === item.type ||
+                            (viewMode === "expense" &&
+                              (item.id === "variableExpense" ||
+                                item.id === "fixedExpense"));
 
                           return (
                             <div
-                              key={id}
-                              className="flex items-center justify-between gap-4"
+                              key={item.id}
+                              className={cn(
+                                "flex items-center justify-between px-2 py-1.5 rounded-lg transition-colors",
+                                isHighlighted
+                                  ? "bg-slate-50 border border-slate-100 shadow-sm"
+                                  : "opacity-40",
+                              )}
                             >
                               <div className="flex items-center gap-2">
-                                {/* 색상 아이콘 (점) 강제 표시 */}
                                 <div
                                   className="w-2 h-2 rounded-full"
                                   style={{ backgroundColor: config.color }}
                                 />
-                                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">
+                                <span
+                                  className={cn(
+                                    "text-[11px] font-bold uppercase tracking-tighter",
+                                    isHighlighted
+                                      ? "text-slate-700"
+                                      : "text-slate-400",
+                                  )}
+                                >
                                   {config.label}
                                 </span>
                               </div>
-                              <span className="text-sm font-black text-slate-900 tabular-nums">
-                                {formatCurrency(Number(entry.value))}
+                              <span
+                                className={cn(
+                                  "text-sm font-black tabular-nums",
+                                  // 순수입이 마이너스인 경우 붉은색 표기
+                                  item.id === "netIncome" &&
+                                    Number(item.value) < 0
+                                    ? "text-red-500"
+                                    : "text-slate-900",
+                                )}
+                              >
+                                {formatCurrency(Number(item.value))}
                               </span>
                             </div>
                           );
@@ -316,11 +365,27 @@ export function YearlyTrendChart() {
                   dataKey="netIncome"
                   stroke={chartConfig.netIncome.color}
                   strokeWidth={3}
-                  dot={{
-                    r: 4,
+                  dot={(dotProps: any) => {
+                    const { cx, cy, payload } = dotProps;
+                    const isNegative = payload.netIncome < 0;
+                    return (
+                      <circle
+                        key={`dot-${payload.yearMonth}`}
+                        cx={cx}
+                        cy={cy}
+                        r={isNegative ? 5 : 4}
+                        fill={
+                          isNegative ? "#ef4444" : chartConfig.netIncome.color
+                        }
+                        stroke="#fff"
+                        strokeWidth={2}
+                      />
+                    );
+                  }}
+                  activeDot={{
+                    r: 7,
+                    strokeWidth: 0,
                     fill: chartConfig.netIncome.color,
-                    stroke: "#fff",
-                    strokeWidth: 2,
                   }}
                 />
               )}

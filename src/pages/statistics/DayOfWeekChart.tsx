@@ -36,8 +36,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CategoryIcon } from "@/components/CategoryIcon";
+import { AllIcon, CategoryIcon } from "@/components/CategoryIcon";
 import { useStatisticsStore } from "@/store/useStatisticsStore";
+import { TitleText } from "./components/TitleText";
 
 interface ProcessedData {
   dayName: string;
@@ -63,7 +64,7 @@ export const DayOfWeekChart: React.FC = () => {
     try {
       const response = await invoke<DayOfWeekResponse>(
         "get_day_of_week_stats_command",
-        { baseMonth, txType: txType === "expense" ? 1 : 0 }
+        { baseMonth, txType: txType === "expense" ? 1 : 0 },
       );
       setData(response);
     } catch (error) {
@@ -78,23 +79,32 @@ export const DayOfWeekChart: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  const { 
-    chartData, 
-    chartConfig, 
-    donutData, 
-    availableCategories, 
-    totalMetricValue 
+  const {
+    chartData,
+    chartConfig,
+    donutData,
+    availableCategories,
+    totalMetricValue,
   } = useMemo(() => {
     if (!data)
-      return { 
-        chartData: [], 
-        chartConfig: {}, 
-        donutData: [], 
-        availableCategories: [], 
-        totalMetricValue: 0
+      return {
+        chartData: [],
+        chartConfig: {},
+        donutData: [],
+        availableCategories: [],
+        totalMetricValue: 0,
       };
 
-    const categoryTotals = new Map<number, { name: string; icon: string; total: number; weeklyAvg: number; txCount: number }>();
+    const categoryTotals = new Map<
+      number,
+      {
+        name: string;
+        icon: string;
+        total: number;
+        weeklyAvg: number;
+        txCount: number;
+      }
+    >();
 
     data.categories.forEach((item) => {
       const existing = categoryTotals.get(item.categoryId) || {
@@ -111,20 +121,25 @@ export const DayOfWeekChart: React.FC = () => {
       categoryTotals.set(item.categoryId, existing);
     });
 
-    let processedCategories = Array.from(categoryTotals.entries()).map(([id, info]) => {
-      let value = metricType === "total" ? info.total : info.weeklyAvg;
-      return {
-        id: String(id),
-        name: info.name,
-        icon: info.icon,
-        value: value,
-        txAvg: info.txCount > 0 ? info.total / info.txCount : 0,
-        fill: "",
-      };
-    });
+    let processedCategories = Array.from(categoryTotals.entries()).map(
+      ([id, info]) => {
+        let value = metricType === "total" ? info.total : info.weeklyAvg;
+        return {
+          id: String(id),
+          name: info.name,
+          icon: info.icon,
+          value: value,
+          txAvg: info.txCount > 0 ? info.total / info.txCount : 0,
+          fill: "",
+        };
+      },
+    );
 
     processedCategories.sort((a, b) => b.value - a.value);
-    const grandTotal = processedCategories.reduce((sum, item) => sum + item.value, 0);
+    const grandTotal = processedCategories.reduce(
+      (sum, item) => sum + item.value,
+      0,
+    );
 
     const donutDataWithColor = processedCategories.map((cat, index) => ({
       ...cat,
@@ -148,20 +163,31 @@ export const DayOfWeekChart: React.FC = () => {
 
     if (selectedCategory === "all") {
       data.totals.forEach((item) => {
-        groupedByDay[item.dayOfWeek].total = metricType === "total" ? item.totalAmount : item.averageAmount;
-        groupedByDay[item.dayOfWeek].count = metricType === "total" 
-            ? item.transactionCount 
-            : (item.dayCount > 0 ? item.transactionCount / item.dayCount : 0);
+        groupedByDay[item.dayOfWeek].total =
+          metricType === "total" ? item.totalAmount : item.averageAmount;
+        groupedByDay[item.dayOfWeek].count =
+          metricType === "total"
+            ? item.transactionCount
+            : item.dayCount > 0
+              ? item.transactionCount / item.dayCount
+              : 0;
       });
     } else {
       const targetId = parseInt(selectedCategory);
-      data.categories.filter((item) => item.categoryId === targetId).forEach((item) => {
-          groupedByDay[item.dayOfWeek].total = metricType === "total" ? item.totalAmount : item.averageAmount;
-          groupedByDay[item.dayOfWeek].count = metricType === "total" 
-            ? item.transactionCount 
-            : (item.dayCount > 0 ? item.transactionCount / item.dayCount : 0);
-          groupedByDay[item.dayOfWeek][`cat_${targetId}`] = groupedByDay[item.dayOfWeek].total;
-      });
+      data.categories
+        .filter((item) => item.categoryId === targetId)
+        .forEach((item) => {
+          groupedByDay[item.dayOfWeek].total =
+            metricType === "total" ? item.totalAmount : item.averageAmount;
+          groupedByDay[item.dayOfWeek].count =
+            metricType === "total"
+              ? item.transactionCount
+              : item.dayCount > 0
+                ? item.transactionCount / item.dayCount
+                : 0;
+          groupedByDay[item.dayOfWeek][`cat_${targetId}`] =
+            groupedByDay[item.dayOfWeek].total;
+        });
     }
 
     return {
@@ -175,35 +201,74 @@ export const DayOfWeekChart: React.FC = () => {
 
   const selectedDonutItem = useMemo(() => {
     if (selectedCategory === "all") return null;
-    return donutData.find(d => d.id === selectedCategory);
+    return donutData.find((d) => d.id === selectedCategory);
   }, [donutData, selectedCategory]);
 
-  const activeTabClass = "data-[state=active]:bg-slate-900 data-[state=active]:text-white shadow-sm";
+  const activeTabClass =
+    "data-[state=active]:bg-slate-900 data-[state=active]:text-white shadow-sm";
 
   return (
-    <Card className={cn("overflow-hidden border-none shadow-sm", loading && "animate-pulse")}>
-      <CardHeader className="flex flex-row items-center justify-between py-4 border-b border-dashed">
+    <Card
+      className={cn(
+        "overflow-hidden border-slate-200 shadow-none",
+        loading && "animate-pulse",
+      )}
+    >
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
         <div className="flex flex-col">
-          <CardTitle className="text-lg font-bold">
-            요일별 {txType === "expense" ? "지출" : "수입"} 분석
-          </CardTitle>
-          <CardDescription className="text-xs hidden sm:block">
-            {metricType === "total" ? "총액 기준" : "평균 기준"} 요일별 소비 패턴
-          </CardDescription>
+          <TitleText
+            title={`요일 ${txType === "expense" ? "지출" : "수입"} 통계: ${metricType === "total" ? "총액" : "평균"}`}
+          />
         </div>
 
         <div className="flex items-center gap-2">
-          <Tabs value={metricType} onValueChange={(v) => setMetricType(v as "total" | "average")}>
-            <TabsList className="h-8 bg-slate-100 p-0.5">
-              <TabsTrigger value="total" className={cn("text-[10px] h-7 px-3", activeTabClass)}>총액</TabsTrigger>
-              <TabsTrigger value="average" className={cn("text-[10px] h-7 px-3", activeTabClass)}>평균</TabsTrigger>
-            </TabsList>
-          </Tabs>
-
-          <Tabs value={txType} onValueChange={(v) => { setTxType(v as "expense" | "income"); setSelectedCategory("all"); }}>
-            <TabsList className="h-8 bg-slate-100 p-0.5">
-              <TabsTrigger value="expense" className={cn("text-[10px] h-7 px-3", activeTabClass)}>지출</TabsTrigger>
-              <TabsTrigger value="income" className={cn("text-[10px] h-7 px-3", activeTabClass)}>수입</TabsTrigger>
+          <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+            <button
+              key="total"
+              onClick={() => setMetricType("total")}
+              className={cn(
+                "px-4 py-1 text-xs font-bold transition-all rounded-md",
+                metricType === "total"
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700",
+              )}
+            >
+              총액
+            </button>
+            <button
+              key="average"
+              onClick={() => setMetricType("average")}
+              className={cn(
+                "px-4 text-xs font-bold transition-all rounded-md",
+                metricType === "average"
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-slate-500 hover:text-slate-700",
+              )}
+            >
+              평균
+            </button>
+          </div>
+          <Tabs
+            value={txType}
+            onValueChange={(v) => {
+              setTxType(v as "expense" | "income");
+              setSelectedCategory("all");
+            }}
+            className="h-8 w-[140px]"
+          >
+            <TabsList className="grid w-full grid-cols-2 h-10 bg-slate-100/50">
+              <TabsTrigger
+                value="expense"
+                className="text-xs transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white font-bold"
+              >
+                지출
+              </TabsTrigger>
+              <TabsTrigger
+                value="income"
+                className="text-xs transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-bold"
+              >
+                수입
+              </TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -214,14 +279,18 @@ export const DayOfWeekChart: React.FC = () => {
             <SelectContent>
               <SelectItem value="all">
                 <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 flex items-center justify-center text-[8px] font-bold bg-slate-100 rounded-full text-slate-500">ALL</span>
+                  <AllIcon />
                   <span>전체</span>
                 </span>
               </SelectItem>
               {availableCategories.map((cat) => (
                 <SelectItem key={cat.id} value={cat.id}>
                   <div className="flex items-center gap-2">
-                    <span className="native-emoji text-xs">{cat.icon}</span>
+                    <CategoryIcon
+                      icon={cat.icon}
+                      type={txType === "expense" ? 1 : 0}
+                      size="xs"
+                    />
                     <span>{cat.name}</span>
                   </div>
                 </SelectItem>
@@ -230,7 +299,7 @@ export const DayOfWeekChart: React.FC = () => {
           </Select>
         </div>
       </CardHeader>
-      
+
       <CardContent className="py-4">
         {loading ? (
           <div className="h-[300px] flex items-center justify-center">
@@ -240,66 +309,201 @@ export const DayOfWeekChart: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 h-[300px]">
               <ChartContainer config={chartConfig} className="h-full w-full">
-                <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }} barCategoryGap="30%">
-                  <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.3} />
-                  <XAxis dataKey="dayName" tickLine={false} axisLine={false} fontSize={12} fontWeight={600} tickFormatter={(v) => `${v}요일`} />
-                  <YAxis tickFormatter={(v) => new Intl.NumberFormat("ko-KR", { notation: "compact" }).format(v)} width={40} tickLine={false} axisLine={false} fontSize={10} className="text-slate-400" />
-                  <ChartTooltip cursor={{ fill: 'hsl(var(--muted)/0.2)' }} content={
-                    <ChartTooltipContent labelFormatter={(v) => `${v}요일`} className="w-[200px]" formatter={(value, name, item) => {
-                       if (selectedCategory === "all" && name !== "total") return null;
-                       const config = chartConfig[name as keyof typeof chartConfig];
-                       const countLabel = metricType === "total" ? "누적 건수" : "일평균 건수";
-                       return (
-                        <div className="flex flex-col gap-2 w-full">
-                            <div className="flex items-center justify-between gap-2">
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                  barCategoryGap="30%"
+                >
+                  <CartesianGrid
+                    vertical={false}
+                    strokeDasharray="3 3"
+                    opacity={0.3}
+                  />
+                  <XAxis
+                    dataKey="dayName"
+                    tickLine={false}
+                    axisLine={false}
+                    fontSize={12}
+                    fontWeight={600}
+                    tickFormatter={(v) => `${v}요일`}
+                  />
+                  <YAxis
+                    tickFormatter={(v) =>
+                      new Intl.NumberFormat("ko-KR", {
+                        notation: "compact",
+                        compactDisplay: "short",
+                      }).format(v)
+                    }
+                    width={60}
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fill: "#94a3b8", fontWeight: 600 }}
+                    fontSize={12}
+                    className="text-slate-400"
+                  />
+                  <ChartTooltip
+                    cursor={{ fill: "hsl(var(--muted)/0.2)" }}
+                    content={
+                      <ChartTooltipContent
+                        labelFormatter={(v) => `${v}요일`}
+                        className="w-[200px]"
+                        formatter={(value, name, item) => {
+                          if (selectedCategory === "all" && name !== "total")
+                            return null;
+                          const config =
+                            chartConfig[name as keyof typeof chartConfig];
+                          const countLabel =
+                            metricType === "total"
+                              ? "누적 건수"
+                              : "일평균 건수";
+                          return (
+                            <div className="flex flex-col gap-2 w-full">
+                              <div className="flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-1.5">
-                                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: config?.color || item.color }} />
-                                    <span className="font-bold text-xs">{config?.label || name}</span>
+                                  <div
+                                    className="h-2 w-2 rounded-full"
+                                    style={{
+                                      backgroundColor:
+                                        config?.color || item.color,
+                                    }}
+                                  />
+                                  <span className="font-bold text-xs">
+                                    {config?.label || name}
+                                  </span>
                                 </div>
-                                <span className="font-bold text-xs">{formatCurrency(Number(value))}</span>
-                            </div>
-                            <div className="flex items-center justify-between border-t border-slate-50 pt-1.5">
-                                <span className="text-slate-400 text-[10px]">{countLabel}</span>
+                                <span className="font-bold text-xs">
+                                  {formatCurrency(Number(value))}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between border-t border-slate-50 pt-1.5">
+                                <span className="text-slate-400 text-[10px]">
+                                  {countLabel}
+                                </span>
                                 <span className="text-[10px] font-medium text-slate-500">{`${Number(item.payload.count).toFixed(metricType === "average" ? 1 : 0)}건`}</span>
+                              </div>
                             </div>
-                        </div>
-                       );
-                    }} />
-                  } />
-                  <Bar dataKey={selectedCategory === "all" ? "total" : `cat_${selectedCategory}`} fill={selectedCategory === "all" ? chartConfig["total"].color : chartConfig[`cat_${selectedCategory}`]?.color} radius={[4, 4, 0, 0]} maxBarSize={50} />
+                          );
+                        }}
+                      />
+                    }
+                  />
+                  <Bar
+                    dataKey={
+                      selectedCategory === "all"
+                        ? "total"
+                        : `cat_${selectedCategory}`
+                    }
+                    fill={
+                      selectedCategory === "all"
+                        ? chartConfig["total"].color
+                        : chartConfig[`cat_${selectedCategory}`]?.color
+                    }
+                    radius={[4, 4, 0, 0]}
+                    maxBarSize={50}
+                  />
                 </BarChart>
               </ChartContainer>
             </div>
 
             <div className="flex flex-col items-center justify-center h-[300px]">
-                <ChartContainer config={chartConfig} className="w-full h-full max-w-[220px]">
-                    <PieChart>
-                        <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                        <Pie data={donutData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={85} paddingAngle={2} strokeWidth={0}>
-                            {donutData.map((entry, index) => (
-                                <Cell key={entry.id} fill={entry.fill} style={{ opacity: selectedCategory === "all" || selectedCategory === entry.id ? 1 : 0.3, cursor: "pointer", transition: "all 0.2s" }} onClick={() => setSelectedCategory(entry.id === selectedCategory ? "all" : entry.id)} />
-                            ))}
-                            <Label content={({ viewBox }) => {
-                                if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                                    return (
-                                        <text x={viewBox.cx} y={viewBox.cy} textAnchor="middle" dominantBaseline="middle">
-                                            <tspan x={viewBox.cx} y={(viewBox.cy || 0) - 15} className="fill-muted-foreground text-2xl font-emoji">{selectedDonutItem ? selectedDonutItem.icon : (txType === "expense" ? "💸" : "💰")}</tspan>
-                                            <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 12} className="fill-foreground text-sm font-bold">{formatCurrency(selectedDonutItem ? (metricType === "total" ? selectedDonutItem.value : selectedDonutItem.txAvg) : totalMetricValue)}</tspan>
-                                            <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 30} className="fill-muted-foreground text-[9px] font-bold">
-                                                {selectedDonutItem ? `${selectedDonutItem.percentage.toFixed(1)}%` : metricType === "total" ? "총액 합계" : "주간 평균"}
-                                            </tspan>
-                                        </text>
-                                    );
-                                }
-                                return null;
-                            }} />
-                        </Pie>
-                    </PieChart>
-                </ChartContainer>
+              <ChartContainer
+                config={chartConfig}
+                className="w-full h-full max-w-[220px]"
+              >
+                <PieChart>
+                  <ChartTooltip
+                    cursor={false}
+                    content={<ChartTooltipContent hideLabel />}
+                  />
+                  <Pie
+                    data={donutData}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={60}
+                    outerRadius={85}
+                    paddingAngle={2}
+                    strokeWidth={0}
+                  >
+                    {donutData.map((entry, index) => (
+                      <Cell
+                        key={entry.id}
+                        fill={entry.fill}
+                        style={{
+                          opacity:
+                            selectedCategory === "all" ||
+                            selectedCategory === entry.id
+                              ? 1
+                              : 0.3,
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                        }}
+                        onClick={() =>
+                          setSelectedCategory(
+                            entry.id === selectedCategory ? "all" : entry.id,
+                          )
+                        }
+                      />
+                    ))}
+                    <Label
+                      content={({ viewBox }) => {
+                        if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                          return (
+                            <text
+                              x={viewBox.cx}
+                              y={viewBox.cy}
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                            >
+                              <tspan
+                                x={viewBox.cx}
+                                y={(viewBox.cy || 0) - 15}
+                                className="fill-muted-foreground text-2xl font-emoji"
+                              >
+                                {selectedDonutItem
+                                  ? selectedDonutItem.icon
+                                  : txType === "expense"
+                                    ? "💸"
+                                    : "💰"}
+                              </tspan>
+                              <tspan
+                                x={viewBox.cx}
+                                y={(viewBox.cy || 0) + 12}
+                                className="fill-foreground text-sm font-bold"
+                              >
+                                {formatCurrency(
+                                  selectedDonutItem
+                                    ? metricType === "total"
+                                      ? selectedDonutItem.value
+                                      : selectedDonutItem.txAvg
+                                    : totalMetricValue,
+                                )}
+                              </tspan>
+                              <tspan
+                                x={viewBox.cx}
+                                y={(viewBox.cy || 0) + 30}
+                                className="fill-muted-foreground text-[9px] font-bold"
+                              >
+                                {selectedDonutItem
+                                  ? `${selectedDonutItem.percentage.toFixed(1)}%`
+                                  : metricType === "total"
+                                    ? "총액 합계"
+                                    : "주간 평균"}
+                              </tspan>
+                            </text>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                  </Pie>
+                </PieChart>
+              </ChartContainer>
             </div>
           </div>
         ) : (
-          <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">데이터가 없습니다.</div>
+          <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">
+            데이터가 없습니다.
+          </div>
         )}
       </CardContent>
     </Card>

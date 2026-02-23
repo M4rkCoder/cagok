@@ -79,7 +79,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
 
   useEffect(() => {
     const currentParent = items.MainMenu.find(
-      (item) => item.subMenu && location.pathname.startsWith(item.url)
+      (item) => item.subMenu && location.pathname.startsWith(item.url),
     );
     if (currentParent) {
       setOpenItem(currentParent.title);
@@ -102,7 +102,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
           <div
             className={cn(
               "shrink-0 flex items-center justify-center rounded-lg bg-blue-700 p-1.5 shadow-md transition-all duration-300",
-              collapsed ? "w-8 h-8 scale-110" : "w-7 h-7" // 3. 축소 시 로고 크기 확대
+              collapsed ? "w-8 h-8 scale-110" : "w-7 h-7", // 3. 축소 시 로고 크기 확대
             )}
           >
             <FinanceModeRounded className="w-5 h-5 text-white" />
@@ -159,7 +159,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                               // ✅ 전체 배경은 투명하게 유지, 활성화 시 글자만 검정색으로 강조
                               isSubActive
                                 ? "text-black font-bold"
-                                : "text-sidebar-foreground"
+                                : "text-sidebar-foreground",
                             )}
                           >
                             <SidebarMenuButton
@@ -171,14 +171,33 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                                 to={item.url}
                                 className="flex items-center gap-2"
                               >
-                                {/* ✅ 아이콘: 활성화 시 파란색 둥근 박스 + 흰색 아이콘 */}
-                                <item.icon
-                                  className={cn(
-                                    "h-6 w-6 shrink-0 transition-all duration-300",
-                                    isSubActive &&
-                                      "bg-blue-700 text-white rounded-md p-1.5"
-                                  )}
-                                />
+                                {/* ✅ 아이콘: 활성화 시 정중앙에서부터 커지는 파란색 박스 효과 (framer-motion) */}
+                                <div className="relative flex items-center justify-center w-6 h-6 shrink-0">
+                                  <AnimatePresence>
+                                    {isSubActive && (
+                                      <motion.div
+                                        layoutId="sidebar-active-indicator"
+                                        initial={{ opacity: 0, scale: 0.5 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.5 }}
+                                        transition={{
+                                          type: "spring",
+                                          stiffness: 300,
+                                          damping: 30,
+                                        }}
+                                        className="absolute inset-0 bg-blue-700 rounded-md"
+                                      />
+                                    )}
+                                  </AnimatePresence>
+                                  <item.icon
+                                    className={cn(
+                                      "relative z-10 h-5 w-5 shrink-0 transition-colors duration-300",
+                                      isSubActive
+                                        ? "text-white"
+                                        : "text-sidebar-foreground group-hover:text-sidebar-accent-foreground",
+                                    )}
+                                  />
+                                </div>
                                 <span>{item.title}</span>
                               </Link>
                             </SidebarMenuButton>
@@ -194,7 +213,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                                     "text-[13px] py-1.5 px-2 rounded-md transition-colors hover:bg-sidebar-accent flex items-center min-w-0 whitespace-nowrap overflow-hidden",
                                     isActive(sub.url)
                                       ? "text-blue-700 font-bold" // ✅ 서브메뉴는 텍스트만 파란색 포인트
-                                      : "text-muted-foreground"
+                                      : "text-muted-foreground",
                                   )}
                                 >
                                   <div className="flex items-center gap-1 min-w-0 w-full">
@@ -216,13 +235,39 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                         isActive={isActive(item.url) || isSubActive}
                         tooltip={collapsed ? item.title : undefined}
                       >
-                        <Link to={item.url}>
-                          <item.icon
+                        <Link to={item.url} className="flex items-center gap-2">
+                          <div
                             className={cn(
-                              "shrink-0 transition-transform duration-300",
-                              collapsed ? "h-7 w-7 scale-120" : "h-6 w-6"
+                              "relative flex items-center justify-center shrink-0",
+                              collapsed ? "w-7 h-7" : "w-6 h-6",
                             )}
-                          />
+                          >
+                            <AnimatePresence>
+                              {(isActive(item.url) || isSubActive) && (
+                                <motion.div
+                                  layoutId="sidebar-active-indicator"
+                                  initial={{ opacity: 0, scale: 0.5 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  exit={{ opacity: 0, scale: 0.5 }}
+                                  transition={{
+                                    type: "spring",
+                                    stiffness: 300,
+                                    damping: 30,
+                                  }}
+                                  className="absolute inset-0 bg-blue-700 rounded-md"
+                                />
+                              )}
+                            </AnimatePresence>
+                            <item.icon
+                              className={cn(
+                                "relative z-10 shrink-0 transition-colors duration-300",
+                                collapsed ? "h-6 w-6" : "h-5 w-5",
+                                isActive(item.url) || isSubActive
+                                  ? "text-white"
+                                  : "text-sidebar-foreground group-hover:text-sidebar-accent-foreground",
+                              )}
+                            />
+                          </div>
                           {!collapsed && <span>{item.title}</span>}
                         </Link>
                       </SidebarMenuButton>
@@ -241,7 +286,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
           variant={collapsed ? "ghost" : "secondary"}
           className={cn(
             "w-full truncate overflow-hidden transition-all",
-            collapsed && "h-10 p-0 hover:bg-sidebar-accent"
+            collapsed && "h-10 p-0 hover:bg-sidebar-accent",
           )}
           onClick={(e) => {
             e.preventDefault();

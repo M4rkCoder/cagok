@@ -1,11 +1,5 @@
 import React, { useState, useMemo, memo } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { XAxis, YAxis, CartesianGrid, Area, AreaChart } from "recharts";
 import {
   Select,
@@ -15,8 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CategoryIcon } from "@/components/CategoryIcon";
-import { Category } from "@/types";
+import { AllIcon, CategoryIcon } from "@/components/CategoryIcon";
 import {
   ChartConfig,
   ChartContainer,
@@ -24,16 +17,14 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { useAppStore } from "@/store/useAppStore";
 import { useStatisticsStore } from "@/store/useStatisticsStore";
+import { TitleText } from "./components/TitleText";
 
 export const CategoryMonthlyTrendSection = memo(
   function CategoryMonthlyTrendSection() {
-    const {
-      baseMonth,
-      categoryMonthlyAmounts,
-    } = useStatisticsStore();
+    const { baseMonth, categoryMonthlyAmounts } = useStatisticsStore();
 
     const [activeType, setActiveType] = useState<"income" | "expense">(
       "expense",
@@ -43,7 +34,7 @@ export const CategoryMonthlyTrendSection = memo(
     );
     const { categoryList: categories } = useAppStore();
 
-    // 1. 카테고리 분리 (수입: 0, 지출: 1)
+    // 1. 카테고리 분리
     const expenseCategories = useMemo(
       () => categories.filter((c) => c.type === 1),
       [categories],
@@ -52,7 +43,6 @@ export const CategoryMonthlyTrendSection = memo(
       () => categories.filter((c) => c.type === 0),
       [categories],
     );
-    // 현재 탭에 맞는 카테고리 목록
     const currentCategories =
       activeType === "income" ? incomeCategories : expenseCategories;
 
@@ -62,9 +52,8 @@ export const CategoryMonthlyTrendSection = memo(
       const targetCategories =
         activeType === "income" ? incomeCategories : expenseCategories;
 
-      // 색상 및 레이블 설정
       targetCategories.forEach((cat, index) => {
-        const hue = activeType === "expense" ? 221 : 142; // 지출은 파란색 계열, 수입은 초록색 계열
+        const hue = activeType === "expense" ? 221 : 142;
         const lightness =
           30 + index * (50 / Math.max(targetCategories.length - 1, 1));
 
@@ -74,10 +63,8 @@ export const CategoryMonthlyTrendSection = memo(
         };
       });
 
-      // 스택 순서 고정
       const fixedOrderNames = targetCategories.map((cat) => cat.name);
 
-      // 최근 12개월 날짜 생성 로직
       const last12Months = Array.from({ length: 12 }, (_, i) => {
         const [year, month] = baseMonth.split("-").map(Number);
         const date = new Date(year, month - 1 - (11 - i), 1);
@@ -89,22 +76,19 @@ export const CategoryMonthlyTrendSection = memo(
         };
       });
 
-      // 월별 데이터 매핑
       const data = last12Months.map((monthObj) => {
         const row: any = { month: monthObj.label };
-
-        // 해당 월의 데이터 중 현재 타입(수입/지출)과 일치하는 항목만 필터링
         categoryMonthlyAmounts
           .filter(
             (item) =>
               item.year_month === monthObj.key &&
               (activeType === "income" ? item.type === 0 : item.type === 1) &&
-              (internalCategoryId === null || item.category_id === internalCategoryId),
+              (internalCategoryId === null ||
+                item.category_id === internalCategoryId),
           )
           .forEach((item) => {
             row[item.category_name] = item.total_amount;
           });
-
         return row;
       });
 
@@ -123,30 +107,28 @@ export const CategoryMonthlyTrendSection = memo(
     ]);
 
     return (
-      <Card className="flex flex-col">
-        <CardHeader className="items-center pb-0 md:flex-row justify-between space-y-0">
-          <div className="grid gap-1">
-            <CardTitle>월별 상세 추이</CardTitle>
-            <CardDescription>기준: {baseMonth} (최근 12개월)</CardDescription>
-          </div>
+      <Card className="flex flex-col border-slate-200 shadow-none">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <TitleText title="월별 통계" />
           <div className="flex items-center gap-2 pb-4">
             <Tabs
               value={activeType}
               onValueChange={(v) => {
                 setActiveType(v as "income" | "expense");
-                setInternalCategoryId(null); // 타입 변경 시 필터 초기화
+                setInternalCategoryId(null);
               }}
+              className="h-8 w-[140px]"
             >
-              <TabsList className="h-10">
+              <TabsList className="grid w-full grid-cols-2 h-8">
                 <TabsTrigger
                   value="expense"
-                  className="text-sm data-[state=active]:bg-slate-900 data-[state=active]:text-white"
+                  className="text-xs transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
                 >
                   지출
                 </TabsTrigger>
                 <TabsTrigger
                   value="income"
-                  className="text-sm data-[state=active]:bg-slate-900 data-[state=active]:text-white"
+                  className="text-xs transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-medium"
                 >
                   수입
                 </TabsTrigger>
@@ -163,14 +145,16 @@ export const CategoryMonthlyTrendSection = memo(
                 <SelectValue placeholder="카테고리" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">전체보기</SelectItem>
+                <SelectItem value="all">
+                  <AllIcon /> 전체 보기
+                </SelectItem>
                 {currentCategories.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id.toString()}>
                     <div className="flex items-center gap-2">
                       <CategoryIcon
                         icon={cat.icon}
                         type={cat.type as 0 | 1}
-                        size="sm"
+                        size="xs"
                       />
                       {cat.name}
                     </div>
@@ -199,38 +183,70 @@ export const CategoryMonthlyTrendSection = memo(
                 axisLine={true}
                 tickMargin={8}
                 fontSize={12}
+                tick={{ fill: "#94a3b8", fontWeight: 600 }}
               />
               <YAxis
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
-                tickFormatter={(value) => value.toLocaleString()}
+                tickFormatter={(v) =>
+                  new Intl.NumberFormat("ko-KR", {
+                    notation: "compact",
+                    compactDisplay: "short",
+                  }).format(v)
+                }
+                tick={{ fill: "#94a3b8", fontWeight: 600 }}
                 width={60}
                 fontSize={12}
               />
               <ChartTooltip
-                cursor={{ strokeWidth: 0 }}
-                content={
-                  <ChartTooltipContent
-                    className="w-[200px]"
-                    formatter={(value, name: string) => (
-                      <div className="flex w-full items-center justify-between gap-2 text-xs">
-                        <div className="flex items-center gap-1">
-                          <div
-                            className="h-2 w-2 rounded-full"
-                            style={{
-                              backgroundColor: chartConfig[name]?.color,
-                            }}
-                          />
-                          {chartConfig[name]?.label || name}
-                        </div>
-                        <span className="font-medium">
-                          {formatCurrency(Number(value))}
-                        </span>
+                cursor={false}
+                content={({ active, payload, label }) => {
+                  if (!active || !payload) return null;
+
+                  // 값이 있는 데이터만 필터링 및 금액 큰 순서로 정렬
+                  const validPayload = [...payload]
+                    .filter((item) => Number(item.value) > 0)
+                    .sort((a, b) => Number(b.value) - Number(a.value));
+
+                  const visibleItems = validPayload.slice(0, 10);
+                  const extraCount = validPayload.length - 10;
+
+                  return (
+                    <div className="rounded-lg border bg-white p-2 shadow-md w-[220px]">
+                      <div className="mb-2 border-b pb-1 text-xs font-bold text-slate-500">
+                        {label} 내역
                       </div>
-                    )}
-                  />
-                }
+                      <div className="flex flex-col gap-1.5">
+                        {visibleItems.map((item, index) => (
+                          <div
+                            key={`tooltip-${index}`}
+                            className="flex items-center justify-between gap-2 text-[11px]"
+                          >
+                            <div className="flex items-center gap-1.5 overflow-hidden">
+                              <div
+                                className="h-2 w-2 shrink-0 rounded-full"
+                                style={{ backgroundColor: item.color }}
+                              />
+                              <span className="truncate text-slate-600">
+                                {chartConfig[item.name as string]?.label ||
+                                  item.name}
+                              </span>
+                            </div>
+                            <span className="font-bold tabular-nums text-slate-900">
+                              {formatCurrency(Number(item.value))}
+                            </span>
+                          </div>
+                        ))}
+                        {extraCount > 0 && (
+                          <div className="mt-1 border-t pt-1 text-center text-[10px] italic text-slate-400">
+                            외 {extraCount}개 항목 더 있음
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }}
               />
               <ChartLegend
                 content={() => {
@@ -249,13 +265,13 @@ export const CategoryMonthlyTrendSection = memo(
                               backgroundColor: chartConfig[name]?.color,
                             }}
                           />
-                          <span className="text-muted-foreground">
+                          <span className="text-xs font-bold text-slate-500">
                             {chartConfig[name]?.label || name}
                           </span>
                         </div>
                       ))}
                       {hasMore && (
-                        <div className="text-xs font-medium text-muted-foreground/60 italic">
+                        <div className="text-xs font-bold text-muted-foreground/60 italic">
                           외 {displayCategoryNames.length - 10}개
                         </div>
                       )}
@@ -272,7 +288,7 @@ export const CategoryMonthlyTrendSection = memo(
                   stroke={chartConfig[name]?.color}
                   strokeWidth={1}
                   fill={chartConfig[name]?.color}
-                  fillOpacity={0.5}
+                  fillOpacity={0.4}
                   connectNulls
                 />
               ))}

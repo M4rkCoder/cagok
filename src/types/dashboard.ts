@@ -47,12 +47,12 @@ export interface MonthlyExpense {
 }
 
 export interface MonthlyFinancialSummaryItem {
-  year_month: string;
-  total_income: number;
-  total_expense: number;
+  yearMonth: string;
+  totalIncome: number;
+  totalExpense: number;
   netIncome: number;
-  fixed_expense: number;
-  variable_expense: number;
+  fixedExpense: number;
+  variableExpense: number;
 }
 
 export interface YearlySummaryItem {

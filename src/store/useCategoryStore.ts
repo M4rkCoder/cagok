@@ -125,7 +125,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
           category: payload,
         });
         toast.success(
-          `${payload.icon} ${payload.name} 카테고리를 수정했습니다.`
+          `${payload.icon} ${payload.name} 카테고리를 수정했습니다.`,
         );
       } else {
         // 생성
@@ -137,9 +137,20 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
 
       get().resetCategoryForm();
       await useAppStore.getState().fetchCategories();
-    } catch (error) {
-      toast.error("카테고리 저장 실패");
-      console.error(error);
+    } catch (error: any) {
+      const errorMsg = error?.toString?.() || String(error || "");
+
+      if (
+        errorMsg.includes("UNIQUE constraint failed") &&
+        errorMsg.includes("categories.name")
+      ) {
+        toast.error(
+          `"${payload.name}"은(는) 이미 사용 중인 카테고리 이름입니다.`,
+        );
+      } else {
+        toast.error("카테고리 저장 중 오류가 발생했습니다.");
+      }
+      console.error("Category save error:", error);
     }
   },
 }));

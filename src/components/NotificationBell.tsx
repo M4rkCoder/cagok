@@ -153,6 +153,7 @@ export const NotificationBell = () => {
           <Button
             variant="ghost"
             className="w-full text-[11px] text-zinc-400 hover:text-zinc-600 h-7 p-0"
+            onClick={() => markAllAsRead()}
           >
             모든 알림 보기
           </Button>
