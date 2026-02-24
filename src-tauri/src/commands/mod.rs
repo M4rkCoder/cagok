@@ -17,6 +17,8 @@ pub fn register_handler<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builde
         onedrive::onedrive_backup,
         onedrive::onedrive_restore,
         onedrive::onedrive_check_status,
+        onedrive::onedrive_auto_sync,
+        onedrive::check_onedrive_sync_status,
         //transaction
         transaction::create_transaction,
         transaction::get_transactions,

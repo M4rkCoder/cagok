@@ -65,6 +65,7 @@ pub fn init_db(db_path: &Path) -> Result<Connection> {
             amount            REAL NOT NULL,
             category_id       INTEGER,
             account_id        INTEGER DEFAULT 1,
+            is_fixed          INTEGER NOT NULL DEFAULT 0,
             frequency         INTEGER NOT NULL,      -- 'daily', 'weekly', 'monthly', 'yearly'
             start_date        TEXT NOT NULL,      -- 시작일
             end_date          TEXT,               -- 종료일 (NULL이면 무제한)
@@ -94,6 +95,7 @@ pub fn init_db(db_path: &Path) -> Result<Connection> {
         CREATE INDEX IF NOT EXISTS idx_transactions_date_fixed ON transactions(date, is_fixed);
         CREATE INDEX IF NOT EXISTS idx_goals_month ON goals(target_month);
         CREATE INDEX IF NOT EXISTS idx_transactions_day_of_week ON transactions(day_of_week);
+        CREATE INDEX IF NOT EXISTS idx_recurring_history_composite ON recurring_history (recurring_id, created_at);
         ",
     )?;
 

@@ -244,6 +244,7 @@ pub struct RecurringTransaction {
     pub description: String,
     pub amount: f64,
     pub category_id: Option<i32>,
+    pub is_fixed: i64,
     pub frequency: RecurringFrequency,
     pub start_date: String, // "2024-01-15"
     pub end_date: Option<String>,

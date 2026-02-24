@@ -5,7 +5,7 @@ interface HeaderState {
   title: ReactNode | null;
   actions: ReactNode | null;
   activeSection: string | null;
-  setHeader: (title: string, actions?: ReactNode) => void;
+  setHeader: (title: ReactNode, actions?: ReactNode) => void;
   resetHeader: () => void;
   setActiveSection: (section: string) => void;
 }

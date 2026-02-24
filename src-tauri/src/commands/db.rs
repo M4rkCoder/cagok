@@ -5,6 +5,7 @@ use std::fs::File;
 use std::io::Write;
 use tauri::{Manager, Runtime, State, Window};
 use tauri_plugin_opener::open_path;
+use crate::db::repository::get_setting;
 
 #[tauri::command]
 pub fn get_db_path<R: Runtime>(window: Window<R>) -> Result<String, String> {
@@ -110,21 +111,28 @@ pub fn export_transactions_csv<R: Runtime>(
     conn: State<DbConnection>,
 ) -> Result<String, String> {
     let app = window.app_handle();
+    let db_conn = conn.0.lock().map_err(|_| "DB lock failed")?;
 
+    // 1. 현재 언어 설정 가져오기 (기본값 "en")
+    let language = get_setting(&db_conn, "language")
+        .unwrap_or_else(|_| Some("en".to_string()))
+        .unwrap_or("en".to_string());
+
+    let is_ko = language == "ko";
+
+    // 2. 경로 및 파일 설정
     let document_dir = app.path().document_dir().map_err(|e| e.to_string())?;
-
     let export_dir = document_dir.join("Cagok").join("Exports");
     std::fs::create_dir_all(&export_dir).map_err(|e| e.to_string())?;
 
     let filename = format!(
-        "Cagok_transactions_{}.csv",
+        "Cagok_{}.csv",
         chrono::Local::now().format("%Y%m%d_%H%M%S")
     );
     let csv_path = export_dir.join(&filename);
 
-    let conn = conn.0.lock().map_err(|_| "DB lock failed")?;
-
-    let mut stmt = conn
+    // 3. 데이터 쿼리
+    let mut stmt = db_conn
         .prepare(
             "
             SELECT
@@ -158,31 +166,36 @@ pub fn export_transactions_csv<R: Runtime>(
 
     let mut file = File::create(&csv_path).map_err(|e| e.to_string())?;
 
+    // UTF-8 BOM 추가 (Excel에서 한글 깨짐 방지)
     file.write_all(b"\xEF\xBB\xBF").map_err(|e| e.to_string())?;
 
-    // CSV Header
-    writeln!(
-        file,
+    // 4. 언어별 CSV 헤더 설정
+    let header = if is_ko {
+        "날짜,유형,카테고리,금액,고정여부,상세내역,메모"
+    } else {
         "date,type,category,amount,is_fixed,description,remarks"
-    )
-    .map_err(|e| e.to_string())?;
+    };
+    writeln!(file, "{}", header).map_err(|e| e.to_string())?;
 
+    // 5. 데이터 작성
     for row in rows {
         let (date, ttype, category, amount, is_fixed, description, remarks) =
             row.map_err(|e| e.to_string())?;
 
+        // 타입 레이블 (수입/지출)
         let type_label = match ttype {
-            0 => "income",
-            1 => "expense",
-            _ => "unknown",
+            0 => if is_ko { "수입" } else { "income" },
+            1 => if is_ko { "지출" } else { "expense" },
+            _ => if is_ko { "미분류" } else { "unknown" },
         };
 
+        // 고정 여부 레이블
         let fixed_label = match is_fixed {
-            1 => "fixed",
-            _ => "variable",
+            1 => if is_ko { "고정" } else { "fixed" },
+            _ => if is_ko { "변동" } else { "variable" },
         };
 
-        let category = category.unwrap_or_else(|| "uncategorized".to_string());
+        let category = category.unwrap_or_else(|| if is_ko { "미지정".to_string() } else { "uncategorized".to_string() });
         let description = description.unwrap_or_default().replace('"', "\"\"");
         let remarks = remarks.unwrap_or_default().replace('"', "\"\"");
 

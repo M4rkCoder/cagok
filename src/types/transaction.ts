@@ -73,3 +73,31 @@ export interface TransactionFilters {
   min_amount?: number;
   max_amount?: number;
 }
+
+export interface RecurringTransaction {
+  id?: number;
+  description: string;
+  amount: number;
+  category_id?: number;
+  is_fixed?: number;
+  frequency: "daily" | "weekly" | "monthly" | "yearly";
+  start_date: string;
+  end_date?: string;
+  day_of_month?: number;
+  day_of_week?: number;
+  is_active: boolean;
+  last_created_date?: string;
+  remarks?: string;
+}
+
+export interface RecurringHistoryItem {
+  id: number;
+  recurring_id: number;
+  transaction_id: number;
+  created_at: string;
+  amount: number;
+  description: string;
+  category_name?: string;
+  category_icon?: string;
+  category_type?: number;
+}

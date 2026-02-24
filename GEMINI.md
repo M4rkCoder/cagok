@@ -71,6 +71,7 @@
   |description|TEXT|"NOT NULL"|거래 설명|
   |amount|REAL|"NOT NULL"|거래 금액|
   |category_id|INTEGER|FOREIGN KEY|categories(id) 참조 (삭제 시 NULL 처리)|
+  |is_fixed|INTEGER|NOT NULL DEFAULT 0|고정 여부|
   |account_id|INTEGER|"DEFAULT 1, FOREIGN KEY"|accounts(id) 참조 (삭제 시 NULL 처리)|
   |frequency|INTEGER|"NOT NULL"|반복 주기 (0: 일별, 1: 주별, 2: 월별, 3: 년별)|
   |start_date|TEXT|"NOT NULL"|반복 시작일 (YYYY-MM-DD)|

@@ -20,7 +20,6 @@ impl RecurringService {
         Ok(created_count)
     }
 
-    // 단일 반복 거래 처리 로직 (재사용을 위해 분리)
     fn process_single_transaction_logic(
         conn: &Connection,
         recurring: RecurringTransaction,
@@ -28,39 +27,46 @@ impl RecurringService {
         let today = chrono::Local::now().date_naive();
         let mut created_for_this_recurring = 0;
 
-        // 마지막 생성일이 있으면 그 다음 날부터 시작, 없으면 시작일부터
-        let start_checking_date = if let Some(last_created_str) = &recurring.last_created_date {
-            NaiveDate::parse_from_str(last_created_str, "%Y-%m-%d")
-                .map_err(|e| format!("Invalid last created date: {}", e))?
-                + Duration::days(1)
-        } else {
-            NaiveDate::parse_from_str(&recurring.start_date, "%Y-%m-%d")
-                .map_err(|e| format!("Invalid start date: {}", e))?
-        };
+        // [수정] last_created_date 무시하고 항상 시작일부터 체크하거나, 
+        // 혹은 효율을 위해 시작일과 (마지막 생성일 - 델타) 중 더 과거를 선택
+        let start_checking_date = NaiveDate::parse_from_str(&recurring.start_date, "%Y-%m-%d")
+            .map_err(|e| format!("Invalid start date: {}", e))?;
 
-        // 오늘까지 체크 (시작일이 오늘보다 이전이거나 같아야 함)
         let mut current_date = start_checking_date;
+        
         while current_date <= today {
+            // 1. 해당 주기 조건에 맞는지 확인
             if Self::should_create_on(&recurring, &current_date)? {
-                Self::create_transaction_from_recurring(conn, &recurring, &current_date)?;
-                created_for_this_recurring += 1;
+                // 2. [추가] 중복 생성 방지: 이 날짜에 이미 생성된 이력이 있는지 확인
+                if !Self::already_exists(conn, recurring.id.unwrap(), &current_date)? {
+                    Self::create_transaction_from_recurring(conn, &recurring, &current_date)?;
+                    created_for_this_recurring += 1;
+                }
             }
             current_date += Duration::days(1);
         }
 
-        // 이 반복 거래에 대해 생성이 하나라도 있었다면 마지막 생성일 업데이트
+        // 마지막 생성일 업데이트 (기존 로직 유지)
         if created_for_this_recurring > 0 {
             RecurringTransactionRepository::update_last_created_date(
                 conn,
-                recurring
-                    .id
-                    .ok_or("Recurring transaction ID is missing for update".to_string())?,
+                recurring.id.ok_or("ID missing")?,
                 &today.format("%Y-%m-%d").to_string(),
-            )
-            .map_err(|e| format!("Failed to update last created date: {}", e))?;
+            ).map_err(|e| e.to_string())?;
         }
 
         Ok(created_for_this_recurring)
+    }
+
+    fn already_exists(conn: &Connection, recurring_id: i32, date: &NaiveDate) -> Result<bool, String> {
+        let date_str = date.format("%Y-%m-%d").to_string();
+        let count: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM recurring_history WHERE recurring_id = ?1 AND created_at = ?2",
+            params![recurring_id, date_str],
+            |row| row.get(0),
+        ).map_err(|e| e.to_string())?;
+
+        Ok(count > 0)
     }
 
     // 단일 반복 거래 처리 (Tauri Command에서 호출될 예정)
@@ -152,12 +158,13 @@ impl RecurringService {
         // 2. Insert transaction
         conn.execute(
             "INSERT INTO transactions (description, amount, date, type, is_fixed, category_id, remarks)
-            VALUES (?1, ?2, ?3, ?4, 1, ?5, ?6)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![
                 recurring.description,
                 recurring.amount,
                 date.format("%Y-%m-%d").to_string(),
                 category_type,
+                recurring.is_fixed,
                 recurring.category_id,
                 recurring.remarks,
             ],

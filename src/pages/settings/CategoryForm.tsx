@@ -17,20 +17,16 @@ import { Category } from "@/types";
 import { cn } from "@/lib/utils";
 import { CategoryIcon } from "@/components/CategoryIcon"; // 컴포넌트 임포트
 import { useCategoryStore } from "@/store/useCategoryStore";
-
-const formSchema = z.object({
-  name: z.string().min(1, { message: "이름을 입력해주세요." }),
-  icon: z.string(),
-  type: z.enum(["0", "1"]),
-});
+import { useAppStore } from "@/store/useAppStore";
 
 interface CategoryFormProps {
-  onSubmit: (values: z.infer<typeof formSchema>) => void;
+  onSubmit: (values: any) => void;
   onCancel: () => void;
   defaultValues?: Category;
 }
 
 const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
+  const { categoryList: categories } = useAppStore();
   const {
     newCategoryName,
     newCategoryIcon,
@@ -40,6 +36,29 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
   } = useCategoryStore();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
+  const formSchema = z
+    .object({
+      name: z.string().min(1, { message: "이름을 입력해주세요." }),
+      icon: z.string(),
+      type: z.enum(["0", "1"]),
+    })
+    .superRefine((data, ctx) => {
+      const isDuplicate = categories.some((cat) => {
+        if (editingCategoryId !== null) {
+          return cat.id !== editingCategoryId && cat.name === data.name.trim();
+        }
+        return cat.name === data.name.trim();
+      });
+
+      if (isDuplicate) {
+        ctx.addIssue({
+          code: "custom",
+          message: "이미 존재하는 카테고리 이름입니다.",
+          path: ["name"],
+        });
+      }
+    });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -47,6 +66,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
       icon: "➕",
       type: "1",
     },
+    mode: "onChange",
   });
 
   useEffect(() => {
@@ -58,16 +78,20 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
         type: newCategoryType.toString() as "0" | "1",
       });
     } else {
-      // 신규 모드
       form.reset({
         name: "",
         icon: "➕",
         type: newCategoryType.toString() as "0" | "1",
       });
     }
-  }, [editingCategoryId, newCategoryName, newCategoryIcon, newCategoryType, form]);
+  }, [
+    editingCategoryId,
+    newCategoryName,
+    newCategoryIcon,
+    newCategoryType,
+    form,
+  ]);
 
-  // 현재 선택된 타입을 실시간으로 감시
   const currentType = form.watch("type");
   const currentIcon = form.watch("icon");
 

@@ -8,6 +8,8 @@ export type {
   QuickEntryTransactionRow,
   CellProps,
   TransactionFilters,
+  RecurringTransaction,
+  RecurringHistoryItem,
 } from "./transaction";
 
 //category
@@ -40,4 +42,4 @@ export type {
   DayOfWeekResponse,
 } from "./dashboard";
 
-export type { OneDriveStatus } from "./sync";
+export type { OneDriveStatus, SyncCheckResult } from "./sync";

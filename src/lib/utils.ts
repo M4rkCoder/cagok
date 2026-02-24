@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { format } from "date-fns";
 import { twMerge } from "tailwind-merge";
+import { RecurringTransaction } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -153,4 +154,21 @@ export const evaluateExpression = (input: string): string => {
     // 계산 도중 문법 오류 발생 시 (예: "100++5") 빈 문자열 반환
     return "";
   }
+};
+
+export const getFrequencyText = (frequency: string) =>
+  ({ daily: "매일", weekly: "매주", monthly: "매월", yearly: "매년" })[
+    frequency
+  ] || frequency;
+
+export const getDayText = (recurring: RecurringTransaction) => {
+  if (recurring.frequency === "weekly" && recurring.day_of_week != null) {
+    return (
+      ["일", "월", "화", "수", "목", "금", "토"][recurring.day_of_week] + "요일"
+    );
+  }
+  if (recurring.frequency === "monthly" && recurring.day_of_month) {
+    return recurring.day_of_month + "일";
+  }
+  return "";
 };

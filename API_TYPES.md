@@ -5,7 +5,9 @@ This document defines the data structures used in the API.
 ## Core Models
 
 ### `Category`
+
 Represents a transaction category.
+
 ```rust
 struct Category {
     id: Option<i64>,
@@ -16,7 +18,9 @@ struct Category {
 ```
 
 ### `Transaction`
+
 Represents a single financial transaction.
+
 ```rust
 struct Transaction {
     id: Option<i64>,
@@ -31,7 +35,9 @@ struct Transaction {
 ```
 
 ### `TransactionWithCategory`
+
 A transaction including its associated category details.
+
 ```rust
 struct TransactionWithCategory {
     id: Option<i64>,
@@ -48,13 +54,16 @@ struct TransactionWithCategory {
 ```
 
 ### `RecurringTransaction`
+
 Represents a recurring transaction setup.
+
 ```rust
 struct RecurringTransaction {
     id: Option<i32>,
     description: String,
     amount: f64,
     category_id: Option<i32>,
+    is_fixed: i64,
     frequency: RecurringFrequency,
     start_date: String, // YYYY-MM-DD
     end_date: Option<String>,
@@ -67,7 +76,9 @@ struct RecurringTransaction {
 ```
 
 ### `RecurringHistoryItem`
+
 Represents a history record of a processed recurring transaction.
+
 ```rust
 struct RecurringHistoryItem {
     id: i64,
@@ -83,7 +94,9 @@ struct RecurringHistoryItem {
 ```
 
 ### `OneDriveStatus`
+
 Represents the connection status with OneDrive.
+
 ```rust
 struct OneDriveStatus {
     is_connected: bool,
@@ -96,14 +109,18 @@ struct OneDriveStatus {
 ## Enums
 
 ### `RecurringFrequency`
+
 Enum for recurring transaction frequency.
+
 - `Daily` (0)
 - `Weekly` (1)
 - `Monthly` (2)
 - `Yearly` (3)
 
 ### `ComparisonType`
+
 Enum for dashboard comparison metrics.
+
 - `Expense`
 - `Income`
 - `NetIncome`
@@ -113,7 +130,9 @@ Enum for dashboard comparison metrics.
 ## Dashboard & Statistics Models
 
 ### `DailySummary`
+
 Summary of transactions for a specific day.
+
 ```rust
 struct DailySummary {
     date: String,
@@ -126,7 +145,9 @@ struct DailySummary {
 ```
 
 ### `MonthlyTotalSummary`
+
 Summary of transactions for a specific month.
+
 ```rust
 struct MonthlyTotalSummary {
     year_month: String,
@@ -139,7 +160,9 @@ struct MonthlyTotalSummary {
 ```
 
 ### `MonthlyOverview`
+
 Overview data for a specific month dashboard.
+
 ```rust
 struct MonthlyOverview {
     total_income: f64,
@@ -152,7 +175,9 @@ struct MonthlyOverview {
 ```
 
 ### `CategoryExpense`
+
 Expense summary for a specific category.
+
 ```rust
 struct CategoryExpense {
     category_id: i32,
@@ -165,7 +190,9 @@ struct CategoryExpense {
 ```
 
 ### `DailyExpense`
+
 Daily expense total.
+
 ```rust
 struct DailyExpense {
     date: String,
@@ -175,7 +202,9 @@ struct DailyExpense {
 ```
 
 ### `DailyCategoryTransaction`
+
 Aggregated transaction data by day and category.
+
 ```rust
 struct DailyCategoryTransaction {
     date: String,
@@ -189,7 +218,9 @@ struct DailyCategoryTransaction {
 ```
 
 ### `YearlySummaryItem`
+
 Summary data for a year.
+
 ```rust
 struct YearlySummaryItem {
     year: i32,
@@ -200,7 +231,9 @@ struct YearlySummaryItem {
 ```
 
 ### `MonthlyFinancialSummaryItem`
+
 Financial summary for a specific month used in yearly reports.
+
 ```rust
 struct MonthlyFinancialSummaryItem {
     year_month: String,
@@ -213,7 +246,9 @@ struct MonthlyFinancialSummaryItem {
 ```
 
 ### `MetricStats`
+
 Statistics for a specific financial metric (e.g., income, expense).
+
 ```rust
 struct MetricStats {
     total: f64,
@@ -226,7 +261,9 @@ struct MetricStats {
 ```
 
 ### `FinancialSummaryStats`
+
 Aggregated financial statistics.
+
 ```rust
 struct FinancialSummaryStats {
     income: MetricStats,
@@ -237,7 +274,9 @@ struct FinancialSummaryStats {
 ```
 
 ### `CategoryMonthlyAmount`
+
 Monthly total amount for a category.
+
 ```rust
 struct CategoryMonthlyAmount {
     year_month: String,
@@ -251,7 +290,9 @@ struct CategoryMonthlyAmount {
 ```
 
 ### `YearlyDashboardData`
+
 Combined data for the yearly dashboard.
+
 ```rust
 struct YearlyDashboardData {
     financial_summary_stats: FinancialSummaryStats,
@@ -260,7 +301,9 @@ struct YearlyDashboardData {
 ```
 
 ### `TreemapNode`
+
 Node structure for treemap visualizations.
+
 ```rust
 struct TreemapNode {
     name: String,
@@ -274,7 +317,9 @@ struct TreemapNode {
 ```
 
 ### `CategoryFixedVariableSummary`
+
 Summary of fixed vs variable expenses for a category.
+
 ```rust
 struct CategoryFixedVariableSummary {
     category_id: i64,
@@ -288,7 +333,9 @@ struct CategoryFixedVariableSummary {
 ```
 
 ### `ComparisonMetric`
+
 Comparison result between two periods.
+
 ```rust
 struct ComparisonMetric {
     current: i64,
@@ -299,7 +346,9 @@ struct ComparisonMetric {
 ```
 
 ### `BadgeStats`
+
 Statistics for dashboard badges.
+
 ```rust
 struct BadgeStats {
     max_expense_month: Option<MonthAmountStat>,
@@ -312,7 +361,9 @@ struct BadgeStats {
 ```
 
 ### `DayOfWeekResponse`
+
 Response structure for day of week statistics.
+
 ```rust
 struct DayOfWeekResponse {
     categories: Vec<DayOfWeekCategoryStat>,
@@ -321,7 +372,9 @@ struct DayOfWeekResponse {
 ```
 
 ### `DayOfWeekCategoryStat`
+
 Statistics for a category by day of week.
+
 ```rust
 struct DayOfWeekCategoryStat {
     day_of_week: i32, // 0: Sun ... 6: Sat
@@ -336,7 +389,9 @@ struct DayOfWeekCategoryStat {
 ```
 
 ### `DayOfWeekTotalStat`
+
 Total statistics by day of week.
+
 ```rust
 struct DayOfWeekTotalStat {
     day_of_week: i32,
@@ -350,7 +405,9 @@ struct DayOfWeekTotalStat {
 ## Helper Models
 
 ### `TransactionFilters`
+
 Filter criteria for querying transactions.
+
 ```rust
 struct TransactionFilters {
     keyword: Option<String>,
@@ -365,7 +422,9 @@ struct TransactionFilters {
 ```
 
 ### `RecurringPayload`
+
 Payload for recurring transaction events.
+
 ```rust
 struct RecurringPayload {
     count: i32,
@@ -374,7 +433,9 @@ struct RecurringPayload {
 ```
 
 ### `DailyDetailResponse`
+
 Response for detailed daily transaction view.
+
 ```rust
 struct DailyDetailResponse {
     items: Vec<TransactionWithCategory>,
@@ -383,7 +444,9 @@ struct DailyDetailResponse {
 ```
 
 ### `ExcelPreviewRow`
+
 Preview data for Excel import.
+
 ```rust
 struct ExcelPreviewRow {
     id: String,
@@ -401,7 +464,9 @@ struct ExcelPreviewRow {
 ```
 
 ### `MonthAmountStat`
+
 Helper for BadgeStats.
+
 ```rust
 struct MonthAmountStat {
     month: String,
@@ -410,7 +475,9 @@ struct MonthAmountStat {
 ```
 
 ### `CategoryStat`
+
 Helper for BadgeStats.
+
 ```rust
 struct CategoryStat {
     name: String,
@@ -420,7 +487,9 @@ struct CategoryStat {
 ```
 
 ### `DayOfWeekStat`
+
 Helper for BadgeStats.
+
 ```rust
 struct DayOfWeekStat {
     day: String,

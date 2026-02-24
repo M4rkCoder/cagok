@@ -24,13 +24,16 @@ import { useSyncStore } from "@/store/useSyncStore";
 
 import { Switch } from "@/components/ui/switch";
 import { useConfirmStore } from "@/store/useConfirmStore";
+import { useAppStore } from "@/store/useAppStore";
 
 const SyncSettings = () => {
   const { resetHeader, setHeader } = useHeaderStore();
+  const { updateSetting } = useAppStore();
   const {
     status,
     isLoading,
     autoBackup,
+    autoSyncEnabled,
     checkStatus,
     loadSettings,
     toggleAutoBackup,
@@ -70,6 +73,11 @@ const SyncSettings = () => {
       ),
       onConfirm: async () => await restore(),
     });
+  };
+
+  const handleToggleAutoSync = async (checked: boolean) => {
+    await updateSetting("onedrive_auto_sync", checked.toString());
+    useSyncStore.setState({ autoSyncEnabled: checked });
   };
 
   return (
@@ -175,13 +183,39 @@ const SyncSettings = () => {
           </div>
 
           {status?.is_connected && (
-            <div className="flex items-center space-x-2 pt-4 border-t">
-              <Switch
-                id="auto-backup"
-                checked={autoBackup}
-                onCheckedChange={toggleAutoBackup}
-              />
-              <Label htmlFor="auto-backup">앱 종료 시 자동 백업</Label>
+            <div className="space-y-4 pt-4 border-t">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="auto-sync" className="text-base">
+                    앱 시작 시 자동 동기화
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    앱을 켤 때 클라우드에 최신 데이터가 있으면 자동으로
+                    가져옵니다.
+                  </p>
+                </div>
+                <Switch
+                  id="auto-sync"
+                  checked={autoSyncEnabled}
+                  onCheckedChange={handleToggleAutoSync}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="auto-backup" className="text-base">
+                    앱 종료 시 자동 백업
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    앱을 닫을 때 현재 데이터를 OneDrive에 안전하게 저장합니다.
+                  </p>
+                </div>
+                <Switch
+                  id="auto-backup"
+                  checked={autoBackup}
+                  onCheckedChange={toggleAutoBackup}
+                />
+              </div>
             </div>
           )}
         </div>

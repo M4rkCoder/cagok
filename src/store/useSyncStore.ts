@@ -7,6 +7,7 @@ interface SyncState {
   status: OneDriveStatus | null;
   isLoading: boolean;
   autoBackup: boolean;
+  autoSyncEnabled: boolean;
 
   // Actions
   checkStatus: () => Promise<void>;
@@ -22,6 +23,7 @@ export const useSyncStore = create<SyncState>((set, get) => ({
   status: null,
   isLoading: false,
   autoBackup: false,
+  autoSyncEnabled: false,
 
   checkStatus: async () => {
     try {
@@ -34,12 +36,22 @@ export const useSyncStore = create<SyncState>((set, get) => ({
 
   loadSettings: async () => {
     try {
-      const val = await invoke<string | null>("get_setting_command", {
-        key: "auto_onedrive_backup",
+      // 두 가지 설정값을 병렬로 가져옵니다.
+      const [backupVal, syncVal] = await Promise.all([
+        invoke<string | null>("get_setting_command", {
+          key: "auto_onedrive_backup",
+        }),
+        invoke<string | null>("get_setting_command", {
+          key: "onedrive_auto_sync", // 우리가 추가한 키
+        }),
+      ]);
+
+      set({
+        autoBackup: backupVal === "true",
+        autoSyncEnabled: syncVal === "true", // 이제 인터페이스 에러가 사라집니다.
       });
-      set({ autoBackup: val === "true" });
     } catch (e) {
-      console.error(e);
+      console.error("설정을 불러오는 중 오류 발생:", e);
     }
   },
 

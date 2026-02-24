@@ -42,6 +42,19 @@ struct GraphMeResponse {
     user_principal_name: String,
 }
 
+#[derive(Deserialize)]
+struct DriveItem {
+    #[serde(rename = "lastModifiedDateTime")]
+    last_modified_date_time: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SyncCheckResult {
+    pub needs_update: bool,
+    pub cloud_time: String,
+    pub local_time: String,
+}
+
 // Store tokens in DB (app_settings)
 fn save_tokens(conn: &Connection, tokens: &TokenData) -> Result<(), String> {
     let json = serde_json::to_string(tokens).map_err(|e| e.to_string())?;
@@ -352,12 +365,8 @@ pub async fn backup_db<R: Runtime>(app_handle: AppHandle<R>) -> Result<String, S
     let app_dir = app_handle.path().app_data_dir().map_err(|e| e.to_string())?;
     let db_path = app_dir.join("cagok.db");
     
-    // We need to read the file.
-    // If SQLite has it locked, we might need to copy it first?
-    // Usually read sharing is allowed.
     let content = std::fs::read(&db_path).map_err(|e| format!("Failed to read DB: {}", e))?;
 
-    // Upload to /Apps/Cagok/cagok.db in OneDrive Root
     let url = "https://graph.microsoft.com/v1.0/me/drive/root:/Apps/Cagok/cagok.db:/content";
     
     let res = client.put(url)
@@ -397,38 +406,28 @@ pub async fn restore_db<R: Runtime>(app_handle: AppHandle<R>) -> Result<String, 
 
     let content = res.bytes().await.map_err(|e| e.to_string())?;
 
-    // Save to a temporary file first
     let app_dir = app_handle.path().app_data_dir().map_err(|e| e.to_string())?;
     let temp_path = app_dir.join("cagok_restore.db");
     let db_path = app_dir.join("cagok.db");
 
     std::fs::write(&temp_path, content).map_err(|e| e.to_string())?;
 
-    // Now the tricky part: Replacing the DB while running.
-    // We need to close the current connection.
     let state = app_handle.state::<DbConnection>();
     {
         let mut guard = state.0.lock().map_err(|_| "Failed to lock DB")?;
-        // Replace connection with in-memory to release file lock
         let old_conn = std::mem::replace(&mut *guard, Connection::open_in_memory().unwrap());
-        drop(old_conn); // This closes the file handle
+        drop(old_conn); 
 
-        // Now replace the file
-        // Retry a few times if needed?
         if let Err(e) = std::fs::rename(&temp_path, &db_path) {
-            // If rename fails (maybe due to other locks?), try copy and delete
              if let Err(e2) = std::fs::copy(&temp_path, &db_path) {
-                  // If that fails, restore the connection and error out
                   *guard = Connection::open(&db_path).map_err(|e| e.to_string())?;
                   return Err(format!("Failed to replace DB file: {} / {}", e, e2));
              }
              let _ = std::fs::remove_file(&temp_path);
         }
 
-        // Re-open connection
         *guard = Connection::open(&db_path).map_err(|e| e.to_string())?;
         
-        // Ensure PRAGMAs are set again if needed (Foreign keys etc)
         guard.execute("PRAGMA foreign_keys = ON;", []).map_err(|e| e.to_string())?;
     }
 
@@ -456,4 +455,68 @@ pub async fn check_status<R: Runtime>(app_handle: AppHandle<R>) -> Result<OneDri
         account_name,
         account_email,
     })
+}
+
+pub async fn check_sync_needed<R: Runtime>(app_handle: &AppHandle<R>) -> Result<SyncCheckResult, String> {
+    let status = check_status(app_handle.clone()).await?;
+    if !status.is_connected {
+        return Err("Not connected".to_string());
+    }
+
+    let remote_time = match get_remote_file_time(app_handle).await? {
+        Some(time) => time,
+        None => return Ok(SyncCheckResult { needs_update: false, cloud_time: "".into(), local_time: "".into() }),
+    };
+
+    let local_time = status.last_synced.unwrap_or_default();
+
+    // 클라우드 시간이 로컬 시간보다 이후(더 최신)인지 확인
+    Ok(SyncCheckResult {
+        needs_update: remote_time > local_time,
+        cloud_time: remote_time,
+        local_time,
+    })
+}
+
+pub async fn get_remote_file_time<R: Runtime>(app_handle: &AppHandle<R>) -> Result<Option<String>, String> {
+    let token = get_valid_token(app_handle).await?;
+    let client = Client::new();
+
+    let url = "https://graph.microsoft.com/v1.0/me/drive/root:/Apps/Cagok/cagok.db";
+    
+    let res = client.get(url)
+        .bearer_auth(token)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if res.status().is_success() {
+        let item: DriveItem = res.json().await.map_err(|e| e.to_string())?;
+        Ok(Some(item.last_modified_date_time))
+    } else if res.status() == 404 {
+        Ok(None) // 파일이 아직 클라우드에 없음
+    } else {
+        Err(format!("메타데이터 조회 실패: {}", res.status()))
+    }
+}
+
+pub async fn auto_sync_check<R: Runtime>(app_handle: AppHandle<R>) -> Result<String, String> {
+    let status = check_status(app_handle.clone()).await?;
+    if !status.is_connected {
+        return Ok("Not logged in, skipping sync".to_string());
+    }
+
+    let remote_time = match get_remote_file_time(&app_handle).await? {
+        Some(time) => time,
+        None => return Ok("No remote file found".to_string()),
+    };
+
+    let local_sync_time = status.last_synced.unwrap_or_default();
+
+    if remote_time > local_sync_time {
+        restore_db(app_handle.clone()).await?;
+        Ok("Auto sync: Database updated from OneDrive".to_string())
+    } else {
+        Ok("Auto sync: Local database is up to date".to_string())
+    }
 }

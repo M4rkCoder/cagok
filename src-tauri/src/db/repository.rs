@@ -1278,7 +1278,7 @@ impl RecurringTransactionRepository {
         let mut stmt = conn
             .prepare(
                 "SELECT 
-                id, description, amount, category_id, frequency,
+                id, description, amount, category_id, is_fixed, frequency,
                 start_date, end_date, day_of_month, day_of_week,
                 is_active, last_created_date, remarks
             FROM recurring_transactions
@@ -1292,14 +1292,15 @@ impl RecurringTransactionRepository {
                 description: row.get(1)?,
                 amount: row.get(2)?,
                 category_id: row.get(3)?,
-                frequency: RecurringFrequency::from(row.get::<_, i32>(4)?),
-                start_date: row.get(5)?,
-                end_date: row.get(6)?,
-                day_of_month: row.get(7)?,
-                day_of_week: row.get(8)?,
-                is_active: row.get::<_, i32>(9)? == 1,
-                last_created_date: row.get(10)?,
-                remarks: row.get(11)?,
+                is_fixed: row.get(4)?,
+                frequency: RecurringFrequency::from(row.get::<_, i32>(5)?),
+                start_date: row.get(6)?,
+                end_date: row.get(7)?,
+                day_of_month: row.get(8)?,
+                day_of_week: row.get(9)?,
+                is_active: row.get::<_, i32>(10)? == 1,
+                last_created_date: row.get(11)?,
+                remarks: row.get(12)?,
             })
         });
 
@@ -1314,7 +1315,7 @@ impl RecurringTransactionRepository {
     pub fn get_all(conn: &Connection) -> Result<Vec<RecurringTransaction>> {
         let query = "
             SELECT 
-                id, description, amount, category_id, frequency,
+                id, description, amount, category_id, is_fixed, frequency,
                 start_date, end_date, day_of_month, day_of_week,
                 is_active, last_created_date, remarks
             FROM recurring_transactions
@@ -1328,14 +1329,15 @@ impl RecurringTransactionRepository {
                 description: row.get(1)?,
                 amount: row.get(2)?,
                 category_id: row.get(3)?,
-                frequency: RecurringFrequency::from(row.get::<_, i32>(4)?),
-                start_date: row.get(5)?,
-                end_date: row.get(6)?,
-                day_of_month: row.get(7)?,
-                day_of_week: row.get(8)?,
-                is_active: row.get::<_, i32>(9)? == 1,
-                last_created_date: row.get(10)?,
-                remarks: row.get(11)?,
+                is_fixed: row.get(4)?,
+                frequency: RecurringFrequency::from(row.get::<_, i32>(5)?),
+                start_date: row.get(6)?,
+                end_date: row.get(7)?,
+                day_of_month: row.get(8)?,
+                day_of_week: row.get(9)?,
+                is_active: row.get::<_, i32>(10)? == 1,
+                last_created_date: row.get(11)?,
+                remarks: row.get(12)?,
             })
         })?;
 
@@ -1346,7 +1348,7 @@ impl RecurringTransactionRepository {
     pub fn get_active(conn: &Connection) -> Result<Vec<RecurringTransaction>> {
         let query = "
             SELECT 
-                id, description, amount, category_id, frequency,
+                id, description, amount, category_id, is_fixed, frequency,
                 start_date, end_date, day_of_month, day_of_week,
                 is_active, last_created_date, remarks
             FROM recurring_transactions
@@ -1361,14 +1363,15 @@ impl RecurringTransactionRepository {
                 description: row.get(1)?,
                 amount: row.get(2)?,
                 category_id: row.get(3)?,
-                frequency: RecurringFrequency::from(row.get::<_, i32>(4)?),
-                start_date: row.get(5)?,
-                end_date: row.get(6)?,
-                day_of_month: row.get(7)?,
-                day_of_week: row.get(8)?,
-                is_active: row.get::<_, i32>(9)? == 1,
-                last_created_date: row.get(10)?,
-                remarks: row.get(11)?,
+                is_fixed: row.get(4)?,
+                frequency: RecurringFrequency::from(row.get::<_, i32>(5)?),
+                start_date: row.get(6)?,
+                end_date: row.get(7)?,
+                day_of_month: row.get(8)?,
+                day_of_week: row.get(9)?,
+                is_active: row.get::<_, i32>(10)? == 1,
+                last_created_date: row.get(11)?,
+                remarks: row.get(12)?,
             })
         })?;
 
@@ -1381,13 +1384,14 @@ impl RecurringTransactionRepository {
 
         conn.execute(
             "INSERT INTO recurring_transactions 
-            (description, amount, category_id, frequency, start_date, end_date,
+            (description, amount, category_id, is_fixed, frequency, start_date, end_date,
              day_of_month, day_of_week, is_active, remarks, created_at)
-            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
             params![
                 recurring.description,
                 recurring.amount,
                 recurring.category_id,
+                recurring.is_fixed,
                 recurring.frequency as i32,
                 recurring.start_date,
                 recurring.end_date,
@@ -1406,14 +1410,15 @@ impl RecurringTransactionRepository {
     pub fn update(conn: &Connection, id: i32, recurring: &RecurringTransaction) -> Result<()> {
         conn.execute(
             "UPDATE recurring_transactions 
-            SET description = ?1, amount = ?2, category_id = ?3, frequency = ?4,
-                start_date = ?5, end_date = ?6, day_of_month = ?7, day_of_week = ?8,
-                is_active = ?9, remarks = ?10
-            WHERE id = ?11",
+            SET description = ?1, amount = ?2, category_id = ?3, is_fixed = ?4, frequency = ?5,
+                start_date = ?6, end_date = ?7, day_of_month = ?8, day_of_week = ?9,
+                is_active = ?10, remarks = ?11
+            WHERE id = ?12",
             params![
                 recurring.description,
                 recurring.amount,
                 recurring.category_id,
+                recurring.is_fixed,
                 recurring.frequency as i32,
                 recurring.start_date,
                 recurring.end_date,
