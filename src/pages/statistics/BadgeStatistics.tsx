@@ -9,7 +9,7 @@ import {
   Award,
   CalendarCheck,
 } from "lucide-react";
-import { useStatisticsStore } from "@/store/useStatisticsStore";
+import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { TitleText } from "./components/TitleText";
 

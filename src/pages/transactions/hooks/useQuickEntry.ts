@@ -8,7 +8,7 @@ import {
 import { QuickEntryTransactionRow } from "@/types";
 import { smartParseDate } from "@/lib/utils";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { useAppStore } from "@/store/useAppStore";
+import { useAppStore } from "@/stores/useAppStore";
 import { invoke } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
 

@@ -1,10 +1,10 @@
 import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { useEffect } from "react";
-import { useDashboardStore } from "@/store/useDashboardStore";
+import { useDashboardStore } from "@/stores/useDashboardStore";
 import { MainExpenseCard } from "./MainExpenseCard";
 import { SummaryItemRow } from "./SummaryItemsRow";
 import DailyTransactionsDialog from "@/components/DailyTransactionsDialog";
-import { useHeaderStore } from "@/store/useHeaderStore";
+import { useHeaderStore } from "@/stores/useHeaderStore";
 import TreemapDetailDialog from "@/pages/dashboard/components/TreemapDetailDialog";
 import CardSelection from "./CardSelection";
 import { useTranslation } from "react-i18next";

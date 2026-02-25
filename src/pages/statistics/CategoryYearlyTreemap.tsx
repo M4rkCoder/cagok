@@ -4,7 +4,7 @@ import { Treemap, ResponsiveContainer, Tooltip } from "recharts";
 import { useTranslation } from "react-i18next";
 import { cn, getThemeColor } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useStatisticsStore } from "@/store/useStatisticsStore";
+import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { TitleText } from "./components/TitleText";
 import { CategoryIcon } from "@/components/CategoryIcon";
 
@@ -87,16 +87,16 @@ export const CategoryYearlyTreemap: React.FC = () => {
 
     const mainCategories = allCategories.filter((item) => item.percentage >= 1);
     const lowVolumeCategories = allCategories.filter(
-      (item) => item.percentage < 1,
+      (item) => item.percentage < 1
     );
 
     const otherTotal = lowVolumeCategories.reduce(
       (sum, item) => sum + item.value,
-      0,
+      0
     );
     const otherCount = lowVolumeCategories.reduce(
       (sum, item) => sum + item.count,
-      0,
+      0
     );
 
     const finalTreemapData: TreemapData[] = mainCategories.map(
@@ -105,9 +105,9 @@ export const CategoryYearlyTreemap: React.FC = () => {
         fill: getThemeColor(
           viewType === "expense" ? "expense" : "income",
           index,
-          mainCategories.length + (otherTotal > 0 ? 1 : 0),
+          mainCategories.length + (otherTotal > 0 ? 1 : 0)
         ),
-      }),
+      })
     );
 
     if (otherTotal > 0) {
@@ -177,7 +177,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
                     ? "text-2xl mb-1"
                     : isMedium
                       ? "text-lg mb-0.5"
-                      : "text-sm",
+                      : "text-sm"
                 )}
               >
                 {icon}
@@ -188,7 +188,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
                 <div
                   className={cn(
                     "font-black truncate w-full px-1",
-                    isLarge ? "text-sm" : "text-[10px]",
+                    isLarge ? "text-sm" : "text-[10px]"
                   )}
                 >
                   {name}
@@ -278,7 +278,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
     <Card
       className={cn(
         "overflow-hidden border-slate-200 shadow-none bg-white",
-        storeLoading && "animate-pulse",
+        storeLoading && "animate-pulse"
       )}
     >
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">

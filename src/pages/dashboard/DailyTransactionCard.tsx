@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useState, useMemo } from "react";
-import { useDashboardStore } from "@/store/useDashboardStore";
+import { useDashboardStore } from "@/stores/useDashboardStore";
 import { getThemeColor } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"; // shadcn/ui 탭 사용 가정
 import CategoryTransactionChart from "./components/CategoryTransactionChart";

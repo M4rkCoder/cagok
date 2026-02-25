@@ -8,7 +8,6 @@ import {
   getFilteredRowModel,
 } from "@tanstack/react-table";
 import { Transaction, TransactionWithCategory } from "@/types";
-import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
@@ -19,8 +18,8 @@ import TransactionTableContent from "./components/TransactionTableContent";
 import TransactionPagination from "./components/TransactionPagination";
 import { Pencil, Trash2 } from "lucide-react";
 import { ExpenseBadge, IncomeBadge } from "./TransactionBadge";
-import { useTransactionStore } from "@/store/useTransactionStore";
-import { useConfirmStore } from "@/store/useConfirmStore";
+import { useTransactionStore } from "@/stores/useTransactionStore";
+import { useConfirmStore } from "@/stores/useConfirmStore";
 import { TransactionFilterPanel } from "./components/TransactionFilterPanel";
 import { cn } from "@/lib/utils";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -34,7 +33,7 @@ const TransactionsTable: React.FC = () => {
   const {
     transactions,
     loading,
-    fetchFilteredAll, // Use fetchFilteredAll instead of fetchTransactions
+    fetchFilteredAll,
     deleteTransaction,
     deleteBulkTransactions,
     setEditingTransaction,

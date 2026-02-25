@@ -16,8 +16,8 @@ import {
 import { Category } from "@/types";
 import { cn } from "@/lib/utils";
 import { CategoryIcon } from "@/components/CategoryIcon"; // 컴포넌트 임포트
-import { useCategoryStore } from "@/store/useCategoryStore";
-import { useAppStore } from "@/store/useAppStore";
+import { useCategoryStore } from "@/stores/useCategoryStore";
+import { useAppStore } from "@/stores/useAppStore";
 
 interface CategoryFormProps {
   onSubmit: (values: any) => void;

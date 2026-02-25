@@ -3,7 +3,7 @@ import { getCurrentWindow, Window } from "@tauri-apps/api/window";
 import FinanceModeRounded from "@/components/FinanceModeRounded";
 import { Minus, Minimize2, Square, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useAppStore } from "@/store/useAppStore";
+import { useAppStore } from "@/stores/useAppStore";
 import { NotificationBell } from "./components/NotificationBell";
 import { SyncNotifier } from "./components/SyncNotifier";
 
@@ -24,10 +24,10 @@ export default function TitleBar() {
 
       // 이벤트 등록
       const unlistenMax = await win.listen("tauri://maximize", () =>
-        setIsMaximized(true),
+        setIsMaximized(true)
       );
       const unlistenUnmax = await win.listen("tauri://unmaximize", () =>
-        setIsMaximized(false),
+        setIsMaximized(false)
       );
       const unlistenResize = await win.listen("tauri://resize", async () => {
         const max = await win.isMaximized();

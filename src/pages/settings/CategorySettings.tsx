@@ -19,12 +19,12 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { useHeaderStore } from "@/store/useHeaderStore";
+import { useHeaderStore } from "@/stores/useHeaderStore";
 import { cn } from "@/lib/utils";
-import { useCategoryStore } from "@/store/useCategoryStore";
-import { useAppStore } from "@/store/useAppStore";
+import { useCategoryStore } from "@/stores/useCategoryStore";
+import { useAppStore } from "@/stores/useAppStore";
 import { Badge } from "@/components/ui/badge";
-import { useConfirmStore } from "@/store/useConfirmStore";
+import { useConfirmStore } from "@/stores/useConfirmStore";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,7 +44,9 @@ const CategorySettings = () => {
   const { confirm } = useConfirmStore();
   const { t } = useTranslation();
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"all" | "income" | "expense">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "income" | "expense">(
+    "all"
+  );
 
   useEffect(() => {
     setHeader("설정");
@@ -61,7 +63,7 @@ const CategorySettings = () => {
       {
         incomeCategories: [] as Category[],
         expenseCategories: [] as Category[],
-      },
+      }
     );
   }, [categoryList]);
 
@@ -69,9 +71,9 @@ const CategorySettings = () => {
     activeTab === "all"
       ? categoryList
       : activeTab === "income"
-      ? incomeCategories
-      : expenseCategories;
-      
+        ? incomeCategories
+        : expenseCategories;
+
   const currentType = activeTab === "income" ? 0 : 1; // Default to expense if 'all'
 
   const handleNew = () => {
@@ -138,18 +140,20 @@ const CategorySettings = () => {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as "all" | "income" | "expense")}
+                onClick={() =>
+                  setActiveTab(tab.id as "all" | "income" | "expense")
+                }
                 className={cn(
                   "relative px-6 py-4 text-sm font-bold transition-all flex items-center gap-2 outline-none",
                   activeTab === tab.id
                     ? tab.color
-                    : "text-slate-400 hover:text-slate-600",
+                    : "text-slate-400 hover:text-slate-600"
                 )}
               >
                 <tab.icon
                   className={cn(
                     "w-4 h-4",
-                    activeTab === tab.id ? tab.color : "text-slate-300",
+                    activeTab === tab.id ? tab.color : "text-slate-300"
                   )}
                 />
                 {tab.label}
@@ -159,7 +163,7 @@ const CategorySettings = () => {
                     "ml-1 h-5 px-1.5 text-[10px] font-black border-none shadow-none",
                     activeTab === tab.id
                       ? "bg-slate-100"
-                      : "bg-transparent text-slate-300",
+                      : "bg-transparent text-slate-300"
                   )}
                 >
                   {tab.count}
@@ -170,7 +174,7 @@ const CategorySettings = () => {
                     layoutId="categoryTabUnderline"
                     className={cn(
                       "absolute bottom-0 left-0 right-0 h-0.5",
-                      tab.bg,
+                      tab.bg
                     )}
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
@@ -225,7 +229,7 @@ const CategorySettings = () => {
                           "absolute inset-0 opacity-40 transition-opacity group-hover:opacity-50",
                           cat.type === 0 // Income
                             ? "bg-emerald-100"
-                            : "bg-indigo-100", // Expense
+                            : "bg-indigo-100" // Expense
                         )}
                       />
 
@@ -240,7 +244,7 @@ const CategorySettings = () => {
                           "w-full py-2 flex items-center justify-center z-10",
                           cat.type === 0
                             ? "bg-emerald-200/80 text-emerald-900"
-                            : "bg-indigo-200/80 text-indigo-900",
+                            : "bg-indigo-200/80 text-indigo-900"
                         )}
                       >
                         <span className="text-xs font-bold px-1 w-full text-center break-keep leading-tight">

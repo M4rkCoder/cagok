@@ -15,7 +15,7 @@ import {
 import { DashboardPage, SettingsPage, TransactionsPage } from "@/pages";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
-import { useAppStore } from "@/store/useAppStore";
+import { useAppStore } from "@/stores/useAppStore";
 import StatisticsPage from "@/pages/statistics/StatisticsPage";
 import QuickEntry from "@/pages/transactions/QuickEntry";
 import RecurringSettings from "@/pages/transactions/RecurringSettings";

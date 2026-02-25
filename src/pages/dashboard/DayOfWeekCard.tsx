@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useDashboardStore } from "@/store/useDashboardStore";
+import { useDashboardStore } from "@/stores/useDashboardStore";
 import { AllIcon } from "@/components/CategoryIcon";
 import { DashboardTitle } from "./components/DashboardTitle";
 
@@ -62,7 +62,7 @@ export const DayOfWeekCard: React.FC = () => {
 
   const data = useMemo(
     () => (viewMode === "expense" ? dayOfWeekExpense : dayOfWeekIncome),
-    [viewMode, dayOfWeekExpense, dayOfWeekIncome],
+    [viewMode, dayOfWeekExpense, dayOfWeekIncome]
   );
 
   const {
@@ -118,13 +118,13 @@ export const DayOfWeekCard: React.FC = () => {
           txAvg: info.txCount > 0 ? info.total / info.txCount : 0,
           fill: "",
         };
-      },
+      }
     );
 
     processedCategories.sort((a, b) => b.value - a.value);
     const grandTotal = processedCategories.reduce(
       (sum, item) => sum + item.value,
-      0,
+      0
     );
 
     const donutDataWithColor = processedCategories.map((cat, index) => ({
@@ -392,7 +392,7 @@ export const DayOfWeekCard: React.FC = () => {
                       }}
                       onClick={() =>
                         setSelectedCategory(
-                          entry.id === selectedCategory ? "all" : entry.id,
+                          entry.id === selectedCategory ? "all" : entry.id
                         )
                       }
                     />
@@ -429,7 +429,7 @@ export const DayOfWeekCard: React.FC = () => {
                                 ? metricType === "total"
                                   ? selectedDonutItem.value
                                   : selectedDonutItem.txAvg
-                                : totalMetricValue,
+                                : totalMetricValue
                             )}
                           </tspan>
                           <tspan

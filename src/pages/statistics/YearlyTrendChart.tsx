@@ -18,7 +18,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { cn, formatCurrency } from "@/lib/utils";
-import { useStatisticsStore } from "@/store/useStatisticsStore";
+import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { TitleText } from "./components/TitleText";
 
 // 색상 체계 업데이트
@@ -43,7 +43,7 @@ const getPath = (
   y: number,
   width: number,
   height: number,
-  radius: number[],
+  radius: number[]
 ) => {
   const [tr, tl, br, bl] = radius;
   return `
@@ -117,7 +117,7 @@ export function YearlyTrendChart() {
                 "px-4 py-1.5 text-xs font-bold transition-all rounded-md",
                 viewMode === tab.id
                   ? "bg-white text-blue-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700",
+                  : "text-slate-500 hover:text-slate-700"
               )}
             >
               {tab.label}
@@ -255,7 +255,7 @@ export function YearlyTrendChart() {
                                 "flex items-center justify-between px-2 py-1.5 rounded-lg transition-colors",
                                 isHighlighted
                                   ? "bg-slate-50 border border-slate-100 shadow-sm"
-                                  : "opacity-40",
+                                  : "opacity-40"
                               )}
                             >
                               <div className="flex items-center gap-2">
@@ -268,7 +268,7 @@ export function YearlyTrendChart() {
                                     "text-[11px] font-bold uppercase tracking-tighter",
                                     isHighlighted
                                       ? "text-slate-700"
-                                      : "text-slate-400",
+                                      : "text-slate-400"
                                   )}
                                 >
                                   {config.label}
@@ -281,7 +281,7 @@ export function YearlyTrendChart() {
                                   item.id === "netIncome" &&
                                     Number(item.value) < 0
                                     ? "text-red-500"
-                                    : "text-slate-900",
+                                    : "text-slate-900"
                                 )}
                               >
                                 {formatCurrency(Number(item.value))}

@@ -23,8 +23,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { useHeaderStore } from "@/store/useHeaderStore";
-import { useSettingStore } from "@/store/useSettingStore";
+import { useHeaderStore } from "@/stores/useHeaderStore";
+import { useSettingStore } from "@/stores/useSettingStore";
 
 export default function DbSettings() {
   const resetHeader = useHeaderStore((state) => state.resetHeader);

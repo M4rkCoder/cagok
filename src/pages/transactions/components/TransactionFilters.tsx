@@ -37,7 +37,7 @@ import {
   ExpenseBadge,
   FixedExpenseBadge,
 } from "../TransactionBadge";
-import { useAppStore } from "@/store/useAppStore";
+import { useAppStore } from "@/stores/useAppStore";
 import {
   Tooltip,
   TooltipContent,

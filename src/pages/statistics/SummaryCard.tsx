@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { formatCurrency } from "@/lib/utils";
-import { useStatisticsStore } from "@/store/useStatisticsStore";
+import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { TitleText } from "./components/TitleText";
 
 const emptyMetricStats: MetricStats = {

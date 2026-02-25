@@ -2,19 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Search,
   Check,
-  ChevronsUpDown,
-  CalendarIcon,
   X,
-  Filter,
   RotateCcw,
-  ArrowRight,
   Wallet,
-  SlidersHorizontal,
   ChevronDown,
-  Calendar1Icon,
   Shapes,
-  FilterIcon,
   LayoutGrid,
+  CalendarIcon,
 } from "lucide-react";
 import { format, startOfMonth, subMonths, subYears } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -39,8 +33,8 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Calendar } from "@/components/ui/calendar";
-import { useAppStore } from "@/store/useAppStore";
-import { useTransactionStore } from "@/store/useTransactionStore";
+import { useAppStore } from "@/stores/useAppStore";
+import { useTransactionStore } from "@/stores/useTransactionStore";
 import { DateRange } from "react-day-picker";
 import { TransactionFilters } from "@/types";
 import {
@@ -58,7 +52,7 @@ type TransactionMode =
   | "fixed_expense"
   | "variable_expense";
 
-interface FilterState {
+export interface FilterState {
   keyword: string;
   categoryIds: number[];
   dateRange: DateRange | undefined;
@@ -76,7 +70,7 @@ const DEFAULT_FILTERS: FilterState = {
   mode: "all",
 };
 
-const MODE_CONFIG = {
+export const MODE_CONFIG = {
   all: { label: "전체", badge: "구분" },
   income: { label: "수입", badge: <IncomeBadge /> },
   total_expense: { label: "총지출", badge: <ExpenseBadge /> },
@@ -84,6 +78,9 @@ const MODE_CONFIG = {
   variable_expense: { label: "변동지출", badge: <VariableExpenseBadge /> },
 } as const;
 
+// ============================================================================
+// [Main Component]
+// ============================================================================
 export function TransactionFilterPanel() {
   const { categoryList } = useAppStore();
   const {
@@ -94,15 +91,10 @@ export function TransactionFilterPanel() {
 
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [localKeyword, setLocalKeyword] = useState(filters.keyword);
-  const [openCategory, setOpenCategory] = useState(false);
-  const [openMode, setOpenMode] = useState(false);
-  const [tempAmount, setTempAmount] = useState({ min: "", max: "" });
-  const [openPrice, setOpenPrice] = useState(false);
-  const current = MODE_CONFIG[filters.mode];
 
+  // 스토어 상태 -> 로컬 상태 동기화
   useEffect(() => {
     if (storeFilters) {
-      // 스토어의 백엔드 필터 형식을 로컬 FilterState 형식으로 역변환
       const restoredFilters: FilterState = {
         keyword: storeFilters.keyword || "",
         categoryIds: storeFilters.category_ids || [],
@@ -130,23 +122,10 @@ export function TransactionFilterPanel() {
 
       setFilters(restoredFilters);
       setLocalKeyword(restoredFilters.keyword);
-      setTempAmount({
-        min: restoredFilters.minAmount,
-        max: restoredFilters.maxAmount,
-      });
     }
-  }, []);
+  }, [storeFilters]);
 
-  const updateFilter = (key: keyof FilterState, value: any) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const filteredCategories = useMemo(() => {
-    if (filters.mode === "all") return categoryList;
-    const targetType = filters.mode === "income" ? 0 : 1;
-    return categoryList.filter((c) => c.type === targetType);
-  }, [categoryList, filters.mode]);
-
+  // 백엔드 파라미터 규격으로 변환
   const constructBackendFilters = (
     fs: FilterState = filters
   ): TransactionFilters => {
@@ -171,38 +150,43 @@ export function TransactionFilterPanel() {
     };
   };
 
-  const applyPriceFilter = async () => {
-    const nextFilters = {
-      ...filters,
-      minAmount: tempAmount.min,
-      maxAmount: tempAmount.max,
-    };
+  // ✅ 핵심: 상태 업데이트와 동시에 검색을 즉시 실행하는 통합 함수
+  const applyFilters = async (nextFilters: FilterState) => {
     setFilters(nextFilters);
-
-    // 2. 팝오버 닫기
-    setOpenPrice(false);
-
-    const backendFilters = constructBackendFilters(nextFilters);
-
-    setStoreFilters(backendFilters);
-    await fetchFilteredAll(backendFilters);
-  };
-
-  const handleApply = async () => {
-    const nextFilters = { ...filters, keyword: localKeyword };
-    setFilters(nextFilters);
-
     const backendFilters = constructBackendFilters(nextFilters);
     setStoreFilters(backendFilters);
     await fetchFilteredAll(backendFilters);
   };
 
+  // 단일 필터 변경 시 호출
+  const updateFilter = (key: keyof FilterState, value: any) => {
+    applyFilters({ ...filters, [key]: value });
+  };
+
+  // 가격 필터 변경 시 호출
+  const applyPriceFilter = (min: string, max: string) => {
+    applyFilters({ ...filters, minAmount: min, maxAmount: max });
+  };
+
+  // 검색어 입력 후 엔터/검색버튼 클릭 시 호출
+  const handleSearch = () => {
+    applyFilters({ ...filters, keyword: localKeyword });
+  };
+
+  // 전체 초기화
   const handleReset = async () => {
     setFilters(DEFAULT_FILTERS);
     setLocalKeyword("");
     setStoreFilters({});
     await fetchFilteredAll({});
   };
+
+  // 선택된 모드에 맞춰 카테고리 목록 필터링
+  const filteredCategories = useMemo(() => {
+    if (filters.mode === "all") return categoryList;
+    const targetType = filters.mode === "income" ? 0 : 1;
+    return categoryList.filter((c) => c.type === targetType);
+  }, [categoryList, filters.mode]);
 
   const selectedCategories = categoryList.filter((c) =>
     filters.categoryIds.includes(c.id)
@@ -211,425 +195,533 @@ export function TransactionFilterPanel() {
   return (
     <Card className="p-2 border-slate-200/60 bg-background backdrop-blur shadow-sm ring-1 ring-black/5">
       <div className="flex flex-wrap items-center gap-3">
-        {/* 검색어 */}
-        <div className="flex items-center min-w-[150px] flex-1 max-w-[250px]">
-          <div className="relative flex-1 group">
-            {/* 왼쪽 검색 아이콘 */}
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-focus-within:text-slate-600 transition-colors" />
+        <SearchFilter
+          keyword={localKeyword}
+          setKeyword={setLocalKeyword}
+          onSearch={handleSearch}
+        />
+        <ModeSelector
+          mode={filters.mode}
+          onModeChange={(m) => updateFilter("mode", m)}
+        />
+        <CategorySelector
+          selectedIds={filters.categoryIds}
+          categories={filteredCategories}
+          onToggle={(ids) => updateFilter("categoryIds", ids)}
+        />
+        <DateRangeSelector
+          dateRange={filters.dateRange}
+          onDateChange={(range) => updateFilter("dateRange", range)}
+        />
+        <PriceSelector
+          minAmount={filters.minAmount}
+          maxAmount={filters.maxAmount}
+          onApply={applyPriceFilter}
+          onReset={() => applyPriceFilter("", "")}
+        />
 
-            <Input
-              value={localKeyword}
-              onChange={(e) => setLocalKeyword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleApply()}
-              placeholder="내역/메모 검색..."
-              className="pl-8 h-8 text-xs bg-white/50 border-slate-200 rounded-r-none focus-visible:ring-0 focus-visible:ring-offset-0 border-r-0 transition-all"
-            />
-          </div>
-
-          {/* 오른쪽 끝 검색 버튼 */}
-          <Button
-            type="button"
-            variant="secondary" // 혹은 'outline'
-            onClick={handleApply}
-            className="h-8 px-3 text-xs rounded-l-none border border-l-0 border-slate-200 bg-slate-100 hover:bg-slate-900 text-slate-600 hover:text-white font-semibold transition-colors"
-          >
-            검색
-          </Button>
-        </div>
-
-        {/* 거래 유형 (Select) */}
-        <Popover open={openMode} onOpenChange={setOpenMode}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn(
-                "h-8 text-xs gap-1.5 border-slate-200 bg-white/50 min-w-[110px] justify-between",
-                filters.mode !== "all" && "border-slate-800 bg-slate-50"
-              )}
-            >
-              <div className="flex items-center gap-1.5">
-                <LayoutGrid className="h-3 w-3 text-slate-400" />
-                <span>{current.label}</span>
-              </div>
-              <ChevronDown className="h-3 w-3 text-slate-400 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[130px] p-0" align="start">
-            <Command>
-              <CommandList>
-                <CommandGroup>
-                  {Object.entries(MODE_CONFIG).map(([key, config]) => (
-                    <CommandItem
-                      key={key}
-                      onSelect={() => {
-                        setFilters((prev: any) => ({ ...prev, mode: key }));
-                        setOpenMode(false);
-                      }}
-                      className="text-xs py-1.5"
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-3 w-3",
-                          filters.mode === key ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      {config.badge}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-
-        {/* 카테고리 (팝오버) */}
-        <Popover open={openCategory} onOpenChange={setOpenCategory}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn(
-                "h-8 text-xs gap-1.5 border-slate-200 bg-white/50 min-w-[110px] justify-between",
-                selectedCategories.length > 0 && "border-slate-800 bg-slate-50"
-              )}
-            >
-              <div className="flex items-center gap-1.5">
-                <Shapes className="h-3 w-3 text-slate-400" />
-                <span>
-                  {filters.categoryIds.length > 0
-                    ? `${filters.categoryIds.length}개`
-                    : "카테고리"}
-                </span>
-              </div>
-              <ChevronDown className="h-3 w-3 text-slate-400 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[180px] p-0" align="start">
-            <Command>
-              <CommandInput
-                placeholder="카테고리 검색..."
-                className="h-8 text-xs"
-              />
-              <CommandList>
-                <CommandEmpty className="text-[11px] py-2">
-                  결과 없음
-                </CommandEmpty>
-                <CommandGroup>
-                  {filteredCategories.map((category) => (
-                    <CommandItem
-                      key={category.id}
-                      onSelect={() => {
-                        const next = filters.categoryIds.includes(category.id)
-                          ? filters.categoryIds.filter(
-                              (id) => id !== category.id
-                            )
-                          : [...filters.categoryIds, category.id];
-                        updateFilter("categoryIds", next);
-                      }}
-                      className="text-sm py-1.5"
-                    >
-                      <Check
-                        className={cn(
-                          "mr-0 h-3 w-3",
-                          filters.categoryIds.includes(category.id)
-                            ? "opacity-100"
-                            : "opacity-0"
-                        )}
-                      />
-                      <CategoryIcon
-                        icon={category.icon}
-                        type={category.type}
-                        size="xs"
-                      />
-                      {category.name}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-
-        {/* 날짜 범위 (팝오버) */}
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn(
-                "h-8 text-xs gap-1.5 border-slate-200 bg-white/50 min-w-[110px] justify-between",
-                filters.dateRange && "border-slate-800 bg-slate-50"
-              )}
-            >
-              <div className="flex items-center gap-1.5">
-                <CalendarIcon className="h-3 w-3 text-slate-400" />
-                <span>
-                  {filters.dateRange?.from
-                    ? filters.dateRange.to
-                      ? `${format(filters.dateRange.from, "MM.dd")}~${format(filters.dateRange.to, "MM.dd")}`
-                      : format(filters.dateRange.from, "MM.dd")
-                    : "기간"}
-                </span>
-              </div>
-              <ChevronDown className="h-3 w-3 text-slate-400 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <div className="p-2 border-b grid grid-cols-4 gap-1 bg-slate-50/50">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  const start = startOfMonth(new Date());
-                  updateFilter("dateRange", { from: start, to: new Date() });
-                }}
-                className="text-sm h-7"
-              >
-                이번 달
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  const start = subMonths(new Date(), 3);
-                  updateFilter("dateRange", { from: start, to: new Date() });
-                }}
-                className="text-sm h-7"
-              >
-                3개월
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  const start = subMonths(new Date(), 6);
-                  updateFilter("dateRange", { from: start, to: new Date() });
-                }}
-                className="text-sm h-7"
-              >
-                6개월
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  const start = subYears(new Date(), 1);
-                  updateFilter("dateRange", { from: start, to: new Date() });
-                }}
-                className="text-sm h-7"
-              >
-                1년
-              </Button>
-            </div>
-            <Calendar
-              initialFocus
-              mode="range"
-              selected={filters.dateRange}
-              onSelect={(range) => updateFilter("dateRange", range)}
-              numberOfMonths={2}
-              locale={ko}
-              className="text-xs"
-            />
-          </PopoverContent>
-        </Popover>
-
-        {/* 금액 (팝오버) */}
-        <Popover open={openPrice} onOpenChange={setOpenPrice}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className={cn(
-                "h-8 text-xs gap-1.5 border-slate-200 bg-white/50 min-w-[110px] justify-between",
-                (filters.minAmount || filters.maxAmount) &&
-                  "border-slate-800 bg-slate-50"
-              )}
-            >
-              <div className="flex items-center gap-1.5">
-                <Wallet className="h-3 w-3 text-slate-400" />
-                <span
-                  className={cn(
-                    (filters.minAmount || filters.maxAmount) &&
-                      "text-slate-900 font-bold"
-                  )}
-                >
-                  {filters.minAmount || filters.maxAmount
-                    ? "금액 필터"
-                    : "금액"}
-                </span>
-              </div>
-              <ChevronDown className="h-3 w-3 text-slate-400 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-56 p-4" align="start">
-            <div className="space-y-4">
-              <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-tighter">
-                금액 범위 (원)
-              </Label>
-
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  placeholder="최소"
-                  value={tempAmount.min}
-                  onChange={(e) =>
-                    setTempAmount((prev) => ({ ...prev, min: e.target.value }))
-                  }
-                  className="h-9 text-xs border-slate-200 focus-visible:ring-1 focus-visible:ring-slate-400"
-                  onKeyDown={(e) => e.key === "Enter" && applyPriceFilter()}
-                />
-                <span className="text-slate-300">~</span>
-                <Input
-                  type="number"
-                  placeholder="최대"
-                  value={tempAmount.max}
-                  onChange={(e) =>
-                    setTempAmount((prev) => ({ ...prev, max: e.target.value }))
-                  }
-                  className="h-9 text-xs border-slate-200 focus-visible:ring-1 focus-visible:ring-slate-400"
-                  onKeyDown={(e) => e.key === "Enter" && applyPriceFilter()}
-                />
-              </div>
-
-              <div className="flex gap-2 pt-1">
-                <Button
-                  variant="outline"
-                  className="h-8 flex-1 text-xs text-slate-500"
-                  onClick={() => {
-                    setTempAmount({ min: "", max: "" });
-                    updateFilter("minAmount", "");
-                    updateFilter("maxAmount", "");
-                  }}
-                >
-                  초기화
-                </Button>
-                <Button
-                  className="h-8 flex-1 text-xs bg-slate-800 hover:bg-slate-900"
-                  onClick={applyPriceFilter} // 팝오버 내에서 즉시 적용 버튼
-                >
-                  확인
-                </Button>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        {/* 액션 버튼 그룹 */}
+        {/* 액션 버튼 그룹: 전체 적용 버튼 제거, 초기화(리셋) 버튼만 유지 */}
         <div className="ml-auto flex items-center gap-1.5">
-          <Button
-            onClick={handleApply}
-            size="sm"
-            className="h-8 px-4 text-xs font-bold bg-slate-800 hover:bg-slate-900 shadow-sm rounded-full"
-          >
-            <FilterIcon />
-            적용
-          </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleReset}
             className="h-8 w-8 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+            title="초기화"
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
-      {/* 선택된 필터 칩 (공간이 있을 때만 표시) */}
-      {(selectedCategories.length > 0 || filters) && (
-        <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-slate-100">
-          {filters.keyword && (
-            <Badge
-              key={filters.keyword}
-              variant="secondary"
-              className="text-sm h-5 gap-1 bg-slate-100/80 text-slate-600 border-none px-1.5"
-            >
-              <Search className="h-3 w-3" />
-              {filters.keyword}
-              <X
-                className="h-2.5 w-2.5 cursor-pointer hover:text-slate-900"
-                onClick={() => {
-                  updateFilter("keyword", "");
-                  setLocalKeyword("");
-                }}
-              />
-            </Badge>
-          )}
-          {filters.mode !== "all" && (
-            <Badge
-              key={filters.mode}
-              variant="outline"
-              className="text-sm h-5 gap-1 border-none px-1.5 scale-110"
-            >
-              {MODE_CONFIG[filters.mode].badge}
-              <X
-                className="h-2.5 w-2.5 cursor-pointer hover:text-slate-900"
-                onClick={() => {
-                  updateFilter("mode", "all");
-                }}
-              />
-            </Badge>
-          )}
-          {selectedCategories.map((c) => (
-            <Badge
-              key={c.id}
-              variant="secondary"
-              className="text-sm h-5 gap-1 bg-slate-100/80 text-slate-600 border-none px-1.5"
-            >
-              <span className="native-emoji">{c.icon}</span>
-              {c.name}
-              <X
-                className="h-2.5 w-2.5 cursor-pointer hover:text-slate-900"
-                onClick={() => {
-                  const next = filters.categoryIds.filter((id) => id !== c.id);
-                  updateFilter("categoryIds", next);
-                }}
-              />
-            </Badge>
-          ))}
-          {filters.dateRange?.from && (
-            <Badge
-              variant="secondary"
-              className="text-sm h-5 gap-1 bg-slate-100 text-slate-700 border-slate-200 px-1.5 font-medium"
-            >
-              <CalendarIcon className="h-3 w-3" />
-              {format(filters.dateRange.from, "yyyy.M.d")}
-              {filters.dateRange.to &&
-                ` ~ ${format(filters.dateRange.to, "yyyy.M.d")}`}
-              <X
-                className="h-2.5 w-2.5 cursor-pointer hover:text-blue-900"
-                onClick={() => updateFilter("dateRange", undefined)}
-              />
-            </Badge>
-          )}
-          {(filters.minAmount || filters.maxAmount) && (
-            <Badge
-              variant="secondary"
-              className="text-sm h-5 gap-1 bg-slate-100 text-slate-700 border-slate-200 px-1.5 font-medium"
-            >
-              <Wallet className="h-3 w-3 text-slate-400" />
-              <span>
-                {filters.minAmount
-                  ? Number(filters.minAmount).toLocaleString()
-                  : "0"}
-                ~
-                {filters.maxAmount
-                  ? Number(filters.maxAmount).toLocaleString()
-                  : "무제한"}
-              </span>
-              <X
-                className="h-3 w-3 cursor-pointer ml-1 hover:text-red-500 transition-colors"
-                onClick={() => {
-                  updateFilter("minAmount", "");
-                  updateFilter("maxAmount", "");
-                  setTempAmount({ min: "", max: "" });
-                }}
-              />
-            </Badge>
-          )}
-        </div>
-      )}
+      <SelectedFilterBadges
+        filters={filters}
+        selectedCategories={selectedCategories}
+        updateFilter={updateFilter}
+        setLocalKeyword={setLocalKeyword}
+        clearPriceFilter={() => applyPriceFilter("", "")}
+      />
     </Card>
+  );
+}
+
+// ============================================================================
+// [Sub Components]
+// ============================================================================
+
+// 1. 검색창 컴포넌트
+function SearchFilter({
+  keyword,
+  setKeyword,
+  onSearch,
+}: {
+  keyword: string;
+  setKeyword: (val: string) => void;
+  onSearch: () => void;
+}) {
+  return (
+    <div className="flex items-center min-w-[150px] flex-1 max-w-[250px]">
+      <div className="relative flex-1 group">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 group-focus-within:text-slate-600 transition-colors" />
+        <Input
+          value={keyword}
+          onChange={(e) => setKeyword(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && onSearch()}
+          placeholder="내역/메모 검색..."
+          className="pl-8 h-8 text-xs bg-white/50 border-slate-200 rounded-r-none focus-visible:ring-0 focus-visible:ring-offset-0 border-r-0 transition-all"
+        />
+      </div>
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={onSearch}
+        className="h-8 px-3 text-xs rounded-l-none border border-l-0 border-slate-200 bg-slate-100 hover:bg-slate-900 text-slate-600 hover:text-white font-semibold transition-colors"
+      >
+        검색
+      </Button>
+    </div>
+  );
+}
+
+// 2. 거래 유형 선택 컴포넌트
+function ModeSelector({
+  mode,
+  onModeChange,
+}: {
+  mode: TransactionMode;
+  onModeChange: (m: TransactionMode) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const current = MODE_CONFIG[mode];
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "h-8 text-xs gap-1.5 border-slate-200 bg-white/50 min-w-[110px] justify-between",
+            mode !== "all" && "border-slate-800 bg-slate-50"
+          )}
+        >
+          <div className="flex items-center gap-1.5">
+            <LayoutGrid className="h-3 w-3 text-slate-400" />
+            <span>{current.label}</span>
+          </div>
+          <ChevronDown className="h-3 w-3 text-slate-400 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[130px] p-0" align="start">
+        <Command>
+          <CommandList>
+            <CommandGroup>
+              {(Object.keys(MODE_CONFIG) as TransactionMode[]).map((key) => (
+                <CommandItem
+                  key={key}
+                  onSelect={() => {
+                    onModeChange(key);
+                    setOpen(false); // 항목 선택 시 팝오버 닫기 & 즉시 반영
+                  }}
+                  className="text-xs py-1.5"
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-3 w-3",
+                      mode === key ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {MODE_CONFIG[key].badge}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// 3. 카테고리 선택 컴포넌트
+function CategorySelector({
+  selectedIds,
+  categories,
+  onToggle,
+}: {
+  selectedIds: number[];
+  categories: any[];
+  onToggle: (ids: number[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "h-8 text-xs gap-1.5 border-slate-200 bg-white/50 min-w-[110px] justify-between",
+            selectedIds.length > 0 && "border-slate-800 bg-slate-50"
+          )}
+        >
+          <div className="flex items-center gap-1.5">
+            <Shapes className="h-3 w-3 text-slate-400" />
+            <span>
+              {selectedIds.length > 0 ? `${selectedIds.length}개` : "카테고리"}
+            </span>
+          </div>
+          <ChevronDown className="h-3 w-3 text-slate-400 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[180px] p-0" align="start">
+        <Command>
+          <CommandInput
+            placeholder="카테고리 검색..."
+            className="h-8 text-xs"
+          />
+          <CommandList>
+            <CommandEmpty className="text-[11px] py-2">결과 없음</CommandEmpty>
+            <CommandGroup>
+              {categories.map((category) => (
+                <CommandItem
+                  key={category.id}
+                  onSelect={() => {
+                    const next = selectedIds.includes(category.id)
+                      ? selectedIds.filter((id) => id !== category.id)
+                      : [...selectedIds, category.id];
+                    onToggle(next); // 체크하는 즉시 필터 반영
+                  }}
+                  className="text-sm py-1.5"
+                >
+                  <Check
+                    className={cn(
+                      "mr-0 h-3 w-3",
+                      selectedIds.includes(category.id)
+                        ? "opacity-100"
+                        : "opacity-0"
+                    )}
+                  />
+                  <CategoryIcon
+                    icon={category.icon}
+                    type={category.type}
+                    size="xs"
+                  />
+                  {category.name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// 4. 날짜 범위 선택 컴포넌트
+function DateRangeSelector({
+  dateRange,
+  onDateChange,
+}: {
+  dateRange: DateRange | undefined;
+  onDateChange: (range: DateRange | undefined) => void;
+}) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "h-8 text-xs gap-1.5 border-slate-200 bg-white/50 min-w-[110px] justify-between",
+            dateRange && "border-slate-800 bg-slate-50"
+          )}
+        >
+          <div className="flex items-center gap-1.5">
+            <CalendarIcon className="h-3 w-3 text-slate-400" />
+            <span>
+              {dateRange?.from
+                ? dateRange.to
+                  ? `${format(dateRange.from, "MM.dd")}~${format(dateRange.to, "MM.dd")}`
+                  : format(dateRange.from, "MM.dd")
+                : "기간"}
+            </span>
+          </div>
+          <ChevronDown className="h-3 w-3 text-slate-400 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <div className="p-2 border-b grid grid-cols-4 gap-1 bg-slate-50/50">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              onDateChange({ from: startOfMonth(new Date()), to: new Date() })
+            }
+            className="text-sm h-7"
+          >
+            이번 달
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              onDateChange({ from: subMonths(new Date(), 3), to: new Date() })
+            }
+            className="text-sm h-7"
+          >
+            3개월
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              onDateChange({ from: subMonths(new Date(), 6), to: new Date() })
+            }
+            className="text-sm h-7"
+          >
+            6개월
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              onDateChange({ from: subYears(new Date(), 1), to: new Date() })
+            }
+            className="text-sm h-7"
+          >
+            1년
+          </Button>
+        </div>
+        <Calendar
+          initialFocus
+          mode="range"
+          selected={dateRange}
+          onSelect={onDateChange} // 날짜 클릭 즉시 반영
+          numberOfMonths={2}
+          locale={ko}
+          className="text-xs"
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// 5. 금액 범위 선택 컴포넌트
+function PriceSelector({
+  minAmount,
+  maxAmount,
+  onApply,
+  onReset,
+}: {
+  minAmount: string;
+  maxAmount: string;
+  onApply: (min: string, max: string) => void;
+  onReset: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [tempAmount, setTempAmount] = useState({
+    min: minAmount,
+    max: maxAmount,
+  });
+
+  useEffect(() => {
+    setTempAmount({ min: minAmount, max: maxAmount });
+  }, [minAmount, maxAmount, open]);
+
+  const handleApply = () => {
+    onApply(tempAmount.min, tempAmount.max);
+    setOpen(false);
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className={cn(
+            "h-8 text-xs gap-1.5 border-slate-200 bg-white/50 min-w-[110px] justify-between",
+            (minAmount || maxAmount) && "border-slate-800 bg-slate-50"
+          )}
+        >
+          <div className="flex items-center gap-1.5">
+            <Wallet className="h-3 w-3 text-slate-400" />
+            <span
+              className={cn(
+                (minAmount || maxAmount) && "text-slate-900 font-bold"
+              )}
+            >
+              {minAmount || maxAmount ? "금액 필터" : "금액"}
+            </span>
+          </div>
+          <ChevronDown className="h-3 w-3 text-slate-400 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-4" align="start">
+        <div className="space-y-4">
+          <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-tighter">
+            금액 범위 (원)
+          </Label>
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              placeholder="최소"
+              value={tempAmount.min}
+              onChange={(e) =>
+                setTempAmount((prev) => ({ ...prev, min: e.target.value }))
+              }
+              className="h-9 text-xs border-slate-200 focus-visible:ring-1 focus-visible:ring-slate-400"
+              onKeyDown={(e) => e.key === "Enter" && handleApply()}
+            />
+            <span className="text-slate-300">~</span>
+            <Input
+              type="number"
+              placeholder="최대"
+              value={tempAmount.max}
+              onChange={(e) =>
+                setTempAmount((prev) => ({ ...prev, max: e.target.value }))
+              }
+              className="h-9 text-xs border-slate-200 focus-visible:ring-1 focus-visible:ring-slate-400"
+              onKeyDown={(e) => e.key === "Enter" && handleApply()}
+            />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <Button
+              variant="outline"
+              className="h-8 flex-1 text-xs text-slate-500"
+              onClick={() => {
+                setTempAmount({ min: "", max: "" });
+                onReset();
+                setOpen(false); // 즉시 닫고 리셋
+              }}
+            >
+              초기화
+            </Button>
+            <Button
+              className="h-8 flex-1 text-xs bg-slate-800 hover:bg-slate-900"
+              onClick={handleApply}
+            >
+              확인
+            </Button>
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// 6. 활성화된 필터 뱃지(칩) 모음 컴포넌트
+function SelectedFilterBadges({
+  filters,
+  selectedCategories,
+  updateFilter,
+  setLocalKeyword,
+  clearPriceFilter,
+}: {
+  filters: FilterState;
+  selectedCategories: any[];
+  updateFilter: (key: keyof FilterState, value: any) => void;
+  setLocalKeyword: (val: string) => void;
+  clearPriceFilter: () => void;
+}) {
+  const hasActiveFilters =
+    filters.keyword ||
+    filters.mode !== "all" ||
+    selectedCategories.length > 0 ||
+    filters.dateRange?.from ||
+    filters.minAmount ||
+    filters.maxAmount;
+
+  if (!hasActiveFilters) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1 mt-2 pt-2 border-t border-slate-100">
+      {filters.keyword && (
+        <Badge
+          variant="secondary"
+          className="text-sm h-5 gap-1 bg-slate-100/80 text-slate-600 border-none px-1.5"
+        >
+          <Search className="h-3 w-3" />
+          {filters.keyword}
+          <X
+            className="h-2.5 w-2.5 cursor-pointer hover:text-slate-900"
+            onClick={() => {
+              updateFilter("keyword", ""); // 삭제 시 즉시 검색 반영
+              setLocalKeyword("");
+            }}
+          />
+        </Badge>
+      )}
+
+      {filters.mode !== "all" && (
+        <Badge
+          variant="outline"
+          className="text-sm h-5 gap-1 border-none px-1.5 scale-110"
+        >
+          {MODE_CONFIG[filters.mode].badge}
+          <X
+            className="h-2.5 w-2.5 cursor-pointer hover:text-slate-900"
+            onClick={() => updateFilter("mode", "all")} // 삭제 시 즉시 검색 반영
+          />
+        </Badge>
+      )}
+
+      {selectedCategories.map((c) => (
+        <Badge
+          key={c.id}
+          variant="secondary"
+          className="text-sm h-5 gap-1 bg-slate-100/80 text-slate-600 border-none px-1.5"
+        >
+          <span className="native-emoji">{c.icon}</span>
+          {c.name}
+          <X
+            className="h-2.5 w-2.5 cursor-pointer hover:text-slate-900"
+            onClick={() => {
+              const next = filters.categoryIds.filter((id) => id !== c.id);
+              updateFilter("categoryIds", next); // 삭제 시 즉시 검색 반영
+            }}
+          />
+        </Badge>
+      ))}
+
+      {filters.dateRange?.from && (
+        <Badge
+          variant="secondary"
+          className="text-sm h-5 gap-1 bg-slate-100 text-slate-700 border-slate-200 px-1.5 font-medium"
+        >
+          <CalendarIcon className="h-3 w-3" />
+          {format(filters.dateRange.from, "yyyy.M.d")}
+          {filters.dateRange.to &&
+            ` ~ ${format(filters.dateRange.to, "yyyy.M.d")}`}
+          <X
+            className="h-2.5 w-2.5 cursor-pointer hover:text-blue-900"
+            onClick={() => updateFilter("dateRange", undefined)} // 삭제 시 즉시 검색 반영
+          />
+        </Badge>
+      )}
+
+      {(filters.minAmount || filters.maxAmount) && (
+        <Badge
+          variant="secondary"
+          className="text-sm h-5 gap-1 bg-slate-100 text-slate-700 border-slate-200 px-1.5 font-medium"
+        >
+          <Wallet className="h-3 w-3 text-slate-400" />
+          <span>
+            {filters.minAmount
+              ? Number(filters.minAmount).toLocaleString()
+              : "0"}
+            ~
+            {filters.maxAmount
+              ? Number(filters.maxAmount).toLocaleString()
+              : "무제한"}
+          </span>
+          <X
+            className="h-3 w-3 cursor-pointer ml-1 hover:text-red-500 transition-colors"
+            onClick={clearPriceFilter}
+          />
+        </Badge>
+      )}
+    </div>
   );
 }

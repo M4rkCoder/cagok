@@ -11,9 +11,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAppStore } from "@/store/useAppStore";
-import { useHeaderStore } from "@/store/useHeaderStore";
-import { useSettingStore } from "@/store/useSettingStore";
+import { useAppStore } from "@/stores/useAppStore";
+import { useHeaderStore } from "@/stores/useHeaderStore";
+import { useSettingStore } from "@/stores/useSettingStore";
 
 const GeneralSettings = () => {
   const { resetHeader, setHeader } = useHeaderStore();

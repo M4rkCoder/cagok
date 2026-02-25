@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FinanceModeRounded from "./FinanceModeRounded";
-import { useAppStore } from "@/store/useAppStore";
+import { useAppStore } from "@/stores/useAppStore";
 import { Link, useLocation } from "react-router-dom";
 import runSeed from "@/db/seed";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,12 @@ import {
   AccordionTrigger,
 } from "./ui/accordion";
 import { useEffect, useState } from "react";
+// ui/tooltip 컴포넌트 임포트
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ProIcon } from "./ui/PlusBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -57,18 +63,15 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
         url: "/transactions",
         icon: SquareLibrary,
         subMenu: [
-          // 서브메뉴 추가
           {
             title: t("menu.quick_entry"),
             url: "/transactions/quickentry",
             icon: Zap,
-            plus: true,
           },
           {
             title: t("menu.recurring"),
             url: "/transactions/recurring",
             icon: RefreshCw,
-            plus: true,
           },
         ],
       },
@@ -79,12 +82,29 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
 
   useEffect(() => {
     const currentParent = items.MainMenu.find(
-      (item) => item.subMenu && location.pathname.startsWith(item.url),
+      (item) => item.subMenu && location.pathname.startsWith(item.url)
     );
     if (currentParent) {
       setOpenItem(currentParent.title);
     }
   }, [location.pathname]);
+
+  // 푸터 버튼 (더미 생성) 노드 정의
+  const FooterBtnNode = (
+    <Button
+      variant={collapsed ? "ghost" : "secondary"}
+      className={cn(
+        "w-full truncate overflow-hidden transition-all",
+        collapsed && "h-10 p-0 hover:bg-sidebar-accent"
+      )}
+      onClick={(e) => {
+        e.preventDefault();
+        runSeed();
+      }}
+    >
+      {!collapsed ? "더미 데이터 생성" : <Pencil className="h-4 w-4" />}
+    </Button>
+  );
 
   return (
     <aside
@@ -102,7 +122,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
           <div
             className={cn(
               "shrink-0 flex items-center justify-center rounded-lg bg-blue-700 p-1.5 shadow-md transition-all duration-300",
-              collapsed ? "w-8 h-8 scale-110" : "w-7 h-7", // 3. 축소 시 로고 크기 확대
+              collapsed ? "ml-1 w-8 h-8 scale-110" : "w-7 h-7"
             )}
           >
             <FinanceModeRounded className="w-5 h-5 text-white" />
@@ -139,6 +159,50 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                 const isSubActive =
                   hasSubMenu && location.pathname.startsWith(item.url);
 
+                // 메뉴 버튼 엘리먼트 분리 (툴팁 래핑용)
+                const MenuButtonNode = (
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url) || isSubActive}
+                  >
+                    <Link to={item.url} className="flex items-center gap-2">
+                      <div
+                        className={cn(
+                          "relative flex items-center justify-center shrink-0",
+                          collapsed ? "w-7 h-7" : "w-6 h-6"
+                        )}
+                      >
+                        <AnimatePresence>
+                          {(isActive(item.url) || isSubActive) && (
+                            <motion.div
+                              layoutId="sidebar-active-indicator"
+                              initial={{ opacity: 0, scale: 0.5 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.5 }}
+                              transition={{
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 30,
+                              }}
+                              className="absolute inset-0 bg-blue-700 rounded-md"
+                            />
+                          )}
+                        </AnimatePresence>
+                        <item.icon
+                          className={cn(
+                            "relative z-10 shrink-0 transition-colors duration-300",
+                            collapsed ? "h-6 w-6" : "h-5 w-5",
+                            isActive(item.url) || isSubActive
+                              ? "text-white"
+                              : "text-sidebar-foreground group-hover:text-sidebar-accent-foreground"
+                          )}
+                        />
+                      </div>
+                      {!collapsed && <span>{item.title}</span>}
+                    </Link>
+                  </SidebarMenuButton>
+                );
+
                 return (
                   <SidebarMenuItem key={item.title}>
                     {hasSubMenu && !collapsed ? (
@@ -156,10 +220,9 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                           <AccordionTrigger
                             className={cn(
                               "py-1 px-2 hover:no-underline border-none rounded-md transition-colors hover:bg-sidebar-accent group",
-                              // ✅ 전체 배경은 투명하게 유지, 활성화 시 글자만 검정색으로 강조
                               isSubActive
                                 ? "text-black font-bold"
-                                : "text-sidebar-foreground",
+                                : "text-sidebar-foreground"
                             )}
                           >
                             <SidebarMenuButton
@@ -171,7 +234,6 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                                 to={item.url}
                                 className="flex items-center gap-2"
                               >
-                                {/* ✅ 아이콘: 활성화 시 정중앙에서부터 커지는 파란색 박스 효과 (framer-motion) */}
                                 <div className="relative flex items-center justify-center w-6 h-6 shrink-0">
                                   <AnimatePresence>
                                     {isSubActive && (
@@ -194,7 +256,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                                       "relative z-10 h-5 w-5 shrink-0 transition-colors duration-300",
                                       isSubActive
                                         ? "text-white"
-                                        : "text-sidebar-foreground group-hover:text-sidebar-accent-foreground",
+                                        : "text-sidebar-foreground group-hover:text-sidebar-accent-foreground"
                                     )}
                                   />
                                 </div>
@@ -212,15 +274,14 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                                   className={cn(
                                     "text-[13px] py-1.5 px-2 rounded-md transition-colors hover:bg-sidebar-accent flex items-center min-w-0 whitespace-nowrap overflow-hidden",
                                     isActive(sub.url)
-                                      ? "text-blue-700 font-bold" // ✅ 서브메뉴는 텍스트만 파란색 포인트
-                                      : "text-muted-foreground",
+                                      ? "text-blue-700 font-bold"
+                                      : "text-muted-foreground"
                                   )}
                                 >
                                   <div className="flex items-center gap-1 min-w-0 w-full">
                                     <span className="truncate">
                                       {sub.title}
                                     </span>
-                                    {sub.plus && <ProIcon />}
                                   </div>
                                 </Link>
                               ))}
@@ -228,49 +289,19 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                           </AccordionContent>
                         </AccordionItem>
                       </Accordion>
+                    ) : collapsed ? (
+                      /* 접힌 상태: Tooltip 활성화 */
+                      <Tooltip delayDuration={0}>
+                        <TooltipTrigger asChild>
+                          {MenuButtonNode}
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="ml-1">
+                          {item.title}
+                        </TooltipContent>
+                      </Tooltip>
                     ) : (
-                      /* 일반 메뉴 또는 접힌 상태 */
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive(item.url) || isSubActive}
-                        tooltip={collapsed ? item.title : undefined}
-                      >
-                        <Link to={item.url} className="flex items-center gap-2">
-                          <div
-                            className={cn(
-                              "relative flex items-center justify-center shrink-0",
-                              collapsed ? "w-7 h-7" : "w-6 h-6",
-                            )}
-                          >
-                            <AnimatePresence>
-                              {(isActive(item.url) || isSubActive) && (
-                                <motion.div
-                                  layoutId="sidebar-active-indicator"
-                                  initial={{ opacity: 0, scale: 0.5 }}
-                                  animate={{ opacity: 1, scale: 1 }}
-                                  exit={{ opacity: 0, scale: 0.5 }}
-                                  transition={{
-                                    type: "spring",
-                                    stiffness: 300,
-                                    damping: 30,
-                                  }}
-                                  className="absolute inset-0 bg-blue-700 rounded-md"
-                                />
-                              )}
-                            </AnimatePresence>
-                            <item.icon
-                              className={cn(
-                                "relative z-10 shrink-0 transition-colors duration-300",
-                                collapsed ? "h-6 w-6" : "h-5 w-5",
-                                isActive(item.url) || isSubActive
-                                  ? "text-white"
-                                  : "text-sidebar-foreground group-hover:text-sidebar-accent-foreground",
-                              )}
-                            />
-                          </div>
-                          {!collapsed && <span>{item.title}</span>}
-                        </Link>
-                      </SidebarMenuButton>
+                      /* 서브메뉴가 없는 일반 메뉴 펼친 상태 */
+                      MenuButtonNode
                     )}
                   </SidebarMenuItem>
                 );
@@ -282,19 +313,16 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
 
       {/* Footer */}
       <SidebarFooter className="p-2">
-        <Button
-          variant={collapsed ? "ghost" : "secondary"}
-          className={cn(
-            "w-full truncate overflow-hidden transition-all",
-            collapsed && "h-10 p-0 hover:bg-sidebar-accent",
-          )}
-          onClick={(e) => {
-            e.preventDefault();
-            runSeed();
-          }}
-        >
-          {!collapsed ? "더미 데이터 생성" : <Pencil className="h-4 w-4" />}
-        </Button>
+        {collapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>{FooterBtnNode}</TooltipTrigger>
+            <TooltipContent side="right" className="ml-1">
+              더미 데이터 생성
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          FooterBtnNode
+        )}
       </SidebarFooter>
     </aside>
   );

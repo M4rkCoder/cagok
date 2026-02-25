@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNotificationStore } from "@/store/useNotificationStore";
+import { useNotificationStore } from "@/stores/useNotificationStore";
 import { Bell, CheckCircle2, Trash2, Info } from "lucide-react";
 import {
   Popover,

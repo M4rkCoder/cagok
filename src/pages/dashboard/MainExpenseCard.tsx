@@ -1,21 +1,24 @@
+import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { DiffBadge } from "./components/DiffBadge";
 import { CurrencyIcon } from "@/components/ui/CurrencyIcon";
 import CountUp from "@/components/CountUp";
 import { ComparisonCardFooter } from "./components/ComparisonCardFooter";
 import { cn } from "@/lib/utils";
-import { useMemo } from "react";
 import TransactionSheet from "../transactions/TrasactionSheet";
-import { useDashboardStore } from "@/store/useDashboardStore";
+import { useDashboardStore } from "@/stores/useDashboardStore";
 import { Badge } from "@/components/ui/badge";
 import { Plus } from "lucide-react";
 import { DashboardTitle } from "./components/DashboardTitle";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import AnimatedAmount from "@/components/AnimatedAmount";
 
 interface MainExpenseCardProps {
   lang: "ko" | "en";
 }
 
 export function MainExpenseCard({ lang }: MainExpenseCardProps) {
+  const { formatAmount } = useCurrencyFormatter();
   const { overview, comparisons, recentTransactions } = useDashboardStore();
   const comparison = comparisons.Expense;
   const quickCategories = useMemo(() => {
@@ -66,14 +69,12 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
               </div>
               <DiffBadge metric={comparison} />
             </div>
-            <div className="flex items-baseline gap-1">
-              <CurrencyIcon
-                lang={lang}
-                className="w-7 h-7 text-slate-300 self-center mb-1"
+            <div className="text-5xl font-extrabold tracking-tighter text-slate-900">
+              <AnimatedAmount
+                value={overview.total_expense}
+                formatter={formatAmount}
+                duration={1.2}
               />
-              <div className="text-5xl font-extrabold tracking-tighter text-slate-900">
-                <CountUp end={overview.total_expense} />
-              </div>
             </div>
           </div>
           <div className="mt-3 pb-5">
@@ -122,12 +123,8 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
 
                           {/* 오른쪽: CurrencyIcon + 금액 (간격 최소화) */}
                           <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                            <CurrencyIcon
-                              lang={lang}
-                              className="w-0.5 h-0.5 text-slate-300 pr-2"
-                            />
                             <span className="text-[13px] font-black text-slate-900 tabular-nums tracking-tighter">
-                              {tx.amount.toLocaleString()}
+                              {formatAmount(tx.amount)}
                             </span>
                           </div>
                         </div>

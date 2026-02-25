@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { listen, UnlistenFn } from "@tauri-apps/api/event";
 import { useTranslation } from "react-i18next";
-import { useNotificationStore } from "@/store/useNotificationStore";
+import { useNotificationStore } from "@/stores/useNotificationStore";
 import { toast } from "sonner";
 import { invoke } from "@tauri-apps/api/core";
 

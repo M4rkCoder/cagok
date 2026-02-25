@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useTransactionStore } from "@/store/useTransactionStore";
+import { useTransactionStore } from "@/stores/useTransactionStore";
 import { DailySummaryCard } from "./DailySummaryCard";
 import { TransactionDetailTable } from "./components/TransactionDetailTable";
 import { TransactionFilterPanel } from "./components/TransactionFilterPanel";
@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { TrendBadge } from "./TransactionBadge";
 import { cn } from "@/lib/utils";
-import { useConfirmStore } from "@/store/useConfirmStore";
+import { useConfirmStore } from "@/stores/useConfirmStore";
 import { Transaction, TransactionWithCategory } from "@/types";
 import { FeedsSkeleton } from "./components/FeedsSkeleton";
 import { Toggle } from "@/components/ui/toggle";
@@ -90,7 +90,7 @@ export default function TransactionsFeeds() {
     setExpandedMonths((prev) =>
       prev.includes(yearMonth)
         ? prev.filter((m) => m !== yearMonth)
-        : [...prev, yearMonth],
+        : [...prev, yearMonth]
     );
   };
 
@@ -230,7 +230,7 @@ export default function TransactionsFeeds() {
       if (isNewMonth) {
         lastYearMonth = currentYearMonth;
         const monthStats = monthlySummaries.find(
-          (m) => m.year_month === currentYearMonth,
+          (m) => m.year_month === currentYearMonth
         );
 
         // 해당 월의 모든 날짜가 펼쳐져 있는지 확인
@@ -328,7 +328,7 @@ export default function TransactionsFeeds() {
                 </div>
               </div>
             </div>
-          </div>,
+          </div>
         );
       }
 
@@ -355,7 +355,7 @@ export default function TransactionsFeeds() {
                 />
               </div>
             )}
-          </div>,
+          </div>
         );
       }
     });
@@ -382,7 +382,7 @@ export default function TransactionsFeeds() {
     <div className="flex flex-col min-h-full bg-transparent relative px-4 py-1">
       <div
         className={cn(
-          "sticky top-0 z-40 -mx-4 px-4 pb-2 pt-2 bg-background backdrop-blur supports-[backdrop-filter]:bg-slate-50/60 mb-1",
+          "sticky top-0 z-40 -mx-4 px-4 pb-2 pt-2 bg-background backdrop-blur supports-[backdrop-filter]:bg-slate-50/60 mb-1"
         )}
       >
         <div className="max-w-4xl mx-auto">

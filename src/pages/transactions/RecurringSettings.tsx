@@ -10,16 +10,16 @@ import {
   RefreshCw,
   Pin,
 } from "lucide-react";
-import { useHeaderStore } from "@/store/useHeaderStore";
-import { useConfirmStore } from "@/store/useConfirmStore";
+import { useHeaderStore } from "@/stores/useHeaderStore";
+import { useConfirmStore } from "@/stores/useConfirmStore";
 import RecurringFormSheet from "./RecurringFormSheet";
 import { cn, getFrequencyText, getDayText } from "@/lib/utils";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { RecurringTransaction, RecurringHistoryItem } from "@/types";
-import { useRecurringStore } from "@/store/useRecurringStore";
-import { useAppStore } from "@/store/useAppStore";
+import { useRecurringStore } from "@/stores/useRecurringStore";
+import { useAppStore } from "@/stores/useAppStore";
 import { PlusBadge, ProIcon } from "@/components/ui/PlusBadge";
 
 const emptyForm: RecurringTransaction = {

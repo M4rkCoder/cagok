@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
-import { useTransactionStore } from "@/store/useTransactionStore";
+import { useTransactionStore } from "@/stores/useTransactionStore";
 import { TransactionFilterPanel } from "./components/TransactionFilterPanel";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -11,7 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format, parse } from "date-fns";
 import { ko } from "date-fns/locale";
-import { useConfirmStore } from "@/store/useConfirmStore";
+import { useConfirmStore } from "@/stores/useConfirmStore";
 import { Transaction, TransactionWithCategory } from "@/types";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import {
@@ -416,88 +416,93 @@ function TransactionDetailDialog({
                       <p className="text-xs text-slate-400 font-medium mt-0.5">
                         {selectedDate &&
                           format(selectedDate, "eeee", { locale: ko })}{" "}
-                        • 상세 {transactions.length}건
+                        • {transactions.length}건
                       </p>
                     </div>
                   </div>
 
-                  {/* 요청사항: 일일 합계 대신 수입/지출 합계 표시 */}
                   <div className="flex flex-col items-end gap-1 mr-5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-blue-500/80 uppercase">
-                        지출
-                      </span>
-                      <span className="text-sm font-black text-blue-600 tabular-nums">
-                        {summary?.expense.toLocaleString() || 0}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-emerald-500/80 uppercase">
-                        수입
-                      </span>
-                      <span className="text-sm font-black text-emerald-600 tabular-nums">
-                        {summary?.income.toLocaleString() || 0}
-                      </span>
-                    </div>
+                    {summary?.expense > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-blue-500/80 uppercase">
+                          지출
+                        </span>
+                        <span className="text-sm font-black text-blue-600 tabular-nums">
+                          {summary?.expense.toLocaleString() || 0}
+                        </span>
+                      </div>
+                    )}
+                    {summary?.income > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-emerald-500/80 uppercase">
+                          수입
+                        </span>
+                        <span className="text-sm font-black text-emerald-600 tabular-nums">
+                          {summary?.income.toLocaleString() || 0}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </DialogHeader>
 
               <ScrollArea className="flex-1 overflow-y-auto min-h-[300px]">
-                <div className="p-4 space-y-3">
+                <div className="p-3 space-y-2">
                   {transactions.length > 0 ? (
                     transactions
-                      .sort((a, b) => a.type - b.type)
+                      .sort((a, b) => b.type - a.type)
                       .map((tx, idx) => (
                         <motion.div
                           key={tx.id}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: idx * 0.05 }}
-                          className="group flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-800 hover:bg-white dark:hover:bg-slate-900 transition-all shadow-sm hover:shadow-md"
+                          className="group flex items-center justify-between py-2.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-800 hover:bg-white dark:hover:bg-slate-900 transition-all shadow-sm hover:shadow-md"
                         >
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3">
                             <div className="relative">
                               <CategoryIcon
                                 type={tx.type}
                                 icon={tx.category_icon}
-                                size="md"
+                                size="sm" // 아이콘 크기 축소
                               />
                               {tx.is_fixed === 1 && (
-                                <span className="absolute -top-1 -right-1 rounded-full bg-slate-100 p-1 text-[10px] native-emoji">
+                                <span className="absolute -top-1 -right-1 rounded-full bg-slate-100 p-0.5 text-[8px] native-emoji shadow-sm">
                                   📌
                                 </span>
                               )}
                             </div>
                             <div className="flex flex-col">
-                              <span className="text-xs font-bold text-slate-400 mb-0.5 uppercase tracking-tighter">
+                              {/* 마진 축소 및 줄간격(leading) 조정 */}
+                              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-tighter leading-none mb-1">
                                 {tx.category_name}
                               </span>
-                              <span className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate max-w-[150px]">
+                              <span className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate max-w-[150px] leading-tight">
                                 {tx.description || tx.category_name}
                               </span>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-3">
                             <span
                               className={cn(
-                                "text-base font-black tabular-nums tracking-tight",
+                                "text-sm font-black tabular-nums tracking-tight", // 금액 폰트 사이즈 조정
                                 tx.type === 0
                                   ? "text-emerald-600"
                                   : "text-blue-600"
                               )}
                             >
                               {tx.amount.toLocaleString()}
-                              <small className="text-xs ml-0.5 font-bold">
+                              <small className="text-[10px] ml-0.5 font-bold">
                                 원
                               </small>
                             </span>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
+                              {/* 버튼 사이즈 축소 */}
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 rounded-full"
+                                className="h-7 w-7 rounded-full"
                                 onClick={() => onEdit(tx)}
                               >
                                 <Pencil className="w-3.5 h-3.5" />
@@ -505,7 +510,7 @@ function TransactionDetailDialog({
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 rounded-full hover:text-rose-600"
+                                className="h-7 w-7 rounded-full hover:text-rose-600"
                                 onClick={() => onDelete(tx.id)}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -515,8 +520,8 @@ function TransactionDetailDialog({
                         </motion.div>
                       ))
                   ) : (
-                    <div className="flex flex-col items-center justify-center py-20 text-slate-300">
-                      <ReceiptText className="w-12 h-12 mb-4 opacity-20" />
+                    <div className="flex flex-col items-center justify-center py-16 text-slate-300">
+                      <ReceiptText className="w-10 h-10 mb-3 opacity-20" />
                       <p className="text-sm font-medium">
                         기록된 내역이 없습니다
                       </p>
@@ -525,10 +530,10 @@ function TransactionDetailDialog({
                 </div>
               </ScrollArea>
 
-              <div className="p-4 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-900 shrink-0">
+              <div className="p-3 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-900 shrink-0">
                 <Button
                   variant="ghost"
-                  className="w-full h-12 rounded-2xl font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900"
+                  className="w-full h-10 rounded-xl font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900"
                   onClick={() => onOpenChange(false)}
                 >
                   닫기

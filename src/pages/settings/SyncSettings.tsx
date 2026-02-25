@@ -17,14 +17,14 @@ import {
   Cloudy,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
-import { useHeaderStore } from "@/store/useHeaderStore";
+import { useHeaderStore } from "@/stores/useHeaderStore";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSyncStore } from "@/store/useSyncStore";
+import { useSyncStore } from "@/stores/useSyncStore";
 
 import { Switch } from "@/components/ui/switch";
-import { useConfirmStore } from "@/store/useConfirmStore";
-import { useAppStore } from "@/store/useAppStore";
+import { useConfirmStore } from "@/stores/useConfirmStore";
+import { useAppStore } from "@/stores/useAppStore";
 
 const SyncSettings = () => {
   const { resetHeader, setHeader } = useHeaderStore();

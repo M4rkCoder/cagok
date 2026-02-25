@@ -14,9 +14,9 @@ import {
   AlertCircle,
   Loader2,
 } from "lucide-react"; // Added Icons
-import { useAppStore } from "@/store/useAppStore";
+import { useAppStore } from "@/stores/useAppStore";
 import { cn } from "@/lib/utils";
-import { useTransactionStore } from "@/store/useTransactionStore";
+import { useTransactionStore } from "@/stores/useTransactionStore";
 import { QuickEntryTransactionRow } from "@/types";
 import { useQuickEntry } from "./hooks/useQuickEntry";
 import FixedCheckboxCell from "./components/FixedCheckboxCell";
@@ -24,7 +24,7 @@ import DateCell from "./components/DateCell";
 import { InputCell } from "./components/InputCell";
 import CategoryCell from "./components/CategoryCell";
 import { AmountCell } from "./components/AmountCell";
-import { useHeaderStore } from "@/store/useHeaderStore";
+import { useHeaderStore } from "@/stores/useHeaderStore";
 import {
   Tooltip,
   TooltipContent,

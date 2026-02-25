@@ -42,12 +42,12 @@ import {
   CirclePlus,
   CircleMinus,
 } from "lucide-react";
-import { useTransactionStore } from "@/store/useTransactionStore";
-import { useAppStore } from "@/store/useAppStore";
-import { useCategoryStore } from "@/store/useCategoryStore";
+import { useTransactionStore } from "@/stores/useTransactionStore";
+import { useAppStore } from "@/stores/useAppStore";
+import { useCategoryStore } from "@/stores/useCategoryStore";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useConfirmStore } from "@/store/useConfirmStore";
+import { useConfirmStore } from "@/stores/useConfirmStore";
 import {
   transactionSchema,
   TransactionFormValues,
@@ -192,13 +192,13 @@ const TransactionTypeSection: React.FC<{
                     "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all font-bold text-sm",
                     field.value === item.id
                       ? "bg-white shadow-sm"
-                      : "text-slate-400",
+                      : "text-slate-400"
                   )}
                 >
                   <item.icon
                     className={cn(
                       "w-4 h-4",
-                      field.value === item.id ? item.color : "text-slate-300",
+                      field.value === item.id ? item.color : "text-slate-300"
                     )}
                   />
                   {item.name}
@@ -211,9 +211,7 @@ const TransactionTypeSection: React.FC<{
       <div
         className={cn(
           "transition-all duration-500 flex items-center overflow-hidden",
-          currentType === 1
-            ? "w-[60px] opacity-100 ml-3"
-            : "w-0 opacity-0 ml-0",
+          currentType === 1 ? "w-[60px] opacity-100 ml-3" : "w-0 opacity-0 ml-0"
         )}
       >
         <Tooltip>
@@ -225,13 +223,13 @@ const TransactionTypeSection: React.FC<{
                 "w-12 h-12 flex items-center justify-center rounded-2xl transition-all border shrink-0 active:scale-95",
                 isFixed === 1
                   ? "bg-black border-black text-white shadow-md shadow-slate-200"
-                  : "bg-slate-50 border-slate-100 text-slate-300",
+                  : "bg-slate-50 border-slate-100 text-slate-300"
               )}
             >
               <Pin
                 className={cn(
                   "w-4 h-4 transition-transform",
-                  isFixed === 1 && "fill-white rotate-45",
+                  isFixed === 1 && "fill-white rotate-45"
                 )}
               />
             </button>
@@ -335,9 +333,7 @@ const CategorySection: React.FC<{
               className={cn(
                 "w-full h-12 px-4 flex items-center justify-between rounded-2xl bg-slate-50 transition-all",
                 isCategoryPopoverOpen && "ring-1 ring-slate-200 shadow-sm",
-                showVisualError &&
-                  error &&
-                  "ring-2 ring-rose-500/50 bg-rose-50",
+                showVisualError && error && "ring-2 ring-rose-500/50 bg-rose-50"
               )}
             >
               <div className="flex items-center gap-2">
@@ -358,7 +354,7 @@ const CategorySection: React.FC<{
                       "text-sm font-bold",
                       showVisualError && error
                         ? "text-rose-400"
-                        : "text-slate-400",
+                        : "text-slate-400"
                     )}
                   >
                     카테고리 선택
@@ -368,7 +364,7 @@ const CategorySection: React.FC<{
               <ChevronDown
                 className={cn(
                   "w-4 h-4 text-slate-300 transition-transform",
-                  isCategoryPopoverOpen && "rotate-180",
+                  isCategoryPopoverOpen && "rotate-180"
                 )}
               />
             </button>
@@ -573,7 +569,7 @@ const DescriptionSection: React.FC<{
                   "h-12 bg-slate-50/80 border-none rounded-2xl text-sm font-bold placeholder:text-slate-300",
                   showError &&
                     fieldState.error &&
-                    "ring-2 ring-rose-500/50 bg-rose-50",
+                    "ring-2 ring-rose-500/50 bg-rose-50"
                 )}
                 placeholder="내용 입력"
                 {...field}
@@ -636,7 +632,7 @@ const DateAmountSection: React.FC<{
                         "h-12 bg-slate-50/80 border-none rounded-2xl text-sm font-bold placeholder:text-slate-300 transition-all",
                         showAmountError && fieldState.error
                           ? "ring-2 ring-rose-500/50 bg-rose-50"
-                          : "focus-visible:ring-2 focus-visible:ring-blue-500/20",
+                          : "focus-visible:ring-2 focus-visible:ring-blue-500/20"
                       )}
                       onFocus={(e) => e.target.select()}
                       onChange={(e) => {
@@ -652,17 +648,17 @@ const DateAmountSection: React.FC<{
                         const result = evaluateExpression(val);
                         if (result !== null) {
                           setPreview(
-                            new Intl.NumberFormat().format(Number(result)),
+                            new Intl.NumberFormat().format(Number(result))
                           );
                         }
                       }}
                       onBlur={() => {
                         const result = evaluateExpression(
-                          field.value?.toString() || "",
+                          field.value?.toString() || ""
                         );
                         if (result !== null) {
                           const formatted = new Intl.NumberFormat().format(
-                            Number(result),
+                            Number(result)
                           );
                           field.onChange(formatted);
                         }
@@ -682,7 +678,7 @@ const DateAmountSection: React.FC<{
                     "border-none text-xs font-bold px-3 py-1.5 rounded-lg shadow-xl mb-1",
                     showAmountError && fieldState.error
                       ? "bg-rose-500 text-white"
-                      : "bg-blue-600 text-white",
+                      : "bg-blue-600 text-white"
                   )}
                 >
                   {showAmountError && fieldState.error
@@ -726,7 +722,7 @@ const DateAmountSection: React.FC<{
                       "h-12 bg-slate-50/80 border-none rounded-2xl text-xs font-bold pr-10 transition-all",
                       showDateError && fieldState.error
                         ? "ring-2 ring-rose-500/50 bg-rose-50"
-                        : "focus-visible:ring-2 focus-visible:ring-blue-500/20",
+                        : "focus-visible:ring-2 focus-visible:ring-blue-500/20"
                     )}
                     onBlur={(e) => {
                       const parsed = smartParseDate(e.target.value);
@@ -736,7 +732,7 @@ const DateAmountSection: React.FC<{
                       if (e.key === "Enter") {
                         e.preventDefault();
                         const parsed = smartParseDate(
-                          (e.target as HTMLInputElement).value,
+                          (e.target as HTMLInputElement).value
                         );
                         field.onChange(parsed);
                         (e.target as HTMLInputElement).blur();

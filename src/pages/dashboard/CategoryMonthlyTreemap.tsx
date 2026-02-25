@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Treemap, ResponsiveContainer, Tooltip } from "recharts";
-import { useDashboardStore } from "@/store/useDashboardStore";
+import { useDashboardStore } from "@/stores/useDashboardStore";
 import { getFixedColor, getVariableColor } from "@/lib/utils";
 import { DashboardTitle } from "./components/DashboardTitle";
 import { Card } from "@/components/ui/card";
@@ -49,7 +49,7 @@ export const CategoryMonthlyTreemap: React.FC = () => {
 
         // 금액순 정렬
         const sortedChildren = [...mainChildren].sort(
-          (a, b) => (b.value || 0) - (a.value || 0),
+          (a, b) => (b.value || 0) - (a.value || 0)
         );
         const totalItems = sortedChildren.length;
 
@@ -80,7 +80,7 @@ export const CategoryMonthlyTreemap: React.FC = () => {
     if (!categoryId || !fixedVariableTransactions) return;
 
     const categoryDetail = fixedVariableTransactions.find(
-      (item) => item.category_id === categoryId,
+      (item) => item.category_id === categoryId
     );
 
     if (categoryDetail) {

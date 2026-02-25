@@ -4,9 +4,9 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { PanelLeftClose } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useHeaderStore } from "@/store/useHeaderStore";
+import { useHeaderStore } from "@/stores/useHeaderStore";
 import ConfirmDialog from "@/components/ConfirmDialog";
-import { useConfirmStore } from "@/store/useConfirmStore";
+import { useConfirmStore } from "@/stores/useConfirmStore";
 import { Separator } from "@/components/ui/separator";
 
 function Home({ children }: { children: React.ReactNode }) {

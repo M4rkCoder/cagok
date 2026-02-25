@@ -193,12 +193,7 @@ export const useSettingStore = create<SettingState>((set, get) => ({
     }
   },
 
-  saveGeneralSettings: async ({
-    appName,
-    currency,
-    defaultView,
-    language,
-  }) => {
+  saveGeneralSettings: async ({ appName, currency, defaultView, language }) => {
     try {
       await Promise.all([
         invoke("set_setting_command", { key: "app_name", value: appName }),
@@ -207,14 +202,21 @@ export const useSettingStore = create<SettingState>((set, get) => ({
           key: "default_view",
           value: defaultView,
         }),
-        useAppStore.getState().updateSetting("language", language),
+        invoke("set_setting_command", { key: "language", value: language }),
       ]);
 
-      // Update local state
+      // 1. SettingStore 로컬 상태 업데이트
       set({ appName, currency, defaultView });
 
-      // Update global app state
-      useAppStore.getState().setAppName(appName);
+      // 2. AppStore 글로벌 상태 업데이트 (중요!)
+      const appStore = useAppStore.getState();
+      appStore.setAppName(appName);
+      appStore.setCurrency(currency); // 새로 추가한 액션 호출
+
+      // 언어 변경 처리
+      if (appStore.language !== language) {
+        appStore.updateSetting("language", language);
+      }
 
       toast.success("설정이 저장되었습니다.");
     } catch (error) {

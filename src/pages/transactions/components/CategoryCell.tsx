@@ -22,15 +22,15 @@ import { Check, Plus, X, SquarePen, Trash2 } from "lucide-react";
 import { Category, CellProps } from "@/types";
 import { toast } from "sonner";
 import { CategoryIcon } from "@/components/CategoryIcon";
-import { useAppStore } from "@/store/useAppStore";
-import { useCategoryStore } from "@/store/useCategoryStore"; // Added useCategoryStore
+import { useAppStore } from "@/stores/useAppStore";
+import { useCategoryStore } from "@/stores/useCategoryStore"; // Added useCategoryStore
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useTableNavigation } from "@/pages/transactions/hooks/useTableNavigation";
-import { useConfirmStore } from "@/store/useConfirmStore";
+import { useConfirmStore } from "@/stores/useConfirmStore";
 
 const CategoryCell = ({
   getValue,
@@ -62,11 +62,11 @@ const CategoryCell = ({
     table.options.meta as any;
   const { handleTableKeyDown, moveNext } = useTableNavigation(
     table,
-    setActiveCell,
+    setActiveCell
   );
   const [openCombo, setOpenCombo] = useState(false);
   const [categoryFilterType, setCategoryFilterType] = useState<number | null>(
-    null,
+    null
   ); // null: all, 0: income, 1: expense
   const [commandSearchTerm, setCommandSearchTerm] = useState("");
   const comboTriggerRef = useRef<HTMLButtonElement>(null);
@@ -112,7 +112,7 @@ const CategoryCell = ({
       column.id,
       row.original.type ?? 1,
       () => setOpenCombo(false),
-      openCombo,
+      openCombo
     );
   };
 
@@ -192,7 +192,7 @@ const CategoryCell = ({
                 "flex h-full w-full items-center px-2 text-sm outline-none transition-colors",
                 "bg-transparent border-none rounded-none",
                 isActive ? "bg-blue-50/50" : "hover:bg-slate-50/50",
-                showErrorVisuals && "border-red-500 outline-2 outline-red-500",
+                showErrorVisuals && "border-red-500 outline-2 outline-red-500"
               )}
             >
               {selected ? (
@@ -206,9 +206,7 @@ const CategoryCell = ({
                   <span>{selected.name}</span>
                 </div>
               ) : (
-                <span className="text-slate-400 text-sm">
-                  {t("select")}...
-                </span>
+                <span className="text-slate-400 text-sm">{t("select")}...</span>
               )}
             </button>
           </PopoverTrigger>
@@ -268,7 +266,7 @@ const CategoryCell = ({
                         "flex-1 py-1 text-xs font-bold rounded-l-md",
                         categoryFilterType === null
                           ? "bg-slate-200 text-slate-800"
-                          : "text-slate-500 hover:bg-slate-100",
+                          : "text-slate-500 hover:bg-slate-100"
                       )}
                     >
                       {t("common.all")}
@@ -280,7 +278,7 @@ const CategoryCell = ({
                         "flex-1 py-1 text-xs font-bold",
                         categoryFilterType === 0
                           ? "bg-slate-200 text-slate-800"
-                          : "text-slate-500 hover:bg-slate-100",
+                          : "text-slate-500 hover:bg-slate-100"
                       )}
                     >
                       {t("common.in")}
@@ -292,7 +290,7 @@ const CategoryCell = ({
                         "flex-1 py-1 text-xs font-bold rounded-r-md",
                         categoryFilterType === 1
                           ? "bg-slate-200 text-slate-800"
-                          : "text-slate-500 hover:bg-slate-100",
+                          : "text-slate-500 hover:bg-slate-100"
                       )}
                     >
                       {t("common.out")}
@@ -316,8 +314,7 @@ const CategoryCell = ({
                             key={cat.id}
                             className={cn(
                               "flex items-center justify-between px-3 py-1 rounded-xl cursor-pointer group mb-0.5",
-                              value === cat.id &&
-                                "bg-blue-100 dark:bg-blue-900",
+                              value === cat.id && "bg-blue-100 dark:bg-blue-900"
                             )}
                             onSelect={() => {
                               updateData(row.index, "category_id", cat.id);
@@ -325,11 +322,8 @@ const CategoryCell = ({
                               setOpenCombo(false);
                               setTimeout(
                                 () =>
-                                  moveNext(
-                                    row.index,
-                                    cat.type === 1 ? 3 : 4,
-                                  ),
-                                50,
+                                  moveNext(row.index, cat.type === 1 ? 3 : 4),
+                                50
                               );
                             }}
                           >
@@ -364,9 +358,7 @@ const CategoryCell = ({
                               </button>
                               <button
                                 type="button"
-                                onClick={(e) =>
-                                  onClickDeleteCategory(e, cat)
-                                }
+                                onClick={(e) => onClickDeleteCategory(e, cat)}
                                 className="p-1.5 hover:bg-slate-200 rounded-md text-slate-400 hover:text-rose-500"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -395,13 +387,11 @@ const CategoryCell = ({
                             onChange={(e) =>
                               setCategoryState(
                                 "newCategoryName",
-                                e.target.value,
+                                e.target.value
                               )
                             }
                             placeholder={
-                              editingCategoryId
-                                ? t("edit_name")
-                                : t("new_name")
+                              editingCategoryId ? t("edit_name") : t("new_name")
                             }
                             className="h-9 text-xs border-none bg-transparent focus-visible:ring-0 px-1 flex-1 font-bold"
                             onKeyDown={(e) => {
@@ -444,8 +434,7 @@ const CategoryCell = ({
                         }
                         className="w-full py-3 flex items-center justify-center gap-1.5 text-[10px] font-black text-emerald-500 border-t border-slate-50 hover:bg-slate-50 transition-colors uppercase"
                       >
-                        <Plus className="w-3.5 h-3.5" />{" "}
-                        {t("add_new_category")}
+                        <Plus className="w-3.5 h-3.5" /> {t("add_new_category")}
                       </button>
                     )}
                 </>

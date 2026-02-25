@@ -3,13 +3,16 @@ import { CurrencyIcon } from "@/components/ui/CurrencyIcon";
 import CountUp from "@/components/CountUp";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
-import { useDashboardStore } from "@/store/useDashboardStore";
+import { useDashboardStore } from "@/stores/useDashboardStore";
+import AnimatedAmount from "@/components/AnimatedAmount";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 interface SummaryItemRowProps {
   lang: "ko" | "en";
 }
 
 export function SummaryItemRow({ lang }: SummaryItemRowProps) {
+  const { formatAmount } = useCurrencyFormatter();
   const { overview, comparisons } = useDashboardStore();
 
   return (
@@ -44,12 +47,12 @@ export function SummaryItemRow({ lang }: SummaryItemRowProps) {
             </span>
 
             <div className="flex items-center gap-1 font-bold">
-              <CurrencyIcon
-                lang={lang}
-                className="w-3.5 h-3.5 text-slate-300"
-              />
               <div className="text-lg tracking-tight text-slate-800">
-                <CountUp end={item.value} />
+                <AnimatedAmount
+                  value={item.value}
+                  formatter={formatAmount}
+                  duration={1.2}
+                />
               </div>
 
               {/* 고정비 비중 (Badge와 겹치지 않게 작게 배치) */}

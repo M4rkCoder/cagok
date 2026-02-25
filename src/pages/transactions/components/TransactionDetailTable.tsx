@@ -9,16 +9,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MoreHorizontal, Pin, Pencil, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { ExpenseBadge, IncomeBadge } from "../TransactionBadge";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   transactions: TransactionWithCategory[];
@@ -37,6 +36,7 @@ export function TransactionDetailTable({
   onToggleSelect,
   onToggleSelectAll,
 }: Props) {
+  const { t } = useTranslation();
   // 1. 수입(0) -> 지출(1) 순으로 정렬
   const sortedTransactions = [...transactions].sort((a, b) => a.type - b.type);
 
@@ -58,7 +58,7 @@ export function TransactionDetailTable({
                       onCheckedChange={(checked) =>
                         onToggleSelectAll(
                           sortedTransactions.map((t) => t.id),
-                          !!checked,
+                          !!checked
                         )
                       }
                       className="border-slate-300 data-[state=checked]:bg-black data-[state=checked]:text-white"
@@ -136,32 +136,30 @@ export function TransactionDetailTable({
 
                     {/* 액션 버튼 */}
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <MoreHorizontal className="h-4 w-4 text-slate-500" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32">
-                          <DropdownMenuItem
-                            onClick={() => onEdit?.(tx)}
-                            className="flex items-center gap-2 cursor-pointer"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                            <span>수정</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onDelete?.(tx.id)}
-                            className="flex items-center gap-2 cursor-pointer text-rose-600 focus:text-rose-600 focus:bg-rose-50"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            <span>삭제</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex justify-center space-x-2 h-full items-center mr-3">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Pencil
+                              onClick={() => onEdit?.(tx)}
+                              className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-all text-slate-400 hover:text-slate-600"
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <span>{t("common.edit")}</span>
+                          </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Trash2
+                              onClick={() => onDelete?.(tx.id)}
+                              className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-all text-slate-400 hover:text-slate-600"
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <span>{t("common.delete")}</span>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

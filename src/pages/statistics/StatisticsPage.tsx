@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { YearPicker } from "@/components/YearPicker";
-import { useHeaderStore } from "@/store/useHeaderStore";
+import { useHeaderStore } from "@/stores/useHeaderStore";
 import { cn } from "@/lib/utils";
 import { SummaryCards } from "./SummaryCard";
 import { YearlyTrendChart } from "./YearlyTrendChart";
 import { CategoryMonthlyTrendSection } from "./CategoryMonthlyTrendSection";
 import { CategoryYearlyTreemap } from "./CategoryYearlyTreemap";
-import { useStatisticsStore } from "@/store/useStatisticsStore";
+import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { BadgeStatistics } from "./BadgeStatistics";
 import { DayOfWeekChart } from "./DayOfWeekChart";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";

@@ -1,9 +1,11 @@
 import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
-import { useNotificationStore } from "@/store/useNotificationStore";
+import { useNotificationStore } from "@/stores/useNotificationStore";
 
 export function useAutoBackupNotification() {
-  const addNotification = useNotificationStore((state) => state.addNotification);
+  const addNotification = useNotificationStore(
+    (state) => state.addNotification
+  );
 
   useEffect(() => {
     const checkNotification = async () => {
@@ -20,7 +22,7 @@ export function useAutoBackupNotification() {
             type: "backup",
             link: "/settings/db",
           });
-          
+
           // Clear the flag
           await invoke("set_setting_command", {
             key: "backup_notification_pending",

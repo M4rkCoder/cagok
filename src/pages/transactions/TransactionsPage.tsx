@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import TransactionsTable from "./TransactionsTable";
-import { useHeaderStore } from "@/store/useHeaderStore";
+import { useHeaderStore } from "@/stores/useHeaderStore";
 import TransactionSheet from "./TrasactionSheet";
 import { Button } from "@/components/ui/button";
 import { CalendarDays, LayoutList, Table } from "lucide-react";
@@ -13,7 +13,9 @@ import { Spinner } from "@/components/ui/spinner";
 
 const TransactionsPage = () => {
   const { t } = useTranslation();
-  const [viewMode, setViewMode] = useState<"timeline" | "board" | "calendar">("timeline");
+  const [viewMode, setViewMode] = useState<"timeline" | "board" | "calendar">(
+    "timeline"
+  );
   const [isInitialized, setIsInitialized] = useState(false);
   const { setHeader, resetHeader } = useHeaderStore();
 
@@ -90,7 +92,7 @@ const TransactionsPage = () => {
 
         {/* 내역 추가 버튼 (Sheet 전용) */}
         <TransactionSheet />
-      </div>,
+      </div>
     );
   }, [viewMode, t, setHeader, isInitialized]);
 

@@ -1,7 +1,7 @@
 import React from "react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { formatCurrency } from "@/lib/utils";
-import { useDashboardStore } from "@/store/useDashboardStore";
+import { useDashboardStore } from "@/stores/useDashboardStore";
 import { DashboardTitle } from "./components/DashboardTitle";
 import { Card } from "@/components/ui/card";
 

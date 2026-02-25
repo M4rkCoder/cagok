@@ -15,8 +15,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useSyncStore } from "@/store/useSyncStore";
-import { useConfirmStore } from "@/store/useConfirmStore";
+import { useSyncStore } from "@/stores/useSyncStore";
+import { useConfirmStore } from "@/stores/useConfirmStore";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";

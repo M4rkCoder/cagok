@@ -37,7 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AllIcon, CategoryIcon } from "@/components/CategoryIcon";
-import { useStatisticsStore } from "@/store/useStatisticsStore";
+import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { TitleText } from "./components/TitleText";
 
 interface ProcessedData {
@@ -64,7 +64,7 @@ export const DayOfWeekChart: React.FC = () => {
     try {
       const response = await invoke<DayOfWeekResponse>(
         "get_day_of_week_stats_command",
-        { baseMonth, txType: txType === "expense" ? 1 : 0 },
+        { baseMonth, txType: txType === "expense" ? 1 : 0 }
       );
       setData(response);
     } catch (error) {
@@ -132,13 +132,13 @@ export const DayOfWeekChart: React.FC = () => {
           txAvg: info.txCount > 0 ? info.total / info.txCount : 0,
           fill: "",
         };
-      },
+      }
     );
 
     processedCategories.sort((a, b) => b.value - a.value);
     const grandTotal = processedCategories.reduce(
       (sum, item) => sum + item.value,
-      0,
+      0
     );
 
     const donutDataWithColor = processedCategories.map((cat, index) => ({
@@ -211,7 +211,7 @@ export const DayOfWeekChart: React.FC = () => {
     <Card
       className={cn(
         "overflow-hidden border-slate-200 shadow-none",
-        loading && "animate-pulse",
+        loading && "animate-pulse"
       )}
     >
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
@@ -230,7 +230,7 @@ export const DayOfWeekChart: React.FC = () => {
                 "px-4 py-1 text-xs font-bold transition-all rounded-md",
                 metricType === "total"
                   ? "bg-white text-blue-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700",
+                  : "text-slate-500 hover:text-slate-700"
               )}
             >
               총액
@@ -242,7 +242,7 @@ export const DayOfWeekChart: React.FC = () => {
                 "px-4 text-xs font-bold transition-all rounded-md",
                 metricType === "average"
                   ? "bg-white text-blue-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700",
+                  : "text-slate-500 hover:text-slate-700"
               )}
             >
               평균
@@ -439,7 +439,7 @@ export const DayOfWeekChart: React.FC = () => {
                         }}
                         onClick={() =>
                           setSelectedCategory(
-                            entry.id === selectedCategory ? "all" : entry.id,
+                            entry.id === selectedCategory ? "all" : entry.id
                           )
                         }
                       />
@@ -475,7 +475,7 @@ export const DayOfWeekChart: React.FC = () => {
                                     ? metricType === "total"
                                       ? selectedDonutItem.value
                                       : selectedDonutItem.txAvg
-                                    : totalMetricValue,
+                                    : totalMetricValue
                                 )}
                               </tspan>
                               <tspan
