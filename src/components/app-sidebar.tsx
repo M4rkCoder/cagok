@@ -15,6 +15,7 @@ import {
   Pencil,
   Zap,
   RefreshCw,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FinanceModeRounded from "./FinanceModeRounded";
@@ -104,6 +105,24 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
     >
       {!collapsed ? "더미 데이터 생성" : <Pencil className="h-4 w-4" />}
     </Button>
+  );
+
+  const AboutBtnNode = (
+    <SidebarMenuButton
+      asChild
+      isActive={isActive("/about")}
+      className={cn(
+        "transition-all",
+        collapsed ? "justify-center p-0 h-10" : "px-2"
+      )}
+    >
+      <Link to="/about" className="flex items-center gap-2">
+        <Info className={cn("shrink-0", collapsed ? "h-6 w-6" : "h-4 w-4")} />
+        {!collapsed && (
+          <span className="text-xs font-medium">{t("menu.about")}</span>
+        )}
+      </Link>
+    </SidebarMenuButton>
   );
 
   return (
@@ -313,6 +332,23 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
 
       {/* Footer */}
       <SidebarFooter className="p-2">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            {collapsed ? (
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>{AboutBtnNode}</TooltipTrigger>
+                <TooltipContent side="right" className="ml-1">
+                  About C'agok
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              AboutBtnNode
+            )}
+          </SidebarMenuItem>
+        </SidebarMenu>
+
+        {/* 구분선 (펼쳐졌을 때만) */}
+        {!collapsed && <div className="h-[1px] bg-sidebar-border mx-2 my-1" />}
         {collapsed ? (
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>{FooterBtnNode}</TooltipTrigger>

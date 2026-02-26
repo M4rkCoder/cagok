@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ComparisonMetric } from "@/types/dashboard";
 import { CardFooter } from "@/components/ui/card";
 import { Wallet, TrendingUp, TrendingDown, PieChart, Info } from "lucide-react";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 interface Props {
   metric: ComparisonMetric | null;
@@ -16,23 +17,7 @@ export function ComparisonCardFooter({
   dailyAverage,
 }: Props) {
   const isEmpty = !metric || metric.previous === 0;
-
-  const formatValue = () => {
-    if (!metric) return "";
-    return new Intl.NumberFormat("ko-KR", {
-      style: "currency",
-      currency: "KRW",
-      maximumFractionDigits: 0,
-    }).format(Math.abs(metric.diff));
-  };
-
-  const formatKRW = (value: number) => {
-    return new Intl.NumberFormat("ko-KR", {
-      style: "currency",
-      currency: "KRW",
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
+  const { formatAmount } = useCurrencyFormatter();
 
   const isIncrease = (metric?.diff ?? 0) > 0;
   const isSame = metric?.diff === 0;
@@ -65,7 +50,7 @@ export function ComparisonCardFooter({
         <Wallet className="w-3.5 h-3.5 text-slate-400" />
         <span>하루 평균</span>
         <span className="text-slate-900 font-extrabold bg-slate-100 px-1.5 py-0.5 rounded tracking-tighter">
-          {formatKRW(dailyAverage!)}
+          {formatAmount(dailyAverage!)}
         </span>
         <span>썼어요</span>
       </div>
@@ -97,14 +82,14 @@ export function ComparisonCardFooter({
             {isIncrease ? (
               <>
                 <span className="text-green-500 bg-slate-50 px-1 py-0.5 rounded ml-1">
-                  {formatValue()}
+                  {formatAmount(Math.abs(metric.diff))}
                 </span>
                 늘었어요.
               </>
             ) : (
               <>
                 <span className="text-red-500 bg-slate-50 px-1 py-0.5 rounded ml-1">
-                  {formatValue()}
+                  {formatAmount(Math.abs(metric.diff))}
                 </span>
                 줄었어요.
               </>

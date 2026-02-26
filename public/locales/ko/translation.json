@@ -21,7 +21,8 @@
     "quick_entry": "빠른 입력",
     "recurring": "반복 입력",
     "statistics": "통계",
-    "settings": "설정"
+    "settings": "설정",
+    "about": "앱 정보"
   },
   "description": "내역",
   "description_required": "설명은 필수입니다",
@@ -77,5 +78,34 @@
       "variable": "변동 지출"
     }
   },
-  "recurring_notification": "{{count}}건의 반복 내역이 생성되었습니다."
+  "recurring_notification": "{{count}}건의 반복 내역이 생성되었습니다.",
+  "about": {
+    "header": "앱 정보",
+    "hero_subtitle": "개인용 로컬 가계부 서비스",
+    "intro_title": "차곡차곡 쌓이는 나의 자산",
+    "intro_description": "C'AGOK은 복잡한 연동 없이 사용자가 직접 입력하여 소비 습관을 정확하게 파악할 수 있도록 돕는 로컬 기반 가계부입니다. 로그인이 필요 없으며, 모든 데이터는 사용자의 기기에만 안전하게 저장됩니다.",
+    "feature_local_title": "로컬 데이터 저장",
+    "feature_local_desc": "사용자 PC 내 SQLite 데이터베이스에 안전하게 저장됩니다.",
+    "feature_sync_title": "MS OneDrive 동기화",
+    "feature_sync_desc": "선택적으로 OneDrive를 통해 데이터를 백업할 수 있습니다.",
+    "privacy_title": "개인정보 처리방침",
+    "privacy_subtitle": "데이터 수집 및 보안 정책 확인"
+  },
+  "privacy": {
+    "title": "개인정보 처리방침",
+    "section1_title": "1. 데이터 수집 금지 원칙",
+    "section1_desc_1": "C'AGOK은 사용자가 입력한 어떠한 금융 정보, 거래 내역, 개인 식별 정보를",
+    "section1_desc_bold": "외부 서버로 전송하거나 수집하지 않습니다.",
+    "section1_desc_2": "앱 실행 시 발생하는 모든 트래픽은 오직 앱 업데이트 확인 및 사용자가 직접 설정한 클라우드 백업 시에만 발생합니다.",
+    "section2_title": "2. 데이터 저장 방식",
+    "section2_desc_1": "모든 가계부 데이터는 사용자의 로컬 디스크 내",
+    "section2_desc_bold": "SQLite 데이터베이스 파일",
+    "section2_desc_2": "에 저장됩니다. 해당 데이터에 대한 관리 책임은 전적으로 사용자에게 있으며, 앱 삭제 시 로컬 데이터도 함께 삭제될 수 있으므로 주의가 필요합니다.",
+    "section3_title": "3. 제3자 제공 및 위탁",
+    "section3_desc": "본 서비스는 별도의 회원 가입 절차가 없으며, 사용자의 데이터를 제3자에게 제공하거나 처리를 위탁하는 과정이 존재하지 않습니다. OneDrive 동기화 기능을 사용할 경우, 해당 데이터는 사용자의 개인 OneDrive 계정에만 저장됩니다.",
+    "footer_badge_title": "안전한 로컬 가계부",
+    "footer_badge_desc_1": "C'AGOK은 사용자의 프라이버시를 최우선으로 생각합니다.",
+    "footer_badge_desc_2": "당신의 자산 정보는 오직 당신의 기기에만 머뭅니다.",
+    "effective_date": "시행일자"
+  }
 }

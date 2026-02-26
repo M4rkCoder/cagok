@@ -1,11 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import {
@@ -27,7 +21,7 @@ import {
 } from "@/components/ui/chart";
 import { useTranslation } from "react-i18next";
 import { DayOfWeekResponse } from "@/types";
-import { cn, getThemeColor, formatCurrency } from "@/lib/utils";
+import { cn, getThemeColor } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -39,6 +33,7 @@ import {
 import { AllIcon, CategoryIcon } from "@/components/CategoryIcon";
 import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { TitleText } from "./components/TitleText";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 interface ProcessedData {
   dayName: string;
@@ -51,6 +46,7 @@ const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 export const DayOfWeekChart: React.FC = () => {
   const { t } = useTranslation();
+  const { formatAmount } = useCurrencyFormatter();
   const { baseMonth } = useStatisticsStore();
   const [data, setData] = useState<DayOfWeekResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -372,7 +368,7 @@ export const DayOfWeekChart: React.FC = () => {
                                   </span>
                                 </div>
                                 <span className="font-bold text-xs">
-                                  {formatCurrency(Number(value))}
+                                  {formatAmount(Number(value))}
                                 </span>
                               </div>
                               <div className="flex items-center justify-between border-t border-slate-50 pt-1.5">
@@ -470,7 +466,7 @@ export const DayOfWeekChart: React.FC = () => {
                                 y={(viewBox.cy || 0) + 12}
                                 className="fill-foreground text-sm font-bold"
                               >
-                                {formatCurrency(
+                                {formatAmount(
                                   selectedDonutItem
                                     ? metricType === "total"
                                       ? selectedDonutItem.value

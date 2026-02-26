@@ -6,13 +6,17 @@ export const useCurrencyFormatter = () => {
 
   const formatAmount = (amount: number) => {
     if (language === "ko") {
-      const formattedNumber = new Intl.NumberFormat("ko-KR").format(amount);
+      const formattedNumber = new Intl.NumberFormat("ko-KR", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount);
       return `${formattedNumber}원`;
     } else {
       return new Intl.NumberFormat(language === "en" ? "en-US" : language, {
         style: "currency",
         currency: currency || "USD", // 설정된 통화가 없으면 기본값 USD
         minimumFractionDigits: 0,
+        maximumFractionDigits: 1,
       }).format(amount);
     }
   };

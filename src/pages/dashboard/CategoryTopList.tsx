@@ -4,6 +4,7 @@ import { formatCurrency } from "@/lib/utils";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { DashboardTitle } from "./components/DashboardTitle";
 import { Card } from "@/components/ui/card";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 interface ExpenseItem {
   id: string | number;
@@ -15,6 +16,7 @@ interface ExpenseItem {
 }
 
 export const CategoryTopList: React.FC = () => {
+  const { formatAmount } = useCurrencyFormatter();
   const { topFixedExpenses: topFixed, topVariableExpenses: topVariable } =
     useDashboardStore();
   const renderList = (title: string, data: ExpenseItem[]) => (
@@ -45,7 +47,7 @@ export const CategoryTopList: React.FC = () => {
               </div>
               <div className="text-right ml-2">
                 <div className="font-black text-[13px] text-slate-800">
-                  {formatCurrency(item.amount)}
+                  {formatAmount(item.amount)}
                 </div>
               </div>
             </div>

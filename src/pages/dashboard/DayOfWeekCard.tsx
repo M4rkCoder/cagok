@@ -33,6 +33,7 @@ import {
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import { AllIcon } from "@/components/CategoryIcon";
 import { DashboardTitle } from "./components/DashboardTitle";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 type ViewMode = "expense" | "income";
 
@@ -47,6 +48,7 @@ const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 export const DayOfWeekCard: React.FC = () => {
   const { t } = useTranslation();
+  const { formatAmount } = useCurrencyFormatter();
   const [metricType, setMetricType] = useState<"total" | "average">("total");
   const [viewMode, setViewMode] = useState<ViewMode>("expense");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -291,7 +293,7 @@ export const DayOfWeekCard: React.FC = () => {
                                   </span>
                                 </div>
                                 <span className="font-bold text-xs">
-                                  {formatCurrency(Number(value))}
+                                  {formatAmount(value)}
                                 </span>
                               </div>
                               <div className="flex items-center justify-between border-t pt-1">
@@ -332,14 +334,14 @@ export const DayOfWeekCard: React.FC = () => {
         <div className="flex flex-col items-center justify-between space-y-4">
           {/* 도넛 차트 상단 중앙: 카테고리 셀렉트 */}
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="h-8 bg-white border-slate-200 w-[150px] text-sm">
+            <SelectTrigger className="h-8 bg-white border-slate-200 w-[150px] text-sm font-emoji">
               <SelectValue placeholder="카테고리" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-1 text-sm">
                   <AllIcon />
-                  <span>전체 카테고리</span>
+                  <span>전체</span>
                 </div>
               </SelectItem>
               {availableCategories.map((cat) => (
@@ -424,7 +426,7 @@ export const DayOfWeekCard: React.FC = () => {
                             y={(viewBox.cy || 0) + 15}
                             className="fill-foreground text-sm font-bold"
                           >
-                            {formatCurrency(
+                            {formatAmount(
                               selectedDonutItem
                                 ? metricType === "total"
                                   ? selectedDonutItem.value

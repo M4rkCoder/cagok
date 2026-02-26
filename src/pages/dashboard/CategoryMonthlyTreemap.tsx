@@ -4,6 +4,7 @@ import { useDashboardStore } from "@/stores/useDashboardStore";
 import { getFixedColor, getVariableColor } from "@/lib/utils";
 import { DashboardTitle } from "./components/DashboardTitle";
 import { Card } from "@/components/ui/card";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 export const CategoryMonthlyTreemap: React.FC = () => {
   const {
@@ -226,6 +227,7 @@ const LegendItem = ({ color, label }: { color: string; label: string }) => (
 );
 
 const CustomTooltip = ({ active, payload }: any) => {
+  const { formatAmount } = useCurrencyFormatter();
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     if (data.depth === 1) return null;
@@ -239,7 +241,7 @@ const CustomTooltip = ({ active, payload }: any) => {
           <span className="text-sm font-bold text-slate-800">{data.name}</span>
         </div>
         <div className="mt-1 border-t pt-1 flex justify-between items-center text-xs font-black text-slate-700">
-          <span>{data.value?.toLocaleString()}원</span>
+          <span>{formatAmount(data.value)}</span>
           <span className="text-blue-500">{data.percentage.toFixed(1)}%</span>
         </div>
       </div>

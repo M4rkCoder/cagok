@@ -7,14 +7,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { TitleText } from "./components/TitleText";
 import { CategoryIcon } from "@/components/CategoryIcon";
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: "KRW",
-    maximumFractionDigits: 0,
-  }).format(amount);
-};
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 interface TreemapData {
   name: string;
@@ -29,6 +22,7 @@ interface TreemapData {
 
 export const CategoryYearlyTreemap: React.FC = () => {
   const { t } = useTranslation();
+  const { formatAmount } = useCurrencyFormatter();
   const { categoryMonthlyAmounts, loading: storeLoading } =
     useStatisticsStore();
   const [viewType, setViewType] = useState<"expense" | "income">("expense");
@@ -203,11 +197,11 @@ export const CategoryYearlyTreemap: React.FC = () => {
                     <span className="font-normal opacity-80">({count}건)</span>
                   </div>
                   <div className="text-[11px] font-extrabold mt-0.5">
-                    {formatCurrency(value)}
+                    {formatAmount(value)}
                   </div>
                   {average > 0 && (
                     <div className="text-[9px] opacity-70 italic font-medium">
-                      평균: {formatCurrency(average)}
+                      평균: {formatAmount(average)}
                     </div>
                   )}
                 </div>
@@ -246,7 +240,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
             <div className="flex justify-between items-center">
               <span className="text-slate-400 font-semibold">총 금액</span>
               <span className="font-black text-slate-900">
-                {formatCurrency(data.value)}
+                {formatAmount(data.value)}
               </span>
             </div>
             <div className="flex justify-between items-center">
@@ -263,7 +257,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
               <div className="flex justify-between items-center pt-2 border-t border-slate-50">
                 <span className="text-slate-400 font-semibold">월 평균</span>
                 <span className="font-bold text-slate-600">
-                  {formatCurrency(data.average)}
+                  {formatAmount(data.average)}
                 </span>
               </div>
             )}

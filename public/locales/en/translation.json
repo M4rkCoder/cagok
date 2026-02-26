@@ -21,7 +21,8 @@
     "quick_entry": "Quick Entry",
     "recurring": "Recurring",
     "statistics": "Statistics",
-    "settings": "Settings"
+    "settings": "Settings",
+    "about": "About"
   },
   "description": "Description",
   "description_required": "Description is required",
@@ -71,5 +72,34 @@
   "search_transactions": "Search transactions...",
   "pick_start_date": "Pick a start date",
   "pick_end_date": "Pick an end date",
-  "recurring_notification": "{{count}} recurring transactions created."
+  "recurring_notification": "{{count}} recurring transactions created.",
+  "about": {
+    "header": "App Info",
+    "hero_subtitle": "Personal Local Account Book Service",
+    "intro_title": "Build Your Assets Step by Step",
+    "intro_description": "C'AGOK is a local-based account book that helps you accurately understand your spending habits by manual entry without complex linking. No login required, and all data is securely stored only on your device.",
+    "feature_local_title": "Local Data Storage",
+    "feature_local_desc": "Stored securely in an SQLite database on your PC.",
+    "feature_sync_title": "MS OneDrive Sync",
+    "feature_sync_desc": "Optionally backup your data via OneDrive.",
+    "privacy_title": "Privacy Policy",
+    "privacy_subtitle": "Check data collection and security policies"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "section1_title": "1. Data Collection Prohibition",
+    "section1_desc_1": "C'AGOK does not",
+    "section1_desc_bold": "transmit or collect any financial information,",
+    "section1_desc_2": "transaction history, or personally identifiable information entered by the user to external servers. All traffic is only for app updates or user-initiated cloud backups.",
+    "section2_title": "2. Data Storage Method",
+    "section2_desc_1": "All data is stored in an",
+    "section2_desc_bold": "SQLite database file",
+    "section2_desc_2": "on the user's local disk. The user is solely responsible for data management, and local data may be deleted upon app removal.",
+    "section3_title": "3. Third-party Provision",
+    "section3_desc": "This service has no registration process and does not provide user data to third parties. If using OneDrive sync, data is stored only in the user's personal OneDrive account.",
+    "footer_badge_title": "Secure Local Account Book",
+    "footer_badge_desc_1": "C'AGOK prioritizes your privacy.",
+    "footer_badge_desc_2": "Your financial data stays only on your device.",
+    "effective_date": "Effective Date"
+  }
 }

@@ -17,9 +17,10 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { TitleText } from "./components/TitleText";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 // 색상 체계 업데이트
 const chartConfig = {
@@ -84,6 +85,7 @@ type ViewMode = "all" | "income" | "expense" | "netIncome";
 export function YearlyTrendChart() {
   const { monthlyFinancialSummary: data } = useStatisticsStore();
   const [viewMode, setViewMode] = useState<ViewMode>("all");
+  const { formatAmount } = useCurrencyFormatter();
 
   const tabs: { id: ViewMode; label: string }[] = [
     { id: "all", label: "전체" },
@@ -284,7 +286,7 @@ export function YearlyTrendChart() {
                                     : "text-slate-900"
                                 )}
                               >
-                                {formatCurrency(Number(item.value))}
+                                {formatAmount(Number(item.value))}
                               </span>
                             </div>
                           );

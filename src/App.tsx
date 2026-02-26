@@ -20,6 +20,7 @@ import StatisticsPage from "@/pages/statistics/StatisticsPage";
 import QuickEntry from "@/pages/transactions/QuickEntry";
 import RecurringSettings from "@/pages/transactions/RecurringSettings";
 import { NotificationProvider } from "@/components/providers/NotificationProvider";
+import About from "./pages/About";
 
 type AppStage = "splash" | "onboarding" | "home";
 
@@ -133,6 +134,7 @@ function App() {
                         path="/settings/db"
                         element={<SettingsPage defaultSection="database" />}
                       />
+                      <Route path="/about" element={<About />} />
 
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>

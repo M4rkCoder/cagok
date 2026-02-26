@@ -8,9 +8,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { formatCurrency } from "@/lib/utils";
 import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { TitleText } from "./components/TitleText";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import AnimatedAmount from "@/components/AnimatedAmount";
 
 const emptyMetricStats: MetricStats = {
   total: 0,
@@ -51,7 +52,6 @@ export function SummaryCards() {
               textColor: "text-violet-600",
             },
           ]}
-          formatCurrency={formatCurrency}
           borderColor="border-slate-200"
           bgColor="bg-emerald-50/5"
         />
@@ -73,7 +73,6 @@ export function SummaryCards() {
               textColor: "text-slate-700",
             },
           ]}
-          formatCurrency={formatCurrency}
           borderColor="border-slate-200"
           bgColor="bg-rose-50/5"
         />
@@ -86,10 +85,10 @@ function CombinedVerticalCard({
   title,
   icon,
   items,
-  formatCurrency,
   borderColor,
   bgColor,
 }: any) {
+  const { formatAmount } = useCurrencyFormatter();
   const allValues = items.flatMap((i: any) => [
     i.data.min,
     i.data.max,
@@ -134,14 +133,18 @@ function CombinedVerticalCard({
                   item.textColor
                 )}
               >
-                {formatCurrency(item.data.total)}
+                <AnimatedAmount
+                  value={item.data.total}
+                  formatter={formatAmount}
+                  duration={1.2}
+                />
               </p>
               <div className="flex items-center gap-1.5 pt-1">
                 <span className="text-xs font-bold text-slate-700 bg-slate-200 p-0.5 rounded uppercase tracking-tighter">
                   월 평균
                 </span>
                 <span className="text-sm font-bold text-slate-500 tracking-tight">
-                  {formatCurrency(item.data.average)}
+                  {formatAmount(item.data.average)}
                 </span>
               </div>
             </div>
@@ -225,7 +228,7 @@ function CombinedVerticalCard({
                             "text-white"
                           )}
                         >
-                          {formatCurrency(item.data.average)}
+                          {formatAmount(item.data.average)}
                         </p>
                       </div>
 
@@ -240,7 +243,7 @@ function CombinedVerticalCard({
                             </p>
                           </div>
                           <p className="text-xs font-bold text-slate-200 tabular-nums">
-                            {formatCurrency(item.data.max)}
+                            {formatAmount(item.data.max)}
                           </p>
                           {item.data.maxMonth && (
                             <p className="text-xs text-slate-500 font-bold">
@@ -261,7 +264,7 @@ function CombinedVerticalCard({
                             <div className="w-1 h-1 rounded-full bg-rose-500" />
                           </div>
                           <p className="text-xs font-bold text-slate-200 tabular-nums">
-                            {formatCurrency(item.data.min)}
+                            {formatAmount(item.data.min)}
                           </p>
                           {item.data.minMonth && (
                             <p className="text-xs text-slate-500 font-bold">

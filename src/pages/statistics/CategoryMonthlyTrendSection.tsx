@@ -21,10 +21,12 @@ import { cn, formatCurrency } from "@/lib/utils";
 import { useAppStore } from "@/stores/useAppStore";
 import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { TitleText } from "./components/TitleText";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 export const CategoryMonthlyTrendSection = memo(
   function CategoryMonthlyTrendSection() {
     const { baseMonth, categoryMonthlyAmounts } = useStatisticsStore();
+    const { formatAmount } = useCurrencyFormatter();
 
     const [activeType, setActiveType] = useState<"income" | "expense">(
       "expense"
@@ -234,7 +236,7 @@ export const CategoryMonthlyTrendSection = memo(
                               </span>
                             </div>
                             <span className="font-bold tabular-nums text-slate-900">
-                              {formatCurrency(Number(item.value))}
+                              {formatAmount(Number(item.value))}
                             </span>
                           </div>
                         ))}

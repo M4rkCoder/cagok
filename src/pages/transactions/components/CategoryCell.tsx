@@ -178,7 +178,7 @@ const CategoryCell = ({
 
   return (
     <div
-      className="relative w-full h-full flex flex-col justify-center bg-transparent"
+      className="group relative w-full h-full flex flex-col justify-center bg-transparent"
       onPaste={(e) => onPaste(e, row.index, colIdx)}
     >
       <div className="relative flex items-center h-full">
@@ -445,7 +445,7 @@ const CategoryCell = ({
       </div>
       <div
         onMouseDown={(e) => onDragStart(e, row.index, colIdx)}
-        className="absolute bottom-0 right-0 w-2 h-2 bg-blue-600 cursor-crosshair hidden group-hover:block z-40"
+        className="absolute bottom-0 right-0 w-2 h-2 bg-blue-600 cursor-crosshair hidden group-hover:block z-50"
       />
     </div>
   );

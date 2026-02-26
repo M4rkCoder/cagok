@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { getThemeColor } from "@/lib/utils"; // 유틸 함수 임포트
 import { AllIcon } from "@/components/CategoryIcon";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 interface CategoryChartProps {
   mode: "expense" | "income"; // 모드 추가
@@ -38,6 +39,7 @@ export default function CategoryTransactionChart({
 }: CategoryChartProps) {
   const { overview, categoriesExpense, categoriesIncome } = useDashboardStore();
   const [isMounted, setIsMounted] = React.useState(false);
+  const { formatAmount } = useCurrencyFormatter();
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -70,14 +72,6 @@ export default function CategoryTransactionChart({
     () => chartData.find((item) => item.id === activeId),
     [chartData, activeId]
   );
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("ko-KR", {
-      style: "currency",
-      currency: "KRW",
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
 
   return (
     <div className="flex flex-col h-full w-full items-center justify-between">
@@ -167,8 +161,8 @@ export default function CategoryTransactionChart({
                           className="fill-foreground text-base font-bold"
                         >
                           {selectedItem
-                            ? formatCurrency(selectedItem.value)
-                            : formatCurrency(totalAmount)}
+                            ? formatAmount(selectedItem.value)
+                            : formatAmount(totalAmount)}
                         </tspan>
 
                         <tspan

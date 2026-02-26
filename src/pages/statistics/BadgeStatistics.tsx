@@ -12,10 +12,12 @@ import {
 import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { TitleText } from "./components/TitleText";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 export function BadgeStatistics() {
   const { badgeStats: stats } = useStatisticsStore();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const { formatAmount } = useCurrencyFormatter();
 
   if (!stats) return null;
 
@@ -34,7 +36,7 @@ export function BadgeStatistics() {
         ? formatMonth(stats.maxExpenseMonth.month)
         : "-",
       subValue: stats.maxExpenseMonth
-        ? formatCurrency(stats.maxExpenseMonth.amount)
+        ? formatAmount(stats.maxExpenseMonth.amount)
         : "-",
       icon: <CalendarDays className="h-4 w-4" />,
     },
@@ -44,7 +46,7 @@ export function BadgeStatistics() {
         ? formatMonth(stats.maxIncomeMonth.month)
         : "-",
       subValue: stats.maxIncomeMonth
-        ? formatCurrency(stats.maxIncomeMonth.amount)
+        ? formatAmount(stats.maxIncomeMonth.amount)
         : "-",
       icon: <TrendingUp className="h-4 w-4" />,
     },
@@ -58,7 +60,7 @@ export function BadgeStatistics() {
       label: "많이 쓴 항목",
       value: stats.maxExpenseCategory ? stats.maxExpenseCategory.name : "-",
       subValue: stats.maxExpenseCategory
-        ? formatCurrency(stats.maxExpenseCategory.value)
+        ? formatAmount(stats.maxExpenseCategory.value)
         : "-",
       icon: <PieChart className="h-4 w-4" />, // 기본 아이콘으로 고정
       categoryIcon: stats.maxExpenseCategory?.icon, // 큰 아이콘용 데이터
@@ -76,7 +78,7 @@ export function BadgeStatistics() {
       label: "많이 쓴 요일",
       value: stats.maxExpenseDayOfWeek ? stats.maxExpenseDayOfWeek.day : "-",
       subValue: stats.maxExpenseDayOfWeek
-        ? formatCurrency(stats.maxExpenseDayOfWeek.amount)
+        ? formatAmount(stats.maxExpenseDayOfWeek.amount)
         : "-",
       icon: <CalendarCheck className="h-4 w-4" />,
     },
