@@ -37,6 +37,7 @@ const SyncSettings = () => {
     checkStatus,
     loadSettings,
     toggleAutoBackup,
+    toggleAutoSync,
     login,
     logout,
     backup,
@@ -73,11 +74,6 @@ const SyncSettings = () => {
       ),
       onConfirm: async () => await restore(),
     });
-  };
-
-  const handleToggleAutoSync = async (checked: boolean) => {
-    await updateSetting("onedrive_auto_sync", checked.toString());
-    useSyncStore.setState({ autoSyncEnabled: checked });
   };
 
   return (
@@ -197,7 +193,7 @@ const SyncSettings = () => {
                 <Switch
                   id="auto-sync"
                   checked={autoSyncEnabled}
-                  onCheckedChange={handleToggleAutoSync}
+                  onCheckedChange={toggleAutoSync}
                 />
               </div>
 

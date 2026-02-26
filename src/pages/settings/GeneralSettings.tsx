@@ -8,6 +8,7 @@ import {
   Table,
   CheckCircle2,
   LayoutList,
+  Coins,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -16,17 +17,20 @@ import { Separator } from "@/components/ui/separator";
 import { useAppStore } from "@/stores/useAppStore";
 import { useHeaderStore } from "@/stores/useHeaderStore";
 import { useSettingStore } from "@/stores/useSettingStore";
+import { useTranslation } from "react-i18next";
 import { format } from "date-fns";
 import { enUS, ko } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 const GeneralSettings = () => {
+  const { t } = useTranslation();
   const { resetHeader, setHeader } = useHeaderStore();
   const { language: globalLanguage } = useAppStore();
   const {
     appName: storeAppName,
     currency: storeCurrency,
     defaultView: storeDefaultView,
+    dateFormat: storeDateFormat,
     fetchGeneralSettings,
     saveGeneralSettings,
   } = useSettingStore();
@@ -38,7 +42,7 @@ const GeneralSettings = () => {
   const [localDateFormat, setLocalDateFormat] = useState("yyyy/MM/dd");
 
   useEffect(() => {
-    setHeader("일반 설정");
+    setHeader(t("settings.general.title"));
     fetchGeneralSettings();
     return () => resetHeader();
   }, []);
@@ -47,7 +51,8 @@ const GeneralSettings = () => {
     setLocalAppName(storeAppName);
     setLocalCurrency(storeCurrency);
     setLocalDefaultView(storeDefaultView);
-  }, [storeAppName, storeCurrency, storeDefaultView]);
+    setLocalDateFormat(storeDateFormat);
+  }, [storeAppName, storeCurrency, storeDefaultView, storeDateFormat]);
 
   useEffect(() => {
     setLocalLanguage(globalLanguage);
@@ -68,6 +73,7 @@ const GeneralSettings = () => {
       currency: localCurrency,
       defaultView: localDefaultView,
       language: localLanguage,
+      dateFormat: localDateFormat,
     });
   };
 
@@ -80,7 +86,7 @@ const GeneralSettings = () => {
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
             <Settings className="w-5 h-5" />
-            <CardTitle className="text-xl">일반 설정</CardTitle>
+            <CardTitle className="text-xl">{t("settings.general.title")}</CardTitle>
           </div>
         </CardHeader>
 
@@ -92,7 +98,7 @@ const GeneralSettings = () => {
                 htmlFor="appName"
                 className="text-sm font-bold text-slate-700 ml-1"
               >
-                가계부 이름
+                {t("settings.general.app_name")}
               </Label>
               <Input
                 id="appName"
@@ -104,7 +110,7 @@ const GeneralSettings = () => {
             </div>
             <div className="space-y-3">
               <Label className="text-sm font-bold text-slate-700 ml-1">
-                언어 설정
+                {t("settings.general.language")}
               </Label>
               <Tabs
                 value={localLanguage}
@@ -135,7 +141,7 @@ const GeneralSettings = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
               <Label className="text-sm font-bold text-slate-700 ml-1">
-                날짜 형식
+                {t("settings.general.date_format")}
               </Label>
               <Tabs
                 value={localDateFormat}
@@ -147,7 +153,7 @@ const GeneralSettings = () => {
                     value="yyyy/MM/dd"
                     className={cn("flex flex-col gap-0.5", activeTabClass)}
                   >
-                    <span className="text-[12px] font-bold">숫자형</span>
+                    <span className="text-[12px] font-bold">{t("onboarding.date_format_numeric")}</span>
                     <span className="text-[12px] opacity-80">
                       {getDateExample("yyyy/MM/dd", localLanguage)}
                     </span>
@@ -156,7 +162,7 @@ const GeneralSettings = () => {
                     value="MMM dd, yyyy"
                     className={cn("flex flex-col gap-0.5", activeTabClass)}
                   >
-                    <span className="text-[12px] font-bold">문자형</span>
+                    <span className="text-[12px] font-bold">{t("onboarding.date_format_text")}</span>
                     <span className="text-[12px] opacity-80">
                       {getDateExample("MMM dd, yyyy", localLanguage)}
                     </span>
@@ -166,8 +172,8 @@ const GeneralSettings = () => {
             </div>
 
             <div className="space-y-3">
-              <Label className="text-sm font-bold text-slate-700 ml-1">
-                통화 단위
+              <Label className="text-sm font-bold text-slate-700 flex items-center gap-2 ml-1">
+                <Coins className="w-4 h-4 text-blue-500" /> {t("settings.general.currency")}
               </Label>
               <Tabs
                 value={localCurrency}
@@ -209,27 +215,27 @@ const GeneralSettings = () => {
           {/* 3. 가계부 화면 */}
           <div className="space-y-4">
             <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2 ml-1">
-              가계부 기본 화면
+              {t("settings.general.default_view")}
             </h3>
             <div className="grid grid-cols-3 gap-4">
               {[
                 {
                   id: "timeline",
-                  label: "타임라인",
+                  label: t("onboarding.view_timeline"),
                   icon: LayoutList,
-                  desc: "일자별 리스트",
+                  desc: t("onboarding.view_timeline_desc"),
                 },
                 {
                   id: "calendar",
-                  label: "캘린더",
+                  label: t("onboarding.view_calendar"),
                   icon: CalendarDays,
-                  desc: "달력 보기",
+                  desc: t("onboarding.view_calendar_desc"),
                 },
                 {
                   id: "board",
-                  label: "테이블",
+                  label: t("onboarding.view_board"),
                   icon: Table,
-                  desc: "게시판 형태",
+                  desc: t("onboarding.view_board_desc"),
                 },
               ].map((view) => (
                 <button
@@ -279,7 +285,7 @@ const GeneralSettings = () => {
               size="lg"
               className="w-full md:w-44 bg-blue-600 hover:bg-blue-700 font-bold shadow-lg shadow-blue-100 transition-all active:scale-95 text-white"
             >
-              설정 저장하기
+              {t("settings.general.save_button")}
             </Button>
           </div>
         </CardContent>

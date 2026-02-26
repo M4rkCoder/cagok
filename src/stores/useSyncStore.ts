@@ -13,6 +13,7 @@ interface SyncState {
   checkStatus: () => Promise<void>;
   loadSettings: () => Promise<void>;
   toggleAutoBackup: (checked: boolean) => Promise<void>;
+  toggleAutoSync: (checked: boolean) => Promise<void>;
   login: () => Promise<void>;
   logout: () => Promise<void>;
   backup: () => Promise<void>;
@@ -68,6 +69,22 @@ export const useSyncStore = create<SyncState>((set, get) => ({
       console.error(e);
       toast.error("설정 저장 실패");
       set({ autoBackup: previous });
+    }
+  },
+
+  toggleAutoSync: async (checked: boolean) => {
+    const previous = get().autoSyncEnabled;
+    set({ autoSyncEnabled: checked });
+    try {
+      await invoke("set_setting_command", {
+        key: "onedrive_auto_sync",
+        value: checked ? "true" : "false",
+      });
+      toast.success("설정이 저장되었습니다.");
+    } catch (e) {
+      console.error(e);
+      toast.error("설정 저장 실패");
+      set({ autoSyncEnabled: previous });
     }
   },
 

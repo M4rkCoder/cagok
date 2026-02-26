@@ -71,6 +71,36 @@
   "6_months": "6개월",
   "1_year": "1년",
   "all_time": "전체 기간(해제)",
+  "onboarding": {
+    "welcome": "반갑습니다!",
+    "description": "차곡차곡 쌓아가는 첫 걸음, 설정을 완료해주세요.",
+    "app_name_label": "가계부 이름",
+    "app_name_placeholder": "예: 나의 소중한 자산 관리",
+    "language_label": "언어 설정",
+    "currency_label": "기본 통화",
+    "date_format_label": "날짜 형식",
+    "date_format_numeric": "숫자형",
+    "date_format_text": "문자형",
+    "default_view_label": "가계부 기본 화면",
+    "view_timeline": "타임라인",
+    "view_timeline_desc": "일자별 리스트",
+    "view_calendar": "캘린더",
+    "view_calendar_desc": "달력 보기",
+    "view_board": "테이블",
+    "view_board_desc": "게시판 형태",
+    "submit_button": "가계부 만들기"
+  },
+  "settings": {
+    "general": {
+      "title": "일반 설정",
+      "app_name": "가계부 이름",
+      "language": "언어 설정",
+      "date_format": "날짜 형식",
+      "currency": "통화 단위",
+      "default_view": "가계부 기본 화면",
+      "save_button": "설정 저장하기"
+    }
+  },
   "dashboard": {
     "treemap": {
       "total": "전체 지출",

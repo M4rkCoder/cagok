@@ -15,6 +15,7 @@ interface SettingState {
   appName: string;
   currency: string;
   defaultView: string;
+  dateFormat: string;
 
   // Actions - DB
   fetchDbPaths: () => Promise<void>;
@@ -35,6 +36,7 @@ interface SettingState {
     currency: string;
     defaultView: string;
     language: string;
+    dateFormat: string;
   }) => Promise<void>;
 }
 
@@ -48,6 +50,7 @@ export const useSettingStore = create<SettingState>((set, get) => ({
   appName: "",
   currency: "KRW",
   defaultView: "timeline",
+  dateFormat: "yyyy/MM/dd",
 
   // --- DB Actions ---
 
@@ -178,22 +181,24 @@ export const useSettingStore = create<SettingState>((set, get) => ({
 
   fetchGeneralSettings: async () => {
     try {
-      const [appName, currency, defaultView] = await Promise.all([
+      const [appName, currency, defaultView, dateFormat] = await Promise.all([
         invoke<string | null>("get_setting_command", { key: "app_name" }),
         invoke<string | null>("get_setting_command", { key: "currency" }),
         invoke<string | null>("get_setting_command", { key: "default_view" }),
+        invoke<string | null>("get_setting_command", { key: "date_format" }),
       ]);
       set({
         appName: appName || "C'agok",
         currency: currency || "KRW",
         defaultView: defaultView || "timeline",
+        dateFormat: dateFormat || "yyyy/MM/dd",
       });
     } catch (error) {
       console.error("Failed to fetch general settings", error);
     }
   },
 
-  saveGeneralSettings: async ({ appName, currency, defaultView, language }) => {
+  saveGeneralSettings: async ({ appName, currency, defaultView, language, dateFormat }) => {
     try {
       await Promise.all([
         invoke("set_setting_command", { key: "app_name", value: appName }),
@@ -203,10 +208,11 @@ export const useSettingStore = create<SettingState>((set, get) => ({
           value: defaultView,
         }),
         invoke("set_setting_command", { key: "language", value: language }),
+        invoke("set_setting_command", { key: "date_format", value: dateFormat }),
       ]);
 
       // 1. SettingStore 로컬 상태 업데이트
-      set({ appName, currency, defaultView });
+      set({ appName, currency, defaultView, dateFormat });
 
       // 2. AppStore 글로벌 상태 업데이트 (중요!)
       const appStore = useAppStore.getState();

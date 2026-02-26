@@ -106,6 +106,18 @@ struct OneDriveStatus {
 }
 ```
 
+### `SyncCheckResult`
+
+Result of a synchronization check with OneDrive.
+
+```rust
+struct SyncCheckResult {
+    needs_update: bool,
+    cloud_time: String,
+    local_time: String,
+}
+```
+
 ## Enums
 
 ### `RecurringFrequency`

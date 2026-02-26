@@ -45,6 +45,7 @@
   |description|TEXT|-|거래 상세 내용|
   |amount|REAL|"NOT NULL"|금액 (실수형)|
   |date|TEXT|"NOT NULL"|거래 날짜 (YYYY-MM-DD)|
+  |day_of_week|INTEGER|"GENERATED ALWAYS"|요일 (0:일 ~ 6:토, 가상 컬럼)|
   |type|INTEGER|"NOT NULL"|0:수입, 1:지출|
   |is_fixed|INTEGER|"NOT NULL DEFAULT 0"|0:변동(Variable), 1:고정(Fixed)|
   |remarks|TEXT|-|메모|
@@ -71,8 +72,8 @@
   |description|TEXT|"NOT NULL"|거래 설명|
   |amount|REAL|"NOT NULL"|거래 금액|
   |category_id|INTEGER|FOREIGN KEY|categories(id) 참조 (삭제 시 NULL 처리)|
-  |is_fixed|INTEGER|NOT NULL DEFAULT 0|고정 여부|
   |account_id|INTEGER|"DEFAULT 1, FOREIGN KEY"|accounts(id) 참조 (삭제 시 NULL 처리)|
+  |is_fixed|INTEGER|NOT NULL DEFAULT 0|고정 여부|
   |frequency|INTEGER|"NOT NULL"|반복 주기 (0: 일별, 1: 주별, 2: 월별, 3: 년별)|
   |start_date|TEXT|"NOT NULL"|반복 시작일 (YYYY-MM-DD)|
   |end_date|TEXT|-|반복 종료일 (NULL이면 무제한)|
@@ -82,6 +83,14 @@
   |last_created_date|TEXT|-|마지막으로 실제 거래가 생성된 날짜 (YYYY-MM-DD)|
   |remarks|TEXT|-|비고 메모|
   |created_at|TEXT|"NOT NULL"|반복 거래 생성일|
+
+- **recurring_history(반복 거래 실행 이력)**
+  |컬럼명|타입|제약 조건|설명|
+  |---|---|---|---|
+  |id|INTEGER|"PRIMARY KEY AUTOINCREMENT"|이력 고유 ID|
+  |recurring_id|INTEGER|"NOT NULL, FOREIGN KEY"|recurring_transactions(id) 참조 (삭제 시 CASCADE)|
+  |transaction_id|INTEGER|"NOT NULL, FOREIGN KEY"|transactions(id) 참조 (삭제 시 CASCADE)|
+  |created_at|TEXT|"NOT NULL"|실행 일시|
 
 ## 4. 화면 구성
 

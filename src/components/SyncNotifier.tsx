@@ -22,17 +22,20 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ProIcon } from "./ui/PlusBadge";
+import { cn } from "@/lib/utils";
 
 export const SyncNotifier = () => {
   const {
     status,
     isLoading,
     autoBackup,
+    autoSyncEnabled,
     login,
     logout,
     backup,
     restore,
     toggleAutoBackup,
+    toggleAutoSync,
   } = useSyncStore();
   const { confirm } = useConfirmStore();
 
@@ -68,69 +71,84 @@ export const SyncNotifier = () => {
 
           {/* 연결 상태 알림 점 */}
           {status?.is_connected && (
-            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
+            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background shadow-sm" />
           )}
         </button>
       </PopoverTrigger>
 
       <PopoverContent
-        className="w-80 p-4 mr-2 shadow-2xl border-border"
+        className="w-80 p-0 mr-2 shadow-2xl border-border overflow-hidden rounded-xl"
         align="end"
       >
-        <div className="space-y-4">
-          {/* 헤더 섹션 */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 font-semibold text-sm">
-              <ProIcon />
-              클라우드 동기화
-            </div>
-            <Badge
-              variant={status?.is_connected ? "default" : "secondary"}
-              className="text-[10px] px-1.5 py-0"
-            >
-              {status?.is_connected ? "연결됨" : "미연결"}
-            </Badge>
+        {/* 헤더 섹션 */}
+        <div className="bg-slate-50 border-b p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 font-bold text-slate-700">
+            <ProIcon />
+            클라우드 동기화
           </div>
+          <Badge
+            variant={status?.is_connected ? "default" : "secondary"}
+            className={cn(
+              "text-[10px] font-bold px-2 py-0.5 rounded-full",
+              status?.is_connected
+                ? "bg-blue-500 hover:bg-blue-600"
+                : "bg-slate-200 text-slate-500",
+            )}
+          >
+            {status?.is_connected ? "연결됨" : "미연결"}
+          </Badge>
+        </div>
+
+        <div className="p-4 space-y-4">
           {status?.is_connected ? (
-            <div className="bg-muted/50 p-3 rounded-lg space-y-2 border border-blue-100/20">
-              {/* 제목행: 서비스 이름 */}
-              <div className="flex items-center gap-2 pb-1 border-b border-muted">
-                <Cloudy size={16} className="text-blue-500" />
-                <span className="text-sm font-bold tracking-tight text-foreground/80">
-                  Microsoft OneDrive
-                </span>
+            <div className="bg-blue-50/50 p-4 rounded-xl space-y-3 border border-blue-100 shadow-inner">
+              <div className="flex items-center gap-2.5 pb-2 border-b border-blue-100/50">
+                <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white shadow-sm">
+                  <Cloud size={18} />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-extrabold text-blue-900 leading-none mb-1">
+                    OneDrive
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3 h-3 text-blue-600" />
+                    <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+                      Authenticated
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              {/* 정보행: 이름 및 이메일 */}
-              <div className="space-y-0.5 px-0.5">
-                <div className="text-[13px] font-semibold flex items-center gap-1.5 text-foreground">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+              <div className="space-y-0.5 px-0.5 overflow-hidden">
+                <div className="text-[13px] font-bold text-slate-700 truncate">
                   {status.account_name}
-                  <div className="text-xs text-muted-foreground truncate leading-relaxed">
-                    {status.account_email}
-                  </div>
+                </div>
+                <div className="text-[11px] text-slate-400 truncate font-medium">
+                  {status.account_email}
                 </div>
               </div>
             </div>
           ) : (
-            <div className="text-sm text-muted-foreground flex items-center gap-2 py-3 px-1">
-              <XCircle className="w-4 h-4" />
+            <div className="text-sm text-slate-400 font-medium flex flex-col items-center justify-center gap-2 py-6 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+              <CloudOff className="w-8 h-8 opacity-20" />
               연결된 계정이 없습니다.
             </div>
           )}
-          <Separator />
+
           {/* 액션 버튼 섹션 */}
-          <div className="grid grid-cols-1 gap-2">
+          <div className="grid grid-cols-1 gap-3">
             {!status?.is_connected ? (
               <Button
-                size="sm"
+                size="lg"
                 onClick={login}
                 disabled={isLoading}
-                className="w-full"
+                className="w-full bg-blue-600 hover:bg-blue-700 font-bold shadow-md shadow-blue-100"
               >
                 {isLoading ? (
-                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
-                ) : null}
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Cloudy className="mr-2 h-4 w-4" />
+                )}
                 OneDrive 로그인
               </Button>
             ) : (
@@ -141,44 +159,73 @@ export const SyncNotifier = () => {
                     size="sm"
                     onClick={backup}
                     disabled={isLoading}
-                    className="text-xs"
+                    className="text-xs font-bold border-slate-200 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200 transition-all"
                   >
                     {isLoading ? (
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin text-blue-500" />
                     ) : (
-                      <CloudUpload className="mr-1 h-3 w-3" />
+                      <CloudUpload className="mr-1.5 h-3.5 w-3.5 text-blue-500" />
                     )}
-                    백업
+                    즉시 백업
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleRestore}
                     disabled={isLoading}
-                    className="text-xs"
+                    className="text-xs font-bold border-slate-200 hover:bg-slate-50 hover:text-amber-600 hover:border-amber-200 transition-all"
                   >
                     {isLoading ? (
-                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin text-amber-500" />
                     ) : (
-                      <CloudDownload className="mr-1 h-3 w-3" />
+                      <CloudDownload className="mr-1.5 h-3.5 w-3.5 text-amber-500" />
                     )}
-                    복구
+                    데이터 복구
                   </Button>
                 </div>
 
-                <div className="flex items-center justify-between py-1 px-1">
-                  <Label
-                    htmlFor="popover-auto-backup"
-                    className="text-[11px] cursor-pointer"
-                  >
-                    앱 종료 시 자동 백업
-                  </Label>
-                  <Switch
-                    id="popover-auto-backup"
-                    checked={autoBackup}
-                    onCheckedChange={toggleAutoBackup}
-                    className="scale-75"
-                  />
+                <div className="bg-slate-50 rounded-lg p-3 space-y-3 border border-slate-100">
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <Label
+                        htmlFor="popover-auto-sync"
+                        className="text-[11px] font-bold text-slate-700 cursor-pointer mb-0.5"
+                      >
+                        실행 시 자동 동기화
+                      </Label>
+                      <span className="text-[9px] text-slate-400">
+                        앱 시작 시 클라우드 데이터와 병합
+                      </span>
+                    </div>
+                    <Switch
+                      id="popover-auto-sync"
+                      checked={autoSyncEnabled}
+                      onCheckedChange={toggleAutoSync}
+                      className="scale-75 data-[state=checked]:bg-blue-500"
+                    />
+                  </div>
+
+                  <Separator className="bg-slate-200/50" />
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <Label
+                        htmlFor="popover-auto-backup"
+                        className="text-[11px] font-bold text-slate-700 cursor-pointer mb-0.5"
+                      >
+                        앱 종료 시 자동 백업
+                      </Label>
+                      <span className="text-[9px] text-slate-400">
+                        데이터 변경 시 클라우드에 자동 업로드
+                      </span>
+                    </div>
+                    <Switch
+                      id="popover-auto-backup"
+                      checked={autoBackup}
+                      onCheckedChange={toggleAutoBackup}
+                      className="scale-75 data-[state=checked]:bg-blue-500"
+                    />
+                  </div>
                 </div>
 
                 <Button
@@ -186,18 +233,20 @@ export const SyncNotifier = () => {
                   size="sm"
                   onClick={logout}
                   disabled={isLoading}
-                  className="w-full text-xs text-rose-500 hover:bg-rose-50 hover:text-rose-600 h-8"
+                  className="w-full text-xs font-bold text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors h-9"
                 >
-                  <CloudOff className="mr-2 h-3 w-3" /> 연결 해제
+                  <CloudOff className="mr-2 h-3.5 w-3.5" /> 연결 해제
                 </Button>
               </>
             )}
           </div>
           {/* 하단 상태 정보 */}
           {status?.last_synced && (
-            <div className="text-[10px] text-muted-foreground flex items-center gap-1 justify-center pt-1">
-              <RotateCw className="w-2.5 h-2.5" />
-              마지막 동기화: {new Date(status.last_synced).toLocaleTimeString()}
+            <div className="text-[10px] text-slate-400 flex items-center gap-1.5 justify-center pt-1 font-medium bg-slate-50 py-2 rounded-lg">
+              <RotateCw className="w-3 h-3 text-slate-300" />
+              <span>
+                마지막 동기화: {new Date(status.last_synced).toLocaleString()}
+              </span>
             </div>
           )}
         </div>

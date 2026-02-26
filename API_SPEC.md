@@ -81,3 +81,5 @@ This document lists all available Tauri commands, their purpose, return types, a
 | `onedrive_backup` | Upload database backup to OneDrive. | `String` | `useSyncStore` |
 | `onedrive_restore` | Restore database from OneDrive. | `String` | `useSyncStore` |
 | `onedrive_check_status` | Check current OneDrive connection status. | `OneDriveStatus` | `useSyncStore` |
+| `check_onedrive_sync_status` | Check if a sync with OneDrive is needed. | [`SyncCheckResult`](API_TYPES.md#synccheckresult) | `useSyncStore` |
+| `onedrive_auto_sync` | Automatically sync the database from OneDrive if needed. | `String` | `useSyncStore` |

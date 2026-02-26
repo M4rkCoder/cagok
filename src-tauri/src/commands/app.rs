@@ -20,6 +20,8 @@ pub fn initialize_app(
     app_name: String,
     language: String,
     currency: String,
+    default_view: String,
+    date_format: String,
 ) -> Result<(), String> {
     let conn = conn.0.lock().unwrap();
 
@@ -27,6 +29,8 @@ pub fn initialize_app(
     set_setting(&conn, "app_name", &app_name).map_err(|e| e.to_string())?;
     set_setting(&conn, "language", &language).map_err(|e| e.to_string())?;
     set_setting(&conn, "currency", &currency).map_err(|e| e.to_string())?;
+    set_setting(&conn, "default_view", &default_view).map_err(|e| e.to_string())?;
+    set_setting(&conn, "date_format", &date_format).map_err(|e| e.to_string())?;
 
     insert_default_categories(&conn, &language).map_err(|e| e.to_string())?;
     Ok(())

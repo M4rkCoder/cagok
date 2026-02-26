@@ -72,6 +72,36 @@
   "search_transactions": "Search transactions...",
   "pick_start_date": "Pick a start date",
   "pick_end_date": "Pick an end date",
+  "onboarding": {
+    "welcome": "Welcome!",
+    "description": "The first step to building your wealth. Please complete the setup.",
+    "app_name_label": "Account Book Name",
+    "app_name_placeholder": "e.g., My Personal Finances",
+    "language_label": "Language",
+    "currency_label": "Default Currency",
+    "date_format_label": "Date Format",
+    "date_format_numeric": "Numeric",
+    "date_format_text": "Textual",
+    "default_view_label": "Default View",
+    "view_timeline": "Timeline",
+    "view_timeline_desc": "Daily list",
+    "view_calendar": "Calendar",
+    "view_calendar_desc": "Monthly view",
+    "view_board": "Table",
+    "view_board_desc": "Board style",
+    "submit_button": "Create Account Book"
+  },
+  "settings": {
+    "general": {
+      "title": "General Settings",
+      "app_name": "Account Book Name",
+      "language": "Language",
+      "date_format": "Date Format",
+      "currency": "Currency Unit",
+      "default_view": "Default View",
+      "save_button": "Save Settings"
+    }
+  },
   "recurring_notification": "{{count}} recurring transactions created.",
   "about": {
     "header": "App Info",
