@@ -7,11 +7,10 @@ import { useDashboardStore } from "@/stores/useDashboardStore";
 import AnimatedAmount from "@/components/AnimatedAmount";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
-interface SummaryItemRowProps {
-  lang: "ko" | "en";
-}
+import { useTranslation } from "react-i18next";
 
-export function SummaryItemRow({ lang }: SummaryItemRowProps) {
+export function SummaryItemRow() {
+  const { t } = useTranslation();
   const { formatAmount } = useCurrencyFormatter();
   const { overview, comparisons } = useDashboardStore();
 
@@ -19,17 +18,17 @@ export function SummaryItemRow({ lang }: SummaryItemRowProps) {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
       {[
         {
-          label: "수입",
+          label: t("common.income"),
           value: overview.total_income,
           metric: comparisons.Income,
         },
         {
-          label: "순수입",
+          label: t("common.net_income"),
           value: overview.net_income,
           metric: comparisons.NetIncome,
         },
         {
-          label: "고정비",
+          label: t("common.fixed_expense"),
           value: overview.fixed_expense,
           metric: comparisons.Fixed,
           ratio: overview.fixed_expense_ratio,
@@ -42,7 +41,7 @@ export function SummaryItemRow({ lang }: SummaryItemRowProps) {
         >
           {/* 왼쪽 영역: 제목 + 금액 */}
           <div className="flex items-center gap-3 overflow-hidden">
-            <span className="text-sm font-bold text-slate-400 whitespace-nowrap min-w-[42px]">
+            <span className="text-sm font-bold text-slate-400 whitespace-nowrap min-w-[32px] md:min-w-[42px]">
               {item.label}
             </span>
 
@@ -67,7 +66,7 @@ export function SummaryItemRow({ lang }: SummaryItemRowProps) {
                     side="top"
                     className="text-[10px] bg-slate-800"
                   >
-                    지출액 대비 고정 지출 비중
+                    {t("dashboard.fixed_expense_ratio")}
                   </TooltipContent>
                 </Tooltip>
               )}

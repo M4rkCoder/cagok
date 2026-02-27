@@ -2,6 +2,8 @@ import { DailySummary } from "@/types";
 import { ExpenseBadge, IncomeBadge, TrendBadge } from "./TransactionBadge";
 import { MinusCircle, PlusCircle } from "lucide-react";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { useDateFormatter } from "@/hooks/useDateFormatter";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   summary: DailySummary;
@@ -10,15 +12,9 @@ interface Props {
 }
 
 export function DailySummaryCard({ summary, isSelected, onClick }: Props) {
+  const { t } = useTranslation();
   const { formatAmount } = useCurrencyFormatter();
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const formatted = new Intl.DateTimeFormat("ko-KR", {
-      day: "numeric",
-      weekday: "short",
-    }).format(date);
-    return formatted;
-  };
+  const { formatDay, formatWeekday } = useDateFormatter();
 
   return (
     <div
@@ -51,7 +47,7 @@ export function DailySummaryCard({ summary, isSelected, onClick }: Props) {
               isSelected ? "text-slate-900" : "text-slate-600"
             }`}
           >
-            {formatDate(summary.date)}
+            {formatDay(summary.date)} ({formatWeekday(summary.date)})
           </span>
 
           <div className="h-3 w-[1px] bg-slate-200" />
@@ -60,13 +56,23 @@ export function DailySummaryCard({ summary, isSelected, onClick }: Props) {
             {summary.income_count > 0 && (
               <div className="flex items-center gap-1 hover:text-emerald-600 transition-colors">
                 <PlusCircle size={12} className="text-emerald-500" />
-                <span>{summary.income_count}건</span>
+                <span>
+                  {t("common.count", {
+                    count: summary.income_count,
+                    defaultValue: `${summary.income_count}건`,
+                  })}
+                </span>
               </div>
             )}
             {summary.expense_count > 0 && (
               <div className="flex items-center gap-1 hover:text-blue-600 transition-colors">
                 <MinusCircle size={12} className="text-blue-500" />
-                <span>{summary.expense_count}건</span>
+                <span>
+                  {t("common.count", {
+                    count: summary.expense_count,
+                    defaultValue: `${summary.expense_count}건`,
+                  })}
+                </span>
               </div>
             )}
           </div>

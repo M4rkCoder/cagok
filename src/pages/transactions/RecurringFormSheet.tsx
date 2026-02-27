@@ -49,6 +49,8 @@ interface RecurringFormSheetProps {
   onSave: (transaction: RecurringTransaction) => void;
 }
 
+import { useTranslation } from "react-i18next";
+
 const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
   open,
   onOpenChange,
@@ -56,6 +58,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
   categories,
   onSave,
 }) => {
+  const { t } = useTranslation();
   // 2. 초기 상태 설정 시 RecurringFormState 타입을 사용
   const [form, setForm] = useState<RecurringFormState>(
     transaction as RecurringFormState
@@ -119,7 +122,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
 
   const handleSubmit = () => {
     if (!form.description.trim()) {
-      toast.error("설명을 입력해주세요.");
+      toast.error(t("recurring.form.validation.description_required"));
       return;
     }
 
@@ -127,12 +130,12 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
     const finalAmount = Number(form.amount.toString().replace(/,/g, ""));
 
     if (isNaN(finalAmount) || finalAmount <= 0) {
-      toast.error("유효한 금액을 입력해주세요.");
+      toast.error(t("recurring.form.validation.amount_required"));
       return;
     }
 
     if (!form.category_id) {
-      toast.error("카테고리를 선택해주세요.");
+      toast.error(t("recurring.form.validation.category_required"));
       return;
     }
 
@@ -159,9 +162,9 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
         className="top-12 h-[calc(100vh-theme(spacing.12))] sm:max-w-[450px]"
       >
         <SheetHeader className="mb-2 space-y-1 px-1">
-          <SheetTitle>{form.id ? "반복 기록 수정" : "새 반복 기록"}</SheetTitle>
+          <SheetTitle>{form.id ? t("recurring.form.title_edit") : t("recurring.form.title_add")}</SheetTitle>
           <SheetDescription className="text-xs">
-            반복 수입/지출 기록을 설정합니다.
+            {t("recurring.form.description")}
           </SheetDescription>
         </SheetHeader>
 
@@ -175,13 +178,13 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                   {[
                     {
                       id: 0,
-                      name: "수입",
+                      name: t("common.income"),
                       icon: CirclePlus,
                       color: "text-emerald-500",
                     },
                     {
                       id: 1,
-                      name: "지출",
+                      name: t("common.expense"),
                       icon: CircleMinus,
                       color: "text-blue-500",
                     },
@@ -260,7 +263,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                             side="top"
                             className="bg-slate-800 text-white border-none text-[10px] font-bold"
                           >
-                            고정 지출 설정
+                            {t("recurring.form.fixed_setting")}
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -272,7 +275,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
               {/* 2. 카테고리 (가로 스크롤) */}
               <div className="space-y-2 w-full overflow-hidden">
                 <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-0.5">
-                  카테고리
+                  {t("category")}
                 </Label>
                 <div className="w-full max-w-[calc(450px-48px)] overflow-hidden">
                   <ScrollArea
@@ -321,13 +324,13 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
               {/* 3. 상세 내역 */}
               <div className="space-y-1 px-0.5">
                 <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  상세 내역
+                  {t("quick_entry.headers.description")}
                 </Label>
                 <Input
                   name="description"
                   value={form.description}
                   onChange={handleChange}
-                  placeholder="내용을 입력하세요"
+                  placeholder={t("transaction_form.description_placeholder")}
                   className="h-10 bg-slate-50 border-none rounded-xl text-sm font-bold"
                 />
               </div>
@@ -335,7 +338,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
               {/* 4. 금액 */}
               <div className="space-y-1 px-0.5">
                 <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  금액
+                  {t("amount")}
                 </Label>
                 <div className="relative">
                   <Input
@@ -355,7 +358,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
               {/* 5. 메모 */}
               <div className="space-y-1 px-0.5">
                 <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  메모 (선택)
+                  {t("remarks")}
                 </Label>
                 <Input
                   name="remarks"
@@ -369,7 +372,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
               {/* 6. 반복 주기 */}
               <div className="space-y-1 px-0.5">
                 <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  반복 주기
+                  {t("recurring.form.frequency")}
                 </Label>
                 <div className="flex p-1 bg-slate-100 rounded-xl">
                   {["daily", "weekly", "monthly", "yearly"].map((f) => (
@@ -386,13 +389,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                           : "text-slate-400"
                       )}
                     >
-                      {f === "daily"
-                        ? "매일"
-                        : f === "weekly"
-                          ? "매주"
-                          : f === "monthly"
-                            ? "매월"
-                            : "매년"}
+                      {t(`recurring.form.frequencies.${f}`)}
                     </button>
                   ))}
                 </div>
@@ -405,7 +402,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                   {/* 고정 높이를 주어 정렬을 맞춥니다 */}
                   <div className="h-5 flex items-end">
                     <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-0.5">
-                      시작일
+                      {t("recurring.form.start_date")}
                     </Label>
                   </div>
                   <div className="relative group">
@@ -449,7 +446,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                   {/* 초기화 버튼이 있어도 전체 높이를 h-5로 고정하여 시작일 라벨과 수평을 맞춥니다 */}
                   <div className="h-5 flex items-end justify-between">
                     <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-0.5">
-                      종료일
+                      {t("recurring.form.end_date")}
                     </Label>
                     {form.end_date && (
                       <button
@@ -458,7 +455,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                         }
                         className="text-[9px] font-bold text-rose-400 hover:text-rose-600 transition-colors pb-0.5"
                       >
-                        초기화
+                        {t("common.cancel")}
                       </button>
                     )}
                   </div>
@@ -469,7 +466,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                       onChange={handleChange}
                       onBlur={() => handleDateBlur("end_date")}
                       className="h-10 bg-slate-50 border-none rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500/20 pr-8 text-xs font-bold w-full"
-                      placeholder="무기한"
+                      placeholder={t("recurring.form.no_end_date")}
                     />
                     <Popover>
                       <PopoverTrigger asChild>
@@ -504,7 +501,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
               className="w-full h-12 text-sm font-black rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-xl"
               onClick={handleSubmit}
             >
-              반복 설정 저장
+              {t("recurring.form.save")}
             </Button>
           </div>
         </div>

@@ -64,7 +64,7 @@ const TransactionsPage = () => {
             onClick={() => setViewMode("timeline")}
           >
             <LayoutList size={14} />
-            <span className="text-xs font-bold">타임라인</span>
+            <span className="text-xs font-bold">{t("transactions_view.timeline")}</span>
           </Button>
           <Button
             variant={viewMode === "calendar" ? "secondary" : "ghost"}
@@ -75,7 +75,7 @@ const TransactionsPage = () => {
             onClick={() => setViewMode("calendar")}
           >
             <CalendarDays size={14} />
-            <span className="text-xs font-bold">달력보기</span>
+            <span className="text-xs font-bold">{t("transactions_view.calendar")}</span>
           </Button>
           <Button
             variant={viewMode === "board" ? "secondary" : "ghost"}
@@ -86,7 +86,7 @@ const TransactionsPage = () => {
             onClick={() => setViewMode("board")}
           >
             <Table size={14} />
-            <span className="text-xs font-bold">표로 보기</span>
+            <span className="text-xs font-bold">{t("transactions_view.board")}</span>
           </Button>
         </div>
 

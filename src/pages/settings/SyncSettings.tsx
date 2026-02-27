@@ -20,8 +20,10 @@ import { useSyncStore } from "@/stores/useSyncStore";
 import { Switch } from "@/components/ui/switch";
 import { useConfirmStore } from "@/stores/useConfirmStore";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const SyncSettings = () => {
+  const { t } = useTranslation();
   const { resetHeader, setHeader } = useHeaderStore();
   const {
     status,
@@ -40,11 +42,11 @@ const SyncSettings = () => {
   const { confirm } = useConfirmStore();
 
   useEffect(() => {
-    setHeader("동기화 설정");
+    setHeader(t("settings.sync.title"));
     checkStatus();
     loadSettings();
     return () => resetHeader();
-  }, [setHeader, resetHeader, checkStatus, loadSettings]);
+  }, [setHeader, resetHeader, checkStatus, loadSettings, t]);
 
   if (!status && !isLoading) {
     return (
@@ -58,14 +60,8 @@ const SyncSettings = () => {
 
   const handleRestore = () => {
     confirm({
-      title: "데이터 복구",
-      description: (
-        <div className="space-y-1">
-          <p>OneDrive에서 데이터를 가져와 현재 데이터를 덮어씁니다.</p>
-          <p>현재 기기의 변경사항이 사라질 수 있습니다.</p>
-          <p className="font-semibold text-rose-500">계속하시겠습니까?</p>
-        </div>
-      ),
+      title: t("settings.sync.restore_confirm_title"),
+      description: t("settings.sync.restore_confirm_desc"),
       onConfirm: async () => await restore(),
     });
   };
@@ -78,11 +74,9 @@ const SyncSettings = () => {
           <div className="flex flex-col items-center gap-4 p-6 bg-card border shadow-xl rounded-xl">
             <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
             <div className="space-y-1 text-center">
-              <h3 className="font-semibold text-lg">데이터 동기화 중</h3>
+              <h3 className="font-semibold text-lg">{t("settings.sync.syncing")}</h3>
               <p className="text-sm text-muted-foreground">
-                OneDrive와 데이터를 주고받고 있습니다.
-                <br />
-                잠시만 기다려 주세요...
+                {t("settings.sync.syncing_desc")}
               </p>
             </div>
           </div>
@@ -93,7 +87,7 @@ const SyncSettings = () => {
         <CardHeader className="border-b bg-slate-50/50 dark:bg-slate-900/50 rounded-t-xl pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Cloudy className="w-5 h-5 text-blue-500" />
-            클라우드 동기화
+            {t("settings.sync.title")}
           </CardTitle>
         </CardHeader>
 
@@ -138,11 +132,11 @@ const SyncSettings = () => {
                   >
                     {status?.is_connected ? (
                       <span className="flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> 연결됨
+                        <CheckCircle2 className="w-3 h-3" /> {t("settings.sync.connected")}
                       </span>
                     ) : (
                       <span className="flex items-center gap-1">
-                        <XCircle className="w-3 h-3" /> 미연결
+                        <XCircle className="w-3 h-3" /> {t("settings.sync.disconnected")}
                       </span>
                     )}
                   </Badge>
@@ -164,14 +158,14 @@ const SyncSettings = () => {
                     {status.last_synced && (
                       <div className="text-xs text-muted-foreground flex items-center gap-1 pt-0.5">
                         <RotateCw className="w-3 h-3" />
-                        마지막 동기화:{" "}
+                        {t("settings.sync.last_sync")}:{" "}
                         {new Date(status.last_synced).toLocaleString()}
                       </div>
                     )}
                   </div>
                 ) : (
                   <div className="text-sm text-muted-foreground">
-                    OneDrive에 연결하여 데이터를 안전하게 백업하세요.
+                    {t("settings.sync.connect_desc")}
                   </div>
                 )}
               </div>
@@ -184,7 +178,7 @@ const SyncSettings = () => {
                   disabled={isLoading}
                   className="w-full sm:w-auto"
                 >
-                  OneDrive 연결
+                  {t("settings.sync.login_button")}
                 </Button>
               ) : (
                 <Button
@@ -193,7 +187,7 @@ const SyncSettings = () => {
                   disabled={isLoading}
                   className="w-full sm:w-auto gap-2 border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900 dark:text-rose-500 dark:hover:bg-rose-950/50 cursor-pointer"
                 >
-                  <CloudOff className="w-4 h-4" /> 연결 해제
+                  <CloudOff className="w-4 h-4" /> {t("settings.sync.logout_button")}
                 </Button>
               )}
             </div>
@@ -209,7 +203,7 @@ const SyncSettings = () => {
                   disabled={isLoading}
                   className="gap-2 flex-1 sm:flex-none bg-slate-600 hover:bg-slate-700 cursor-pointer"
                 >
-                  <CloudUpload className="w-4 h-4" /> 지금 백업하기
+                  <CloudUpload className="w-4 h-4" /> {t("settings.sync.backup_now")}
                 </Button>
 
                 <Button
@@ -218,7 +212,7 @@ const SyncSettings = () => {
                   className="gap-2 flex-1 sm:flex-none cursor-pointer"
                   onClick={handleRestore}
                 >
-                  <CloudDownload className="w-4 h-4" /> 클라우드에서 복구
+                  <CloudDownload className="w-4 h-4" /> {t("settings.sync.restore_from_cloud")}
                 </Button>
               </div>
 
@@ -229,11 +223,10 @@ const SyncSettings = () => {
                       htmlFor="auto-sync"
                       className="text-base font-semibold"
                     >
-                      앱 시작 시 자동 동기화
+                      {t("settings.sync.auto_sync_start")}
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      앱을 켤 때 클라우드에 최신 데이터가 있으면 자동으로
-                      가져옵니다.
+                      {t("settings.sync.auto_sync_start_desc")}
                     </p>
                   </div>
                   <Switch
@@ -249,10 +242,10 @@ const SyncSettings = () => {
                       htmlFor="auto-backup"
                       className="text-base font-semibold"
                     >
-                      앱 종료 시 자동 백업
+                      {t("settings.sync.auto_backup_end")}
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      앱을 닫을 때 현재 데이터를 OneDrive에 안전하게 저장합니다.
+                      {t("settings.sync.auto_backup_end_desc")}
                     </p>
                   </div>
                   <Switch

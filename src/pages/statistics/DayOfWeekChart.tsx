@@ -35,6 +35,8 @@ import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { TitleText } from "./components/TitleText";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
+import { useDateFormatter } from "@/hooks/useDateFormatter";
+
 interface ProcessedData {
   dayName: string;
   total: number;
@@ -42,11 +44,10 @@ interface ProcessedData {
   [key: string]: string | number;
 }
 
-const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
-
 export const DayOfWeekChart: React.FC = () => {
   const { t } = useTranslation();
   const { formatAmount } = useCurrencyFormatter();
+  const { formatDayIndex } = useDateFormatter();
   const { baseMonth } = useStatisticsStore();
   const [data, setData] = useState<DayOfWeekResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,12 +65,12 @@ export const DayOfWeekChart: React.FC = () => {
       );
       setData(response);
     } catch (error) {
-      toast.error("데이터를 불러오지 못했습니다.");
+      toast.error(t("statistics.summary.no_data"));
       console.error("Failed to fetch day of week stats:", error);
     } finally {
       setLoading(false);
     }
-  }, [baseMonth, txType]);
+  }, [baseMonth, txType, t]);
 
   useEffect(() => {
     fetchData();
@@ -148,14 +149,14 @@ export const DayOfWeekChart: React.FC = () => {
       config[`cat_${cat.id}`] = { label: cat.name, color: cat.fill };
     });
     config["total"] = {
-      label: metricType === "total" ? "전체 합계" : "일평균",
+      label: metricType === "total" ? t("dashboard.cards.total_sum") : t("dashboard.cards.daily_avg"),
       color: getThemeColor(txType),
     };
 
     const groupedByDay: { [key: number]: ProcessedData } = {};
-    DAYS.forEach((day, index) => {
-      groupedByDay[index] = { dayName: day, total: 0, count: 0 };
-    });
+    for (let i = 0; i < 7; i++) {
+      groupedByDay[i] = { dayName: formatDayIndex(i, "short"), total: 0, count: 0 };
+    }
 
     if (selectedCategory === "all") {
       data.totals.forEach((item) => {
@@ -193,7 +194,7 @@ export const DayOfWeekChart: React.FC = () => {
       availableCategories: donutDataWithColor,
       totalMetricValue: grandTotal,
     };
-  }, [data, metricType, selectedCategory, txType]);
+  }, [data, metricType, selectedCategory, txType, t, formatDayIndex]);
 
   const selectedDonutItem = useMemo(() => {
     if (selectedCategory === "all") return null;
@@ -213,7 +214,7 @@ export const DayOfWeekChart: React.FC = () => {
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
         <div className="flex flex-col">
           <TitleText
-            title={`요일 ${txType === "expense" ? "지출" : "수입"} 통계: ${metricType === "total" ? "총액" : "평균"}`}
+            title={`${t("statistics.tabs.dayofweek")} ${txType === "expense" ? t("common.expense") : t("common.income")} ${t("statistics.tabs.yearly")}: ${metricType === "total" ? t("statistics.summary.yearly_total", { label: "" }).replace(t("statistics.summary.yearly_total", { label: "" }).split(" ")[0], "").trim() : t("statistics.summary.monthly_avg")}`}
           />
         </div>
 
@@ -229,7 +230,7 @@ export const DayOfWeekChart: React.FC = () => {
                   : "text-slate-500 hover:text-slate-700"
               )}
             >
-              총액
+              {t("statistics.summary.yearly_total", { label: "" }).replace(t("statistics.summary.yearly_total", { label: "" }).split(" ")[0], "").trim()}
             </button>
             <button
               key="average"
@@ -241,7 +242,7 @@ export const DayOfWeekChart: React.FC = () => {
                   : "text-slate-500 hover:text-slate-700"
               )}
             >
-              평균
+              {t("statistics.summary.monthly_avg")}
             </button>
           </div>
           <Tabs
@@ -257,26 +258,26 @@ export const DayOfWeekChart: React.FC = () => {
                 value="expense"
                 className="text-xs transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white font-bold"
               >
-                지출
+                {t("common.expense")}
               </TabsTrigger>
               <TabsTrigger
                 value="income"
                 className="text-xs transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-bold"
               >
-                수입
+                {t("common.income")}
               </TabsTrigger>
             </TabsList>
           </Tabs>
 
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-[140px] h-8 text-[11px] bg-white border-slate-200">
-              <SelectValue placeholder="카테고리" />
+              <SelectValue placeholder={t("category")} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">
                 <span className="flex items-center gap-2">
                   <AllIcon />
-                  <span>전체</span>
+                  <span>{t("common.all")}</span>
                 </span>
               </SelectItem>
               {availableCategories.map((cat) => (
@@ -321,7 +322,6 @@ export const DayOfWeekChart: React.FC = () => {
                     axisLine={false}
                     fontSize={12}
                     fontWeight={600}
-                    tickFormatter={(v) => `${v}요일`}
                   />
                   <YAxis
                     tickFormatter={(v) =>
@@ -341,7 +341,6 @@ export const DayOfWeekChart: React.FC = () => {
                     cursor={{ fill: "hsl(var(--muted)/0.2)" }}
                     content={
                       <ChartTooltipContent
-                        labelFormatter={(v) => `${v}요일`}
                         className="w-[200px]"
                         formatter={(value, name, item) => {
                           if (selectedCategory === "all" && name !== "total")
@@ -350,8 +349,8 @@ export const DayOfWeekChart: React.FC = () => {
                             chartConfig[name as keyof typeof chartConfig];
                           const countLabel =
                             metricType === "total"
-                              ? "누적 건수"
-                              : "일평균 건수";
+                              ? t("dashboard.cards.cumulative_count")
+                              : t("dashboard.cards.average_count");
                           return (
                             <div className="flex flex-col gap-2 w-full">
                               <div className="flex items-center justify-between gap-2">
@@ -375,7 +374,7 @@ export const DayOfWeekChart: React.FC = () => {
                                 <span className="text-slate-400 text-[10px]">
                                   {countLabel}
                                 </span>
-                                <span className="text-[10px] font-medium text-slate-500">{`${Number(item.payload.count).toFixed(metricType === "average" ? 1 : 0)}건`}</span>
+                                <span className="text-[10px] font-medium text-slate-500">{`${Number(item.payload.count).toFixed(metricType === "average" ? 1 : 0)}${t("common.unit", { defaultValue: "건" })}`}</span>
                               </div>
                             </div>
                           );
@@ -482,8 +481,8 @@ export const DayOfWeekChart: React.FC = () => {
                                 {selectedDonutItem
                                   ? `${selectedDonutItem.percentage.toFixed(1)}%`
                                   : metricType === "total"
-                                    ? "총액 합계"
-                                    : "주간 평균"}
+                                    ? t("dashboard.cards.total_sum")
+                                    : t("dashboard.cards.weekly_avg")}
                               </tspan>
                             </text>
                           );
@@ -498,7 +497,7 @@ export const DayOfWeekChart: React.FC = () => {
           </div>
         ) : (
           <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">
-            데이터가 없습니다.
+            {t("statistics.summary.no_data")}
           </div>
         )}
       </CardContent>

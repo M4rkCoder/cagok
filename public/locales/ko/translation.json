@@ -13,7 +13,23 @@
     "edit": "수정",
     "delete": "삭제",
     "cancel": "취소",
-    "loading": "로딩 중..."
+    "close": "닫기",
+    "loading": "로딩 중...",
+    "year": "연도",
+    "count": "{{count}}건",
+    "count_day": "{{count}}일",
+    "rows": "행",
+    "more_items": "외 {{count}}개 항목 더 있음",
+    "more_items_simple": "외 {{count}}개",
+    "days": {
+      "0": "일요일",
+      "1": "월요일",
+      "2": "화요일",
+      "3": "수요일",
+      "4": "목요일",
+      "5": "금요일",
+      "6": "토요일"
+    }
   },
   "menu": {
     "dashboard": "한 눈에 보기",
@@ -33,6 +49,7 @@
   "date_required": "날짜는 필수입니다",
   "type": "유형",
   "select_type": "유형 선택",
+  "select_month": "월 선택",
   "transaction_type": "가계부 유형",
   "select_transaction_type": "가계부 유형 선택",
   "remarks": "메모",
@@ -40,6 +57,13 @@
   "category": "항목",
   "select_category": "항목 선택",
   "no_category": "항목 없음",
+  "select_icon": "아이콘 선택",
+  "search_category": "항목 검색",
+  "no_results": "결과가 없습니다.",
+  "edit_name": "이름 수정...",
+  "new_name": "새 이름...",
+  "add_new_category": "새 항목 추가",
+  "category_name_empty": "항목 이름을 입력하세요.",
   "transactions": "가계부",
   "new_transaction": "가계부 입력",
   "edit_transaction": "가계부 수정",
@@ -57,11 +81,12 @@
   "failed_to_save_transaction": "가계부 저장에 실패했습니다.",
   "confirm_delete": "삭제 확인",
   "confirm_delete_transaction_message": "이 가계부를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+  "bulk_delete_title": "선택 항목 삭제",
+  "bulk_delete_confirm": "{{count}}개의 내역을 정말 삭제하시겠습니까?",
   "filter_by_type": "유형별 필터",
   "all_types": "모든 유형",
   "filter_by_category": "항목별 필터",
   "all_categories": "모든 항목",
-  "search_category": "항목 검색",
   "search_transactions": "가계부 검색...",
   "pick_start_date": "시작일 선택",
   "pick_end_date": "종료일 선택",
@@ -71,6 +96,190 @@
   "6_months": "6개월",
   "1_year": "1년",
   "all_time": "전체 기간(해제)",
+  "transaction_form": {
+    "delete_title": "내역 삭제",
+    "delete_description": "이 내역을 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.",
+    "fixed_expense_setting": "고정 지출 설정",
+    "search_category": "카테고리 검색...",
+    "no_results": "결과가 없습니다.",
+    "edit_name": "이름 수정...",
+    "new_name": "새 이름...",
+    "add_new_category": "새 카테고리 추가",
+    "description_placeholder": "내용 입력",
+    "calculation_result": "계산 결과: {{amount}}원",
+    "date_placeholder": "YYYY-MM-DD 또는 '오늘', '어제'",
+    "remarks_placeholder": "메모를 입력하세요"
+  },
+  "transaction_filter": {
+    "search_placeholder": "내역/메모 검색...",
+    "search_button": "검색",
+    "reset_filter": "필터 초기화",
+    "all": "전체",
+    "category": "카테고리",
+    "period": "기간",
+    "amount": "금액",
+    "amount_filter": "금액 필터",
+    "amount_range": "금액 범위 (원)",
+    "min": "최소",
+    "max": "최대",
+    "unlimited": "무제한",
+    "this_month": "이번 달",
+    "3_months": "3개월",
+    "6_months": "6개월",
+    "1_year": "1년",
+    "confirm": "확인",
+    "expand_all": "모두 펼치기",
+    "collapse_all": "모두 접기",
+    "expand_details": "상세 펼치기",
+    "collapse_details": "상세 접기",
+    "no_search_results": "검색 결과가 없습니다",
+    "no_search_results_hint": "필터 조건을 변경하거나 검색어를 다르게 입력해보세요.",
+    "modes": {
+      "all": "전체",
+      "income": "수입",
+      "total_expense": "총지출",
+      "fixed_expense": "고정지출",
+      "variable_expense": "변동지출",
+      "divider": "구분"
+    }
+  },
+  "quick_entry": {
+    "title": "빠른 입력",
+    "save_data": "데이터 저장",
+    "invalid_data": "유효하지 않은 데이터입니다.",
+    "download_template": "서식 다운로드",
+    "excel_upload": "엑셀 업로드",
+    "add_row": "행 추가",
+    "headers": {
+      "fixed": "고정",
+      "description": "상세 내역"
+    },
+    "toasts": {
+      "no_data": "저장할 거래 내역이 없습니다.",
+      "error_in_input": "입력한 내용에 오류가 있습니다.",
+      "saving_count": "{{count}}건 저장 중...",
+      "save_success": "성공적으로 저장되었습니다.",
+      "save_failed": "저장 실패: {{error}}",
+      "template_saved": "엑셀 템플릿이 저장되었습니다.",
+      "template_error": "템플릿 생성 중 오류가 발생했습니다.",
+      "import_check_required": "{{count}}건의 데이터에 확인(카테고리 등)이 필요합니다.",
+      "import_success": "{{count}}건을 성공적으로 읽어왔습니다.",
+      "import_error": "파일 처리 중 오류가 발생했습니다."
+    }
+  },
+  "recurring": {
+    "title": "반복 입력",
+    "process_all": "전체 실행",
+    "processing": "처리 중",
+    "input": "입력",
+    "delete_title": "반복 지출 삭제",
+    "delete_confirm": "정말 삭제하시겠습니까?",
+    "no_recurring": "등록된 반복 지출이 없습니다",
+    "uncategorized": "미지정",
+    "last_run_today": "오늘 실행됨 ✨",
+    "no_record": "기록 없음",
+    "actions": {
+      "edit": "수정",
+      "pause": "중단",
+      "activate": "활성화",
+      "run_now": "즉시 실행",
+      "delete": "삭제"
+    },
+    "form": {
+      "title_edit": "반복 기록 수정",
+      "title_add": "새 반복 기록",
+      "description": "반복 수입/지출 기록을 설정합니다.",
+      "fixed_setting": "고정 지출 설정",
+      "frequency": "반복 주기",
+      "start_date": "시작일",
+      "end_date": "종료일",
+      "no_end_date": "무기한",
+      "save": "반복 설정 저장",
+      "frequencies": {
+        "daily": "매일",
+        "weekly": "매주",
+        "monthly": "매월",
+        "yearly": "매년"
+      },
+      "validation": {
+        "description_required": "설명을 입력해주세요.",
+        "amount_required": "유효한 금액을 입력해주세요.",
+        "category_required": "카테고리를 선택해주세요."
+      }
+    },
+    "card_labels": {
+      "amount": "금액",
+      "frequency": "반복 주기",
+      "cycle": "기간",
+      "last_run": "마지막 실행"
+    }
+  },
+  "statistics": {
+    "title": "통계 및 분석",
+    "period": "기간",
+    "view_modes": {
+      "this_month": "이번 달 기준",
+      "by_year": "연도별"
+    },
+    "tabs": {
+      "summary": "개요",
+      "yearly": "연간 통계",
+      "monthly": "월별 통계",
+      "treemap": "카테고리 통계",
+      "dayofweek": "요일 통계"
+    },
+    "summary": {
+      "total_income": "총 수입",
+      "total_expense": "총 지출",
+      "net_income": "순 수입",
+      "monthly_avg_expense": "월평균 지출",
+      "comparison_prev_year": "전년 동기 대비",
+      "comparison_prev_month": "지난 달 대비",
+      "no_data": "통계 데이터가 없습니다.",
+      "annual_summary": "연간 요약",
+      "income_expense_summary": "수입 · 지출 요약",
+      "yearly_total": "연간 총 {{label}}",
+      "monthly_avg": "월 평균",
+      "details": "상세",
+      "max": "최대",
+      "min": "최소",
+      "badge_labels": {
+        "max_expense_month": "많이 쓴 달",
+        "max_income_month": "많이 번 달",
+        "net_income_ratio": "순수입률",
+        "net_income_ratio_desc": "(수입 대비 순수입)",
+        "max_expense_category": "많이 쓴 항목",
+        "most_frequent_category": "자주 쓴 항목",
+        "max_expense_day": "많이 쓴 요일",
+        "times_unit": "회"
+      }
+    },
+    "charts": {
+      "yearly_trend": "연간 수입/지출 추이",
+      "monthly_category_trend": "월별 카테고리 소비 추이",
+      "category_composition": "카테고리별 지출 구성",
+      "day_of_week_avg": "요일별 평균 지출",
+      "fixed_vs_variable": "고정 vs 변동 지출"
+    }
+  },
+  "notifications": {
+    "title": "알림",
+    "no_notifications": "알림이 없습니다.",
+    "view_all": "모든 알림 보기",
+    "mark_all_read": "모두 읽음으로 표시",
+    "clear_all": "모두 삭제",
+    "types": {
+      "recurring": "정기 내역 처리",
+      "backup": "자동 백업 완료",
+      "general": "알림"
+    }
+  },
+  "sync_notifier": {
+    "no_account": "연결된 계정이 없습니다.",
+    "login_button": "OneDrive 로그인",
+    "backup_now": "즉시 백업",
+    "restore_data": "데이터 복구"
+  },
   "onboarding": {
     "welcome": "반갑습니다!",
     "description": "차곡차곡 쌓아가는 첫 걸음, 설정을 완료해주세요.",
@@ -99,14 +308,120 @@
       "currency": "통화 단위",
       "default_view": "가계부 기본 화면",
       "save_button": "설정 저장하기"
+    },
+    "tabs": {
+      "general": "일반 설정",
+      "category": "카테고리 관리",
+      "database": "데이터베이스 관리",
+      "sync": "동기화 설정"
+    },
+    "category": {
+      "title": "카테고리 관리",
+      "add": "추가",
+      "edit": "수정",
+      "delete": "카테고리 삭제",
+      "delete_confirm": "[{{name}}] 카테고리를 삭제하시겠습니까? 관련 내역은 '미분류'로 변경됩니다.",
+      "no_categories": "등록된 카테고리가 없습니다.",
+      "add_new": "새로 추가하기",
+      "form_title_add": "카테고리 추가",
+      "form_title_edit": "카테고리 수정",
+      "form_description": "카테고리 정보를 입력하고 저장하세요.",
+      "name_required": "이름을 입력해주세요.",
+      "name_duplicate": "이미 존재하는 카테고리 이름입니다.",
+      "name_placeholder": "이름을 입력하세요",
+      "select_icon": "아이콘 선택"
+    },
+    "database": {
+      "title": "데이터베이스 관리",
+      "path_label": "데이터베이스 경로",
+      "open_folder": "폴더 열기",
+      "copy_path": "경로 복사",
+      "path_copied": "경로가 복사되었습니다.",
+      "download_title": "데이터베이스 다운로드",
+      "download_button": "다운로드",
+      "backup_title": "데이터베이스 백업",
+      "backup_folder": "백업 폴더",
+      "backup_now": "지금 백업",
+      "auto_backup_label": "종료 시 자동 백업 활성화",
+      "auto_backup_desc": "앱을 닫을 때 'cagok_auto.db' 파일로 자동 저장합니다.",
+      "backup_time_header": "백업 시점",
+      "manage_header": "관리",
+      "auto_backup_tag": "[자동 백업]",
+      "no_record": "기록 없음",
+      "no_backups": "보관된 백업 기록이 없습니다.",
+      "restore": "복원",
+      "restore_dialog_title": "데이터 복원",
+      "restore_dialog_desc": "선택한 시점으로 데이터를 되돌립니다. 현재 데이터는 모두 삭제됩니다.",
+      "restore_confirm": "복원 진행",
+      "restore_complete_title": "복원 완료",
+      "restore_complete_desc": "성공적으로 복원되었습니다. 적용을 위해 앱을 다시 시작합니다.",
+      "restart_button": "앱 재시작",
+      "delete_backup_title": "기록 삭제",
+      "delete_backup_desc": "백업 파일을 삭제하시겠습니까? 삭제된 데이터는 다시 찾을 수 없습니다."
+    },
+    "sync": {
+      "title": "클라우드 동기화",
+      "syncing": "데이터 동기화 중",
+      "syncing_desc": "OneDrive와 데이터를 주고받고 있습니다. 잠시만 기다려 주세요...",
+      "connected": "연결됨",
+      "disconnected": "미연결",
+      "last_sync": "마지막 동기화",
+      "connect_desc": "OneDrive에 연결하여 데이터를 안전하게 백업하세요.",
+      "login_button": "OneDrive 연결",
+      "logout_button": "연결 해제",
+      "backup_now": "지금 백업하기",
+      "restore_from_cloud": "클라우드에서 복구",
+      "auto_sync_start": "앱 시작 시 자동 동기화",
+      "auto_sync_start_desc": "앱을 켤 때 클라우드에 최신 데이터가 있으면 자동으로 가져옵니다.",
+      "auto_backup_end": "앱 종료 시 자동 백업",
+      "auto_backup_end_desc": "앱을 닫을 때 현재 데이터를 OneDrive에 안전하게 저장합니다.",
+      "restore_confirm_title": "데이터 복구",
+      "restore_confirm_desc": "OneDrive에서 데이터를 가져와 현재 데이터를 덮어씁니다. 현재 기기의 변경사항이 사라질 수 있습니다. 계속하시겠습니까?"
     }
   },
   "dashboard": {
+    "monthly_expense": "이달의 지출",
+    "recent_expense": "최근 지출",
+    "quick_entry": "바로 입력",
+    "no_recent_data": "최근 내역이 없습니다",
     "treemap": {
       "total": "전체 지출",
       "fixed": "고정 지출",
       "variable": "변동 지출"
+    },
+    "fixed_expense_ratio": "지출액 대비 고정 지출 비중",
+    "cards": {
+      "daily": "일일 현황",
+      "dayofweek": "요일 현황",
+      "treemap": "고정·변동 지출",
+      "toplist": "지출 TOP5",
+      "daily_status_title": "일일 {{type}} 현황",
+      "dayofweek_status_title": "요일별 {{type}} 현황",
+      "total_sum": "전체 합계",
+      "daily_avg": "일평균",
+      "weekly_avg": "주평균",
+      "cumulative_count": "누적 건수",
+      "average_count": "평균 건수",
+      "all_categories": "전체 카테고리",
+      "fixed_expense": "고정 지출",
+      "variable_expense": "변동 지출",
+      "etc": "기타",
+      "no_expense_this_month": "이번 달 지출 내역이 없습니다.",
+      "analyzing_data": "데이터 분석 중..."
+    },
+    "comparison": {
+      "daily_avg_spent": "하루 평균 <1>{{amount}}</1> 썼어요",
+      "same_as_last_month": "지난 달과 동일함",
+      "spent_more_than_last_month": "전월 대비 <1>{{amount}}</1> 늘었어요.",
+      "spent_less_than_last_month": "전월 대비 <1>{{amount}}</1> 줄었어요.",
+      "expense_ratio_spent": "수입의 <1>{{ratio}}%</1>를 썼어요.",
+      "no_data": "데이터가 없습니다."
     }
+  },
+  "transactions_view": {
+    "timeline": "타임라인",
+    "calendar": "달력보기",
+    "board": "표로 보기"
   },
   "recurring_notification": "{{count}}건의 반복 내역이 생성되었습니다.",
   "about": {

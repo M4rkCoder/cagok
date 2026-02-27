@@ -19,8 +19,10 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AnimatedTabs, TabItem, TabContent } from "@/components/AnimatedTabs";
+import { useTranslation } from "react-i18next";
 
 export default function StatisticsPage() {
+  const { t } = useTranslation();
   const { setHeader, resetHeader } = useHeaderStore();
 
   const {
@@ -41,21 +43,21 @@ export default function StatisticsPage() {
   const [activeTab, setActiveTab] = useState("summary");
 
   const tabs: TabItem[] = [
-    { id: "summary", label: "개요", icon: Activity },
-    { id: "yearly", label: "연간 통계", icon: ChartNoAxesCombined },
-    { id: "monthly", label: "월별 통계", icon: ChartSpline },
-    { id: "treemap", label: "카테고리 통계", icon: ChartPie },
-    { id: "dayofweek", label: "요일 통계", icon: BarChart3 },
+    { id: "summary", label: t("statistics.tabs.summary"), icon: Activity },
+    { id: "yearly", label: t("statistics.tabs.yearly"), icon: ChartNoAxesCombined },
+    { id: "monthly", label: t("statistics.tabs.monthly"), icon: ChartSpline },
+    { id: "treemap", label: t("statistics.tabs.treemap"), icon: ChartPie },
+    { id: "dayofweek", label: t("statistics.tabs.dayofweek"), icon: BarChart3 },
   ];
 
   useEffect(() => {
     setHeader(
-      "통계 및 분석",
+      t("statistics.title"),
       <div className="flex items-center gap-2">
         {viewMode === "month" && (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-md shadow-sm">
             <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-              기간
+              {t("statistics.period")}
             </span>
             <span className="text-sm font-medium text-slate-700 tabular-nums">
               {getFormattedPeriod()}
@@ -76,7 +78,7 @@ export default function StatisticsPage() {
           onValueChange={(value) => setViewMode(value as "month" | "year")}
           className="mr-2"
         >
-          <TabsList className="bg-slate-100 h-10 p-1.5 grid w-[180px] grid-cols-2">
+          <TabsList className="bg-slate-100 h-10 p-1.5 grid w-[220px] grid-cols-2">
             <TabsTrigger
               value="month"
               className={cn(
@@ -85,7 +87,7 @@ export default function StatisticsPage() {
                 "text-slate-500"
               )}
             >
-              이번 달 기준
+              {t("statistics.view_modes.this_month")}
             </TabsTrigger>
             <TabsTrigger
               value="year"
@@ -95,7 +97,7 @@ export default function StatisticsPage() {
                 "text-slate-500"
               )}
             >
-              연도별
+              {t("statistics.view_modes.by_year")}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -110,6 +112,7 @@ export default function StatisticsPage() {
     resetHeader,
     setSelectedYear,
     setViewMode,
+    t
   ]);
 
   useEffect(() => {
@@ -123,7 +126,7 @@ export default function StatisticsPage() {
   ) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <div className="text-lg">로딩 중...</div>
+        <div className="text-lg">{t("common.loading")}</div>
       </div>
     );
   }

@@ -29,8 +29,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
 import { MonthYearPicker } from "@/components/MonthYearPicker";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { useDateFormatter } from "@/hooks/useDateFormatter";
+import { useTranslation } from "react-i18next";
 
 export default function TransactionsCalendar() {
+  const { t, i18n } = useTranslation();
   const {
     filters,
     dailySummaries,
@@ -43,6 +46,7 @@ export default function TransactionsCalendar() {
 
   const { confirm } = useConfirmStore();
   const { formatAmount } = useCurrencyFormatter();
+  const { formatYear, formatMonth, formatFullDate, getDateParts } = useDateFormatter();
   const filterRef = useRef<HTMLDivElement>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -150,9 +154,8 @@ export default function TransactionsCalendar() {
 
   const handleDelete = (id: number) => {
     confirm({
-      title: "가계부 기록 삭제",
-      description:
-        "이 거래 내역을 정말 삭제하시겠습니까? \n 삭제 후에는 복구할 수 없습니다.",
+      title: t("confirm_delete"),
+      description: t("confirm_delete_transaction_message"),
       onConfirm: async () => {
         await deleteTransaction(id);
         if (selectedDate) {
@@ -221,30 +224,30 @@ export default function TransactionsCalendar() {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-black text-slate-800 dark:text-slate-100">
-                  {format(currentMonth, "M")}월
+                  {formatMonth(currentMonth.toISOString(), "long")}
                 </span>
                 <span className="text-lg font-semibold text-slate-400">
-                  {format(currentMonth, "yyyy")}
+                  {formatYear(currentMonth.getFullYear())}
                 </span>
               </div>
               <div className="h-6 w-[1px] bg-slate-200 dark:bg-slate-800 mx-2" />
               <div className="flex gap-4 text-sm">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-blue-500" />
-                  <span className="text-slate-500 font-medium">지출</span>
+                  <span className="text-slate-500 font-medium">{t("common.expense")}</span>
                   <span className="font-bold text-blue-600">
-                    {monthlySummary.expense.toLocaleString()}
+                    {formatAmount(monthlySummary.expense)}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-slate-500 font-medium">수입</span>
+                  <span className="text-slate-500 font-medium">{t("common.income")}</span>
                   <span className="font-bold text-emerald-600">
-                    {monthlySummary.income.toLocaleString()}
+                    {formatAmount(monthlySummary.income)}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-slate-500 font-medium">순수입</span>
+                  <span className="text-slate-500 font-medium">{t("common.net_income")}</span>
                   <span
                     className={cn(
                       "font-bold",
@@ -253,7 +256,7 @@ export default function TransactionsCalendar() {
                         : "text-rose-600"
                     )}
                   >
-                    {monthlySummary.total.toLocaleString()}
+                    {formatAmount(monthlySummary.total)}
                   </span>
                 </div>
               </div>
@@ -268,7 +271,7 @@ export default function TransactionsCalendar() {
           <div className="flex-1 overflow-hidden mt-2">
             <Calendar
               mode="single"
-              locale={ko}
+              locale={i18n.language === "ko" ? ko : undefined}
               month={currentMonth}
               onMonthChange={setCurrentMonth}
               selected={selectedDate}
@@ -392,7 +395,11 @@ function TransactionDetailDialog({
   onEdit,
   onDelete,
 }: TransactionDetailDialogProps) {
+  const { t } = useTranslation();
   const { formatAmount } = useCurrencyFormatter();
+  const { formatFullDate, getDateParts } = useDateFormatter();
+  const dateParts = selectedDate ? getDateParts(selectedDate.toISOString()) : null;
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg p-0 overflow-hidden border-none bg-transparent shadow-none">
@@ -412,13 +419,12 @@ function TransactionDetailDialog({
                     </div>
                     <div>
                       <DialogTitle className="text-xl font-black text-slate-800 dark:text-slate-100">
-                        {selectedDate &&
-                          format(selectedDate, "M월 d일", { locale: ko })}
+                        {selectedDate && (
+                          <span>{dateParts?.month} {dateParts?.day}</span>
+                        )}
                       </DialogTitle>
                       <p className="text-xs text-slate-400 font-medium mt-0.5">
-                        {selectedDate &&
-                          format(selectedDate, "eeee", { locale: ko })}{" "}
-                        • {transactions.length}건
+                        {dateParts?.weekday} • {t("common.count", { count: transactions.length })}
                       </p>
                     </div>
                   </div>
@@ -427,7 +433,7 @@ function TransactionDetailDialog({
                     {summary?.expense > 0 && (
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold text-blue-500/80 uppercase">
-                          지출
+                          {t("common.expense")}
                         </span>
                         <span className="text-sm font-black text-blue-600 tabular-nums">
                           {formatAmount(summary?.expense)}
@@ -437,7 +443,7 @@ function TransactionDetailDialog({
                     {summary?.income > 0 && (
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold text-emerald-500/80 uppercase">
-                          수입
+                          {t("common.income")}
                         </span>
                         <span className="text-sm font-black text-emerald-600 tabular-nums">
                           {formatAmount(summary?.income)}
@@ -518,7 +524,7 @@ function TransactionDetailDialog({
                     <div className="flex flex-col items-center justify-center py-16 text-slate-300">
                       <ReceiptText className="w-10 h-10 mb-3 opacity-20" />
                       <p className="text-sm font-medium">
-                        기록된 내역이 없습니다
+                        {t("no_transactions_found")}
                       </p>
                     </div>
                   )}
@@ -531,7 +537,7 @@ function TransactionDetailDialog({
                   className="w-full h-10 rounded-xl font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900"
                   onClick={() => onOpenChange(false)}
                 >
-                  닫기
+                  {t("common.close")}
                 </Button>
               </div>
             </motion.div>

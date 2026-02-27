@@ -22,11 +22,15 @@ import { useAppStore } from "@/stores/useAppStore";
 import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { TitleText } from "./components/TitleText";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { useTranslation } from "react-i18next";
+import { useDateFormatter } from "@/hooks/useDateFormatter";
 
 export const CategoryMonthlyTrendSection = memo(
   function CategoryMonthlyTrendSection() {
+    const { t } = useTranslation();
     const { baseMonth, categoryMonthlyAmounts } = useStatisticsStore();
     const { formatAmount } = useCurrencyFormatter();
+    const { formatMonth } = useDateFormatter();
 
     const [activeType, setActiveType] = useState<"income" | "expense">(
       "expense"
@@ -73,7 +77,7 @@ export const CategoryMonthlyTrendSection = memo(
         const y = date.getFullYear();
         const m = String(date.getMonth() + 1).padStart(2, "0");
         return {
-          label: `${date.getMonth() + 1}월`,
+          label: formatMonth(date.toISOString(), "short"),
           key: `${y}-${m}`,
         };
       });
@@ -106,12 +110,13 @@ export const CategoryMonthlyTrendSection = memo(
       expenseCategories,
       incomeCategories,
       internalCategoryId,
+      formatMonth
     ]);
 
     return (
       <Card className="flex flex-col border-slate-200 shadow-none">
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <TitleText title="월별 통계" />
+          <TitleText title={t("statistics.tabs.monthly")} />
           <div className="flex items-center gap-2 pb-4">
             <Tabs
               value={activeType}
@@ -126,13 +131,13 @@ export const CategoryMonthlyTrendSection = memo(
                   value="expense"
                   className="text-xs transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
                 >
-                  지출
+                  {t("common.expense")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="income"
                   className="text-xs transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-medium"
                 >
-                  수입
+                  {t("common.income")}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -144,11 +149,11 @@ export const CategoryMonthlyTrendSection = memo(
               }
             >
               <SelectTrigger className="w-[140px] h-8 text-xs">
-                <SelectValue placeholder="카테고리" />
+                <SelectValue placeholder={t("category")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">
-                  <AllIcon /> 전체 보기
+                  <AllIcon /> {t("common.all")}
                 </SelectItem>
                 {currentCategories.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id.toString()}>
@@ -217,7 +222,7 @@ export const CategoryMonthlyTrendSection = memo(
                   return (
                     <div className="rounded-lg border bg-white p-2 shadow-md w-[220px]">
                       <div className="mb-2 border-b pb-1 text-xs font-bold text-slate-500">
-                        {label} 내역
+                        {label} {t("statistics.summary.details")}
                       </div>
                       <div className="flex flex-col gap-1.5">
                         {visibleItems.map((item, index) => (
@@ -242,7 +247,7 @@ export const CategoryMonthlyTrendSection = memo(
                         ))}
                         {extraCount > 0 && (
                           <div className="mt-1 border-t pt-1 text-center text-[10px] italic text-slate-400">
-                            외 {extraCount}개 항목 더 있음
+                            {t("common.more_items", { count: extraCount })}
                           </div>
                         )}
                       </div>
@@ -274,7 +279,7 @@ export const CategoryMonthlyTrendSection = memo(
                       ))}
                       {hasMore && (
                         <div className="text-xs font-bold text-muted-foreground/60 italic">
-                          외 {displayCategoryNames.length - 10}개
+                          {t("common.more_items_simple", { count: displayCategoryNames.length - 10 })}
                         </div>
                       )}
                     </div>

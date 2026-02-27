@@ -22,9 +22,12 @@ interface TransactionPaginationProps {
   table: ReactTableType<TransactionWithCategory>;
 }
 
+import { useTranslation } from "react-i18next";
+
 const TransactionPagination: React.FC<TransactionPaginationProps> = ({
   table,
 }) => {
+  const { t } = useTranslation();
   const currentPage = table.getState().pagination.pageIndex;
   const totalPages = table.getPageCount();
   const pageSize = table.getState().pagination.pageSize;
@@ -49,13 +52,13 @@ const TransactionPagination: React.FC<TransactionPaginationProps> = ({
           table.setPageSize(Number(value));
         }}
       >
-        <SelectTrigger className="h-8 w-[90px] bg-white">
+        <SelectTrigger className="h-8 w-[100px] bg-white">
           <SelectValue placeholder={pageSize.toString()} />
         </SelectTrigger>
         <SelectContent side="top">
           {[10, 15, 20, 30, 40, 50].map((size) => (
             <SelectItem key={size} value={size.toString()}>
-              {size} 행
+              {size} {t("common.rows")}
             </SelectItem>
           ))}
         </SelectContent>

@@ -18,16 +18,14 @@ import {
   getMonth,
   setMonth,
   setYear,
-  setDefaultOptions,
   addYears,
   subYears,
   subMonths,
   addMonths,
 } from "date-fns";
-import { ko } from "date-fns/locale";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-
-setDefaultOptions({ locale: ko });
+import { useDateFormatter } from "@/hooks/useDateFormatter";
+import { useTranslation } from "react-i18next";
 
 interface MonthYearPickerProps {
   selectedMonth: string; // "YYYY-MM" format
@@ -38,6 +36,8 @@ export const MonthYearPicker: React.FC<MonthYearPickerProps> = ({
   selectedMonth,
   onMonthChange,
 }) => {
+  const { t } = useTranslation();
+  const { formatYear, formatYearMonth, formatMonth } = useDateFormatter();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [pickerDate, setPickerDate] = useState(new Date()); // Internal state for the picker
 
@@ -102,9 +102,9 @@ export const MonthYearPicker: React.FC<MonthYearPickerProps> = ({
             className="w-[150px] justify-center text-center font-semibold"
           >
             {selectedMonth ? (
-              format(new Date(`${selectedMonth}-01`), "yyyy년 M월")
+              formatYearMonth(`${selectedMonth}-01`)
             ) : (
-              <span>월 선택</span>
+              <span>{t("select_month", { defaultValue: "월 선택" })}</span>
             )}
           </Button>
         </PopoverTrigger>
@@ -120,12 +120,12 @@ export const MonthYearPicker: React.FC<MonthYearPickerProps> = ({
                 onValueChange={handleYearChange}
               >
                 <SelectTrigger className="w-[120px]">
-                  <SelectValue placeholder="연도" />
+                  <SelectValue placeholder={t("common.year")} />
                 </SelectTrigger>
                 <SelectContent>
                   {years.map((year) => (
                     <SelectItem key={year} value={year.toString()}>
-                      {year}년
+                      {formatYear(year)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -139,7 +139,7 @@ export const MonthYearPicker: React.FC<MonthYearPickerProps> = ({
             <div className="grid grid-cols-3 gap-1">
               {Array.from({ length: 12 }, (_, i) => {
                 const monthDate = setMonth(pickerDate, i); // Use pickerDate's year
-                const monthName = format(monthDate, "MMM", { locale: ko });
+                const monthName = formatMonth(monthDate.toISOString(), "short");
                 return (
                   <Button
                     key={i}

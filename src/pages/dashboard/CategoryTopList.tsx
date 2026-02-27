@@ -5,6 +5,7 @@ import { useDashboardStore } from "@/stores/useDashboardStore";
 import { DashboardTitle } from "./components/DashboardTitle";
 import { Card } from "@/components/ui/card";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { useTranslation } from "react-i18next";
 
 interface ExpenseItem {
   id: string | number;
@@ -16,6 +17,7 @@ interface ExpenseItem {
 }
 
 export const CategoryTopList: React.FC = () => {
+  const { t } = useTranslation();
   const { formatAmount } = useCurrencyFormatter();
   const { topFixedExpenses: topFixed, topVariableExpenses: topVariable } =
     useDashboardStore();
@@ -41,7 +43,7 @@ export const CategoryTopList: React.FC = () => {
                     {item.description}
                   </div>
                   <div className="text-[10px] text-slate-400 font-medium gap-2">
-                    {item.category_name} · {item.date.slice(-2)}일
+                    {item.category_name} · {item.date.slice(-2)}{t("common.day", { defaultValue: "일" })}
                   </div>
                 </div>
               </div>
@@ -54,7 +56,7 @@ export const CategoryTopList: React.FC = () => {
           ))
         ) : (
           <div className="h-24 flex items-center justify-center text-xs text-slate-300 italic bg-slate-50/50 rounded-2xl border border-dashed">
-            지출 내역이 없습니다.
+            {t("no_transactions_found")}
           </div>
         )}
       </div>
@@ -64,12 +66,12 @@ export const CategoryTopList: React.FC = () => {
   return (
     <Card className="pt-4 pb-0 px-5 border-none shadow-md">
       <div className="flex gap-8 w-full mt-0 px-3 pb-3">
-        {renderList("고정 지출", topFixed)}
+        {renderList(t("dashboard.cards.fixed_expense"), topFixed)}
 
         {/* 구분선 */}
         <div className="w-px bg-gradient-to-b from-transparent via-slate-300 to-transparent self-stretch" />
 
-        {renderList("변동 지출", topVariable)}
+        {renderList(t("dashboard.cards.variable_expense"), topVariable)}
       </div>
     </Card>
   );

@@ -67,11 +67,11 @@ export function TransactionDetailTable({
                     />
                   </div>
                 </TableHead>
-                <TableHead className="pl-5 w-[80px] font-bold">유형</TableHead>
-                <TableHead className="w-[150px] font-bold">카테고리</TableHead>
-                <TableHead className="w-[150px] font-bold">상세 내역</TableHead>
-                <TableHead className="w-[150px] font-bold">금액</TableHead>
-                <TableHead className="w-[100px] font-bold">메모</TableHead>
+                <TableHead className="pl-5 w-[80px] font-bold">{t("type")}</TableHead>
+                <TableHead className="w-[150px] font-bold">{t("category")}</TableHead>
+                <TableHead className="w-[150px] font-bold">{t("quick_entry.headers.description")}</TableHead>
+                <TableHead className="w-[150px] font-bold">{t("amount")}</TableHead>
+                <TableHead className="w-[100px] font-bold">{t("remarks")}</TableHead>
                 <TableHead className="w-[60px]"></TableHead>
               </TableRow>
             </TableHeader>
@@ -169,7 +169,7 @@ export function TransactionDetailTable({
                     colSpan={5}
                     className="h-24 text-center text-slate-400"
                   >
-                    이 날의 거래 내역이 없습니다.
+                    {t("no_transactions_found")}
                   </TableCell>
                 </TableRow>
               )}

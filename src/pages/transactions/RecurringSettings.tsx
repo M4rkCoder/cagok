@@ -31,7 +31,11 @@ const emptyForm: RecurringTransaction = {
   is_active: true,
 };
 
+import { useTranslation } from "react-i18next";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+
 export default function RecurringSettings() {
+  const { t } = useTranslation();
   const { setHeader, resetHeader } = useHeaderStore();
   const { confirm } = useConfirmStore();
   const { categoryList: categories } = useAppStore();
@@ -56,7 +60,7 @@ export default function RecurringSettings() {
   useEffect(() => {
     setHeader(
       <div className="flex items-center gap-2">
-        반복 입력 <ProIcon />
+        {t("recurring.title")} <ProIcon />
       </div>,
       <div className="flex items-center gap-2">
         <Button
@@ -69,7 +73,9 @@ export default function RecurringSettings() {
             className={cn("w-4 h-4 mr-2", isProcessing && "animate-spin")}
           />
           <span className="hidden sm:inline">
-            {isProcessing ? "처리 중" : "전체 실행"}
+            {isProcessing
+              ? t("recurring.processing")
+              : t("recurring.process_all")}
           </span>
         </Button>
 
@@ -82,12 +88,12 @@ export default function RecurringSettings() {
           className="rounded-full px-4 h-9 shadow-sm bg-blue-600 hover:bg-blue-700"
         >
           <Plus className="w-4 h-4 mr-1.5" />
-          입력
+          {t("recurring.input")}
         </Button>
-      </div>
+      </div>,
     );
     return () => resetHeader();
-  }, [isProcessing]);
+  }, [isProcessing, t, setHeader, resetHeader]);
 
   useEffect(() => {
     loadData();
@@ -95,20 +101,20 @@ export default function RecurringSettings() {
 
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
-    [categories]
+    [categories],
   );
 
   const counts = useMemo(
     () => ({
       all: recurringList.length,
       income: recurringList.filter(
-        (item) => categoryMap.get(item.category_id!)?.type === 0
+        (item) => categoryMap.get(item.category_id!)?.type === 0,
       ).length,
       expense: recurringList.filter(
-        (item) => categoryMap.get(item.category_id!)?.type === 1
+        (item) => categoryMap.get(item.category_id!)?.type === 1,
       ).length,
     }),
-    [recurringList, categoryMap]
+    [recurringList, categoryMap],
   );
 
   const filteredList = useMemo(() => {
@@ -132,8 +138,8 @@ export default function RecurringSettings() {
 
   const onDeleteConfirm = (id: number) => {
     confirm({
-      title: "반복 지출 삭제",
-      description: "정말 삭제하시겠습니까?",
+      title: t("recurring.delete_title"),
+      description: t("recurring.delete_confirm"),
       onConfirm: () => deleteRecurring(id),
     });
   };
@@ -149,9 +155,9 @@ export default function RecurringSettings() {
       {/* 탭 버튼 */}
       <div className="flex border-b border-slate-200 w-full relative mb-6">
         {[
-          { id: "all", label: "전체", count: counts.all },
-          { id: "income", label: "수입", count: counts.income },
-          { id: "expense", label: "지출", count: counts.expense },
+          { id: "all", label: t("common.all"), count: counts.all },
+          { id: "income", label: t("common.income"), count: counts.income },
+          { id: "expense", label: t("common.expense"), count: counts.expense },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -160,7 +166,7 @@ export default function RecurringSettings() {
               "relative px-6 py-3 text-sm font-bold transition-all flex items-center gap-2 outline-none",
               filterType === tab.id
                 ? "text-slate-900"
-                : "text-slate-400 hover:text-slate-600"
+                : "text-slate-400 hover:text-slate-600",
             )}
           >
             {tab.label}
@@ -170,7 +176,7 @@ export default function RecurringSettings() {
                 "ml-1 h-5 px-1.5 text-[10px] font-black border-none shadow-none",
                 filterType === tab.id
                   ? "bg-slate-100 text-slate-900"
-                  : "bg-transparent text-slate-300"
+                  : "bg-transparent text-slate-300",
               )}
             >
               {tab.count}
@@ -200,7 +206,7 @@ export default function RecurringSettings() {
         {filteredList.length === 0 && (
           <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-300 border-2 border-dashed border-slate-100 rounded-3xl bg-slate-50/50">
             <RefreshCw className="w-12 h-12 mb-3 opacity-20" />
-            <p className="text-sm font-medium">등록된 반복 지출이 없습니다</p>
+            <p className="text-sm font-medium">{t("recurring.no_recurring")}</p>
           </div>
         )}
       </div>
@@ -235,6 +241,8 @@ function RecurringCard({
   onDelete,
   onProcess,
 }: any) {
+  const { t } = useTranslation();
+  const { formatAmount } = useCurrencyFormatter();
   // 오늘 날짜 확인 (YYYY-MM-DD 형식)
   const isToday = useMemo(() => {
     if (!recurring.last_created_date) return false;
@@ -248,7 +256,7 @@ function RecurringCard({
         "relative group border-slate-200 overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md",
         recurring.is_active
           ? "hover:border-blue-300/50"
-          : "bg-slate-50/50 border-dashed opacity-80"
+          : "bg-slate-50/50 border-dashed opacity-80",
       )}
     >
       {/* 1. 상단 상태 바 (활성/비활성 배지) */}
@@ -259,7 +267,7 @@ function RecurringCard({
             ? category?.type === 0
               ? "bg-emerald-500"
               : "bg-blue-500"
-            : "bg-slate-300"
+            : "bg-slate-300",
         )}
       />
 
@@ -272,7 +280,7 @@ function RecurringCard({
               "text-[9px] font-black border-none px-2 py-0 transition-colors",
               recurring.is_active
                 ? "bg-emerald-100 text-emerald-700"
-                : "bg-slate-200 text-slate-500"
+                : "bg-slate-200 text-slate-500",
             )}
           >
             {recurring.is_active ? "ACTIVE" : "PAUSED"}
@@ -285,7 +293,7 @@ function RecurringCard({
               <div
                 className={cn(
                   "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-inner transition-transform group-hover:scale-105",
-                  category?.type === 0 ? "bg-emerald-50" : "bg-blue-50"
+                  category?.type === 0 ? "bg-emerald-50" : "bg-blue-50",
                 )}
               >
                 <CategoryIcon
@@ -305,7 +313,7 @@ function RecurringCard({
                 {recurring.description}
               </h3>
               <span className="text-[11px] text-slate-400 font-bold uppercase tracking-tighter">
-                {category?.name || "미지정"}
+                {category?.name || t("recurring.uncategorized")}
               </span>
             </div>
           </div>
@@ -314,27 +322,27 @@ function RecurringCard({
         <div className="flex items-end justify-between mb-5">
           <div className="flex flex-col">
             <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1.5">
-              Amount
+              {t("recurring.card_labels.amount")}
             </span>
             <div
               className={cn(
                 "font-black text-xl leading-none",
-                category?.type === 0 ? "text-emerald-600" : "text-blue-600"
+                category?.type === 0 ? "text-emerald-600" : "text-blue-600",
               )}
             >
-              {recurring.amount.toLocaleString()}
-              <span className="text-sm ml-0.5">원</span>
+              {formatAmount(recurring.amount)}
             </div>
           </div>
           <div className="flex flex-col items-end">
             <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1.5">
-              Frequency
+              {t("recurring.card_labels.frequency")}
             </span>
             <Badge
               variant="outline"
               className="text-[10px] font-black py-0.5 px-2 bg-slate-50 border-slate-200 text-slate-600"
             >
-              {getFrequencyText(recurring.frequency)} {getDayText(recurring)}
+              {getFrequencyText(recurring.frequency, t)}{" "}
+              {getDayText(recurring, t)}
             </Badge>
           </div>
         </div>
@@ -343,7 +351,7 @@ function RecurringCard({
         <div className="grid grid-cols-1 gap-2 pt-4 border-t border-slate-100">
           <div className="flex justify-between items-center text-[10px]">
             <span className="text-slate-400 font-bold uppercase tracking-tighter">
-              Cycle
+              {t("recurring.card_labels.cycle")}
             </span>
             <span className="text-slate-600 font-black tabular-nums">
               {recurring.start_date.slice(2, 10).replace(/-/g, ".")} ~{" "}
@@ -356,34 +364,34 @@ function RecurringCard({
           <div
             className={cn(
               "flex justify-between items-center text-[10px] p-1.5 rounded-lg transition-colors",
-              isToday ? "bg-blue-50/50 ring-1 ring-blue-100" : "bg-transparent"
+              isToday ? "bg-blue-50/50 ring-1 ring-blue-100" : "bg-transparent",
             )}
           >
             <span
               className={cn(
                 "font-bold uppercase tracking-tighter",
-                isToday ? "text-blue-600" : "text-slate-400"
+                isToday ? "text-blue-600" : "text-slate-400",
               )}
             >
-              Last Run
+              {t("recurring.card_labels.last_run")}
             </span>
             <div className="flex items-center gap-2">
               {recurring.last_created_date ? (
                 <span
                   className={cn(
                     "font-black tabular-nums",
-                    isToday ? "text-blue-600 animate-pulse" : "text-slate-600"
+                    isToday ? "text-blue-600 animate-pulse" : "text-slate-600",
                   )}
                 >
                   {isToday
-                    ? "오늘 실행됨 ✨"
+                    ? t("recurring.last_run_today")
                     : recurring.last_created_date
                         .slice(2, 10)
                         .replace(/-/g, ".")}
                 </span>
               ) : (
                 <span className="text-slate-300 font-bold italic">
-                  No Record
+                  {t("recurring.no_record")}
                 </span>
               )}
             </div>
@@ -397,7 +405,7 @@ function RecurringCard({
               icon: Edit,
               onClick: () => onEdit(recurring),
               color: "hover:text-blue-600 hover:border-blue-200",
-              title: "수정",
+              title: t("recurring.actions.edit"),
             },
             {
               icon: recurring.is_active ? PowerOff : Power,
@@ -405,19 +413,21 @@ function RecurringCard({
               color: recurring.is_active
                 ? "hover:text-orange-600 hover:border-orange-200"
                 : "hover:text-emerald-600 hover:border-emerald-200",
-              title: recurring.is_active ? "중단" : "활성화",
+              title: recurring.is_active
+                ? t("recurring.actions.pause")
+                : t("recurring.actions.activate"),
             },
             {
               icon: RefreshCw,
               onClick: () => onProcess(recurring.id!),
               color: "hover:text-blue-600 hover:border-blue-200",
-              title: "즉시 실행",
+              title: t("recurring.actions.run_now"),
             },
             {
               icon: Trash2,
               onClick: () => onDelete(recurring.id!),
               color: "hover:text-rose-600 hover:border-rose-200",
-              title: "삭제",
+              title: t("recurring.actions.delete"),
             },
           ].map((action, i) => (
             <Button
@@ -426,7 +436,7 @@ function RecurringCard({
               size="icon"
               className={cn(
                 "h-10 w-10 rounded-xl shadow-sm bg-white transition-all hover:scale-110 active:scale-95",
-                action.color
+                action.color,
               )}
               onClick={action.onClick}
               title={action.title}

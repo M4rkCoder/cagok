@@ -151,6 +151,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
   };
 
   const handleSaveAll = useCallback(async () => {
+    const { t } = i18n;
     const currentBatchErrors: Record<string, any> = {};
     const transactionsToSubmit: TransactionFormValues[] = [];
     console.log(data);
@@ -165,7 +166,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
     });
 
     if (filledData.length === 0) {
-      toast.info("저장할 거래 내역이 없습니다.");
+      toast.info(t("quick_entry.toasts.no_data"));
       return;
     }
 
@@ -213,14 +214,14 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
     // 에러가 있다면 중단
     if (Object.keys(currentBatchErrors).length > 0) {
       setRowErrors(currentBatchErrors);
-      toast.error("입력한 내용에 오류가 있습니다.");
+      toast.error(t("quick_entry.toasts.error_in_input"));
       return;
     }
 
     // 벡엔드 전송
     if (transactionsToSubmit.length > 0) {
       const loadingId = toast.loading(
-        `${transactionsToSubmit.length}건 저장 중...`
+        t("quick_entry.toasts.saving_count", { count: transactionsToSubmit.length })
       );
       try {
         await invoke("bulk_create_transactions", {
@@ -228,17 +229,17 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
         });
 
         toast.dismiss(loadingId);
-        toast.success("성공적으로 저장되었습니다.");
+        toast.success(t("quick_entry.toasts.save_success"));
 
         // 저장 후 테이블 초기화
         setData(Array.from({ length: initialRows }, createEmptyRow));
         setRowErrors({});
       } catch (error) {
         toast.dismiss(loadingId);
-        toast.error(`저장 실패: ${error}`);
+        toast.error(t("quick_entry.toasts.save_failed", { error }));
       }
     }
-  }, [data, invoke]);
+  }, [data, invoke, i18n]);
 
   const batchUpdate = useCallback(
     (startRow: number, startCol: number, rows: string[][]) => {
@@ -317,6 +318,7 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
   );
 
   const handleDownloadTemplate = async () => {
+    const { t } = i18n;
     try {
       // 1. 파일 저장 다이얼로그 (확장자를 xlsx로 변경)
       const filePath = await save({
@@ -331,14 +333,15 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
         lang: i18n.language.startsWith("ko") ? "ko" : "en",
       });
 
-      toast.success("엑셀 템플릿이 저장되었습니다.");
+      toast.success(t("quick_entry.toasts.template_saved"));
     } catch (err) {
       console.error(err);
-      toast.error("템플릿 생성 중 오류가 발생했습니다.");
+      toast.error(t("quick_entry.toasts.template_error"));
     }
   };
 
   const handleImportFile = async () => {
+    const { t } = i18n;
     try {
       const selected = await open({
         filters: [
@@ -380,14 +383,14 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
       const invalidCount = previewData.filter((r) => !r.is_valid).length;
       if (invalidCount > 0) {
         toast.warning(
-          `${invalidCount}건의 데이터에 확인(카테고리 등)이 필요합니다.`
+          t("quick_entry.toasts.import_check_required", { count: invalidCount })
         );
       } else {
-        toast.success(`${previewData.length}건을 성공적으로 읽어왔습니다.`);
+        toast.success(t("quick_entry.toasts.import_success", { count: previewData.length }));
       }
     } catch (err) {
       console.error(err);
-      toast.error("파일 처리 중 오류가 발생했습니다.");
+      toast.error(t("quick_entry.toasts.import_error"));
     } finally {
       setIsLoading(false);
     }

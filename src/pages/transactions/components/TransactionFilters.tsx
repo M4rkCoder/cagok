@@ -337,7 +337,7 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
             <RotateCcw className="h-4 w-4" />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>필터 초기화</TooltipContent>
+        <TooltipContent>{t("transaction_filter.reset_filter")}</TooltipContent>
       </Tooltip>
     </div>
   );

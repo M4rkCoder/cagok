@@ -48,9 +48,9 @@ const CategorySettings = () => {
   );
 
   useEffect(() => {
-    setHeader("설정");
+    setHeader(t("menu.settings"));
     return () => resetHeader();
-  }, [setHeader, resetHeader]);
+  }, [setHeader, resetHeader, t]);
 
   const { incomeCategories, expenseCategories } = useMemo(() => {
     return categoryList.reduce(
@@ -89,14 +89,14 @@ const CategorySettings = () => {
     e.preventDefault();
     e.stopPropagation();
     confirm({
-      title: "카테고리 삭제",
-      description: `[${cat.name}] 카테고리를 삭제하시겠습니까? 관련 내역은 '미분류'로 변경됩니다.`,
+      title: t("settings.category.delete"),
+      description: t("settings.category.delete_confirm", { name: cat.name }),
       onConfirm: async () => {
         try {
           await deleteCategory(cat.id);
           fetchCategories();
         } catch (err) {
-          toast.error("삭제에 실패했습니다.");
+          toast.error(t("failed_to_delete_transaction")); // or generic fail
         }
       },
     });
@@ -106,7 +106,7 @@ const CategorySettings = () => {
     <div className="space-y-6">
       <Card className="p-6 space-y-6">
         <div className="flex items-center gap-2 text-lg font-semibold">
-          <Shapes className="w-5 h-5" /> 카테고리 관리
+          <Shapes className="w-5 h-5" /> {t("settings.category.title")}
         </div>
         <CardHeader className="p-0 pb-6 flex flex-col items-center justify-between space-y-0">
           {/* 언더라인 탭 내비게이션 */}
@@ -114,7 +114,7 @@ const CategorySettings = () => {
             {[
               {
                 id: "all",
-                label: "전체",
+                label: t("common.all"),
                 icon: LayoutGrid,
                 color: "text-slate-600",
                 bg: "bg-slate-600",
@@ -122,7 +122,7 @@ const CategorySettings = () => {
               },
               {
                 id: "income",
-                label: "수입",
+                label: t("common.income"),
                 icon: CirclePlus,
                 color: "text-emerald-600",
                 bg: "bg-emerald-600",
@@ -130,7 +130,7 @@ const CategorySettings = () => {
               },
               {
                 id: "expense",
-                label: "지출",
+                label: t("common.expense"),
                 icon: CircleMinus,
                 color: "text-blue-600",
                 bg: "bg-blue-600",
@@ -188,7 +188,7 @@ const CategorySettings = () => {
                 onClick={handleNew}
                 className="rounded-full shadow-sm px-4"
               >
-                <Plus className="h-4 w-4 mr-1" /> 추가
+                <Plus className="h-4 w-4 mr-1" /> {t("settings.category.add")}
               </Button>
             </div>
           </div>
@@ -206,14 +206,14 @@ const CategorySettings = () => {
               {currentCategories.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
                   <p className="text-sm text-muted-foreground font-medium">
-                    등록된 카테고리가 없습니다.
+                    {t("settings.category.no_categories")}
                   </p>
                   <Button
                     variant="link"
                     onClick={handleNew}
                     className="text-blue-600 mt-2"
                   >
-                    새로 추가하기
+                    {t("settings.category.add_new")}
                   </Button>
                 </div>
               ) : (
@@ -290,10 +290,12 @@ const CategorySettings = () => {
         >
           <SheetHeader className="mb-6">
             <SheetTitle>
-              {editingCategoryId !== null ? "카테고리 수정" : "카테고리 추가"}
+              {editingCategoryId !== null
+                ? t("settings.category.form_title_edit")
+                : t("settings.category.form_title_add")}
             </SheetTitle>
             <SheetDescription>
-              카테고리 정보를 입력하고 저장하세요.
+              {t("settings.category.form_description")}
             </SheetDescription>
           </SheetHeader>
           <CategoryForm

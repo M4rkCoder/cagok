@@ -31,11 +31,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTranslation } from "react-i18next";
 
 const QuickEntry: React.FC = () => {
   const { categoryList: categories } = useAppStore();
   const { submitForm } = useTransactionStore();
   const { setHeader, resetHeader } = useHeaderStore();
+  const { t } = useTranslation();
 
   const {
     data,
@@ -58,7 +60,7 @@ const QuickEntry: React.FC = () => {
 
   useEffect(() => {
     setHeader(
-      "빠른 입력",
+      t("quick_entry.title"),
       <Button
         size="lg"
         className="bg-blue-600 hover:bg-blue-700 cursor-pointer flex justify-start"
@@ -70,11 +72,11 @@ const QuickEntry: React.FC = () => {
         }}
       >
         <Save className="mr-1 w-20 h-20" />
-        데이터 저장
-      </Button>
+        {t("quick_entry.save_data")}
+      </Button>,
     );
     return () => resetHeader();
-  }, [handleSaveAll]);
+  }, [handleSaveAll, t, setHeader, resetHeader]);
 
   const columns = useMemo<ColumnDef<QuickEntryTransactionRow>[]>(
     () => [
@@ -97,7 +99,7 @@ const QuickEntry: React.FC = () => {
           }
 
           if (row.original.is_valid === false && errorMessages.size === 0) {
-            errorMessages.add("유효하지 않은 데이터입니다.");
+            errorMessages.add(t("quick_entry.invalid_data"));
           }
 
           const hasError = errorMessages.size > 0;
@@ -134,7 +136,7 @@ const QuickEntry: React.FC = () => {
       },
       {
         accessorKey: "date",
-        header: "날짜",
+        header: t("date"),
         size: 120,
         cell: (ctx) => {
           const tableMeta = ctx.table.options.meta as any;
@@ -150,7 +152,7 @@ const QuickEntry: React.FC = () => {
       },
       {
         accessorKey: "category_id",
-        header: "항목",
+        header: t("category"),
         size: 160,
         cell: (i) => (
           <CategoryCell
@@ -163,7 +165,7 @@ const QuickEntry: React.FC = () => {
       },
       {
         accessorKey: "is_fixed",
-        header: "고정",
+        header: t("quick_entry.headers.fixed"),
         size: 50,
         cell: (ctx) => (
           <FixedCheckboxCell {...ctx} colIdx={3} onPaste={handlePaste} />
@@ -171,7 +173,7 @@ const QuickEntry: React.FC = () => {
       },
       {
         accessorKey: "description",
-        header: "상세 내역",
+        header: t("quick_entry.headers.description"),
         size: 180,
         cell: (i) => (
           <InputCell
@@ -184,7 +186,7 @@ const QuickEntry: React.FC = () => {
       },
       {
         accessorKey: "amount",
-        header: "금액",
+        header: t("amount"),
         size: 100,
         meta: { type: "number" },
         cell: (i) => (
@@ -198,7 +200,7 @@ const QuickEntry: React.FC = () => {
       },
       {
         accessorKey: "remarks",
-        header: "메모",
+        header: t("remarks"),
         size: 150,
         cell: (i) => (
           <InputCell
@@ -227,7 +229,7 @@ const QuickEntry: React.FC = () => {
         ),
       },
     ],
-    [updateData, data.length, rowErrors]
+    [updateData, data.length, rowErrors],
   );
 
   const table = useReactTable({
@@ -257,7 +259,7 @@ const QuickEntry: React.FC = () => {
             className="cursor-pointer text-slate-500"
           >
             <Download size={16} className="mr-2" />
-            서식 다운로드
+            {t("quick_entry.download_template")}
           </Button>
           <Button
             variant="secondary"
@@ -271,7 +273,7 @@ const QuickEntry: React.FC = () => {
             ) : (
               <Upload className="mr-2" size={16} />
             )}
-            엑셀 업로드
+            {t("quick_entry.excel_upload")}
           </Button>
         </div>
 
@@ -281,7 +283,7 @@ const QuickEntry: React.FC = () => {
               <div className="flex flex-col items-center p-6 bg-white/90 shadow-lg rounded-xl border border-slate-100">
                 <Loader2 className="w-8 h-8 text-blue-600 animate-spin mb-3" />
                 <p className="text-slate-700 font-medium text-sm">
-                  데이터 분석 중...
+                  {t("dashboard.cards.analyzing_data")}
                 </p>
               </div>
             </div>
@@ -309,7 +311,7 @@ const QuickEntry: React.FC = () => {
                   className={cn(
                     "border-b border-slate-100 last:border-0 hover:bg-slate-50/50",
                     row.original.is_valid === false &&
-                      "bg-red-50 hover:bg-red-100/50"
+                      "bg-red-50 hover:bg-red-100/50",
                   )}
                 >
                   {row.getVisibleCells().map((cell, idx) => {
@@ -328,7 +330,7 @@ const QuickEntry: React.FC = () => {
                           isSelectedByDrag && "bg-blue-100/40",
                           activeCell?.rowIndex === row.index &&
                             activeCell?.colIdx === idx &&
-                            "bg-slate-50 z-20 "
+                            "bg-slate-50 z-20 ",
                         )}
                         onClick={() =>
                           setActiveCell({ rowIndex: row.index, colIdx: idx })
@@ -336,7 +338,7 @@ const QuickEntry: React.FC = () => {
                       >
                         {React.createElement(
                           cell.column.columnDef.cell as any,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                         {isSelectedByDrag && (
                           <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
@@ -353,13 +355,14 @@ const QuickEntry: React.FC = () => {
               setData((p) => [...p, createEmptyRow()]);
               setTimeout(
                 () => setActiveCell({ rowIndex: data.length, colIdx: 1 }),
-                50
+                50,
               );
             }}
             disabled={isLoading}
             className="w-full py-3 flex items-center justify-center gap-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 transition-all border-t border-dashed"
           >
-            <Plus size={16} />행 추가
+            <Plus size={16} />
+            {t("quick_entry.add_row")}
           </button>
         </div>
       </div>

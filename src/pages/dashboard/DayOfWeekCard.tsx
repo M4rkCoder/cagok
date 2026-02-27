@@ -140,7 +140,7 @@ export const DayOfWeekCard: React.FC = () => {
       config[`cat_${cat.id}`] = { label: cat.name, color: cat.fill };
     });
     config["total"] = {
-      label: metricType === "total" ? "전체 합계" : "일평균",
+      label: metricType === "total" ? t("dashboard.cards.total_sum") : t("dashboard.cards.daily_avg"),
       color: getThemeColor(viewMode),
     };
 
@@ -207,7 +207,9 @@ export const DayOfWeekCard: React.FC = () => {
         <div className="md:col-span-2 flex flex-col space-y-4">
           <div className="flex items-center justify-between">
             <DashboardTitle
-              title={`요일별 ${viewMode === "expense" ? "지출" : "수입"} 현황`}
+              title={t("dashboard.cards.dayofweek_status_title", {
+                type: viewMode === "expense" ? t("common.expense") : t("common.income"),
+              })}
             />
             {/* 바 차트 우측 상단: 지출/수입 및 총액/평균 탭 */}
             <div className="flex items-center gap-2">
@@ -221,13 +223,13 @@ export const DayOfWeekCard: React.FC = () => {
                     value="expense"
                     className="text-xs data-[state=active]:bg-blue-600 data-[state=active]:text-white"
                   >
-                    지출
+                    {t("common.expense")}
                   </TabsTrigger>
                   <TabsTrigger
                     value="income"
                     className="text-xs data-[state=active]:bg-emerald-600 data-[state=active]:text-white"
                   >
-                    수입
+                    {t("common.income")}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -241,13 +243,13 @@ export const DayOfWeekCard: React.FC = () => {
                     value="total"
                     className={cn("text-xs", activeTabClass)}
                   >
-                    총액
+                    {t("dashboard.cards.total_sum")}
                   </TabsTrigger>
                   <TabsTrigger
                     value="average"
                     className={cn("text-xs", activeTabClass)}
                   >
-                    평균
+                    {t("dashboard.cards.daily_avg")}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -310,10 +312,10 @@ export const DayOfWeekCard: React.FC = () => {
                               <div className="flex items-center justify-between border-t pt-1">
                                 <span className="text-slate-400 text-[10px]">
                                   {metricType === "total"
-                                    ? "누적 건수"
-                                    : "평균 건수"}
+                                    ? t("dashboard.cards.cumulative_count")
+                                    : t("dashboard.cards.average_count")}
                                 </span>
-                                <span className="text-[10px] font-medium">{`${Number(item.payload.count).toFixed(metricType === "average" ? 1 : 0)}건`}</span>
+                                <span className="text-[10px] font-medium">{`${Number(item.payload.count).toFixed(metricType === "average" ? 1 : 0)}${t("common.unit", { defaultValue: "건" })}`}</span>
                               </div>
                             </div>
                           );
@@ -346,12 +348,12 @@ export const DayOfWeekCard: React.FC = () => {
           {/* 도넛 차트 상단 중앙: 카테고리 셀렉트 */}
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="h-8 bg-white border-slate-200 w-[150px] text-sm">
-              <SelectValue placeholder="카테고리" />
+              <SelectValue placeholder={t("category")} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">
                 <AllIcon />
-                <span>전체 카테고리</span>
+                <span>{t("dashboard.cards.all_categories")}</span>
               </SelectItem>
               {availableCategories.map((cat) => (
                 <SelectItem key={cat.id} value={cat.id}>
@@ -445,7 +447,7 @@ export const DayOfWeekCard: React.FC = () => {
                             className="fill-slate-400 text-[10px]"
                           >
                             {selectedCategory === "all"
-                              ? "합계"
+                              ? t("dashboard.cards.total_sum")
                               : selectedDonutItem.name}
                           </tspan>
                         </text>

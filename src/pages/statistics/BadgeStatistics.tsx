@@ -13,27 +13,23 @@ import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { TitleText } from "./components/TitleText";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { useTranslation } from "react-i18next";
+import { useDateFormatter } from "@/hooks/useDateFormatter";
 
 export function BadgeStatistics() {
+  const { t } = useTranslation();
   const { badgeStats: stats } = useStatisticsStore();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const { formatAmount } = useCurrencyFormatter();
+  const { formatYearMonth } = useDateFormatter();
 
   if (!stats) return null;
 
-  const formatMonth = (monthStr: string) => {
-    if (!monthStr || monthStr === "-" || !monthStr.includes("-"))
-      return monthStr;
-    const [year, month] = monthStr.split("-");
-    const monthNumber = parseInt(month, 10);
-    return `${year}년 ${monthNumber}월`;
-  };
-
   const items = [
     {
-      label: "많이 쓴 달",
+      label: t("statistics.summary.badge_labels.max_expense_month"),
       value: stats.maxExpenseMonth
-        ? formatMonth(stats.maxExpenseMonth.month)
+        ? formatYearMonth(`${stats.maxExpenseMonth.month}-01`)
         : "-",
       subValue: stats.maxExpenseMonth
         ? formatAmount(stats.maxExpenseMonth.amount)
@@ -41,9 +37,9 @@ export function BadgeStatistics() {
       icon: <CalendarDays className="h-4 w-4" />,
     },
     {
-      label: "많이 번 달",
+      label: t("statistics.summary.badge_labels.max_income_month"),
       value: stats.maxIncomeMonth
-        ? formatMonth(stats.maxIncomeMonth.month)
+        ? formatYearMonth(`${stats.maxIncomeMonth.month}-01`)
         : "-",
       subValue: stats.maxIncomeMonth
         ? formatAmount(stats.maxIncomeMonth.amount)
@@ -51,13 +47,13 @@ export function BadgeStatistics() {
       icon: <TrendingUp className="h-4 w-4" />,
     },
     {
-      label: "순수입률",
+      label: t("statistics.summary.badge_labels.net_income_ratio"),
       value: stats.netIncomeRatio ? `${stats.netIncomeRatio.toFixed(1)}%` : "-",
-      subValue: stats.netIncomeRatio ? "(수입 대비 순수입)" : "-",
+      subValue: stats.netIncomeRatio ? t("statistics.summary.badge_labels.net_income_ratio_desc") : "-",
       icon: <Wallet className="h-4 w-4" />,
     },
     {
-      label: "많이 쓴 항목",
+      label: t("statistics.summary.badge_labels.max_expense_category"),
       value: stats.maxExpenseCategory ? stats.maxExpenseCategory.name : "-",
       subValue: stats.maxExpenseCategory
         ? formatAmount(stats.maxExpenseCategory.value)
@@ -66,16 +62,16 @@ export function BadgeStatistics() {
       categoryIcon: stats.maxExpenseCategory?.icon, // 큰 아이콘용 데이터
     },
     {
-      label: "자주 쓴 항목",
+      label: t("statistics.summary.badge_labels.most_frequent_category"),
       value: stats.mostFrequentCategory ? stats.mostFrequentCategory.name : "-",
       subValue: stats.mostFrequentCategory
-        ? `${stats.mostFrequentCategory.value}회`
+        ? t("common.count", { count: stats.mostFrequentCategory.value })
         : "-",
       icon: <Award className="h-4 w-4" />, // 기본 아이콘으로 고정
       categoryIcon: stats.mostFrequentCategory?.icon, // 큰 아이콘용 데이터
     },
     {
-      label: "많이 쓴 요일",
+      label: t("statistics.summary.badge_labels.max_expense_day"),
       value: stats.maxExpenseDayOfWeek ? stats.maxExpenseDayOfWeek.day : "-",
       subValue: stats.maxExpenseDayOfWeek
         ? formatAmount(stats.maxExpenseDayOfWeek.amount)
@@ -86,7 +82,7 @@ export function BadgeStatistics() {
 
   return (
     <>
-      <TitleText title="연간 요약" />
+      <TitleText title={t("statistics.summary.annual_summary")} />
       <div
         className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 group/stats-container"
         onMouseLeave={() => setHoveredIndex(null)}

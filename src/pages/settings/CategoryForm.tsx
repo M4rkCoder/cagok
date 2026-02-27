@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { CategoryIcon } from "@/components/CategoryIcon"; // 컴포넌트 임포트
 import { useCategoryStore } from "@/stores/useCategoryStore";
 import { useAppStore } from "@/stores/useAppStore";
+import { useTranslation } from "react-i18next";
 
 interface CategoryFormProps {
   onSubmit: (values: any) => void;
@@ -26,6 +27,7 @@ interface CategoryFormProps {
 }
 
 const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
+  const { t } = useTranslation();
   const { categoryList: categories } = useAppStore();
   const {
     newCategoryName,
@@ -38,7 +40,9 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
 
   const formSchema = z
     .object({
-      name: z.string().min(1, { message: "이름을 입력해주세요." }),
+      name: z
+        .string()
+        .min(1, { message: t("settings.category.name_required") }),
       icon: z.string(),
       type: z.enum(["0", "1"]),
     })
@@ -53,7 +57,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
       if (isDuplicate) {
         ctx.addIssue({
           code: "custom",
-          message: "이미 존재하는 카테고리 이름입니다.",
+          message: t("settings.category.name_duplicate"),
           path: ["name"],
         });
       }
@@ -113,8 +117,16 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
                     <FormControl>
                       <div className="p-1 bg-slate-100/80 rounded-2xl flex gap-1">
                         {[
-                          { id: "0", name: "수입", icon: ArrowUpCircle },
-                          { id: "1", name: "지출", icon: ArrowDownCircle },
+                          {
+                            id: "0",
+                            name: t("common.income"),
+                            icon: ArrowUpCircle,
+                          },
+                          {
+                            id: "1",
+                            name: t("common.expense"),
+                            icon: ArrowDownCircle,
+                          },
                         ].map((item) => {
                           const isActive = field.value === item.id;
                           return (
@@ -126,7 +138,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
                                 "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all font-bold text-sm",
                                 isActive
                                   ? "bg-white shadow-sm"
-                                  : "text-slate-400"
+                                  : "text-slate-400",
                               )}
                             >
                               <item.icon
@@ -136,7 +148,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
                                     ? item.id === "0"
                                       ? "text-emerald-500"
                                       : "text-rose-500"
-                                    : "text-slate-300"
+                                    : "text-slate-300",
                                 )}
                               />
                               {item.name}
@@ -171,7 +183,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
                     <FormItem className="w-full">
                       <FormControl>
                         <Input
-                          placeholder="이름을 입력하세요"
+                          placeholder={t("settings.category.name_placeholder")}
                           className="h-16 bg-transparent border-0 border-b-2 border-slate-100 rounded-none text-3xl font-black text-center focus-visible:ring-0 focus-visible:border-black transition-all px-0"
                           {...field}
                         />
@@ -189,7 +201,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
             <div className="h-full flex flex-col animate-in slide-in-from-bottom-4 duration-300">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">
-                  아이콘 선택
+                  {t("settings.category.select_icon")}
                 </span>
                 <Button
                   variant="ghost"
@@ -229,7 +241,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
         <div
           className={cn(
             "shrink-0 pt-6 bg-white flex gap-3",
-            isPickerOpen && "hidden"
+            isPickerOpen && "hidden",
           )}
         >
           <Button
@@ -238,7 +250,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
             onClick={onCancel}
             className="flex-1 h-14 text-slate-400 font-bold hover:bg-slate-50 rounded-2xl"
           >
-            취소
+            {t("common.cancel")}
           </Button>
           <Button
             type="submit"
@@ -248,10 +260,10 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
               currentType === "0"
                 ? "bg-emerald-500 hover:bg-emerald-600"
                 : "bg-black hover:bg-slate-800",
-              "disabled:bg-slate-100 disabled:text-slate-300"
+              "disabled:bg-slate-100 disabled:text-slate-300",
             )}
           >
-            저장
+            {t("common.save")}
           </Button>
         </div>
       </form>

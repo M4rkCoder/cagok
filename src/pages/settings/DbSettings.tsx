@@ -25,8 +25,10 @@ import {
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useHeaderStore } from "@/stores/useHeaderStore";
 import { useSettingStore } from "@/stores/useSettingStore";
+import { useTranslation } from "react-i18next";
 
 export default function DbSettings() {
+  const { t } = useTranslation();
   const resetHeader = useHeaderStore((state) => state.resetHeader);
   const setHeader = useHeaderStore((state) => state.setHeader);
 
@@ -54,7 +56,7 @@ export default function DbSettings() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   useEffect(() => {
-    setHeader("데이터베이스 설정");
+    setHeader(t("settings.database.title"));
     fetchDbPaths();
     fetchBackups();
     fetchAutoBackupSettings();
@@ -77,9 +79,9 @@ export default function DbSettings() {
     if (backup === "cagok_auto.db") {
       return (
         <div className="flex items-center gap-2">
-          <span className="font-bold text-primary">[자동 백업]</span>
+          <span className="font-bold text-primary">{t("settings.database.auto_backup_tag")}</span>
           <span className="text-muted-foreground">
-            {lastAutoBackupDate || "기록 없음"}
+            {lastAutoBackupDate || t("settings.database.no_record")}
           </span>
         </div>
       );
@@ -95,7 +97,7 @@ export default function DbSettings() {
           <div className="flex items-center gap-2">
             <Database className="w-5 h-5 text-primary" />
             <CardTitle className="text-lg font-bold">
-              데이터베이스 관리
+              {t("settings.database.title")}
             </CardTitle>
           </div>
         </CardHeader>
@@ -105,7 +107,7 @@ export default function DbSettings() {
             <div className="flex items-center gap-2">
               <Save className="w-4 h-4 text-primary" />
               <label className="text-sm font-bold uppercase text-muted-foreground tracking-widest">
-                데이터베이스 경로
+                {t("settings.database.path_label")}
               </label>
             </div>
             <div className="flex items-center gap-2 p-2 rounded-xl bg-background border shadow-sm group transition-all hover:border-primary/30">
@@ -120,7 +122,7 @@ export default function DbSettings() {
                   onClick={() => openFolder("db")}
                 >
                   <FolderOpen className="w-4 h-4" />
-                  <span className="text-[11px] font-medium">폴더 열기</span>
+                  <span className="text-[11px] font-medium">{t("settings.database.open_folder")}</span>
                 </Button>
                 <Button
                   variant="ghost"
@@ -128,11 +130,11 @@ export default function DbSettings() {
                   className="h-9 px-3 hover:bg-muted text-muted-foreground flex gap-2"
                   onClick={() => {
                     navigator.clipboard.writeText(dbPath);
-                    toast.success("경로가 복사되었습니다.");
+                    toast.success(t("settings.database.path_copied"));
                   }}
                 >
                   <Copy className="w-4 h-4" />
-                  <span className="text-[11px] font-medium">경로 복사</span>
+                  <span className="text-[11px] font-medium">{t("settings.database.copy_path")}</span>
                 </Button>
               </div>
             </div>
@@ -143,7 +145,7 @@ export default function DbSettings() {
             <div className="flex items-center gap-2">
               <Download className="w-4 h-4 text-primary" />
               <label className="text-sm font-bold uppercase text-muted-foreground tracking-widest">
-                데이터베이스 다운로드
+                {t("settings.database.download_title")}
               </label>
             </div>
             <div className="flex items-center gap-2 p-2 rounded-xl bg-background border shadow-sm group transition-all hover:border-primary/30">
@@ -158,7 +160,7 @@ export default function DbSettings() {
                   onClick={() => openFolder("export")}
                 >
                   <FolderOpen className="w-4 h-4" />
-                  <span className="text-[11px] font-medium">폴더 열기</span>
+                  <span className="text-[11px] font-medium">{t("settings.database.open_folder")}</span>
                 </Button>
                 <Button
                   variant="ghost"
@@ -168,7 +170,7 @@ export default function DbSettings() {
                 >
                   <Download className="w-4 h-4" />
                   <span className="text-[11px] font-medium uppercase tracking-tighter">
-                    다운로드
+                    {t("settings.database.download_button")}
                   </span>
                 </Button>
               </div>
@@ -183,7 +185,7 @@ export default function DbSettings() {
           <div className="flex items-center gap-2">
             <History className="w-5 h-5 text-primary" />
             <CardTitle className="text-lg font-bold">
-              데이터베이스 백업
+              {t("settings.database.backup_title")}
             </CardTitle>
           </div>
           <div className="flex items-center gap-2">
@@ -194,11 +196,11 @@ export default function DbSettings() {
               onClick={() => openFolder("backup")}
             >
               <FolderOpen className="w-4 h-4" />
-              백업 폴더
+              {t("settings.database.backup_folder")}
             </Button>
             <Button size="sm" onClick={createBackup} className="h-8 shadow-sm">
               <ShieldCheck className="w-4 h-4 mr-2" />
-              지금 백업
+              {t("settings.database.backup_now")}
             </Button>
           </div>
         </CardHeader>
@@ -221,7 +223,7 @@ export default function DbSettings() {
                 <label
                   className={`font-bold text-sm transition-colors ${autoBackupEnabled ? "text-primary" : "text-foreground"}`}
                 >
-                  종료 시 자동 백업 활성화
+                  {t("settings.database.auto_backup_label")}
                 </label>
                 {autoBackupEnabled && (
                   <span className="flex h-2 w-2 rounded-full bg-primary animate-pulse" />
@@ -230,7 +232,7 @@ export default function DbSettings() {
               <p
                 className={`text-xs transition-colors ${autoBackupEnabled ? "text-primary/80" : "text-muted-foreground"}`}
               >
-                앱을 닫을 때 'cagok_auto.db' 파일로 자동 저장합니다.
+                {t("settings.database.auto_backup_desc")}
               </p>
             </div>
 
@@ -252,10 +254,10 @@ export default function DbSettings() {
                 <TableHeader className="bg-muted/30">
                   <TableRow>
                     <TableHead className="py-3 text-[11px] font-bold pl-6">
-                      백업 시점
+                      {t("settings.database.backup_time_header")}
                     </TableHead>
                     <TableHead className="text-right py-3 text-[11px] font-bold pr-6">
-                      관리
+                      {t("settings.database.manage_header")}
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -281,7 +283,7 @@ export default function DbSettings() {
                               }}
                             >
                               <RotateCcw className="w-3.5 h-3.5 mr-1" />
-                              복원
+                              {t("settings.database.restore")}
                             </Button>
                             {/* 자동 백업 파일은 삭제 버튼을 숨기거나 비활성화 (권장) */}
                             {backup !== "cagok_auto.db" && (
@@ -307,7 +309,7 @@ export default function DbSettings() {
                         colSpan={2}
                         className="h-24 text-center text-sm text-muted-foreground"
                       >
-                        보관된 백업 기록이 없습니다.
+                        {t("settings.database.no_backups")}
                       </TableCell>
                     </TableRow>
                   )}
@@ -322,15 +324,12 @@ export default function DbSettings() {
       <ConfirmDialog
         open={restoreConfirmOpen}
         onOpenChange={setRestoreConfirmOpen}
-        title="데이터 복원"
+        title={t("settings.database.restore_dialog_title")}
         description={
           selectedBackup && (
             <div className="space-y-2 py-2">
               <p className="text-sm">
-                선택한 시점으로 데이터를 되돌립니다.{" "}
-                <span className="underline decoration-destructive underline-offset-4">
-                  현재 데이터는 모두 삭제됩니다.
-                </span>
+                {t("settings.database.restore_dialog_desc")}
               </p>
               <p className="text-xs font-mono bg-muted p-2 rounded text-center">
                 {parseBackupName(selectedBackup)}
@@ -338,7 +337,7 @@ export default function DbSettings() {
             </div>
           )
         }
-        confirmText="복원 진행"
+        confirmText={t("settings.database.restore_confirm")}
         onConfirm={async () => {
           if (!selectedBackup) return;
           try {
@@ -353,17 +352,17 @@ export default function DbSettings() {
       <ConfirmDialog
         open={restoreDialogOpen}
         onOpenChange={setRestoreDialogOpen}
-        title="복원 완료"
-        description="성공적으로 복원되었습니다. 적용을 위해 앱을 다시 시작합니다."
-        confirmText="앱 재시작"
+        title={t("settings.database.restore_complete_title")}
+        description={t("settings.database.restore_complete_desc")}
+        confirmText={t("settings.database.restart_button")}
         onConfirm={restartApp}
       />
       <ConfirmDialog
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
-        title="기록 삭제"
-        description="백업 파일을 삭제하시겠습니까? 삭제된 데이터는 다시 찾을 수 없습니다."
-        confirmText="삭제"
+        title={t("settings.database.delete_backup_title")}
+        description={t("settings.database.delete_backup_desc")}
+        confirmText={t("common.delete")}
         onConfirm={async () => {
           if (!selectedBackup) return;
           try {

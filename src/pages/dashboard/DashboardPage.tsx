@@ -45,8 +45,8 @@ export default function Dashboard() {
 
   return (
     <div className="pt-2 px-6 max-w-7xl mx-auto h-full">
-      <MainExpenseCard lang="ko" />
-      <SummaryItemRow lang="ko" />
+      <MainExpenseCard />
+      <SummaryItemRow />
       <CardSelection />
 
       <DailyTransactionsDialog />

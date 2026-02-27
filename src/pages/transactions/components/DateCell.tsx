@@ -18,6 +18,9 @@ import { cn, smartParseDate } from "@/lib/utils";
 import { CellProps } from "@/types";
 import { useTableNavigation } from "@/pages/transactions/hooks/useTableNavigation";
 
+import { ko } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
+
 const DateCell: React.FC<CellProps> = ({
   getValue,
   row,
@@ -27,6 +30,7 @@ const DateCell: React.FC<CellProps> = ({
   onPaste,
   error,
 }) => {
+  const { i18n } = useTranslation();
   const initialValue = getValue();
   const [value, setValue] = useState(initialValue);
   const [openCombo, setOpenCombo] = useState(false);
@@ -98,6 +102,7 @@ const DateCell: React.FC<CellProps> = ({
           <PopoverContent className="w-auto p-0 z-50" align="start">
             <Calendar
               mode="single"
+              locale={i18n.language === "ko" ? ko : undefined}
               selected={value ? parseISO(value) : undefined}
               onSelect={(date) => {
                 if (date) {

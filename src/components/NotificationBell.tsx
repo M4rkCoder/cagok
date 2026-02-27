@@ -10,8 +10,16 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export const NotificationBell = () => {
+  const { t } = useTranslation();
   const { notifications, markAsRead, markAllAsRead, clearAll } =
     useNotificationStore();
   const unreadCount = notifications.filter((n) => !n.isRead).length;
@@ -38,67 +46,71 @@ export const NotificationBell = () => {
         </button>
       </PopoverTrigger>
 
-      {/* 화이트 테마 적용 및 크기 축소 (w-72, z-[9999]) */}
       <PopoverContent
         align="end"
         sideOffset={6}
-        className="w-72 p-0 bg-white border-zinc-200 shadow-lg z-[9999] rounded-xl overflow-hidden"
+        className="w-80 p-0 bg-white border-zinc-200 shadow-2xl z-[9999] rounded-xl overflow-hidden"
       >
-        {/* 헤더 부분 여백 축소 */}
-        <div className="flex items-center justify-between px-3 py-2 bg-zinc-50/50">
-          <h4 className="font-bold text-xs text-zinc-800 flex items-center gap-1.5">
-            알림{" "}
-            <span className="text-amber-600 font-medium">{unreadCount}</span>
+        <div className="flex items-center justify-between px-4 py-3 bg-zinc-50/50 border-b">
+          <h4 className="font-bold text-sm text-zinc-700 flex items-center gap-2">
+            <Bell size={18} />
+            {t("notifications.title")}
+            {unreadCount > 0 && (
+              <span className="bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                {unreadCount}
+              </span>
+            )}
           </h4>
-          <div className="flex gap-0.5">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-zinc-400 hover:text-amber-600 hover:bg-white"
-              onClick={() => markAllAsRead()}
-            >
-              <CheckCircle2 size={14} />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-zinc-400 hover:text-red-500 hover:bg-white"
-              onClick={() => clearAll()}
-            >
-              <Trash2 size={14} />
-            </Button>
+          <div className="flex gap-1">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-zinc-400 hover:text-amber-600 hover:bg-white"
+                    onClick={() => markAllAsRead()}
+                  >
+                    <CheckCircle2 size={16} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-zinc-800 text-white border-none text-xs">
+                  {t("notifications.mark_all_read")}
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-zinc-400 hover:text-red-500 hover:bg-white"
+                    onClick={() => clearAll()}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-zinc-800 text-white border-none text-xs">
+                  {t("notifications.clear_all")}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 
-        <Separator className="bg-zinc-100" />
-
-        {/* 높이 축소 (h-[300px]) */}
-        <ScrollArea className="h-[300px]">
+        <ScrollArea className="h-[350px]">
           {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[250px] text-zinc-400 gap-1.5">
-              <Info size={24} className="opacity-30" />
-              <p className="text-xs">알림이 없습니다.</p>
+            <div className="flex flex-col items-center justify-center h-[300px] text-zinc-400 gap-2">
+              <Info size={32} className="opacity-20" />
+              <p className="text-xs font-medium">{t("notifications.no_notifications")}</p>
             </div>
           ) : (
             <div className="flex flex-col">
               {notifications.map((n) => {
-                // 링크 생성 로직: 명시적 링크 -> 타입 기반 -> 메시지 키워드 기반 -> 기본값
                 let linkTarget = n.link;
                 if (!linkTarget) {
                   if (n.type === "recurring")
                     linkTarget = "/transactions/recurring";
                   else if (n.type === "backup") linkTarget = "/settings/db";
-                  // 레거시 지원: 메시지 내용으로 추론
-                  else if (
-                    n.message.includes("정기") ||
-                    n.message.includes("Recurring")
-                  )
-                    linkTarget = "/transactions/recurring";
-                  else if (
-                    n.message.includes("백업") ||
-                    n.message.includes("Backup")
-                  )
-                    linkTarget = "/settings/db";
                   else linkTarget = "/";
                 }
 
@@ -110,35 +122,34 @@ export const NotificationBell = () => {
                     className="flex flex-col w-full group outline-none select-none no-underline"
                   >
                     <div
-                      className={`relative flex flex-col gap-0.5 p-3 border-b border-zinc-50 cursor-pointer transition-colors hover:bg-zinc-50/80 ${
-                        !n.isRead ? "bg-amber-50/30" : ""
+                      className={`relative flex flex-col gap-1 p-4 border-b border-zinc-50 cursor-pointer transition-colors hover:bg-zinc-50/80 ${
+                        !n.isRead ? "bg-amber-50/20" : ""
                       }`}
                     >
-                      {/* 읽지 않음 표시 사이드 바 */}
                       {!n.isRead && (
-                        <div className="absolute left-2 top-2 bottom-2 w-0.5 bg-amber-500" />
+                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-amber-500" />
                       )}
 
-                      <div className="flex justify-between items-center pl-2">
+                      <div className="flex justify-between items-center">
                         <span
-                          className={`text-[10px] font-semibold tracking-tight ${
+                          className={`text-[10px] font-black uppercase tracking-wider ${
                             !n.isRead ? "text-amber-600" : "text-zinc-400"
                           }`}
                         >
                           {n.type === "recurring"
-                            ? "정기 내역 처리"
+                            ? t("notifications.types.recurring")
                             : n.type === "backup"
-                              ? "자동 백업 완료"
-                              : "알림"}
+                              ? t("notifications.types.backup")
+                              : t("notifications.types.general")}
                         </span>
-                        <span className="text-[11px] text-zinc-400 font-medium">
+                        <span className="text-[10px] text-zinc-400 font-bold">
                           {new Date(n.timestamp).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
                         </span>
                       </div>
-                      <p className="text-sm text-zinc-600 leading-normal line-clamp-2 pl-2">
+                      <p className={`text-sm leading-snug line-clamp-2 ${!n.isRead ? "text-zinc-900 font-bold" : "text-zinc-500 font-medium"}`}>
                         {n.message}
                       </p>
                     </div>
@@ -149,13 +160,13 @@ export const NotificationBell = () => {
           )}
         </ScrollArea>
 
-        <div className="p-1.5 bg-zinc-50/30 border-t border-zinc-100">
+        <div className="p-2 bg-zinc-50/30 border-t border-zinc-100">
           <Button
             variant="ghost"
-            className="w-full text-[11px] text-zinc-400 hover:text-zinc-600 h-7 p-0"
+            className="w-full text-xs font-bold text-zinc-400 hover:text-zinc-600 h-8 p-0"
             onClick={() => markAllAsRead()}
           >
-            모든 알림 보기
+            {t("notifications.view_all")}
           </Button>
         </div>
       </PopoverContent>

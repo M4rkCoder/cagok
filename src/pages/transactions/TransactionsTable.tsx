@@ -50,9 +50,8 @@ const TransactionsTable: React.FC = () => {
 
   const onClickDelete = (id: number) => {
     confirm({
-      title: "가계부 기록 삭제",
-      description:
-        "이 거래 내역을 정말 삭제하시겠습니까? \n 삭제 후에는 복구할 수 없습니다.",
+      title: t("confirm_delete"),
+      description: t("confirm_delete_transaction_message"),
       onConfirm: async () => {
         await deleteTransaction(id);
       },
@@ -64,8 +63,8 @@ const TransactionsTable: React.FC = () => {
     const ids = selectedRows.map((row) => row.original.id as number);
 
     confirm({
-      title: t("선택 항목 삭제"),
-      description: `${ids.length}개의 내역을 정말 삭제하시겠습니까?`,
+      title: t("bulk_delete_title"),
+      description: t("bulk_delete_confirm", { count: ids.length }),
       onConfirm: async () => {
         await deleteBulkTransactions(ids);
         setRowSelection({}); // 삭제 후 선택 초기화
@@ -285,7 +284,7 @@ const TransactionsTable: React.FC = () => {
               >
                 <Trash2 className="size-4" />
                 <span className="text-sm font-medium">
-                  {Object.keys(rowSelection).length}개 {t("delete")}
+                  {t("common.count", { count: Object.keys(rowSelection).length })} {t("common.delete")}
                 </span>
               </Button>
             </div>

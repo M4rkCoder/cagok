@@ -12,6 +12,8 @@ import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { TitleText } from "./components/TitleText";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 import AnimatedAmount from "@/components/AnimatedAmount";
+import { useTranslation } from "react-i18next";
+import { useDateFormatter } from "@/hooks/useDateFormatter";
 
 const emptyMetricStats: MetricStats = {
   total: 0,
@@ -28,25 +30,26 @@ const emptyFinancialSummaryStats: FinancialSummaryStats = {
 };
 
 export function SummaryCards() {
+  const { t } = useTranslation();
   const { financialSummaryStats } = useStatisticsStore();
   const stats = financialSummaryStats ?? emptyFinancialSummaryStats;
 
   return (
     <>
-      <TitleText title="수입 · 지출 요약" />
+      <TitleText title={t("statistics.summary.income_expense_summary")} />
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <CombinedVerticalCard
-          title="수입"
+          title={t("common.income")}
           icon={<LandmarkIcon className="h-5 w-5 text-emerald-500" />}
           items={[
             {
-              label: "수입",
+              label: t("common.income"),
               data: stats.income,
               color: "bg-emerald-500",
               textColor: "text-emerald-600",
             },
             {
-              label: "순수입",
+              label: t("common.net_income"),
               data: stats.netIncome,
               color: "bg-violet-500",
               textColor: "text-violet-600",
@@ -57,17 +60,17 @@ export function SummaryCards() {
         />
 
         <CombinedVerticalCard
-          title="지출"
+          title={t("common.expense")}
           icon={<ReceiptTextIcon className="h-5 w-5 text-blue-600" />}
           items={[
             {
-              label: "지출",
+              label: t("common.expense"),
               data: stats.expense,
               color: "bg-blue-600",
               textColor: "text-blue-600",
             },
             {
-              label: "고정지출",
+              label: t("common.fixed_expense"),
               data: stats.fixedExpense,
               color: "bg-slate-600",
               textColor: "text-slate-700",
@@ -88,7 +91,9 @@ function CombinedVerticalCard({
   borderColor,
   bgColor,
 }: any) {
+  const { t } = useTranslation();
   const { formatAmount } = useCurrencyFormatter();
+  const { formatYearMonth } = useDateFormatter();
   const allValues = items.flatMap((i: any) => [
     i.data.min,
     i.data.max,
@@ -125,7 +130,7 @@ function CombinedVerticalCard({
           {items.map((item: any) => (
             <div key={item.label} className="space-y-1">
               <p className="text-xs font-bold uppercase opacity-50">
-                연간 총 {item.label}
+                {t("statistics.summary.yearly_total", { label: item.label })}
               </p>
               <p
                 className={cn(
@@ -141,7 +146,7 @@ function CombinedVerticalCard({
               </p>
               <div className="flex items-center gap-1.5 pt-1">
                 <span className="text-xs font-bold text-slate-700 bg-slate-200 p-0.5 rounded uppercase tracking-tighter">
-                  월 평균
+                  {t("statistics.summary.monthly_avg")}
                 </span>
                 <span className="text-sm font-bold text-slate-500 tracking-tight">
                   {formatAmount(item.data.average)}
@@ -212,7 +217,7 @@ function CombinedVerticalCard({
                     {/* 상단 헤더 */}
                     <div className="bg-slate-800/50 px-4 py-2 border-b border-slate-700/50">
                       <p className="text-sm font-black text-blue-400 uppercase tracking-widest">
-                        {item.label} 상세
+                        {item.label} {t("statistics.summary.details")}
                       </p>
                     </div>
 
@@ -220,7 +225,7 @@ function CombinedVerticalCard({
                       {/* 평균값 섹션 */}
                       <div className="space-y-1">
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-tighter">
-                          월 평균
+                          {t("statistics.summary.monthly_avg")}
                         </p>
                         <p
                           className={cn(
@@ -239,7 +244,7 @@ function CombinedVerticalCard({
                           <div className="flex items-center gap-1">
                             <div className="w-1 h-1 rounded-full bg-emerald-500" />
                             <p className="text-slate-400 text-xs font-black uppercase">
-                              최대
+                              {t("statistics.summary.max")}
                             </p>
                           </div>
                           <p className="text-xs font-bold text-slate-200 tabular-nums">
@@ -247,10 +252,7 @@ function CombinedVerticalCard({
                           </p>
                           {item.data.maxMonth && (
                             <p className="text-xs text-slate-500 font-bold">
-                              {(() => {
-                                const [y, m] = item.data.maxMonth.split("-");
-                                return `${y}년 ${parseInt(m, 10)}월`;
-                              })()}
+                              {formatYearMonth(`${item.data.maxMonth}-01`)}
                             </p>
                           )}
                         </div>
@@ -259,7 +261,7 @@ function CombinedVerticalCard({
                         <div className="space-y-1 text-right">
                           <div className="flex items-center gap-1 justify-end">
                             <p className="text-slate-400 text-xs font-black uppercase">
-                              최소
+                              {t("statistics.summary.min")}
                             </p>
                             <div className="w-1 h-1 rounded-full bg-rose-500" />
                           </div>
@@ -268,10 +270,7 @@ function CombinedVerticalCard({
                           </p>
                           {item.data.minMonth && (
                             <p className="text-xs text-slate-500 font-bold">
-                              {(() => {
-                                const [y, m] = item.data.minMonth.split("-");
-                                return `${y}년 ${parseInt(m, 10)}월`;
-                              })()}
+                              {formatYearMonth(`${item.data.minMonth}-01`)}
                             </p>
                           )}
                         </div>
@@ -283,7 +282,7 @@ function CombinedVerticalCard({
 
               {/* 하단 레이블 (박스 안에 맞게 위치 조정) */}
               <span className="absolute -bottom-4 text-[10px] font-black text-muted-foreground/90 uppercase tracking-tighter whitespace-nowrap">
-                {item.label.split(" ")[1] || item.label}
+                {item.label}
               </span>
             </div>
           ))}

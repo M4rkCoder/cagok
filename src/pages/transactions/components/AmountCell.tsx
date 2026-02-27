@@ -7,6 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useTableNavigation } from "@/pages/transactions/hooks/useTableNavigation";
+import { useTranslation } from "react-i18next";
 
 export const AmountCell = ({
   getValue,
@@ -17,6 +18,7 @@ export const AmountCell = ({
   onPaste,
   error,
 }: CellProps) => {
+  const { t } = useTranslation();
   const initialValue = getValue();
   const { setActiveCell, activeCell, onDragStart, confirmUpdate } = table
     .options.meta as any;
@@ -123,7 +125,7 @@ export const AmountCell = ({
           side="top"
           className="text-xs font-sans px-2 py-1 bg-blue-600 text-white"
         >
-          {`계산 결과: ${preview}`}
+          {t("transaction_form.calculation_result", { amount: preview })}
         </TooltipContent>
       </Tooltip>
       <div

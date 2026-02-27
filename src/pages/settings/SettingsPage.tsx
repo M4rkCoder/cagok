@@ -6,11 +6,14 @@ import SyncSettings from "./SyncSettings";
 import { AnimatedTabs, TabItem, TabContent } from "@/components/AnimatedTabs";
 import { Cloudy, Database, Settings, Shapes } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
+
 const SettingsPage = ({
   defaultSection = "general",
 }: {
   defaultSection?: string;
 }) => {
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState(defaultSection);
 
   useEffect(() => {
@@ -18,10 +21,10 @@ const SettingsPage = ({
   }, [defaultSection]);
 
   const tabs: TabItem[] = [
-    { id: "general", label: "일반 설정", icon: Settings },
-    { id: "category", label: "카테고리 관리", icon: Shapes },
-    { id: "database", label: "데이터베이스 관리", icon: Database },
-    { id: "sync", label: "동기화 설정", icon: Cloudy },
+    { id: "general", label: t("settings.tabs.general"), icon: Settings },
+    { id: "category", label: t("settings.tabs.category"), icon: Shapes },
+    { id: "database", label: t("settings.tabs.database"), icon: Database },
+    { id: "sync", label: t("settings.tabs.sync"), icon: Cloudy },
   ];
 
   const renderContent = () => {

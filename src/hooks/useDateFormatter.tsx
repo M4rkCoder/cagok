@@ -115,6 +115,41 @@ export const useDateFormatter = () => {
   };
 
   /**
+   * '연도' 포매팅 (ko: "2024년", en: "2024")
+   */
+  const formatYear = (dateOrYear: string | number) => {
+    let year: number;
+    if (typeof dateOrYear === "string") {
+      const date = new Date(dateOrYear);
+      year = date.getFullYear();
+    } else {
+      year = dateOrYear;
+    }
+
+    if (language === "ko") {
+      return `${year}년`;
+    }
+    return `${year}`;
+  };
+
+  /**
+   * '연월' 포매팅 (ko: "2024년 5월", en: "May 2024")
+   */
+  const formatYearMonth = (dateString: string) => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+
+    if (language === "ko") {
+      return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
+    } else {
+      return new Intl.DateTimeFormat(locale, {
+        year: "numeric",
+        month: "long",
+      }).format(date);
+    }
+  };
+
+  /**
    * 백엔드에서 오는 요일 인덱스(0: 일요일 ~ 6: 토요일)를 다국어 요일 문자열로 변환
    */
   const formatDayIndex = (
@@ -131,6 +166,8 @@ export const useDateFormatter = () => {
     formatFullDate,
     formatMonth,
     formatDay,
+    formatYear,
+    formatYearMonth,
     formatWeekday,
     getDateParts,
     formatDayIndex,

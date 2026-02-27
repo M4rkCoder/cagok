@@ -154,8 +154,8 @@ const CategoryCell = ({
     e.stopPropagation();
 
     confirm({
-      title: t("delete_category") || "카테고리 삭제",
-      description: `[${cat.name}] ${t("delete_category_confirm_msg") || "카테고리를 삭제하시겠습니까? 관련 내역은 '미분류'로 변경됩니다."}`,
+      title: t("settings.category.delete"),
+      description: t("settings.category.delete_confirm", { name: cat.name }),
       onConfirm: async () => {
         try {
           await deleteCategory(cat.id);
@@ -166,9 +166,9 @@ const CategoryCell = ({
             updateData(row.index, "category_id", null);
           }
 
-          toast.success(t("category_deleted") || "삭제되었습니다.");
+          toast.success(t("transaction_updated_successfully"));
         } catch (err) {
-          toast.error("삭제에 실패했습니다.");
+          toast.error(t("failed_to_delete_transaction"));
         }
       },
     });
@@ -206,7 +206,7 @@ const CategoryCell = ({
                   <span>{selected.name}</span>
                 </div>
               ) : (
-                <span className="text-slate-400 text-sm">{t("select")}...</span>
+                <span className="text-slate-400 text-sm">{t("select_category")}...</span>
               )}
             </button>
           </PopoverTrigger>

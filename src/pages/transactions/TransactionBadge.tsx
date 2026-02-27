@@ -108,11 +108,12 @@ export function TrendBadge({
   isSimple = false,
   className,
 }: TrendBadgeProps) {
+  const { t } = useTranslation();
   const isIncome = type === "income";
 
   // 타입에 따른 스타일 및 아이콘 설정
   const config = {
-    label: isIncome ? "수입" : "지출",
+    label: isIncome ? t("common.income") : t("common.expense"),
     icon: isIncome ? (
       <CirclePlus size={12} strokeWidth={3} />
     ) : (

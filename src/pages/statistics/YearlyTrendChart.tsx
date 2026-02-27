@@ -1,50 +1,61 @@
-import React, { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { useDateFormatter } from "@/hooks/useDateFormatter";
+import { useStatisticsStore } from "@/stores/useStatisticsStore";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TitleText } from "./components/TitleText";
+import { cn } from "@/lib/utils";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartTooltip,
+} from "@/components/ui/chart";
 import {
   Bar,
-  ComposedChart,
   CartesianGrid,
+  ComposedChart,
   Line,
   ReferenceLine,
   XAxis,
   YAxis,
 } from "recharts";
-import { format } from "date-fns";
-import {
-  ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { cn } from "@/lib/utils";
-import { useStatisticsStore } from "@/stores/useStatisticsStore";
-import { TitleText } from "./components/TitleText";
-import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 // 색상 체계 업데이트
-const chartConfig = {
-  totalIncome: { label: "수입", color: "#10b981", negativeColor: "#ef4444" },
-  totalExpense: { label: "총지출", color: "#ef4444", negativeColor: "#ef4444" },
+const getChartConfig = (t: any) => ({
+  totalIncome: {
+    label: t("common.income"),
+    color: "#10b981",
+    negativeColor: "#ef4444",
+  },
+  totalExpense: {
+    label: t("common.expense"),
+    color: "#ef4444",
+    negativeColor: "#ef4444",
+  },
   variableExpense: {
-    label: "변동지출",
+    label: t("common.variable"),
     color: "#2563eb",
     negativeColor: "#ef4444",
   },
   fixedExpense: {
-    label: "고정지출",
+    label: t("common.fixed"),
     color: "#475569",
     negativeColor: "#ef4444",
   },
-  netIncome: { label: "순수입", color: "#8b5cf6", negativeColor: "#ef4444" },
-} satisfies ChartConfig;
+  netIncome: {
+    label: t("common.net_income"),
+    color: "#8b5cf6",
+    negativeColor: "#ef4444",
+  },
+});
 
 const getPath = (
   x: number,
   y: number,
   width: number,
   height: number,
-  radius: number[]
+  radius: number[],
 ) => {
   const [tr, tl, br, bl] = radius;
   return `
@@ -62,7 +73,8 @@ const getPath = (
 };
 
 const CustomBarShape = (props: any) => {
-  const { x, y, width, height, radius, payload, fillVariable } = props;
+  const { x, y, width, height, radius, payload, fillVariable, chartConfig } =
+    props;
   const isNegative = payload.netIncome < 0;
   const fillConfig = chartConfig[fillVariable as keyof typeof chartConfig];
 
@@ -82,15 +94,18 @@ const CustomBarShape = (props: any) => {
 type ViewMode = "all" | "income" | "expense" | "netIncome";
 
 export function YearlyTrendChart() {
+  const { t } = useTranslation();
+  const chartConfig = getChartConfig(t);
   const { monthlyFinancialSummary: data } = useStatisticsStore();
   const [viewMode, setViewMode] = useState<ViewMode>("all");
   const { formatAmount } = useCurrencyFormatter();
+  const { formatMonth } = useDateFormatter();
 
   const tabs: { id: ViewMode; label: string }[] = [
-    { id: "all", label: "전체" },
-    { id: "income", label: "수입" },
-    { id: "expense", label: "지출" },
-    { id: "netIncome", label: "순수입" },
+    { id: "all", label: t("common.all") },
+    { id: "income", label: t("common.income") },
+    { id: "expense", label: t("common.expense") },
+    { id: "netIncome", label: t("common.net_income") },
   ];
 
   const legendOrder =
@@ -108,7 +123,7 @@ export function YearlyTrendChart() {
   return (
     <Card className="border-slate-200 shadow-none">
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <TitleText title="연간 통계" />
+        <TitleText title={t("statistics.tabs.yearly")} />
         <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
           {tabs.map((tab) => (
             <button
@@ -118,7 +133,7 @@ export function YearlyTrendChart() {
                 "px-4 py-1.5 text-xs font-bold transition-all rounded-md",
                 viewMode === tab.id
                   ? "bg-white text-blue-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  : "text-slate-500 hover:text-slate-700",
               )}
             >
               {tab.label}
@@ -145,7 +160,7 @@ export function YearlyTrendChart() {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={12}
-                tickFormatter={(v) => format(new Date(v), "M월")}
+                tickFormatter={(v) => formatMonth(`${v}-01`, "short")}
                 fontSize={12}
                 className="font-bold text-slate-400"
                 tick={{ fill: "#94a3b8", fontWeight: 600 }}
@@ -232,7 +247,14 @@ export function YearlyTrendChart() {
                     <div className="bg-white border border-slate-200 p-0 shadow-xl rounded-2xl overflow-hidden min-w-[200px] animate-in fade-in zoom-in duration-200">
                       <div className="bg-slate-50/80 px-4 py-2 border-b border-slate-100">
                         <p className="text-[12px] font-black text-slate-500 uppercase tracking-widest">
-                          {format(new Date(label), "yyyy년 M월")} 분석
+                          {(() => {
+                            const [y, m] = label.toString().split("-");
+                            if (t("common.year") === "Year") {
+                              // Simple check for EN
+                              return `${new Intl.DateTimeFormat("en-US", { month: "long" }).format(new Date(label))} ${y} analysis`;
+                            }
+                            return `${y}년 ${parseInt(m, 10)}월 분석`;
+                          })()}
                         </p>
                       </div>
 
@@ -256,7 +278,7 @@ export function YearlyTrendChart() {
                                 "flex items-center justify-between px-2 py-1.5 rounded-lg transition-colors",
                                 isHighlighted
                                   ? "bg-slate-50 border border-slate-100 shadow-sm"
-                                  : "opacity-40"
+                                  : "opacity-40",
                               )}
                             >
                               <div className="flex items-center gap-2">
@@ -269,7 +291,7 @@ export function YearlyTrendChart() {
                                     "text-[11px] font-bold uppercase tracking-tighter",
                                     isHighlighted
                                       ? "text-slate-700"
-                                      : "text-slate-400"
+                                      : "text-slate-400",
                                   )}
                                 >
                                   {config.label}
@@ -282,7 +304,7 @@ export function YearlyTrendChart() {
                                   item.id === "netIncome" &&
                                     Number(item.value) < 0
                                     ? "text-red-500"
-                                    : "text-slate-900"
+                                    : "text-slate-900",
                                 )}
                               >
                                 {formatAmount(Number(item.value))}
@@ -327,6 +349,7 @@ export function YearlyTrendChart() {
                     <CustomBarShape
                       fillVariable="totalIncome"
                       radius={[4, 4, 0, 0]}
+                      chartConfig={chartConfig}
                     />
                   }
                 />
@@ -342,6 +365,7 @@ export function YearlyTrendChart() {
                       <CustomBarShape
                         fillVariable="fixedExpense"
                         radius={[0, 0, 4, 4]}
+                        chartConfig={chartConfig}
                       />
                     }
                   />
@@ -354,6 +378,7 @@ export function YearlyTrendChart() {
                       <CustomBarShape
                         fillVariable="variableExpense"
                         radius={[4, 4, 0, 0]}
+                        chartConfig={chartConfig}
                       />
                     }
                   />
@@ -394,7 +419,7 @@ export function YearlyTrendChart() {
           </ChartContainer>
         ) : (
           <div className="flex items-center justify-center h-[400px] text-muted-foreground font-medium">
-            데이터가 없습니다.
+            {t("statistics.summary.no_data")}
           </div>
         )}
       </CardContent>

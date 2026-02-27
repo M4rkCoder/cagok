@@ -7,14 +7,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  getYear,
-  setDefaultOptions,
-} from "date-fns";
-import { ko } from "date-fns/locale";
+import { getYear } from "date-fns";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
-
-setDefaultOptions({ locale: ko });
+import { useDateFormatter } from "@/hooks/useDateFormatter";
+import { useTranslation } from "react-i18next";
 
 interface YearPickerProps {
   selectedYear: number;
@@ -25,6 +21,9 @@ export const YearPicker: React.FC<YearPickerProps> = ({
   selectedYear,
   onYearChange,
 }) => {
+  const { t } = useTranslation();
+  const { formatYear } = useDateFormatter();
+
   const handleYearChange = (year: string) => {
     const newYear = parseInt(year, 10);
     onYearChange(newYear); // Update external state
@@ -57,12 +56,12 @@ export const YearPicker: React.FC<YearPickerProps> = ({
         onValueChange={handleYearChange}
       >
         <SelectTrigger className="w-[100px] justify-center text-center font-semibold">
-          <SelectValue placeholder="연도" />
+          <SelectValue placeholder={t("common.year")} />
         </SelectTrigger>
         <SelectContent>
           {years.map((year) => (
             <SelectItem key={year} value={year.toString()}>
-              {year}년
+              {formatYear(year)}
             </SelectItem>
           ))}
         </SelectContent>

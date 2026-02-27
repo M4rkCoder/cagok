@@ -21,9 +21,12 @@ import { DashboardTitle } from "./components/DashboardTitle";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 import { useDateFormatter } from "@/hooks/useDateFormatter";
 
+import { useTranslation } from "react-i18next";
+
 type ViewMode = "expense" | "income";
 
 export default function DailyTransactionCard() {
+  const { t } = useTranslation();
   const {
     selectedMonth,
     dailyCategoryExpenses,
@@ -70,11 +73,11 @@ export default function DailyTransactionCard() {
 
     config["total"] = {
       id: "all",
-      name: "전체",
+      name: t("common.all"),
       color: getThemeColor(viewMode),
     };
     return config;
-  }, [currentCategories, viewMode]);
+  }, [currentCategories, viewMode, t]);
 
   // 3. 데이터 가공
   const chartData = useMemo(() => {
@@ -101,7 +104,7 @@ export default function DailyTransactionCard() {
       data.push(dayData);
     }
     return data;
-  }, [selectedMonth, currentDailyData]);
+  }, [selectedMonth, currentDailyData, formatDay]);
 
   // 탭 변경 시 선택된 카테고리 초기화
   const handleTabChange = (value: string) => {
@@ -115,7 +118,9 @@ export default function DailyTransactionCard() {
         <div className="md:col-span-2 w-full">
           <div className="flex items-center justify-between mb-4">
             <DashboardTitle
-              title={`일일 ${viewMode === "expense" ? "지출" : "수입"} 현황`}
+              title={t("dashboard.cards.daily_status_title", {
+                type: viewMode === "expense" ? t("common.expense") : t("common.income"),
+              })}
             />
 
             {/* 지출/수입 전환 탭 */}
@@ -129,13 +134,13 @@ export default function DailyTransactionCard() {
                   value="expense"
                   className="text-xs transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white font-medium"
                 >
-                  지출
+                  {t("common.expense")}
                 </TabsTrigger>
                 <TabsTrigger
                   value="income"
                   className="text-xs transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-medium"
                 >
-                  수입
+                  {t("common.income")}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -182,7 +187,7 @@ export default function DailyTransactionCard() {
                   {selectedCategoryId === "all" ? (
                     <Bar
                       dataKey="total"
-                      name={viewMode === "expense" ? "총 지출" : "총 수입"}
+                      name={viewMode === "expense" ? t("dashboard.treemap.total") : t("common.income")} // total_income?
                       fill={categoryConfig["total"].color}
                       radius={[4, 4, 0, 0]}
                       onClick={(data) => handleDateClick(data.payload.date)}

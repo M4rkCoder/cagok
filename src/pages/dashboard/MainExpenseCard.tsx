@@ -14,11 +14,10 @@ import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 import AnimatedAmount from "@/components/AnimatedAmount";
 import { useDateFormatter } from "@/hooks/useDateFormatter";
 
-interface MainExpenseCardProps {
-  lang: "ko" | "en";
-}
+import { useTranslation } from "react-i18next";
 
-export function MainExpenseCard({ lang }: MainExpenseCardProps) {
+export function MainExpenseCard() {
+  const { t } = useTranslation();
   const { formatAmount } = useCurrencyFormatter();
   const { formatDay } = useDateFormatter();
   const { overview, comparisons, recentTransactions } = useDashboardStore();
@@ -66,7 +65,7 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
             <div className="flex items-center justify-between pb-8">
               <div className="flex items-center gap-2">
                 <DashboardTitle
-                  title={lang === "ko" ? "이달의 지출" : "Monthly Expense"}
+                  title={t("dashboard.monthly_expense")}
                 />
               </div>
               <DiffBadge metric={comparison} />
@@ -92,7 +91,7 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* 2-1. 최근 지출 내역 리스트 (초슬림 & 컴팩트 버전) */}
             <div className="flex flex-col">
-              <DashboardTitle title={"최근 지출"} />
+              <DashboardTitle title={t("dashboard.recent_expense")} />
 
               <div className="flex-1 min-h-0 mt-2">
                 {/* max-h를 조절하고 내부 여백을 줄였습니다 */}
@@ -130,7 +129,7 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
                     ))
                   ) : (
                     <div className="py-6 text-center text-slate-300 text-[10px] font-medium italic">
-                      내역 없음
+                      {t("no_transactions_found")}
                     </div>
                   )}
                 </div>
@@ -138,7 +137,7 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
             </div>
             {/* 2-2. 바로 입력 부분 */}
             <div className="space-y-4 flex flex-col">
-              <DashboardTitle title={"바로 입력"} />
+              <DashboardTitle title={t("dashboard.quick_entry")} />
               <div className="flex-1 min-h-[150px] w-full flex flex-col items-center justify-center gap-6">
                 {/* 상단: 메인 입력 버튼 */}
                 <TransactionSheet />
@@ -167,9 +166,7 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
                       ))
                     ) : (
                       <span className="text-xs text-slate-400 italic">
-                        {lang === "ko"
-                          ? "최근 내역이 없습니다"
-                          : "No recent data"}
+                        {t("dashboard.no_recent_data")}
                       </span>
                     )}
                   </div>

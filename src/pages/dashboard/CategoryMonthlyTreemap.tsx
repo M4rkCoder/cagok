@@ -5,8 +5,10 @@ import { getFixedColor, getVariableColor } from "@/lib/utils";
 import { DashboardTitle } from "./components/DashboardTitle";
 import { Card } from "@/components/ui/card";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { useTranslation } from "react-i18next";
 
 export const CategoryMonthlyTreemap: React.FC = () => {
+  const { t } = useTranslation();
   const {
     expenseTreemap,
     loading,
@@ -21,7 +23,7 @@ export const CategoryMonthlyTreemap: React.FC = () => {
     return expenseTreemap.children
       .map((group) => {
         const isFixed = group.name === "fixed";
-        const groupDisplayName = isFixed ? "고정 지출" : "변동 지출";
+        const groupDisplayName = isFixed ? t("dashboard.cards.fixed_expense") : t("dashboard.cards.variable_expense");
         const safeChildren = group.children || [];
         const groupTotal = group.value || 0;
 
@@ -41,7 +43,7 @@ export const CategoryMonthlyTreemap: React.FC = () => {
         // 기타 항목 추가 (합계가 있을 경우만)
         if (etcValue > 0) {
           mainChildren.push({
-            name: "기타",
+            name: t("dashboard.cards.etc"),
             value: etcValue,
             category_icon: "📦",
             isEtc: true, // 기타 항목 식별자
@@ -69,7 +71,7 @@ export const CategoryMonthlyTreemap: React.FC = () => {
         };
       })
       .filter((group) => (group.value || 0) > 0);
-  }, [expenseTreemap]);
+  }, [expenseTreemap, t]);
 
   const handleNodeClick = (nodeData: any) => {
     const payload = nodeData.payload || nodeData;
@@ -85,7 +87,7 @@ export const CategoryMonthlyTreemap: React.FC = () => {
     );
 
     if (categoryDetail) {
-      const isFixed = groupName === "고정 지출";
+      const isFixed = groupName === t("dashboard.cards.fixed_expense");
       setDetailData({
         items: isFixed
           ? categoryDetail.fixed_items
@@ -190,10 +192,10 @@ export const CategoryMonthlyTreemap: React.FC = () => {
     <Card className="pt-4 pb-0 px-5 border-none shadow-md">
       <div className="w-full h-[290px] min-2xl:h-[380px] bg-white border-none flex flex-col">
         <div className="flex justify-between items-end mb-1">
-          <DashboardTitle title="고정·변동 지출" />
+          <DashboardTitle title={t("dashboard.cards.treemap")} />
           <div className="flex gap-4 mr-4">
-            <LegendItem color="bg-slate-400" label="고정 지출" />
-            <LegendItem color="bg-orange-300" label="변동 지출" />
+            <LegendItem color="bg-slate-400" label={t("dashboard.cards.fixed_expense")} />
+            <LegendItem color="bg-orange-300" label={t("dashboard.cards.variable_expense")} />
           </div>
         </div>
 
@@ -210,7 +212,7 @@ export const CategoryMonthlyTreemap: React.FC = () => {
               </Treemap>
             </ResponsiveContainer>
           ) : (
-            <EmptyState loading={loading} />
+            <EmptyState loading={loading} t={t} />
           )}
         </div>
       </div>
@@ -250,8 +252,8 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-const EmptyState = ({ loading }: { loading: boolean }) => (
+const EmptyState = ({ loading, t }: { loading: boolean; t: any }) => (
   <div className="flex h-full items-center justify-center text-slate-400 font-bold">
-    {loading ? "데이터 분석 중..." : "이번 달 지출 내역이 없습니다."}
+    {loading ? t("dashboard.cards.analyzing_data") : t("dashboard.cards.no_expense_this_month")}
   </div>
 );

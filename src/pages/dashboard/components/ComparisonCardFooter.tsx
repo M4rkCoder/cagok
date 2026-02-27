@@ -4,6 +4,8 @@ import { ComparisonMetric } from "@/types/dashboard";
 import { CardFooter } from "@/components/ui/card";
 import { Wallet, TrendingUp, TrendingDown, PieChart, Info } from "lucide-react";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { useTranslation, Trans } from "react-i18next";
+import { cn } from "@/lib/utils";
 
 interface Props {
   metric: ComparisonMetric | null;
@@ -16,6 +18,7 @@ export function ComparisonCardFooter({
   expenseRate,
   dailyAverage,
 }: Props) {
+  const { t } = useTranslation();
   const isEmpty = !metric || metric.previous === 0;
   const { formatAmount } = useCurrencyFormatter();
 
@@ -47,12 +50,16 @@ export function ComparisonCardFooter({
         className="flex items-center gap-1.5 whitespace-nowrap"
       >
         <Wallet className="w-3.5 h-3.5 text-slate-400" />
-        <span>하루 평균</span>
-        <span className="text-slate-900 font-extrabold bg-slate-100 px-1.5 py-0.5 rounded tracking-tighter">
-          {formatAmount(dailyAverage!)}
-        </span>
-        <span>썼어요</span>
-      </div>
+        <Trans
+          i18nKey="dashboard.comparison.daily_avg_spent"
+          values={{ amount: formatAmount(dailyAverage!) }}
+          components={{
+            1: (
+              <span className="text-slate-900 font-extrabold bg-slate-100 px-1.5 py-0.5 rounded tracking-tighter mx-1" />
+            ),
+          }}
+        />
+      </div>,
     );
   }
 
@@ -64,7 +71,7 @@ export function ComparisonCardFooter({
           className="flex items-center gap-1.5 whitespace-nowrap"
         >
           <Info className="w-3.5 h-3.5 text-slate-400" />
-          <span>지난 달과 동일함</span>
+          <span>{t("dashboard.comparison.same_as_last_month")}</span>
         </div>
       ) : (
         <div
@@ -76,26 +83,26 @@ export function ComparisonCardFooter({
           ) : (
             <TrendingDown className="w-3.5 h-3.5 text-blue-400" />
           )}
-          <span>
-            전월 대비
-            {isIncrease ? (
-              <>
-                <span className="text-green-500 bg-slate-50 px-1 py-0.5 rounded ml-1">
-                  {formatAmount(Math.abs(metric.diff))}
-                </span>
-                늘었어요.
-              </>
-            ) : (
-              <>
-                <span className="text-red-500 bg-slate-50 px-1 py-0.5 rounded ml-1">
-                  {formatAmount(Math.abs(metric.diff))}
-                </span>
-                줄었어요.
-              </>
-            )}
-          </span>
+          <Trans
+            i18nKey={
+              isIncrease
+                ? "dashboard.comparison.spent_more_than_last_month"
+                : "dashboard.comparison.spent_less_than_last_month"
+            }
+            values={{ amount: formatAmount(Math.abs(metric.diff)) }}
+            components={{
+              1: (
+                <span
+                  className={cn(
+                    "bg-slate-50 px-1 py-0.5 rounded mx-1",
+                    isIncrease ? "text-green-500" : "text-red-500",
+                  )}
+                />
+              ),
+            }}
+          />
         </div>
-      )
+      ),
     );
   }
 
@@ -106,11 +113,14 @@ export function ComparisonCardFooter({
         className="flex items-center gap-1.5 whitespace-nowrap"
       >
         <PieChart className="w-3.5 h-3.5 text-slate-400" />
-        <span>
-          수입의 <span className={expenseRateColor()}>{expenseRate}%</span>를
-          썼어요.
-        </span>
-      </div>
+        <Trans
+          i18nKey="dashboard.comparison.expense_ratio_spent"
+          values={{ ratio: expenseRate }}
+          components={{
+            1: <span className={expenseRateColor()} />,
+          }}
+        />
+      </div>,
     );
   }
 
@@ -121,7 +131,7 @@ export function ComparisonCardFooter({
 
     const interval = setInterval(() => {
       setCurrentSentenceIndex(
-        (prevIndex) => (prevIndex + 1) % sentences.length
+        (prevIndex) => (prevIndex + 1) % sentences.length,
       );
     }, 3500); // Roll every 3.5 seconds
 
@@ -144,7 +154,9 @@ export function ComparisonCardFooter({
       onMouseLeave={handleMouseLeave}
     >
       {sentences.length === 0 ? (
-        <div className="w-full text-center">데이터가 없습니다.</div>
+        <div className="w-full text-center">
+          {t("dashboard.comparison.no_data")}
+        </div>
       ) : (
         <div className="relative w-full h-full flex items-center justify-start">
           <AnimatePresence mode="wait" initial={false}>

@@ -156,18 +156,29 @@ export const evaluateExpression = (input: string): string => {
   }
 };
 
-export const getFrequencyText = (frequency: string) =>
-  ({ daily: "매일", weekly: "매주", monthly: "매월", yearly: "매년" })[
-    frequency
-  ] || frequency;
+export const getFrequencyText = (frequency: string, t?: any) => {
+  if (t) {
+    return t(`recurring.form.frequencies.${frequency}`);
+  }
+  return (
+    ({ daily: "매일", weekly: "매주", monthly: "매월", yearly: "매년" }) as any
+  )[frequency] || frequency;
+};
 
-export const getDayText = (recurring: RecurringTransaction) => {
+export const getDayText = (recurring: RecurringTransaction, t?: any) => {
   if (recurring.frequency === "weekly" && recurring.day_of_week != null) {
-    return (
-      ["일", "월", "화", "수", "목", "금", "토"][recurring.day_of_week] + "요일"
-    );
+    const days = ["일", "월", "화", "수", "목", "금", "토"];
+    if (t) {
+      // Use Intl.DateTimeFormat via a trick or just simple keys
+      // Since we already have formatDayIndex in useDateFormatter, 
+      // but this is a util, we'll use a simple approach or let the caller handle it.
+      // For now, let's just return the day name if t is provided we could use keys.
+      return t(`common.days.${recurring.day_of_week}`, { defaultValue: days[recurring.day_of_week] + "요일" });
+    }
+    return days[recurring.day_of_week] + "요일";
   }
   if (recurring.frequency === "monthly" && recurring.day_of_month) {
+    if (t) return t("common.count_day", { count: recurring.day_of_month, defaultValue: `${recurring.day_of_month}일` });
     return recurring.day_of_month + "일";
   }
   return "";

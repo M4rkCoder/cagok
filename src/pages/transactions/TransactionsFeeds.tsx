@@ -24,7 +24,12 @@ import { Tooltip } from "@/components/ui/tooltip";
 import { TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
+import { useTranslation } from "react-i18next";
+import { useDateFormatter } from "@/hooks/useDateFormatter";
+
 export default function TransactionsFeeds() {
+  const { t } = useTranslation();
+  const { formatMonth, formatYear } = useDateFormatter();
   const {
     dailySummaries,
     monthlySummaries,
@@ -148,9 +153,8 @@ export default function TransactionsFeeds() {
 
   const handleDelete = (id: number) => {
     confirm({
-      title: "가계부 기록 삭제",
-      description:
-        "이 거래 내역을 정말 삭제하시겠습니까? \n 삭제 후에는 복구할 수 없습니다.",
+      title: t("confirm_delete"),
+      description: t("confirm_delete_transaction_message"),
       onConfirm: async () => {
         await deleteTransaction(id);
       },
@@ -179,8 +183,8 @@ export default function TransactionsFeeds() {
 
   const handleBulkDelete = () => {
     confirm({
-      title: "선택 항목 삭제",
-      description: `${selectedIds.size}개의 내역을 정말 삭제하시겠습니까?`,
+      title: t("bulk_delete_title"),
+      description: t("bulk_delete_confirm", { count: selectedIds.size }),
       onConfirm: async () => {
         await deleteBulkTransactions(Array.from(selectedIds));
         setSelectedIds(new Set());
@@ -196,10 +200,10 @@ export default function TransactionsFeeds() {
             <Search className="h-10 w-10 text-slate-300" />
           </div>
           <h3 className="text-lg font-bold text-slate-700 mb-1">
-            검색 결과가 없습니다
+            {t("transaction_filter.no_search_results")}
           </h3>
           <p className="text-sm text-slate-400 mb-6">
-            필터 조건을 변경하거나 검색어를 다르게 입력해보세요.
+            {t("transaction_filter.no_search_results_hint")}
           </p>
           <Button
             variant="outline"
@@ -210,7 +214,7 @@ export default function TransactionsFeeds() {
             }}
             className="gap-2 rounded-full px-5"
           >
-            <FilterX className="h-4 w-4" /> 필터 초기화
+            <FilterX className="h-4 w-4" /> {t("transaction_filter.reset_filter")}
           </Button>
         </div>
       );
@@ -272,15 +276,15 @@ export default function TransactionsFeeds() {
                 <div className="flex items-baseline gap-2">
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-sm font-semibold text-slate-400 tracking-tighter">
-                      {currentYear}
+                      {formatYear(Number(currentYear))}
                     </span>
                     <span className="text-2xl font-black text-slate-800 tracking-tight">
-                      {currentMonthDisplay}월
+                      {formatMonth(`${currentYearMonth}-01`, "long")}
                     </span>
                   </div>
                   {monthStats && (
                     <div className="flex items-center gap-1.2 ml-2 px-2.5 py-0.5 rounded-full bg-slate-100/80 text-[10px] font-bold text-slate-500 border border-slate-200/50 uppercase">
-                      {monthStats.total_count} 건
+                      {t("common.count", { count: monthStats.total_count, defaultValue: `${monthStats.total_count} 건` })}
                     </div>
                   )}
                 </div>
@@ -321,9 +325,9 @@ export default function TransactionsFeeds() {
                     </TooltipTrigger>
                     <TooltipContent className="text-white bg-black rounded text-xs p-1">
                       {isAllDetailsExpanded ? (
-                        <span>상세 접기</span>
+                        <span>{t("transaction_filter.collapse_details")}</span>
                       ) : (
-                        <span>상세 펼치기</span>
+                        <span>{t("transaction_filter.expand_details")}</span>
                       )}
                     </TooltipContent>
                   </Tooltip>
@@ -401,7 +405,7 @@ export default function TransactionsFeeds() {
               onClick={handleExpandAllMonths}
               className="h-7 px-2 text-[11px] text-slate-400 hover:text-slate-600 gap-1"
             >
-              <ChevronsDown className="w-3 h-3" /> 모두 펼치기
+              <ChevronsDown className="w-3 h-3" /> {t("transaction_filter.expand_all")}
             </Button>
             <Button
               variant="ghost"
@@ -409,7 +413,7 @@ export default function TransactionsFeeds() {
               onClick={handleCollapseAllMonths}
               className="h-7 px-2 text-[11px] text-slate-400 hover:text-slate-600 gap-1"
             >
-              <ChevronsUp className="w-3 h-3" /> 모두 접기
+              <ChevronsUp className="w-3 h-3" /> {t("transaction_filter.collapse_all")}
             </Button>
           </div>
         )}
@@ -439,7 +443,7 @@ export default function TransactionsFeeds() {
             className="rounded-full shadow-lg gap-2 pl-4 pr-6 h-12"
           >
             <Trash2 className="h-5 w-5" />
-            <span className="font-bold">{selectedIds.size}개 삭제</span>
+            <span className="font-bold">{t("common.count", { count: selectedIds.size })} {t("common.delete")}</span>
           </Button>
         </div>
       )}

@@ -201,7 +201,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
                   </div>
                   {average > 0 && (
                     <div className="text-[9px] opacity-70 italic font-medium">
-                      평균: {formatAmount(average)}
+                      {t("statistics.summary.monthly_avg")}: {formatAmount(average)}
                     </div>
                   )}
                 </div>
@@ -238,24 +238,24 @@ export const CategoryYearlyTreemap: React.FC = () => {
 
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 font-semibold">총 금액</span>
+              <span className="text-slate-400 font-semibold">{t("statistics.summary.yearly_total", { label: "" })}</span>
               <span className="font-black text-slate-900">
                 {formatAmount(data.value)}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 font-semibold">총 건수</span>
-              <span className="font-bold text-slate-700">{data.count}건</span>
+              <span className="text-slate-400 font-semibold">{t("common.count", { count: 0 }).replace(/[0-9]/g, "").trim()}</span>
+              <span className="font-bold text-slate-700">{t("common.count", { count: data.count })}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 font-semibold">전체 비중</span>
+              <span className="text-slate-400 font-semibold">{t("statistics.summary.badge_labels.net_income_ratio").replace("수입", t("common.all"))}</span>
               <span className="text-blue-600 font-black bg-blue-50 px-2 py-0.5 rounded-md">
                 {data.percentage.toFixed(1)}%
               </span>
             </div>
             {data.average > 0 && (
               <div className="flex justify-between items-center pt-2 border-t border-slate-50">
-                <span className="text-slate-400 font-semibold">월 평균</span>
+                <span className="text-slate-400 font-semibold">{t("statistics.summary.monthly_avg")}</span>
                 <span className="font-bold text-slate-600">
                   {formatAmount(data.average)}
                 </span>
@@ -277,7 +277,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
     >
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
         <TitleText
-          title={`${viewType === "expense" ? "지출" : "수입"} 카테고리 통계`}
+          title={`${viewType === "expense" ? t("common.expense") : t("common.income")} ${t("statistics.tabs.treemap")}`}
         />
         <Tabs
           value={viewType}
@@ -289,13 +289,13 @@ export const CategoryYearlyTreemap: React.FC = () => {
               value="expense"
               className="text-xs transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white font-bold"
             >
-              지출
+              {t("common.expense")}
             </TabsTrigger>
             <TabsTrigger
               value="income"
               className="text-xs transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-bold"
             >
-              수입
+              {t("common.income")}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -318,7 +318,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
         ) : (
           <div className="flex h-full items-center justify-center bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
             <span className="text-slate-400 font-medium">
-              분석할 데이터가 충분하지 않습니다.
+              {t("statistics.summary.no_data")}
             </span>
           </div>
         )}

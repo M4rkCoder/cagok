@@ -14,7 +14,11 @@ import { CategoryIcon } from "./CategoryIcon";
 import { motion, AnimatePresence } from "framer-motion"; // 추가
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
+import { useTranslation } from "react-i18next";
+import { useDateFormatter } from "@/hooks/useDateFormatter";
+
 const DailyTransactionsDialog = () => {
+  const { t, i18n } = useTranslation();
   const {
     dialogState,
     closeDialog,
@@ -23,6 +27,7 @@ const DailyTransactionsDialog = () => {
     loadChartDetail,
   } = useDashboardStore();
   const { formatAmount } = useCurrencyFormatter();
+  const { formatFullDate } = useDateFormatter();
   const { isOpen, date, txType, categoryId } = dialogState;
 
   useEffect(() => {
@@ -32,7 +37,7 @@ const DailyTransactionsDialog = () => {
   }, [isOpen, date, txType, categoryId, loadChartDetail]);
 
   const formattedDate = date
-    ? format(new Date(date), "M.d (eee)", { locale: ko })
+    ? formatFullDate(date)
     : "";
 
   return (
@@ -72,10 +77,10 @@ const DailyTransactionsDialog = () => {
                     </div>
                     <div className="flex flex-col items-start leading-none">
                       <DialogTitle className="text-base font-bold">
-                        {txType === 0 ? "수입" : "지출"} 내역
+                        {txType === 0 ? t("common.income") : t("common.expense")} {t("description")}
                         {detailData?.is_fixed_view !== undefined && (
                           <span className="ml-1.5 text-xs font-medium text-slate-400">
-                            ({detailData.is_fixed_view ? "고정" : "변동"})
+                            ({detailData.is_fixed_view ? t("common.fixed") : t("common.variable")})
                           </span>
                         )}
                       </DialogTitle>
@@ -113,7 +118,7 @@ const DailyTransactionsDialog = () => {
                           className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full"
                         />
                         <p className="text-xs text-slate-400 font-medium">
-                          데이터 로딩 중...
+                          {t("common.loading")}
                         </p>
                       </div>
                     ) : detailData?.items && detailData.items.length > 0 ? (
@@ -156,7 +161,7 @@ const DailyTransactionsDialog = () => {
                     ) : (
                       <div className="py-20 text-center">
                         <p className="text-xs text-slate-400">
-                          조회된 내역이 없습니다.
+                          {t("no_transactions_found")}
                         </p>
                       </div>
                     )}
@@ -171,7 +176,7 @@ const DailyTransactionsDialog = () => {
                   onClick={closeDialog}
                   className="w-full py-2.5 text-sm font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all outline-none"
                 >
-                  확인
+                  {t("transaction_filter.confirm")}
                 </button>
               </div>
             </motion.div>

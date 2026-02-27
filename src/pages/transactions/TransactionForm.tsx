@@ -114,9 +114,8 @@ const TransactionForm: React.FC = () => {
 
   const handleDelete = () => {
     confirm({
-      title: "내역 삭제",
-      description:
-        "이 내역을 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.",
+      title: t("transaction_form.delete_title"),
+      description: t("transaction_form.delete_description"),
       onConfirm: async () => {
         if (editingTransaction?.id) {
           deleteTransaction(editingTransaction.id);
@@ -155,6 +154,7 @@ const TransactionForm: React.FC = () => {
 const TransactionTypeSection: React.FC<{
   form: UseFormReturn<TransactionFormValues>;
 }> = ({ form }) => {
+  const { t } = useTranslation();
   const currentType = form.watch("type");
   const isFixed = form.watch("is_fixed");
 
@@ -169,13 +169,13 @@ const TransactionTypeSection: React.FC<{
               {[
                 {
                   id: 0,
-                  name: "수입",
+                  name: t("common.income"),
                   icon: CirclePlus,
                   color: "text-emerald-500",
                 },
                 {
                   id: 1,
-                  name: "지출",
+                  name: t("common.expense"),
                   icon: CircleMinus,
                   color: "text-blue-500",
                 },
@@ -238,7 +238,7 @@ const TransactionTypeSection: React.FC<{
             side="top"
             className="bg-slate-800 text-white border-none text-xs font-bold"
           >
-            고정 지출 설정
+            {t("transaction_form.fixed_expense_setting")}
           </TooltipContent>
         </Tooltip>
       </div>
@@ -291,8 +291,8 @@ const CategorySection: React.FC<{
     e.nativeEvent.stopImmediatePropagation();
 
     confirm({
-      title: "카테고리 삭제",
-      description: `[${cat.name}] 카테고리를 삭제하시겠습니까? 관련 내역은 '미분류'로 변경됩니다.`,
+      title: t("settings.category.delete"),
+      description: t("settings.category.delete_confirm", { name: cat.name }),
       onConfirm: async () => {
         await deleteCategory(cat.id);
         if (form.getValues("category_id") === cat.id) {
@@ -357,7 +357,7 @@ const CategorySection: React.FC<{
                         : "text-slate-400"
                     )}
                   >
-                    카테고리 선택
+                    {t("select_category")}
                   </span>
                 )}
               </div>
@@ -381,7 +381,7 @@ const CategorySection: React.FC<{
               <div className="flex flex-col animate-in fade-in zoom-in duration-200">
                 <div className="flex items-center justify-between p-2 border-b">
                   <span className="text-[10px] font-bold text-slate-400 ml-2">
-                    아이콘 선택
+                    {t("settings.category.select_icon")}
                   </span>
                   <Button
                     variant="ghost"
@@ -408,10 +408,10 @@ const CategorySection: React.FC<{
               </div>
             ) : (
               <>
-                <CommandInput placeholder="카테고리 검색..." className="h-11" />
+                <CommandInput placeholder={t("transaction_form.search_category")} className="h-11" />
                 <CommandList className="max-h-[350px] overflow-y-auto p-1 scrollbar-hide">
                   <CommandEmpty className="py-6 text-center text-xs text-slate-400">
-                    결과가 없습니다.
+                    {t("transaction_form.no_results")}
                   </CommandEmpty>
                   <CommandGroup>
                     {categories
@@ -484,7 +484,7 @@ const CategorySection: React.FC<{
                           setCategoryState("newCategoryName", e.target.value)
                         }
                         placeholder={
-                          editingCategoryId ? "이름 수정..." : "새 이름..."
+                          editingCategoryId ? t("transaction_form.edit_name") : t("transaction_form.new_name")
                         }
                         className="h-9 text-xs border-none bg-transparent focus-visible:ring-0 px-1 flex-1 font-bold"
                         onKeyDown={(e) => {
@@ -524,7 +524,7 @@ const CategorySection: React.FC<{
                     }
                     className="w-full py-3 flex items-center justify-center gap-1.5 text-[10px] font-black text-emerald-500 border-t border-slate-50 hover:bg-slate-50 transition-colors uppercase"
                   >
-                    <Plus className="w-3.5 h-3.5" /> 새 카테고리 추가
+                    <Plus className="w-3.5 h-3.5" /> {t("transaction_form.add_new_category")}
                   </button>
                 )}
               </>
@@ -571,7 +571,7 @@ const DescriptionSection: React.FC<{
                     fieldState.error &&
                     "ring-2 ring-rose-500/50 bg-rose-50"
                 )}
-                placeholder="내용 입력"
+                placeholder={t("transaction_form.description_placeholder")}
                 {...field}
               />
             </TemporaryErrorTooltip>
@@ -683,7 +683,7 @@ const DateAmountSection: React.FC<{
                 >
                   {showAmountError && fieldState.error
                     ? fieldState.error.message
-                    : `계산 결과: ${preview}원`}
+                    : t("transaction_form.calculation_result", { amount: preview })}
                 </TooltipContent>
               </Tooltip>
             </FormItem>
@@ -717,7 +717,7 @@ const DateAmountSection: React.FC<{
                 <div className="relative group">
                   <Input
                     {...field}
-                    placeholder="YYYY-MM-DD 또는 '오늘', '어제'"
+                    placeholder={t("transaction_form.date_placeholder")}
                     className={cn(
                       "h-12 bg-slate-50/80 border-none rounded-2xl text-xs font-bold pr-10 transition-all",
                       showDateError && fieldState.error
@@ -794,7 +794,7 @@ const RemarksSection: React.FC<{
           </FormLabel>
           <Textarea
             className="resize-none rounded-3xl border-none bg-slate-50/80 p-5 text-sm font-medium placeholder:text-slate-300 min-h-[80px]"
-            placeholder="메모를 입력하세요"
+            placeholder={t("transaction_form.remarks_placeholder")}
             {...field}
           />
         </FormItem>
@@ -820,7 +820,7 @@ const ActionButtons: React.FC<{
         onClick={onCancel}
         className="flex-1 h-14 text-slate-400 font-bold hover:bg-slate-50 rounded-2xl transition-colors"
       >
-        취소
+        {t("common.cancel")}
       </Button>
       {onDelete && (
         <Button
@@ -829,14 +829,14 @@ const ActionButtons: React.FC<{
           className="flex-1 h-14 rounded-2xl border-slate-100 text-rose-500 hover:bg-rose-50"
           onClick={onDelete}
         >
-          {t("delete")}
+          {t("common.delete")}
         </Button>
       )}
       <Button
         type="submit"
         className="flex-[2] h-14 bg-black hover:bg-slate-800 text-white rounded-2xl font-black text-base transition-all shadow-xl shadow-slate-100 active:scale-[0.98]"
       >
-        저장
+        {t("common.save")}
       </Button>
     </div>
   );

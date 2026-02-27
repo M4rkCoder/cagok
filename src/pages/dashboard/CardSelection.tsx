@@ -7,16 +7,19 @@ import { DayOfWeekCard } from "./DayOfWeekCard";
 import { CategoryMonthlyTreemap } from "./CategoryMonthlyTreemap";
 import { CategoryTopList } from "./CategoryTopList";
 
+import { useTranslation } from "react-i18next";
+
 export default function CardSelection() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<
     "daily" | "dayofweek" | "treemap" | "toplist"
   >("daily");
 
   const tabs = [
-    { id: "daily", label: "일일 현황", icon: Activity },
-    { id: "dayofweek", label: "요일 현황", icon: BarChart3 },
-    { id: "treemap", label: "고정·변동 지출", icon: Pin },
-    { id: "toplist", label: "지출 TOP5", icon: ListOrdered },
+    { id: "daily", label: t("dashboard.cards.daily"), icon: Activity },
+    { id: "dayofweek", label: t("dashboard.cards.dayofweek"), icon: BarChart3 },
+    { id: "treemap", label: t("dashboard.cards.treemap"), icon: Pin },
+    { id: "toplist", label: t("dashboard.cards.toplist"), icon: ListOrdered },
   ];
 
   const renderContent = () => {

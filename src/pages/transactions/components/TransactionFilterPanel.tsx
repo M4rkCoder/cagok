@@ -45,6 +45,8 @@ import {
 } from "../TransactionBadge";
 import { CategoryIcon } from "@/components/CategoryIcon";
 
+import { useTranslation } from "react-i18next";
+
 type TransactionMode =
   | "all"
   | "income"
@@ -70,19 +72,20 @@ const DEFAULT_FILTERS: FilterState = {
   mode: "all",
 };
 
-export const MODE_CONFIG = {
-  all: { label: "전체", badge: "구분" },
-  income: { label: "수입", badge: <IncomeBadge /> },
-  total_expense: { label: "총지출", badge: <ExpenseBadge /> },
-  fixed_expense: { label: "고정지출", badge: <FixedExpenseBadge /> },
-  variable_expense: { label: "변동지출", badge: <VariableExpenseBadge /> },
-} as const;
-
 // ============================================================================
 // [Main Component]
 // ============================================================================
 export function TransactionFilterPanel() {
+  const { t } = useTranslation();
   const { categoryList } = useAppStore();
+
+  const MODE_CONFIG = {
+    all: { label: t("transaction_filter.modes.all"), badge: t("transaction_filter.modes.divider") },
+    income: { label: t("transaction_filter.modes.income"), badge: <IncomeBadge /> },
+    total_expense: { label: t("transaction_filter.modes.total_expense"), badge: <ExpenseBadge /> },
+    fixed_expense: { label: t("transaction_filter.modes.fixed_expense"), badge: <FixedExpenseBadge /> },
+    variable_expense: { label: t("transaction_filter.modes.variable_expense"), badge: <VariableExpenseBadge /> },
+  } as const;
   const {
     filters: storeFilters,
     setFilters: setStoreFilters,
@@ -203,6 +206,7 @@ export function TransactionFilterPanel() {
         <ModeSelector
           mode={filters.mode}
           onModeChange={(m) => updateFilter("mode", m)}
+          MODE_CONFIG={MODE_CONFIG}
         />
         <CategorySelector
           selectedIds={filters.categoryIds}
@@ -227,7 +231,7 @@ export function TransactionFilterPanel() {
             size="icon"
             onClick={handleReset}
             className="h-8 w-8 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100"
-            title="초기화"
+            title={t("transaction_filter.reset_filter")}
           >
             <RotateCcw className="h-4 w-4" />
           </Button>
@@ -240,6 +244,7 @@ export function TransactionFilterPanel() {
         updateFilter={updateFilter}
         setLocalKeyword={setLocalKeyword}
         clearPriceFilter={() => applyPriceFilter("", "")}
+        MODE_CONFIG={MODE_CONFIG}
       />
     </Card>
   );
@@ -259,6 +264,7 @@ function SearchFilter({
   setKeyword: (val: string) => void;
   onSearch: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center min-w-[150px] flex-1 max-w-[250px]">
       <div className="relative flex-1 group">
@@ -267,7 +273,7 @@ function SearchFilter({
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && onSearch()}
-          placeholder="내역/메모 검색..."
+          placeholder={t("transaction_filter.search_placeholder")}
           className="pl-8 h-8 text-xs bg-white/50 border-slate-200 rounded-r-none focus-visible:ring-0 focus-visible:ring-offset-0 border-r-0 transition-all"
         />
       </div>
@@ -277,7 +283,7 @@ function SearchFilter({
         onClick={onSearch}
         className="h-8 px-3 text-xs rounded-l-none border border-l-0 border-slate-200 bg-slate-100 hover:bg-slate-900 text-slate-600 hover:text-white font-semibold transition-colors"
       >
-        검색
+        {t("transaction_filter.search_button")}
       </Button>
     </div>
   );
@@ -287,9 +293,11 @@ function SearchFilter({
 function ModeSelector({
   mode,
   onModeChange,
+  MODE_CONFIG,
 }: {
   mode: TransactionMode;
   onModeChange: (m: TransactionMode) => void;
+  MODE_CONFIG: any;
 }) {
   const [open, setOpen] = useState(false);
   const current = MODE_CONFIG[mode];
@@ -352,6 +360,7 @@ function CategorySelector({
   categories: any[];
   onToggle: (ids: number[]) => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   return (
@@ -368,7 +377,7 @@ function CategorySelector({
           <div className="flex items-center gap-1.5">
             <Shapes className="h-3 w-3 text-slate-400" />
             <span>
-              {selectedIds.length > 0 ? `${selectedIds.length}개` : "카테고리"}
+              {selectedIds.length > 0 ? t("common.count", { count: selectedIds.length, defaultValue: `${selectedIds.length}개` }) : t("transaction_filter.category")}
             </span>
           </div>
           <ChevronDown className="h-3 w-3 text-slate-400 opacity-50" />
@@ -377,11 +386,11 @@ function CategorySelector({
       <PopoverContent className="w-[180px] p-0" align="start">
         <Command>
           <CommandInput
-            placeholder="카테고리 검색..."
+            placeholder={t("transaction_form.search_category")}
             className="h-8 text-xs"
           />
           <CommandList>
-            <CommandEmpty className="text-[11px] py-2">결과 없음</CommandEmpty>
+            <CommandEmpty className="text-[11px] py-2">{t("transaction_form.no_results")}</CommandEmpty>
             <CommandGroup>
               {categories.map((category) => (
                 <CommandItem
@@ -426,6 +435,7 @@ function DateRangeSelector({
   dateRange: DateRange | undefined;
   onDateChange: (range: DateRange | undefined) => void;
 }) {
+  const { t, i18n } = useTranslation();
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -444,7 +454,7 @@ function DateRangeSelector({
                 ? dateRange.to
                   ? `${format(dateRange.from, "MM.dd")}~${format(dateRange.to, "MM.dd")}`
                   : format(dateRange.from, "MM.dd")
-                : "기간"}
+                : t("transaction_filter.period")}
             </span>
           </div>
           <ChevronDown className="h-3 w-3 text-slate-400 opacity-50" />
@@ -460,7 +470,7 @@ function DateRangeSelector({
             }
             className="text-sm h-7"
           >
-            이번 달
+            {t("transaction_filter.this_month")}
           </Button>
           <Button
             variant="ghost"
@@ -470,7 +480,7 @@ function DateRangeSelector({
             }
             className="text-sm h-7"
           >
-            3개월
+            {t("transaction_filter.3_months")}
           </Button>
           <Button
             variant="ghost"
@@ -480,7 +490,7 @@ function DateRangeSelector({
             }
             className="text-sm h-7"
           >
-            6개월
+            {t("transaction_filter.6_months")}
           </Button>
           <Button
             variant="ghost"
@@ -490,7 +500,7 @@ function DateRangeSelector({
             }
             className="text-sm h-7"
           >
-            1년
+            {t("transaction_filter.1_year")}
           </Button>
         </div>
         <Calendar
@@ -499,7 +509,7 @@ function DateRangeSelector({
           selected={dateRange}
           onSelect={onDateChange} // 날짜 클릭 즉시 반영
           numberOfMonths={2}
-          locale={ko}
+          locale={i18n.language === "ko" ? ko : undefined}
           className="text-xs"
         />
       </PopoverContent>
@@ -519,6 +529,7 @@ function PriceSelector({
   onApply: (min: string, max: string) => void;
   onReset: () => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [tempAmount, setTempAmount] = useState({
     min: minAmount,
@@ -552,7 +563,7 @@ function PriceSelector({
                 (minAmount || maxAmount) && "text-slate-900 font-bold"
               )}
             >
-              {minAmount || maxAmount ? "금액 필터" : "금액"}
+              {minAmount || maxAmount ? t("transaction_filter.amount_filter") : t("transaction_filter.amount")}
             </span>
           </div>
           <ChevronDown className="h-3 w-3 text-slate-400 opacity-50" />
@@ -561,12 +572,12 @@ function PriceSelector({
       <PopoverContent className="w-56 p-4" align="start">
         <div className="space-y-4">
           <Label className="text-[11px] font-bold text-slate-400 uppercase tracking-tighter">
-            금액 범위 (원)
+            {t("transaction_filter.amount_range")}
           </Label>
           <div className="flex items-center gap-2">
             <Input
               type="number"
-              placeholder="최소"
+              placeholder={t("transaction_filter.min")}
               value={tempAmount.min}
               onChange={(e) =>
                 setTempAmount((prev) => ({ ...prev, min: e.target.value }))
@@ -577,7 +588,7 @@ function PriceSelector({
             <span className="text-slate-300">~</span>
             <Input
               type="number"
-              placeholder="최대"
+              placeholder={t("transaction_filter.max")}
               value={tempAmount.max}
               onChange={(e) =>
                 setTempAmount((prev) => ({ ...prev, max: e.target.value }))
@@ -596,13 +607,13 @@ function PriceSelector({
                 setOpen(false); // 즉시 닫고 리셋
               }}
             >
-              초기화
+              {t("common.cancel")}
             </Button>
             <Button
               className="h-8 flex-1 text-xs bg-slate-800 hover:bg-slate-900"
               onClick={handleApply}
             >
-              확인
+              {t("transaction_filter.confirm")}
             </Button>
           </div>
         </div>
@@ -618,13 +629,16 @@ function SelectedFilterBadges({
   updateFilter,
   setLocalKeyword,
   clearPriceFilter,
+  MODE_CONFIG,
 }: {
   filters: FilterState;
   selectedCategories: any[];
   updateFilter: (key: keyof FilterState, value: any) => void;
   setLocalKeyword: (val: string) => void;
   clearPriceFilter: () => void;
+  MODE_CONFIG: any;
 }) {
+  const { t } = useTranslation();
   const hasActiveFilters =
     filters.keyword ||
     filters.mode !== "all" ||
@@ -714,7 +728,7 @@ function SelectedFilterBadges({
             ~
             {filters.maxAmount
               ? Number(filters.maxAmount).toLocaleString()
-              : "무제한"}
+              : t("transaction_filter.unlimited")}
           </span>
           <X
             className="h-3 w-3 cursor-pointer ml-1 hover:text-red-500 transition-colors"
@@ -725,3 +739,4 @@ function SelectedFilterBadges({
     </div>
   );
 }
+
