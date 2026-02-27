@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Settings,
-  LayoutTemplate,
   CalendarDays,
   Table,
   CheckCircle2,
@@ -82,11 +81,13 @@ const GeneralSettings = () => {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <Card className="border-none shadow-md bg-white">
+      <Card className="shadow-md">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
             <Settings className="w-5 h-5" />
-            <CardTitle className="text-xl">{t("settings.general.title")}</CardTitle>
+            <CardTitle className="text-xl">
+              {t("settings.general.title")}
+            </CardTitle>
           </div>
         </CardHeader>
 
@@ -153,7 +154,9 @@ const GeneralSettings = () => {
                     value="yyyy/MM/dd"
                     className={cn("flex flex-col gap-0.5", activeTabClass)}
                   >
-                    <span className="text-[12px] font-bold">{t("onboarding.date_format_numeric")}</span>
+                    <span className="text-[12px] font-bold">
+                      {t("onboarding.date_format_numeric")}
+                    </span>
                     <span className="text-[12px] opacity-80">
                       {getDateExample("yyyy/MM/dd", localLanguage)}
                     </span>
@@ -162,7 +165,9 @@ const GeneralSettings = () => {
                     value="MMM dd, yyyy"
                     className={cn("flex flex-col gap-0.5", activeTabClass)}
                   >
-                    <span className="text-[12px] font-bold">{t("onboarding.date_format_text")}</span>
+                    <span className="text-[12px] font-bold">
+                      {t("onboarding.date_format_text")}
+                    </span>
                     <span className="text-[12px] opacity-80">
                       {getDateExample("MMM dd, yyyy", localLanguage)}
                     </span>
@@ -173,7 +178,7 @@ const GeneralSettings = () => {
 
             <div className="space-y-3">
               <Label className="text-sm font-bold text-slate-700 flex items-center gap-2 ml-1">
-                <Coins className="w-4 h-4 text-blue-500" /> {t("settings.general.currency")}
+                {t("settings.general.currency")}
               </Label>
               <Tabs
                 value={localCurrency}
@@ -283,7 +288,7 @@ const GeneralSettings = () => {
             <Button
               onClick={handleSaveSettings}
               size="lg"
-              className="w-full md:w-44 bg-blue-600 hover:bg-blue-700 font-bold shadow-lg shadow-blue-100 transition-all active:scale-95 text-white"
+              className="w-full md:w-44 bg-slate-600 hover:bg-slate-700 font-bold shadow-lg shadow-blue-100 transition-all active:scale-95 text-white cursor-pointer"
             >
               {t("settings.general.save_button")}
             </Button>

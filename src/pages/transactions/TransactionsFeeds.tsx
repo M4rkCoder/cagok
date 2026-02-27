@@ -22,6 +22,7 @@ import { FeedsSkeleton } from "./components/FeedsSkeleton";
 import { Toggle } from "@/components/ui/toggle";
 import { Tooltip } from "@/components/ui/tooltip";
 import { TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 export default function TransactionsFeeds() {
   const {
@@ -39,6 +40,7 @@ export default function TransactionsFeeds() {
   } = useTransactionStore();
 
   const { confirm } = useConfirmStore();
+  const { formatAmount } = useCurrencyFormatter();
 
   const [expandedMonths, setExpandedMonths] = useState<string[]>([]);
   const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
@@ -244,7 +246,7 @@ export default function TransactionsFeeds() {
         items.push(
           <div
             key={`header-${currentYearMonth}`}
-            className="sticky top-20 z-30 pt-0 pb-0 mb-2 group cursor-pointer"
+            className="sticky top-16 z-30 pt-0 pb-0 mb-2 group cursor-pointer"
             onClick={() => toggleMonth(currentYearMonth)}
           >
             <div className="relative flex items-center justify-between gap-4 pt-1 p-4 pl-0 bg-white/60 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-white/40 hover:bg-white/80 transition-all duration-300">
@@ -288,14 +290,14 @@ export default function TransactionsFeeds() {
                     <div className="flex items-center gap-2">
                       <TrendBadge
                         type="income"
-                        amount={monthStats.income_total}
+                        amount={formatAmount(monthStats.income_total)}
                         className="shadow-none bg-transparent border-none min-w-fit gap-1"
                         isSimple
                       />
                       <div className="w-[1px] h-3 bg-slate-200" />
                       <TrendBadge
                         type="expense"
-                        amount={monthStats.expense_total}
+                        amount={formatAmount(monthStats.expense_total)}
                         className="shadow-none bg-transparent border-none min-w-fit gap-1"
                         isSimple
                       />

@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 interface TrendBadgeProps {
   type: "income" | "expense";
-  amount: number;
+  amount: string | number;
   isSimple?: boolean; // 텍스트(수입/지출) 숨김 여부
   className?: string;
 }
@@ -130,7 +130,7 @@ export function TrendBadge({
         "flex items-center gap-2 px-3 py-1.5 rounded-lg min-w-[140px] justify-between border",
         config.baseClass,
         isSimple && "min-w-[110px] justify-start",
-        className,
+        className
       )}
     >
       <div className="flex items-center gap-1.5">
@@ -149,7 +149,7 @@ export function TrendBadge({
       <span
         className={cn("text-sm font-bold tabular-nums", isSimple && "ml-1")}
       >
-        {amount.toLocaleString()}
+        {amount}
       </span>
     </Badge>
   );

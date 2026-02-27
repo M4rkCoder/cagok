@@ -32,7 +32,6 @@ import { motion, AnimatePresence } from "framer-motion";
 const CategorySettings = () => {
   const { setHeader, resetHeader } = useHeaderStore();
   const categoryList = useAppStore((s) => s.categoryList);
-  console.log(categoryList);
   const {
     editingCategoryId,
     startEditCategory,
@@ -77,7 +76,7 @@ const CategorySettings = () => {
   const currentType = activeTab === "income" ? 0 : 1; // Default to expense if 'all'
 
   const handleNew = () => {
-    startEditCategory({ id: 0, name: "", icon: "➕", type: currentType });
+    startEditCategory({ id: null, name: "", icon: "➕", type: currentType });
     setSheetOpen(true);
   };
 
@@ -291,7 +290,7 @@ const CategorySettings = () => {
         >
           <SheetHeader className="mb-6">
             <SheetTitle>
-              {editingCategoryId !== null ? "카테고리 수정" : "새 카테고리"}
+              {editingCategoryId !== null ? "카테고리 수정" : "카테고리 추가"}
             </SheetTitle>
             <SheetDescription>
               카테고리 정보를 입력하고 저장하세요.

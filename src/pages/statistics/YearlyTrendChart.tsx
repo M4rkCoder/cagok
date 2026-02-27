@@ -66,7 +66,6 @@ const CustomBarShape = (props: any) => {
   const isNegative = payload.netIncome < 0;
   const fillConfig = chartConfig[fillVariable as keyof typeof chartConfig];
 
-  // 빗금 패턴(isStriped) 로직 제거 및 단순 색상 채우기
   const finalFill =
     isNegative && fillVariable === "netIncome"
       ? fillConfig.negativeColor

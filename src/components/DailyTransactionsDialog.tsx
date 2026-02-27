@@ -12,6 +12,7 @@ import { ko } from "date-fns/locale";
 import { ReceiptText } from "lucide-react";
 import { CategoryIcon } from "./CategoryIcon";
 import { motion, AnimatePresence } from "framer-motion"; // 추가
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 const DailyTransactionsDialog = () => {
   const {
@@ -21,7 +22,7 @@ const DailyTransactionsDialog = () => {
     detailLoading,
     loadChartDetail,
   } = useDashboardStore();
-
+  const { formatAmount } = useCurrencyFormatter();
   const { isOpen, date, txType, categoryId } = dialogState;
 
   useEffect(() => {
@@ -90,10 +91,7 @@ const DailyTransactionsDialog = () => {
                         txType === 0 ? "text-emerald-600" : "text-blue-700"
                       }`}
                     >
-                      {detailData?.total_amount?.toLocaleString() || 0}
-                      <small className="text-xs ml-0.5 font-normal text-slate-500">
-                        원
-                      </small>
+                      {formatAmount(detailData?.total_amount)}
                     </span>
                   </div>
                 </div>
@@ -150,10 +148,7 @@ const DailyTransactionsDialog = () => {
                                   : "text-blue-700"
                               }`}
                             >
-                              {tx.amount.toLocaleString()}
-                              <small className="text-xs ml-0.5 font-normal text-slate-500">
-                                원
-                              </small>
+                              {formatAmount(tx.amount)}
                             </span>
                           </div>
                         </motion.div>

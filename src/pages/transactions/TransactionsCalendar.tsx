@@ -13,7 +13,7 @@ import { format, parse } from "date-fns";
 import { ko } from "date-fns/locale";
 import { useConfirmStore } from "@/stores/useConfirmStore";
 import { Transaction, TransactionWithCategory } from "@/types";
-import { CategoryIcon } from "@/components/CategoryIcon";
+import { CategoryIcon, FixIcon } from "@/components/CategoryIcon";
 import {
   Pin,
   Pencil,
@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { motion, AnimatePresence } from "framer-motion";
 import { MonthYearPicker } from "@/components/MonthYearPicker";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 export default function TransactionsCalendar() {
   const {
@@ -38,10 +39,10 @@ export default function TransactionsCalendar() {
     deleteTransaction,
     setEditingTransaction,
     setSheetOpen,
-    fetchFilteredAll,
   } = useTransactionStore();
 
   const { confirm } = useConfirmStore();
+  const { formatAmount } = useCurrencyFormatter();
   const filterRef = useRef<HTMLDivElement>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -334,13 +335,13 @@ export default function TransactionsCalendar() {
                             {data.expense > 0 && (
                               <div className="flex items-center justify-between w-[80%] px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/30 text-[11px] text-blue-700 dark:text-blue-400 font-bold truncate min-2xl:text-[13px]">
                                 <MinusCircle className="w-3 h-3" />
-                                <span>{data.expense.toLocaleString()}</span>
+                                <span>{formatAmount(data.expense)}</span>
                               </div>
                             )}
                             {data.income > 0 && (
                               <div className="flex items-center justify-between w-[80%] px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-[11px] text-emerald-700 dark:text-emerald-400 font-bold truncate min-2xl:text-[13px]">
                                 <PlusCircle className="w-3 h-3" />
-                                <span>{data.income.toLocaleString()}</span>
+                                <span>{formatAmount(data.income)}</span>
                               </div>
                             )}
                           </>
@@ -391,6 +392,7 @@ function TransactionDetailDialog({
   onEdit,
   onDelete,
 }: TransactionDetailDialogProps) {
+  const { formatAmount } = useCurrencyFormatter();
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg p-0 overflow-hidden border-none bg-transparent shadow-none">
@@ -428,7 +430,7 @@ function TransactionDetailDialog({
                           지출
                         </span>
                         <span className="text-sm font-black text-blue-600 tabular-nums">
-                          {summary?.expense.toLocaleString() || 0}
+                          {formatAmount(summary?.expense)}
                         </span>
                       </div>
                     )}
@@ -438,7 +440,7 @@ function TransactionDetailDialog({
                           수입
                         </span>
                         <span className="text-sm font-black text-emerald-600 tabular-nums">
-                          {summary?.income.toLocaleString() || 0}
+                          {formatAmount(summary?.income)}
                         </span>
                       </div>
                     )}
@@ -466,11 +468,7 @@ function TransactionDetailDialog({
                                 icon={tx.category_icon}
                                 size="sm" // 아이콘 크기 축소
                               />
-                              {tx.is_fixed === 1 && (
-                                <span className="absolute -top-1 -right-1 rounded-full bg-slate-100 p-0.5 text-[8px] native-emoji shadow-sm">
-                                  📌
-                                </span>
-                              )}
+                              {tx.is_fixed === 1 && <FixIcon />}
                             </div>
                             <div className="flex flex-col">
                               {/* 마진 축소 및 줄간격(leading) 조정 */}
@@ -492,10 +490,7 @@ function TransactionDetailDialog({
                                   : "text-blue-600"
                               )}
                             >
-                              {tx.amount.toLocaleString()}
-                              <small className="text-[10px] ml-0.5 font-bold">
-                                원
-                              </small>
+                              {formatAmount(tx.amount)}
                             </span>
                             <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all">
                               {/* 버튼 사이즈 축소 */}

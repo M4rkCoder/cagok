@@ -12,6 +12,7 @@ import { Plus } from "lucide-react";
 import { DashboardTitle } from "./components/DashboardTitle";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 import AnimatedAmount from "@/components/AnimatedAmount";
+import { useDateFormatter } from "@/hooks/useDateFormatter";
 
 interface MainExpenseCardProps {
   lang: "ko" | "en";
@@ -19,6 +20,7 @@ interface MainExpenseCardProps {
 
 export function MainExpenseCard({ lang }: MainExpenseCardProps) {
   const { formatAmount } = useCurrencyFormatter();
+  const { formatDay } = useDateFormatter();
   const { overview, comparisons, recentTransactions } = useDashboardStore();
   const comparison = comparisons.Expense;
   const quickCategories = useMemo(() => {
@@ -96,40 +98,36 @@ export function MainExpenseCard({ lang }: MainExpenseCardProps) {
                 {/* max-h를 조절하고 내부 여백을 줄였습니다 */}
                 <div className="divide-y divide-slate-100/50 overflow-y-auto max-h-[160px] custom-scrollbar pr-3">
                   {recentTransactions && recentTransactions.length > 0 ? (
-                    recentTransactions.map((tx) => {
-                      const [_, month, day] = tx.date.split("-");
-
-                      return (
-                        <div
-                          key={tx.id}
-                          className={cn(
-                            "flex items-center justify-between py-1 px-2 transition-all duration-200 ease-out",
-                            "hover:bg-white hover:scale-[1.03] hover:shadow-sm hover:z-10 hover:rounded-md",
-                            "group cursor-default"
-                          )}
-                        >
-                          {/* 왼쪽: 날짜 + 이모지 + 설명 (gap을 2로 축소) */}
-                          <div className="flex items-center gap-3 min-w-0">
-                            <span className="text-[11px] font-bold text-slate-400 tabular-nums shrink-0 uppercase group-hover:text-black">
-                              {day}일
-                            </span>
-                            <span className="text-[14px] leading-none shrink-0 native-emoji">
-                              {tx.category_icon}
-                            </span>
-                            <span className="text-[13px] font-semibold text-slate-700 truncate max-w-[80px] sm:max-w-[120px]">
-                              {tx.description || tx.category_name}
-                            </span>
-                          </div>
-
-                          {/* 오른쪽: CurrencyIcon + 금액 (간격 최소화) */}
-                          <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                            <span className="text-[13px] font-black text-slate-900 tabular-nums tracking-tighter">
-                              {formatAmount(tx.amount)}
-                            </span>
-                          </div>
+                    recentTransactions.map((tx) => (
+                      <div
+                        key={tx.id}
+                        className={cn(
+                          "flex items-center justify-between py-1 px-2 transition-all duration-200 ease-out",
+                          "hover:bg-white hover:scale-[1.03] hover:shadow-sm hover:z-10 hover:rounded-md",
+                          "group cursor-default"
+                        )}
+                      >
+                        {/* 왼쪽: 날짜 + 이모지 + 설명 (gap을 2로 축소) */}
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="text-[11px] font-bold text-slate-600 tabular-nums shrink-0 uppercase group-hover:text-black">
+                            {formatDay(tx.date)}
+                          </span>
+                          <span className="text-[14px] leading-none shrink-0 native-emoji">
+                            {tx.category_icon}
+                          </span>
+                          <span className="text-[13px] font-semibold text-slate-700 truncate max-w-[80px] sm:max-w-[120px]">
+                            {tx.description || tx.category_name}
+                          </span>
                         </div>
-                      );
-                    })
+
+                        {/* 오른쪽: CurrencyIcon + 금액 (간격 최소화) */}
+                        <div className="flex items-center gap-1.5 shrink-0 ml-1">
+                          <span className="text-[13px] font-black text-slate-900 tabular-nums tracking-tighter">
+                            {formatAmount(tx.amount)}
+                          </span>
+                        </div>
+                      </div>
+                    ))
                   ) : (
                     <div className="py-6 text-center text-slate-300 text-[10px] font-medium italic">
                       내역 없음

@@ -90,7 +90,7 @@ export default function DbSettings() {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-10">
       {/* 1. 스토리지 경로 정보 카드 */}
-      <Card className="overflow-hidden border-none shadow-sm bg-muted/20">
+      <Card className="overflow-hidden shadow-sm">
         <CardHeader className="pb-2">
           <div className="flex items-center gap-2">
             <Database className="w-5 h-5 text-primary" />
@@ -178,7 +178,7 @@ export default function DbSettings() {
       </Card>
 
       {/* 2. 통합된 백업 관리 카드 */}
-      <Card className="border-none shadow-md overflow-hidden">
+      <Card className="shadow-md overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div className="flex items-center gap-2">
             <History className="w-5 h-5 text-primary" />

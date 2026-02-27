@@ -66,3 +66,11 @@ export const AllIcon = () => {
     </span>
   );
 };
+
+export const FixIcon = () => {
+  return (
+    <span className="absolute -top-1 -right-1 rounded-full bg-slate-100 p-0.5 text-[8px] native-emoji shadow-sm">
+      📌
+    </span>
+  );
+};

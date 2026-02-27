@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MoreHorizontal, Pin, Pencil, Trash2 } from "lucide-react";
-import { CategoryIcon } from "@/components/CategoryIcon";
+import { CategoryIcon, FixIcon } from "@/components/CategoryIcon";
 import { ExpenseBadge, IncomeBadge } from "../TransactionBadge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -18,6 +18,7 @@ import {
   TooltipContent,
 } from "@/components/ui/tooltip";
 import { useTranslation } from "react-i18next";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 interface Props {
   transactions: TransactionWithCategory[];
@@ -38,6 +39,7 @@ export function TransactionDetailTable({
 }: Props) {
   const { t } = useTranslation();
   // 1. 수입(0) -> 지출(1) 순으로 정렬
+  const { formatAmount } = useCurrencyFormatter();
   const sortedTransactions = [...transactions].sort((a, b) => a.type - b.type);
 
   const allSelected =
@@ -98,20 +100,18 @@ export function TransactionDetailTable({
                     {/* 카테고리 (+ 고정 핀) */}
                     <TableCell>
                       <div className="flex items-center gap-2.5">
-                        <span className="text-xl native-emoji shrink-0">
+                        <span className="relative text-xl shrink-0">
                           <CategoryIcon
                             type={tx.type}
                             icon={tx.category_icon}
                             size="sm"
                           />
+                          {tx.is_fixed === 1 && <FixIcon />}
                         </span>
                         <div className="flex items-center gap-1.5 min-w-0">
                           <span className="text-slate-700 truncate">
                             {tx.category_name}
                           </span>
-                          {tx.is_fixed === 1 && (
-                            <span className="text-[10px] native-emoji">📌</span>
-                          )}
                         </div>
                       </div>
                     </TableCell>
@@ -127,7 +127,7 @@ export function TransactionDetailTable({
                         tx.type === 0 ? "text-emerald-600" : "text-blue-600"
                       }`}
                     >
-                      {tx.amount.toLocaleString()}원
+                      {formatAmount(tx.amount)}
                     </TableCell>
                     {/* 메모 (Remarks) */}
                     <TableCell className="text-sm text-slate-400 italic items-center">

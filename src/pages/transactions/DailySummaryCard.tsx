@@ -1,6 +1,7 @@
 import { DailySummary } from "@/types";
 import { ExpenseBadge, IncomeBadge, TrendBadge } from "./TransactionBadge";
 import { MinusCircle, PlusCircle } from "lucide-react";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 interface Props {
   summary: DailySummary;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function DailySummaryCard({ summary, isSelected, onClick }: Props) {
+  const { formatAmount } = useCurrencyFormatter();
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     const formatted = new Intl.DateTimeFormat("ko-KR", {
@@ -54,7 +56,7 @@ export function DailySummaryCard({ summary, isSelected, onClick }: Props) {
 
           <div className="h-3 w-[1px] bg-slate-200" />
 
-          <div className="flex items-center gap-2.5 text-[11px] font-medium text-slate-500">
+          <div className="flex items-center gap-2.5 text-[12px] font-medium text-slate-500">
             {summary.income_count > 0 && (
               <div className="flex items-center gap-1 hover:text-emerald-600 transition-colors">
                 <PlusCircle size={12} className="text-emerald-500" />
@@ -76,7 +78,7 @@ export function DailySummaryCard({ summary, isSelected, onClick }: Props) {
             <div className="flex items-center gap-1.5">
               <TrendBadge
                 type="income"
-                amount={summary.income_total}
+                amount={formatAmount(summary.income_total)}
                 isSimple={true}
               />
             </div>
@@ -86,7 +88,7 @@ export function DailySummaryCard({ summary, isSelected, onClick }: Props) {
             <div className="flex items-center gap-1.5">
               <TrendBadge
                 type="expense"
-                amount={summary.expense_total}
+                amount={formatAmount(summary.expense_total)}
                 isSimple={true}
               />
             </div>

@@ -18,6 +18,8 @@ import { getThemeColor } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"; // shadcn/ui 탭 사용 가정
 import CategoryTransactionChart from "./components/CategoryTransactionChart";
 import { DashboardTitle } from "./components/DashboardTitle";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { useDateFormatter } from "@/hooks/useDateFormatter";
 
 type ViewMode = "expense" | "income";
 
@@ -31,6 +33,9 @@ export default function DailyTransactionCard() {
     loadChartDetail,
     openDialog,
   } = useDashboardStore();
+
+  const { formatAmount } = useCurrencyFormatter();
+  const { formatDay } = useDateFormatter();
 
   const [viewMode, setViewMode] = useState<ViewMode>("expense");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
@@ -81,7 +86,7 @@ export default function DailyTransactionCard() {
       const dateStr = `${selectedMonth}-${String(d).padStart(2, "0")}`;
       const dayData: any = {
         date: dateStr,
-        displayDate: `${d}일`,
+        displayDate: formatDay(dateStr),
         total: 0,
       };
 
@@ -152,6 +157,8 @@ export default function DailyTransactionCard() {
                     axisLine={false}
                     interval={3}
                     minTickGap={10}
+                    className="font-bold text-slate-400"
+                    tick={{ fill: "#94a3b8", fontWeight: 600 }}
                   />
                   <YAxis hide />
                   <ChartTooltip
@@ -164,7 +171,7 @@ export default function DailyTransactionCard() {
                               {name}
                             </span>
                             <span className="font-bold text-xs">
-                              {Number(value).toLocaleString()}원
+                              {formatAmount(Number(value))}
                             </span>
                           </div>
                         )}

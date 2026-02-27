@@ -34,6 +34,7 @@ import { useDashboardStore } from "@/stores/useDashboardStore";
 import { AllIcon } from "@/components/CategoryIcon";
 import { DashboardTitle } from "./components/DashboardTitle";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { useDateFormatter } from "@/hooks/useDateFormatter";
 
 type ViewMode = "expense" | "income";
 
@@ -44,11 +45,10 @@ interface ProcessedData {
   [key: string]: string | number;
 }
 
-const DAYS = ["일", "월", "화", "수", "목", "금", "토"];
-
 export const DayOfWeekCard: React.FC = () => {
   const { t } = useTranslation();
   const { formatAmount } = useCurrencyFormatter();
+  const { formatDayIndex } = useDateFormatter();
   const [metricType, setMetricType] = useState<"total" | "average">("total");
   const [viewMode, setViewMode] = useState<ViewMode>("expense");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -145,9 +145,14 @@ export const DayOfWeekCard: React.FC = () => {
     };
 
     const groupedByDay: { [key: number]: ProcessedData } = {};
-    DAYS.forEach((day, index) => {
-      groupedByDay[index] = { dayName: day, total: 0, count: 0 };
-    });
+    for (let i = 0; i < 7; i++) {
+      groupedByDay[i] = {
+        dayName: formatDayIndex(i, "short"),
+        dayIndex: i,
+        total: 0,
+        count: 0,
+      };
+    }
 
     if (selectedCategory === "all") {
       data.totals.forEach((item) => {
@@ -185,7 +190,7 @@ export const DayOfWeekCard: React.FC = () => {
       availableCategories: donutDataWithColor,
       totalMetricValue: grandTotal,
     };
-  }, [data, metricType, selectedCategory, viewMode]);
+  }, [data, metricType, selectedCategory, viewMode, formatDayIndex]);
 
   const selectedDonutItem = useMemo(() => {
     if (selectedCategory === "all") return null;
@@ -273,7 +278,13 @@ export const DayOfWeekCard: React.FC = () => {
                     cursor={{ fill: "hsl(var(--muted)/0.2)" }}
                     content={
                       <ChartTooltipContent
-                        labelFormatter={(v) => `${v}요일`}
+                        labelFormatter={(v, payload) => {
+                          if (payload && payload.length > 0) {
+                            const dayIndex = payload[0].payload.dayIndex;
+                            return formatDayIndex(dayIndex, "long");
+                          }
+                          return v;
+                        }}
                         formatter={(value, name, item) => {
                           const config =
                             chartConfig[name as keyof typeof chartConfig];
@@ -334,24 +345,18 @@ export const DayOfWeekCard: React.FC = () => {
         <div className="flex flex-col items-center justify-between space-y-4">
           {/* 도넛 차트 상단 중앙: 카테고리 셀렉트 */}
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="h-8 bg-white border-slate-200 w-[150px] text-sm font-emoji">
+            <SelectTrigger className="h-8 bg-white border-slate-200 w-[150px] text-sm">
               <SelectValue placeholder="카테고리" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">
-                <div className="flex items-center gap-1 text-sm">
-                  <AllIcon />
-                  <span>전체</span>
-                </div>
+                <AllIcon />
+                <span>전체 카테고리</span>
               </SelectItem>
               {availableCategories.map((cat) => (
-                <SelectItem
-                  key={cat.id}
-                  value={cat.id}
-                  className="font-emoji mr-2"
-                >
+                <SelectItem key={cat.id} value={cat.id}>
                   <div className="flex items-center gap-2 text-xs">
-                    <span>{cat.icon}</span>
+                    <span className="font-emoji mr-2">{cat.icon}</span>
                     <span className="text-sm">{cat.name}</span>
                   </div>
                 </SelectItem>

@@ -37,7 +37,6 @@ export function ComparisonCardFooter({
 
   const [currentSentenceIndex, setCurrentSentenceIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
 
   const sentences: React.ReactNode[] = [];
 
@@ -116,7 +115,7 @@ export function ComparisonCardFooter({
   }
 
   useEffect(() => {
-    if (isPaused || isExpanded || sentences.length <= 1) {
+    if (isPaused || sentences.length <= 1) {
       return;
     }
 
@@ -127,7 +126,7 @@ export function ComparisonCardFooter({
     }, 3500); // Roll every 3.5 seconds
 
     return () => clearInterval(interval);
-  }, [isPaused, isExpanded, sentences.length]);
+  }, [isPaused, sentences.length]);
 
   const handleMouseEnter = () => setIsPaused(true);
   const handleMouseLeave = () => setIsPaused(false);
@@ -146,14 +145,6 @@ export function ComparisonCardFooter({
     >
       {sentences.length === 0 ? (
         <div className="w-full text-center">데이터가 없습니다.</div>
-      ) : isExpanded ? (
-        <div className="flex flex-col gap-1 w-full py-2">
-          {sentences.map((s, index) => (
-            <div key={`expanded-${index}`} className="whitespace-nowrap">
-              {s}
-            </div>
-          ))}
-        </div>
       ) : (
         <div className="relative w-full h-full flex items-center justify-start">
           <AnimatePresence mode="wait" initial={false}>

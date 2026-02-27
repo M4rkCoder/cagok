@@ -21,7 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ProIcon } from "./ui/PlusBadge";
 import { cn } from "@/lib/utils";
 
 export const SyncNotifier = () => {
@@ -83,18 +82,19 @@ export const SyncNotifier = () => {
         {/* 헤더 섹션 */}
         <div className="bg-slate-50 border-b p-4 flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-slate-700">
-            <ProIcon />
+            <Cloudy size={18} />
             클라우드 동기화
           </div>
           <Badge
             variant={status?.is_connected ? "default" : "secondary"}
             className={cn(
-              "text-[10px] font-bold px-2 py-0.5 rounded-full",
+              "text-[10px] font-bold px-2 py-0.5 rounded-full gap-1 justify-center items-center",
               status?.is_connected
                 ? "bg-blue-500 hover:bg-blue-600"
-                : "bg-slate-200 text-slate-500",
+                : "bg-slate-200 text-slate-500"
             )}
           >
+            <CheckCircle2 className="w-3 h-3 text-white" />
             {status?.is_connected ? "연결됨" : "미연결"}
           </Badge>
         </div>
@@ -102,29 +102,22 @@ export const SyncNotifier = () => {
         <div className="p-4 space-y-4">
           {status?.is_connected ? (
             <div className="bg-blue-50/50 p-4 rounded-xl space-y-3 border border-blue-100 shadow-inner">
-              <div className="flex items-center gap-2.5 pb-2 border-b border-blue-100/50">
+              <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white shadow-sm">
                   <Cloud size={18} />
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm font-extrabold text-blue-900 leading-none mb-1">
-                    OneDrive
+                    MS OneDrive
                   </span>
                   <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3 h-3 text-blue-600" />
                     <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
-                      Authenticated
+                      {status.account_name}
                     </span>
+                    <div className="text-[11px] text-slate-400 truncate font-medium">
+                      {status.account_email}
+                    </div>
                   </div>
-                </div>
-              </div>
-
-              <div className="space-y-0.5 px-0.5 overflow-hidden">
-                <div className="text-[13px] font-bold text-slate-700 truncate">
-                  {status.account_name}
-                </div>
-                <div className="text-[11px] text-slate-400 truncate font-medium">
-                  {status.account_email}
                 </div>
               </div>
             </div>
@@ -159,12 +152,12 @@ export const SyncNotifier = () => {
                     size="sm"
                     onClick={backup}
                     disabled={isLoading}
-                    className="text-xs font-bold border-slate-200 hover:bg-slate-50 hover:text-blue-600 hover:border-blue-200 transition-all"
+                    className="text-xs font-bold bg-slate-600 hover:bg-slate-700 text-white hover:text-white transition-all cursor-pointer"
                   >
                     {isLoading ? (
-                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin text-blue-500" />
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                     ) : (
-                      <CloudUpload className="mr-1.5 h-3.5 w-3.5 text-blue-500" />
+                      <CloudUpload className="mr-1.5 h-3.5 w-3.5" />
                     )}
                     즉시 백업
                   </Button>
@@ -173,29 +166,26 @@ export const SyncNotifier = () => {
                     size="sm"
                     onClick={handleRestore}
                     disabled={isLoading}
-                    className="text-xs font-bold border-slate-200 hover:bg-slate-50 hover:text-amber-600 hover:border-amber-200 transition-all"
+                    className="text-xs font-bold border-slate-200 hover:bg-slate-50 transition-all cursor-pointer"
                   >
                     {isLoading ? (
-                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin text-amber-500" />
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                     ) : (
-                      <CloudDownload className="mr-1.5 h-3.5 w-3.5 text-amber-500" />
+                      <CloudDownload className="mr-1.5 h-3.5 w-3.5" />
                     )}
                     데이터 복구
                   </Button>
                 </div>
 
-                <div className="bg-slate-50 rounded-lg p-3 space-y-3 border border-slate-100">
+                <div className="bg-slate-50 rounded-lg p-3 space-y-1 border border-slate-100">
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col">
                       <Label
                         htmlFor="popover-auto-sync"
-                        className="text-[11px] font-bold text-slate-700 cursor-pointer mb-0.5"
+                        className="text-xs font-bold text-slate-700 cursor-pointer"
                       >
-                        실행 시 자동 동기화
+                        앱 실행 시 자동 동기화
                       </Label>
-                      <span className="text-[9px] text-slate-400">
-                        앱 시작 시 클라우드 데이터와 병합
-                      </span>
                     </div>
                     <Switch
                       id="popover-auto-sync"
@@ -211,13 +201,10 @@ export const SyncNotifier = () => {
                     <div className="flex flex-col">
                       <Label
                         htmlFor="popover-auto-backup"
-                        className="text-[11px] font-bold text-slate-700 cursor-pointer mb-0.5"
+                        className="text-xs font-bold text-slate-700 cursor-pointer"
                       >
                         앱 종료 시 자동 백업
                       </Label>
-                      <span className="text-[9px] text-slate-400">
-                        데이터 변경 시 클라우드에 자동 업로드
-                      </span>
                     </div>
                     <Switch
                       id="popover-auto-backup"
@@ -233,7 +220,7 @@ export const SyncNotifier = () => {
                   size="sm"
                   onClick={logout}
                   disabled={isLoading}
-                  className="w-full text-xs font-bold text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors h-9"
+                  className="w-full text-xs font-bold text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors h-9 cursor-pointer"
                 >
                   <CloudOff className="mr-2 h-3.5 w-3.5" /> 연결 해제
                 </Button>

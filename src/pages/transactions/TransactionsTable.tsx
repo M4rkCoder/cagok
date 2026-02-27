@@ -25,11 +25,12 @@ import { cn } from "@/lib/utils";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 const TransactionsTable: React.FC = () => {
   const { t } = useTranslation();
   const [rowSelection, setRowSelection] = useState({});
-
+  const { formatAmount } = useCurrencyFormatter();
   const {
     transactions,
     loading,
@@ -146,7 +147,7 @@ const TransactionsTable: React.FC = () => {
         accessorKey: "category",
         header: t("category"),
         cell: ({ row }) => (
-          <div className="flex items-center justify-start space-x-2 h-full">
+          <div className="flex items-center justify-start gap-1 h-full">
             <CategoryIcon
               icon={row.original.category_icon}
               type={row.original.type}
@@ -181,9 +182,8 @@ const TransactionsTable: React.FC = () => {
         header: t("amount"),
         cell: ({ row }) => (
           <div className="flex justify-start items-center h-full gap-1">
-            <span className="text-muted-foreground text-xs">￦</span>
             <span className="font-extrabold">
-              {row.original.amount.toLocaleString()}
+              {formatAmount(row.original.amount)}
             </span>
           </div>
         ),
