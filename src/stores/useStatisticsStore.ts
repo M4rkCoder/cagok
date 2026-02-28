@@ -50,7 +50,7 @@ interface StatisticsState {
   setSelectedMonth: (month: string) => void;
 
   // 추가된 계산 기능: 현재 설정된 기간을 문자열로 반환
-  getFormattedPeriod: () => string;
+  getFormattedPeriod: (options?: { dateFormat?: string; locale?: any }) => string;
 
   loadYearlyStatistics: () => Promise<void>;
   loadCategoryTrend: () => Promise<void>;
@@ -103,8 +103,10 @@ export const useStatisticsStore = create<StatisticsState>((set, get) => ({
     });
   },
 
-  getFormattedPeriod: () => {
+  getFormattedPeriod: (options) => {
     const { viewMode, selectedMonth, selectedYear } = get();
+    const formatStr = options?.dateFormat || (viewMode === "month" ? "yyyy.M.d" : "yyyy.MM.dd");
+    const formatOpts = options?.locale ? { locale: options.locale } : undefined;
 
     if (viewMode === "month") {
       // 선택된 월의 Date 객체 (예: 2026-02-01)
@@ -116,13 +118,13 @@ export const useStatisticsStore = create<StatisticsState>((set, get) => ({
       // 선택된 월의 마지막 날 (예: 2026-02-28)
       const end = endOfMonth(endDateObj);
 
-      return `${format(startDateObj, "yyyy.M.d")} - ${format(end, "yyyy.M.d")}`;
+      return `${format(startDateObj, formatStr, formatOpts)} - ${format(end, formatStr, formatOpts)}`;
     } else {
       // 연간 모드는 기존과 동일하게 해당 연도 1월 1일 ~ 12월 31일
       const date = new Date(selectedYear, 0, 1);
       const start = startOfYear(date);
       const end = endOfYear(date);
-      return `${format(start, "yyyy.MM.dd")} - ${format(end, "yyyy.MM.dd")}`;
+      return `${format(start, formatStr, formatOpts)} - ${format(end, formatStr, formatOpts)}`;
     }
   },
 

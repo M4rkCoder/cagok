@@ -104,7 +104,7 @@ export const MonthYearPicker: React.FC<MonthYearPickerProps> = ({
             {selectedMonth ? (
               formatYearMonth(`${selectedMonth}-01`)
             ) : (
-              <span>{t("select_month", { defaultValue: "월 선택" })}</span>
+              <span>{t("common.select_month", { defaultValue: "월 선택" })}</span>
             )}
           </Button>
         </PopoverTrigger>

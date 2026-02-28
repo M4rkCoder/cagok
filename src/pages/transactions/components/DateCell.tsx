@@ -17,8 +17,9 @@ import { format, parseISO } from "date-fns";
 import { cn, smartParseDate } from "@/lib/utils";
 import { CellProps } from "@/types";
 import { useTableNavigation } from "@/pages/transactions/hooks/useTableNavigation";
+import { useSettingStore } from "@/stores/useSettingStore";
 
-import { ko } from "date-fns/locale";
+import { ko, enUS } from "date-fns/locale";
 import { useTranslation } from "react-i18next";
 
 const DateCell: React.FC<CellProps> = ({
@@ -31,6 +32,7 @@ const DateCell: React.FC<CellProps> = ({
   error,
 }) => {
   const { i18n } = useTranslation();
+  const { dateFormat } = useSettingStore();
   const initialValue = getValue();
   const [value, setValue] = useState(initialValue);
   const [openCombo, setOpenCombo] = useState(false);
@@ -71,6 +73,19 @@ const DateCell: React.FC<CellProps> = ({
     confirmUpdate(row.index, column.id, value, initialValue);
   };
 
+  const localeObj = i18n.language === "ko" ? ko : enUS;
+  let displayValue = value ?? "";
+  if (!isActive && value) {
+    try {
+      const parsedDate = parseISO(value);
+      if (!isNaN(parsedDate.getTime())) {
+        displayValue = format(parsedDate, dateFormat, { locale: localeObj });
+      }
+    } catch (e) {
+      // 파싱 실패 시 원본 표시
+    }
+  }
+
   return (
     <div
       className="relative w-full h-full flex flex-col justify-center bg-transparent group"
@@ -79,7 +94,7 @@ const DateCell: React.FC<CellProps> = ({
       <div className="relative flex items-center h-full">
         <input
           ref={inputRef}
-          value={value ?? ""}
+          value={displayValue}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={onKeyDown}
           onBlur={handleBlur}

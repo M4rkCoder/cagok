@@ -136,7 +136,7 @@ const QuickEntry: React.FC = () => {
       },
       {
         accessorKey: "date",
-        header: t("date"),
+        header: t("common.date"),
         size: 120,
         cell: (ctx) => {
           const tableMeta = ctx.table.options.meta as any;
@@ -152,7 +152,7 @@ const QuickEntry: React.FC = () => {
       },
       {
         accessorKey: "category_id",
-        header: t("category"),
+        header: t("common.category"),
         size: 160,
         cell: (i) => (
           <CategoryCell
@@ -186,7 +186,7 @@ const QuickEntry: React.FC = () => {
       },
       {
         accessorKey: "amount",
-        header: t("amount"),
+        header: t("common.amount"),
         size: 100,
         meta: { type: "number" },
         cell: (i) => (
@@ -200,7 +200,7 @@ const QuickEntry: React.FC = () => {
       },
       {
         accessorKey: "remarks",
-        header: t("remarks"),
+        header: t("common.remarks"),
         size: 150,
         cell: (i) => (
           <InputCell

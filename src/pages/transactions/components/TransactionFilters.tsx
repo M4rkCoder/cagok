@@ -160,7 +160,7 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
       {/* 1. 검색창 */}
       <div className="relative flex-1">
         <Input
-          placeholder={t("search_transactions")}
+          placeholder={t("filter.search_transactions")}
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
           onKeyDown={(event) => {
@@ -182,10 +182,10 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
       {/* 2. 유형 필터 (수입/지출) */}
       <Select value={filterType || "all"} onValueChange={handleTypeChange}>
         <SelectTrigger className="w-30">
-          <SelectValue placeholder={t("filter_by_type")} />
+          <SelectValue placeholder={t("filter.by_type")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">{t("all_types")}</SelectItem>
+          <SelectItem value="all">{t("filter.all_types")}</SelectItem>
           <SelectItem value="0">
             <IncomeBadge />
           </SelectItem>
@@ -208,7 +208,7 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
           >
             <span className="truncate">
               {filterCategory === null
-                ? t("all_categories")
+                ? t("filter.all_categories")
                 : `${selectedCategory?.icon} ${selectedCategory?.name}`}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -216,9 +216,9 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
         </PopoverTrigger>
         <PopoverContent className="w-40 p-0">
           <Command>
-            <CommandInput placeholder={t("search_category")} />
+            <CommandInput placeholder={t("category.search")} />
             <CommandList>
-              <CommandEmpty>{t("no_results_found")}</CommandEmpty>
+              <CommandEmpty>{t("common.no_results_found")}</CommandEmpty>
               <CommandGroup>
                 <CommandItem
                   value="all"
@@ -233,7 +233,7 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
                       filterCategory === null ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  {t("all_categories")}
+                  {t("filter.all_categories")}
                 </CommandItem>
                 {categories.map((category) => (
                   <CommandItem
@@ -264,16 +264,16 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
       {/* 4. 분류 필터 뒤 혹은 날짜 필터 앞에 추가 */}
       <Select value={preset} onValueChange={handlePresetChange}>
         <SelectTrigger className="w-20">
-          <SelectValue placeholder={t("period_preset")} />
+          <SelectValue placeholder={t("filter.period_preset")} />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all" className="text-muted-foreground font-medium">
-            {t("all_time")}
+            {t("filter.periods.all_time")}
           </SelectItem>
-          <SelectItem value="1m">{t("1_month")}</SelectItem>
-          <SelectItem value="3m">{t("3_months")}</SelectItem>
-          <SelectItem value="6m">{t("6_months")}</SelectItem>
-          <SelectItem value="1y">{t("1_year")}</SelectItem>
+          <SelectItem value="1m">{t("filter.periods.1_month")}</SelectItem>
+          <SelectItem value="3m">{t("filter.periods.3_months")}</SelectItem>
+          <SelectItem value="6m">{t("filter.periods.6_months")}</SelectItem>
+          <SelectItem value="1y">{t("filter.periods.1_year")}</SelectItem>
         </SelectContent>
       </Select>
       {/* 5. 시작 날짜 */}
@@ -290,7 +290,7 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
             {startDate ? (
               format(startDate, "yyyy/MM/dd")
             ) : (
-              <span>{t("pick_start_date")}</span>
+              <span>{t("filter.pick_start_date")}</span>
             )}
           </Button>
         </PopoverTrigger>
@@ -318,7 +318,7 @@ const TransactionFilters: React.FC<TransactionFiltersProps> = ({
             {endDate ? (
               format(endDate, "yyyy/MM/dd")
             ) : (
-              <span>{t("pick_end_date")}</span>
+              <span>{t("filter.pick_end_date")}</span>
             )}
           </Button>
         </PopoverTrigger>

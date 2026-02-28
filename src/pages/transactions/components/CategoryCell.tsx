@@ -18,7 +18,8 @@ import { ExpenseBadge, IncomeBadge } from "../TransactionBadge";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import EmojiPicker, { EmojiClickData, EmojiStyle } from "emoji-picker-react";
-import { Check, Plus, X, SquarePen, Trash2 } from "lucide-react";
+import ko from "emoji-picker-react/dist/data/emojis-ko";
+import { Check, Plus, X, SquarePen, Trash2, Pencil } from "lucide-react";
 import { Category, CellProps } from "@/types";
 import { toast } from "sonner";
 import { CategoryIcon } from "@/components/CategoryIcon";
@@ -41,7 +42,7 @@ const CategoryCell = ({
   onPaste,
   error,
 }: CellProps): React.ReactNode => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { fetchCategories } = useAppStore();
   const {
     isAddingNewCategoryMode,
@@ -62,11 +63,11 @@ const CategoryCell = ({
     table.options.meta as any;
   const { handleTableKeyDown, moveNext } = useTableNavigation(
     table,
-    setActiveCell
+    setActiveCell,
   );
   const [openCombo, setOpenCombo] = useState(false);
   const [categoryFilterType, setCategoryFilterType] = useState<number | null>(
-    null
+    null,
   ); // null: all, 0: income, 1: expense
   const [commandSearchTerm, setCommandSearchTerm] = useState("");
   const comboTriggerRef = useRef<HTMLButtonElement>(null);
@@ -112,7 +113,7 @@ const CategoryCell = ({
       column.id,
       row.original.type ?? 1,
       () => setOpenCombo(false),
-      openCombo
+      openCombo,
     );
   };
 
@@ -120,7 +121,7 @@ const CategoryCell = ({
 
   const handleSaveCategory = async () => {
     if (!newCategoryName.trim()) {
-      toast.error(t("category_name_empty"));
+      toast.error(t("validation.category_name_empty"));
       return;
     }
 
@@ -166,9 +167,9 @@ const CategoryCell = ({
             updateData(row.index, "category_id", null);
           }
 
-          toast.success(t("transaction_updated_successfully"));
+          toast.success(t("toast.transaction_updated"));
         } catch (err) {
-          toast.error(t("failed_to_delete_transaction"));
+          toast.error(t("toast.delete_transaction_failed"));
         }
       },
     });
@@ -192,7 +193,7 @@ const CategoryCell = ({
                 "flex h-full w-full items-center px-2 text-sm outline-none transition-colors",
                 "bg-transparent border-none rounded-none",
                 isActive ? "bg-blue-50/50" : "hover:bg-slate-50/50",
-                showErrorVisuals && "border-red-500 outline-2 outline-red-500"
+                showErrorVisuals && "border-red-500 outline-2 outline-red-500",
               )}
             >
               {selected ? (
@@ -206,12 +207,14 @@ const CategoryCell = ({
                   <span>{selected.name}</span>
                 </div>
               ) : (
-                <span className="text-slate-400 text-sm">{t("select_category")}...</span>
+                <span className="text-slate-400 text-sm">
+                  {t("transaction.select_category")}...
+                </span>
               )}
             </button>
           </PopoverTrigger>
           <PopoverContent
-            className="p-0 w-[250px]"
+            className="p-0 w-[300px]"
             align="start"
             onOpenAutoFocus={(e) => {
               /* CommandInput autoFocus 작동을 위해 비워둠 */
@@ -222,7 +225,7 @@ const CategoryCell = ({
                 <div className="flex flex-col animate-in fade-in zoom-in duration-200">
                   <div className="flex items-center justify-between p-2 border-b">
                     <span className="text-[10px] font-bold text-slate-400 ml-2">
-                      {t("select_icon")}
+                      {t("category.select_icon")}
                     </span>
                     <Button
                       variant="ghost"
@@ -243,7 +246,11 @@ const CategoryCell = ({
                       }}
                       height="100%"
                       width="100%"
+                      emojiData={
+                        i18n.language.startsWith("ko") ? ko : undefined
+                      }
                       emojiStyle={EmojiStyle.NATIVE}
+                      searchPlaceHolder={t("transaction_filter.search_button")}
                       previewConfig={{ showPreview: false }}
                       skinTonesDisabled
                     />
@@ -252,7 +259,7 @@ const CategoryCell = ({
               ) : (
                 <>
                   <CommandInput
-                    placeholder={t("search_category")}
+                    placeholder={t("category.search")}
                     autoFocus
                     value={commandSearchTerm} // Bind search term to state
                     onValueChange={setCommandSearchTerm} // Update state on change
@@ -266,7 +273,7 @@ const CategoryCell = ({
                         "flex-1 py-1 text-xs font-bold rounded-l-md",
                         categoryFilterType === null
                           ? "bg-slate-200 text-slate-800"
-                          : "text-slate-500 hover:bg-slate-100"
+                          : "text-slate-500 hover:bg-slate-100",
                       )}
                     >
                       {t("common.all")}
@@ -278,7 +285,7 @@ const CategoryCell = ({
                         "flex-1 py-1 text-xs font-bold",
                         categoryFilterType === 0
                           ? "bg-slate-200 text-slate-800"
-                          : "text-slate-500 hover:bg-slate-100"
+                          : "text-slate-500 hover:bg-slate-100",
                       )}
                     >
                       {t("common.in")}
@@ -290,7 +297,7 @@ const CategoryCell = ({
                         "flex-1 py-1 text-xs font-bold rounded-r-md",
                         categoryFilterType === 1
                           ? "bg-slate-200 text-slate-800"
-                          : "text-slate-500 hover:bg-slate-100"
+                          : "text-slate-500 hover:bg-slate-100",
                       )}
                     >
                       {t("common.out")}
@@ -298,7 +305,7 @@ const CategoryCell = ({
                   </div>
                   <CommandList className="max-h-[350px] overflow-y-auto p-1 scrollbar-hide">
                     <CommandEmpty className="py-6 text-center text-xs text-slate-400">
-                      {t("no_results")}
+                      {t("common.no_results")}
                     </CommandEmpty>
                     <CommandGroup>
                       {categories.map((cat: Category) => {
@@ -313,8 +320,9 @@ const CategoryCell = ({
                           <CommandItem
                             key={cat.id}
                             className={cn(
-                              "flex items-center justify-between px-3 py-1 rounded-xl cursor-pointer group mb-0.5",
-                              value === cat.id && "bg-blue-100 dark:bg-blue-900"
+                              "relative flex items-center px-3 py-1 rounded-xl cursor-pointer group mb-0.5",
+                              value === cat.id &&
+                                "bg-blue-100 dark:bg-blue-900",
                             )}
                             onSelect={() => {
                               updateData(row.index, "category_id", cat.id);
@@ -323,11 +331,11 @@ const CategoryCell = ({
                               setTimeout(
                                 () =>
                                   moveNext(row.index, cat.type === 1 ? 3 : 4),
-                                50
+                                50,
                               );
                             }}
                           >
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 truncate mr-12">
                               {cat.type === 0 ? (
                                 <IncomeBadge />
                               ) : (
@@ -338,12 +346,12 @@ const CategoryCell = ({
                                 type={cat.type}
                                 size="xs"
                               />
-                              <span className="font-semibold text-slate-600 text-xs">
+                              <span className="font-semibold text-slate-600 text-xs truncate">
                                 {cat.name}
                               </span>
                             </div>
                             <div
-                              className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity bg-inherit pr-1"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <button
@@ -354,7 +362,7 @@ const CategoryCell = ({
                                 }}
                                 className="p-1.5 hover:bg-slate-200 rounded-md text-slate-400 hover:text-blue-500"
                               >
-                                <SquarePen className="w-3.5 h-3.5" />
+                                <Pencil className="w-3.5 h-3.5" />
                               </button>
                               <button
                                 type="button"
@@ -387,11 +395,11 @@ const CategoryCell = ({
                             onChange={(e) =>
                               setCategoryState(
                                 "newCategoryName",
-                                e.target.value
+                                e.target.value,
                               )
                             }
                             placeholder={
-                              editingCategoryId ? t("edit_name") : t("new_name")
+                              editingCategoryId ? t("category.edit_name") : t("category.new_name")
                             }
                             className="h-9 text-xs border-none bg-transparent focus-visible:ring-0 px-1 flex-1 font-bold"
                             onKeyDown={(e) => {
@@ -434,7 +442,7 @@ const CategoryCell = ({
                         }
                         className="w-full py-3 flex items-center justify-center gap-1.5 text-[10px] font-black text-emerald-500 border-t border-slate-50 hover:bg-slate-50 transition-colors uppercase"
                       >
-                        <Plus className="w-3.5 h-3.5" /> {t("add_new_category")}
+                        <Plus className="w-3.5 h-3.5" /> {t("category.add_new")}
                       </button>
                     )}
                 </>

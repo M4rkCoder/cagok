@@ -7,7 +7,7 @@
     "out": "OUT",
     "variable": "VAR",
     "fixed": "FIX",
-    "fixed_expense": "Fixed",
+    "fixed_expense": "fixed expense",
     "net_income": "Net",
     "save": "Save",
     "edit": "Edit",
@@ -29,7 +29,16 @@
       "4": "Thursday",
       "5": "Friday",
       "6": "Saturday"
-    }
+    },
+    "description": "Description",
+    "amount": "Amount",
+    "date": "Date",
+    "type": "Type",
+    "select_month": "Select Month",
+    "remarks": "Remarks",
+    "category": "Category",
+    "no_results": "No results.",
+    "actions": "Actions"
   },
   "menu": {
     "dashboard": "Dashboard",
@@ -40,64 +49,13 @@
     "settings": "Settings",
     "about": "About"
   },
-  "description": "Description",
-  "description_required": "Description is required",
-  "transaction_description_placeholder": "e.g., Groceries, Salary",
-  "amount": "Amount",
-  "amount_required": "Amount is required",
-  "date": "Date",
-  "date_required": "Date is required",
-  "type": "Type",
-  "select_type": "Select Type",
-  "select_month": "Select Month",
-  "income": "Income",
-  "expense": "Expense",
-  "fixed_expesne": "fixed expense",
-  "transaction_type": "Transaction Type",
-  "select_transaction_type": "Select Transaction Type",
+  "lang": "en-US",
   "variable": "Variable",
   "fixed": "Fixed",
-  "remarks": "Remarks",
-  "optional_memo_note": "Optional memo or note",
-  "category": "Category",
-  "select_category": "Select Category",
-  "no_category": "No Category",
-  "select_icon": "Select Icon",
-  "search_category": "Search Category",
-  "no_results": "No results.",
-  "edit_name": "Edit name...",
-  "new_name": "New name...",
-  "add_new_category": "Add New Category",
-  "category_name_empty": "Please enter category name.",
   "cancel": "Cancel",
   "save": "Save",
-  "transactions": "Transactions",
-  "new_transaction": "New Transaction",
-  "edit_transaction": "Edit Transaction",
-  "create_new_transaction": "Create New Transaction",
-  "loading": "Loading...",
-  "no_transactions_found": "No transactions found.",
-  "actions": "Actions",
   "edit": "Edit",
   "delete": "Delete",
-  "failed_to_fetch_transactions": "Failed to fetch transactions.",
-  "failed_to_fetch_categories": "Failed to fetch categories.",
-  "transaction_deleted_successfully": "Transaction deleted successfully.",
-  "failed_to_delete_transaction": "Failed to delete transaction.",
-  "transaction_updated_successfully": "Transaction updated successfully.",
-  "transaction_created_successfully": "Transaction created successfully.",
-  "failed_to_save_transaction": "Failed to save transaction.",
-  "confirm_delete": "Confirm Deletion",
-  "confirm_delete_transaction_message": "Are you sure you want to delete this transaction? This action cannot be undone.",
-  "bulk_delete_title": "Delete Selected",
-  "bulk_delete_confirm": "Are you sure you want to delete {{count}} items?",
-  "filter_by_type": "Filter by Type",
-  "all_types": "All Types",
-  "filter_by_category": "Filter by Category",
-  "all_categories": "All Categories",
-  "search_transactions": "Search transactions...",
-  "pick_start_date": "Pick a start date",
-  "pick_end_date": "Pick an end date",
   "transaction_form": {
     "delete_title": "Delete Transaction",
     "delete_description": "Are you sure you want to delete this transaction? Deleted data cannot be recovered.",
@@ -180,6 +138,10 @@
     "uncategorized": "Uncategorized",
     "last_run_today": "Ran today ✨",
     "no_record": "No Record",
+    "status": {
+      "active": "Active",
+      "paused": "Paused"
+    },
     "actions": {
       "edit": "Edit",
       "pause": "Pause",
@@ -217,7 +179,7 @@
     }
   },
   "statistics": {
-    "title": "Statistics & Analysis",
+    "title": "Statistics",
     "period": "Period",
     "view_modes": {
       "this_month": "This Month",
@@ -228,7 +190,7 @@
       "yearly": "Yearly",
       "monthly": "Monthly",
       "treemap": "Category",
-      "dayofweek": "Day of Week"
+      "dayofweek": "Week Day"
     },
     "summary": {
       "total_income": "Total Income",
@@ -241,7 +203,7 @@
       "annual_summary": "Annual Summary",
       "income_expense_summary": "Income & Expense Summary",
       "yearly_total": "Yearly Total {{label}}",
-      "monthly_avg": "Monthly Avg",
+      "monthly_avg": "Average",
       "details": "Details",
       "max": "Max",
       "min": "Min",
@@ -425,7 +387,6 @@
     "calendar": "Calendar",
     "board": "Table"
   },
-  "recurring_notification": "{{count}} recurring transactions created.",
   "about": {
     "header": "App Info",
     "hero_subtitle": "Personal Local Account Book Service",
@@ -454,5 +415,59 @@
     "footer_badge_desc_1": "C'AGOK prioritizes your privacy.",
     "footer_badge_desc_2": "Your financial data stays only on your device.",
     "effective_date": "Effective Date"
+  },
+  "validation": {
+    "description_required": "Description is required",
+    "amount_required": "Amount is required",
+    "date_required": "Date is required",
+    "category_name_empty": "Please enter category name."
+  },
+  "transaction": {
+    "description_placeholder": "e.g., Groceries, Salary",
+    "select_type": "Select Type",
+    "type_label": "Transaction Type",
+    "select_type_label": "Select Transaction Type",
+    "optional_memo_note": "Optional memo or note",
+    "select_category": "Select Category",
+    "no_category": "No Category",
+    "title": "Transactions",
+    "new": "New Transaction",
+    "edit": "Edit Transaction",
+    "create_new": "Create New Transaction",
+    "no_found": "No transactions found."
+  },
+  "category": {
+    "select_icon": "Select Icon",
+    "search": "Search Category",
+    "edit_name": "Edit name...",
+    "new_name": "New name...",
+    "add_new": "Add New Category"
+  },
+  "toast": {
+    "fetch_transactions_failed": "Failed to fetch transactions.",
+    "fetch_categories_failed": "Failed to fetch categories.",
+    "transaction_deleted": "Transaction deleted successfully.",
+    "delete_transaction_failed": "Failed to delete transaction.",
+    "transaction_updated": "Transaction updated successfully.",
+    "transaction_created": "Transaction created successfully.",
+    "save_transaction_failed": "Failed to save transaction."
+  },
+  "dialog": {
+    "confirm_delete": "Confirm Deletion",
+    "delete_transaction_message": "Are you sure you want to delete this transaction? This action cannot be undone.",
+    "bulk_delete_title": "Delete Selected",
+    "bulk_delete_confirm": "Are you sure you want to delete {{count}} items?"
+  },
+  "filter": {
+    "by_type": "Filter by Type",
+    "all_types": "All Types",
+    "by_category": "Filter by Category",
+    "all_categories": "All Categories",
+    "search_transactions": "Search transactions...",
+    "pick_start_date": "Pick a start date",
+    "pick_end_date": "Pick an end date"
+  },
+  "notification": {
+    "recurring_created": "{{count}} recurring transactions created."
   }
 }

@@ -21,6 +21,9 @@ import { RecurringTransaction, RecurringHistoryItem } from "@/types";
 import { useRecurringStore } from "@/stores/useRecurringStore";
 import { useAppStore } from "@/stores/useAppStore";
 import { PlusBadge, ProIcon } from "@/components/ui/PlusBadge";
+import { useSettingStore } from "@/stores/useSettingStore";
+import { format, parseISO } from "date-fns";
+import { enUS, ko } from "date-fns/locale";
 
 const emptyForm: RecurringTransaction = {
   description: "",
@@ -241,7 +244,8 @@ function RecurringCard({
   onDelete,
   onProcess,
 }: any) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { dateFormat } = useSettingStore();
   const { formatAmount } = useCurrencyFormatter();
   // 오늘 날짜 확인 (YYYY-MM-DD 형식)
   const isToday = useMemo(() => {
@@ -249,6 +253,19 @@ function RecurringCard({
     const today = new Date().toISOString().split("T")[0];
     return recurring.last_created_date.startsWith(today);
   }, [recurring.last_created_date]);
+
+  const localeObj = i18n.language === "ko" ? ko : enUS;
+
+  const formatDateValue = (dateStr?: string) => {
+    if (!dateStr) return "";
+    try {
+      const d = parseISO(dateStr);
+      if (!isNaN(d.getTime())) {
+        return format(d, dateFormat, { locale: localeObj });
+      }
+    } catch {}
+    return dateStr;
+  };
 
   return (
     <Card
@@ -283,7 +300,9 @@ function RecurringCard({
                 : "bg-slate-200 text-slate-500",
             )}
           >
-            {recurring.is_active ? "ACTIVE" : "PAUSED"}
+            {recurring.is_active
+              ? t("recurring.status.active").toUpperCase()
+              : t("recurring.status.paused").toUpperCase()}
           </Badge>
         </div>
 
@@ -354,10 +373,10 @@ function RecurringCard({
               {t("recurring.card_labels.cycle")}
             </span>
             <span className="text-slate-600 font-black tabular-nums">
-              {recurring.start_date.slice(2, 10).replace(/-/g, ".")} ~{" "}
+              {formatDateValue(recurring.start_date)} ~{" "}
               {recurring.end_date
-                ? recurring.end_date.slice(2, 10).replace(/-/g, ".")
-                : "INF"}
+                ? formatDateValue(recurring.end_date)
+                : t("recurring.form.no_end_date")}
             </span>
           </div>
 
@@ -385,9 +404,7 @@ function RecurringCard({
                 >
                   {isToday
                     ? t("recurring.last_run_today")
-                    : recurring.last_created_date
-                        .slice(2, 10)
-                        .replace(/-/g, ".")}
+                    : formatDateValue(recurring.last_created_date)}
                 </span>
               ) : (
                 <span className="text-slate-300 font-bold italic">

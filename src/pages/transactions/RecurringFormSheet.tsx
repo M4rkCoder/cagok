@@ -28,6 +28,7 @@ import {
   CircleMinus,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { ko, enUS } from "date-fns/locale";
 import {
   Tooltip,
   TooltipContent,
@@ -35,6 +36,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSettingStore } from "@/stores/useSettingStore";
 
 // 1. 내부 입력 상태를 위한 별도 타입 정의 (amount를 string으로 허용)
 interface RecurringFormState extends Omit<RecurringTransaction, "amount"> {
@@ -58,12 +60,29 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
   categories,
   onSave,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { dateFormat } = useSettingStore();
   // 2. 초기 상태 설정 시 RecurringFormState 타입을 사용
   const [form, setForm] = useState<RecurringFormState>(
     transaction as RecurringFormState
   );
   const [transactionType, setTransactionType] = useState<0 | 1>(1);
+
+  const [isStartDateFocused, setIsStartDateFocused] = useState(false);
+  const [isEndDateFocused, setIsEndDateFocused] = useState(false);
+
+  const getDisplayDate = (dateStr?: string, isFocused?: boolean) => {
+    if (isFocused || !dateStr) return dateStr || "";
+    try {
+      const d = parseISO(dateStr);
+      if (!isNaN(d.getTime())) {
+        return format(d, dateFormat, {
+          locale: i18n.language === "ko" ? ko : enUS,
+        });
+      }
+    } catch {}
+    return dateStr;
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -275,7 +294,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
               {/* 2. 카테고리 (가로 스크롤) */}
               <div className="space-y-2 w-full overflow-hidden">
                 <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-0.5">
-                  {t("category")}
+                  {t("common.category")}
                 </Label>
                 <div className="w-full max-w-[calc(450px-48px)] overflow-hidden">
                   <ScrollArea
@@ -338,7 +357,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
               {/* 4. 금액 */}
               <div className="space-y-1 px-0.5">
                 <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  {t("amount")}
+                  {t("common.amount")}
                 </Label>
                 <div className="relative">
                   <Input
@@ -358,7 +377,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
               {/* 5. 메모 */}
               <div className="space-y-1 px-0.5">
                 <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  {t("remarks")}
+                  {t("common.remarks")}
                 </Label>
                 <Input
                   name="remarks"
@@ -408,9 +427,13 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                   <div className="relative group">
                     <Input
                       name="start_date"
-                      value={form.start_date}
+                      value={getDisplayDate(form.start_date, isStartDateFocused)}
                       onChange={handleChange}
-                      onBlur={() => handleDateBlur("start_date")}
+                      onFocus={() => setIsStartDateFocused(true)}
+                      onBlur={() => {
+                        setIsStartDateFocused(false);
+                        handleDateBlur("start_date");
+                      }}
                       className="h-10 bg-slate-50 border-none rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500/20 pr-8 text-xs font-bold w-full"
                       placeholder="YYYY-MM-DD"
                     />
@@ -423,6 +446,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                       <PopoverContent className="w-auto p-0" align="end">
                         <Calendar
                           mode="single"
+                          locale={i18n.language === "ko" ? ko : enUS}
                           selected={
                             form.start_date
                               ? parseISO(form.start_date)
@@ -462,9 +486,13 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                   <div className="relative group">
                     <Input
                       name="end_date"
-                      value={form.end_date || ""}
+                      value={getDisplayDate(form.end_date, isEndDateFocused)}
                       onChange={handleChange}
-                      onBlur={() => handleDateBlur("end_date")}
+                      onFocus={() => setIsEndDateFocused(true)}
+                      onBlur={() => {
+                        setIsEndDateFocused(false);
+                        handleDateBlur("end_date");
+                      }}
                       className="h-10 bg-slate-50 border-none rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500/20 pr-8 text-xs font-bold w-full"
                       placeholder={t("recurring.form.no_end_date")}
                     />
@@ -477,6 +505,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                       <PopoverContent className="w-auto p-0" align="end">
                         <Calendar
                           mode="single"
+                          locale={i18n.language === "ko" ? ko : enUS}
                           selected={
                             form.end_date ? parseISO(form.end_date) : undefined
                           }

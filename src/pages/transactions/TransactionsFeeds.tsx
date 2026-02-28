@@ -153,8 +153,8 @@ export default function TransactionsFeeds() {
 
   const handleDelete = (id: number) => {
     confirm({
-      title: t("confirm_delete"),
-      description: t("confirm_delete_transaction_message"),
+      title: t("dialog.confirm_delete"),
+      description: t("dialog.delete_transaction_message"),
       onConfirm: async () => {
         await deleteTransaction(id);
       },
@@ -183,8 +183,8 @@ export default function TransactionsFeeds() {
 
   const handleBulkDelete = () => {
     confirm({
-      title: t("bulk_delete_title"),
-      description: t("bulk_delete_confirm", { count: selectedIds.size }),
+      title: t("dialog.bulk_delete_title"),
+      description: t("dialog.bulk_delete_confirm", { count: selectedIds.size }),
       onConfirm: async () => {
         await deleteBulkTransactions(Array.from(selectedIds));
         setSelectedIds(new Set());

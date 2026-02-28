@@ -30,7 +30,7 @@ const TransactionTableContent: React.FC<TransactionTableContentProps> = ({
         <div className="flex flex-col items-center gap-3">
           <Spinner className="size-8 text-primary" />
           <span className="text-sm font-medium text-muted-foreground animate-pulse">
-            {t("loading")}
+            {t("common.loading")}
           </span>
         </div>
       </div>
@@ -100,7 +100,7 @@ const TransactionTableContent: React.FC<TransactionTableContentProps> = ({
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                {t("no_transactions_found")}
+                {t("transaction.no_found")}
               </TableCell>
             </TableRow>
           )}

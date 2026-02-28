@@ -29,7 +29,17 @@
       "4": "목요일",
       "5": "금요일",
       "6": "토요일"
-    }
+    },
+    "description": "내역",
+    "amount": "금액",
+    "date": "날짜",
+    "type": "유형",
+    "select_month": "월 선택",
+    "remarks": "메모",
+    "category": "항목",
+    "no_results": "결과가 없습니다.",
+    "no_results_found": "검색 결과 없음",
+    "actions": "액션"
   },
   "menu": {
     "dashboard": "한 눈에 보기",
@@ -40,62 +50,7 @@
     "settings": "설정",
     "about": "앱 정보"
   },
-  "description": "내역",
-  "description_required": "설명은 필수입니다",
-  "transaction_description_placeholder": "예: 식료품, 급여",
-  "amount": "금액",
-  "amount_required": "금액은 필수입니다",
-  "date": "날짜",
-  "date_required": "날짜는 필수입니다",
-  "type": "유형",
-  "select_type": "유형 선택",
-  "select_month": "월 선택",
-  "transaction_type": "가계부 유형",
-  "select_transaction_type": "가계부 유형 선택",
-  "remarks": "메모",
-  "optional_memo_note": "선택 사항 메모 또는 노트",
-  "category": "항목",
-  "select_category": "항목 선택",
-  "no_category": "항목 없음",
-  "select_icon": "아이콘 선택",
-  "search_category": "항목 검색",
-  "no_results": "결과가 없습니다.",
-  "edit_name": "이름 수정...",
-  "new_name": "새 이름...",
-  "add_new_category": "새 항목 추가",
-  "category_name_empty": "항목 이름을 입력하세요.",
-  "transactions": "가계부",
-  "new_transaction": "가계부 입력",
-  "edit_transaction": "가계부 수정",
-  "create_new_transaction": "새 가계부 생성",
-  "loading": "로딩 중...",
-  "no_results_found": "검색 결과 없음",
-  "no_transactions_found": "가계부 내역이 없습니다.",
-  "actions": "액션",
-  "failed_to_fetch_transactions": "가계부 내역을 불러오는 데 실패했습니다.",
-  "failed_to_fetch_categories": "항목를 불러오는 데 실패했습니다.",
-  "transaction_deleted_successfully": "가계부가 성공적으로 삭제되었습니다.",
-  "failed_to_delete_transaction": "가계부 삭제에 실패했습니다.",
-  "transaction_updated_successfully": "가계부가 성공적으로 업데이트되었습니다.",
-  "transaction_created_successfully": "가계부가 성공적으로 생성되었습니다.",
-  "failed_to_save_transaction": "가계부 저장에 실패했습니다.",
-  "confirm_delete": "삭제 확인",
-  "confirm_delete_transaction_message": "이 가계부를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
-  "bulk_delete_title": "선택 항목 삭제",
-  "bulk_delete_confirm": "{{count}}개의 내역을 정말 삭제하시겠습니까?",
-  "filter_by_type": "유형별 필터",
-  "all_types": "모든 유형",
-  "filter_by_category": "항목별 필터",
-  "all_categories": "모든 항목",
-  "search_transactions": "가계부 검색...",
-  "pick_start_date": "시작일 선택",
-  "pick_end_date": "종료일 선택",
-  "period_preset": "기간",
-  "1_month": "1개월",
-  "3_months": "3개월",
-  "6_months": "6개월",
-  "1_year": "1년",
-  "all_time": "전체 기간(해제)",
+  "lang": "ko-KR",
   "transaction_form": {
     "delete_title": "내역 삭제",
     "delete_description": "이 내역을 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.",
@@ -178,6 +133,10 @@
     "uncategorized": "미지정",
     "last_run_today": "오늘 실행됨 ✨",
     "no_record": "기록 없음",
+    "status": {
+      "active": "활성",
+      "paused": "중단됨"
+    },
     "actions": {
       "edit": "수정",
       "pause": "중단",
@@ -238,7 +197,7 @@
       "no_data": "통계 데이터가 없습니다.",
       "annual_summary": "연간 요약",
       "income_expense_summary": "수입 · 지출 요약",
-      "yearly_total": "연간 총 {{label}}",
+      "yearly_total": "연간 합계 {{label}}",
       "monthly_avg": "월 평균",
       "details": "상세",
       "max": "최대",
@@ -423,7 +382,6 @@
     "calendar": "달력보기",
     "board": "표로 보기"
   },
-  "recurring_notification": "{{count}}건의 반복 내역이 생성되었습니다.",
   "about": {
     "header": "앱 정보",
     "hero_subtitle": "개인용 로컬 가계부 서비스",
@@ -452,5 +410,67 @@
     "footer_badge_desc_1": "C'AGOK은 사용자의 프라이버시를 최우선으로 생각합니다.",
     "footer_badge_desc_2": "당신의 자산 정보는 오직 당신의 기기에만 머뭅니다.",
     "effective_date": "시행일자"
+  },
+  "validation": {
+    "description_required": "설명은 필수입니다",
+    "amount_required": "금액은 필수입니다",
+    "date_required": "날짜는 필수입니다",
+    "category_name_empty": "항목 이름을 입력하세요."
+  },
+  "transaction": {
+    "description_placeholder": "예: 식료품, 급여",
+    "select_type": "유형 선택",
+    "type_label": "가계부 유형",
+    "select_type_label": "가계부 유형 선택",
+    "optional_memo_note": "선택 사항 메모 또는 노트",
+    "select_category": "항목 선택",
+    "no_category": "항목 없음",
+    "title": "가계부",
+    "new": "가계부 입력",
+    "edit": "가계부 수정",
+    "create_new": "새 가계부 생성",
+    "no_found": "가계부 내역이 없습니다."
+  },
+  "category": {
+    "select_icon": "아이콘 선택",
+    "search": "항목 검색",
+    "edit_name": "이름 수정...",
+    "new_name": "새 이름...",
+    "add_new": "새 항목 추가"
+  },
+  "toast": {
+    "fetch_transactions_failed": "가계부 내역을 불러오는 데 실패했습니다.",
+    "fetch_categories_failed": "항목를 불러오는 데 실패했습니다.",
+    "transaction_deleted": "가계부가 성공적으로 삭제되었습니다.",
+    "delete_transaction_failed": "가계부 삭제에 실패했습니다.",
+    "transaction_updated": "가계부가 성공적으로 업데이트되었습니다.",
+    "transaction_created": "가계부가 성공적으로 생성되었습니다.",
+    "save_transaction_failed": "가계부 저장에 실패했습니다."
+  },
+  "dialog": {
+    "confirm_delete": "삭제 확인",
+    "delete_transaction_message": "이 가계부를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+    "bulk_delete_title": "선택 항목 삭제",
+    "bulk_delete_confirm": "{{count}}개의 내역을 정말 삭제하시겠습니까?"
+  },
+  "filter": {
+    "by_type": "유형별 필터",
+    "all_types": "모든 유형",
+    "by_category": "항목별 필터",
+    "all_categories": "모든 항목",
+    "search_transactions": "가계부 검색...",
+    "pick_start_date": "시작일 선택",
+    "pick_end_date": "종료일 선택",
+    "period_preset": "기간",
+    "periods": {
+      "1_month": "1개월",
+      "3_months": "3개월",
+      "6_months": "6개월",
+      "1_year": "1년",
+      "all_time": "전체 기간(해제)"
+    }
+  },
+  "notification": {
+    "recurring_created": "{{count}}건의 반복 내역이 생성되었습니다."
   }
 }

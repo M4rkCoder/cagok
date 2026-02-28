@@ -26,9 +26,13 @@ import { CategoryIcon } from "@/components/CategoryIcon";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { useSettingStore } from "@/stores/useSettingStore";
+import { format, parseISO } from "date-fns";
+import { enUS, ko } from "date-fns/locale";
 
 const TransactionsTable: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { dateFormat } = useSettingStore();
   const [rowSelection, setRowSelection] = useState({});
   const { formatAmount } = useCurrencyFormatter();
   const {
@@ -50,8 +54,8 @@ const TransactionsTable: React.FC = () => {
 
   const onClickDelete = (id: number) => {
     confirm({
-      title: t("confirm_delete"),
-      description: t("confirm_delete_transaction_message"),
+      title: t("dialog.confirm_delete"),
+      description: t("dialog.delete_transaction_message"),
       onConfirm: async () => {
         await deleteTransaction(id);
       },
@@ -63,8 +67,8 @@ const TransactionsTable: React.FC = () => {
     const ids = selectedRows.map((row) => row.original.id as number);
 
     confirm({
-      title: t("bulk_delete_title"),
-      description: t("bulk_delete_confirm", { count: ids.length }),
+      title: t("dialog.bulk_delete_title"),
+      description: t("dialog.bulk_delete_confirm", { count: ids.length }),
       onConfirm: async () => {
         await deleteBulkTransactions(ids);
         setRowSelection({}); // 삭제 후 선택 초기화
@@ -120,19 +124,32 @@ const TransactionsTable: React.FC = () => {
       },
       {
         accessorKey: "date",
-        header: t("date"),
-        cell: ({ row }) => (
-          <div className="flex justify-start items-center h-full text-sm">
-            {row.original.date.replace(/-/g, ".")}
-          </div>
-        ),
+        header: t("common.date"),
+        cell: ({ row }) => {
+          let displayDate = row.original.date.replace(/-/g, ".");
+          try {
+            const parsedDate = parseISO(row.original.date);
+            if (!isNaN(parsedDate.getTime())) {
+              displayDate = format(parsedDate, dateFormat, {
+                locale: i18n.language === "ko" ? ko : enUS,
+              });
+            }
+          } catch (e) {
+            // parsing failed, fallback to default displayDate
+          }
+          return (
+            <div className="flex justify-start items-center h-full text-sm">
+              {displayDate}
+            </div>
+          );
+        },
         size: 130, // Set initial size for date column
         minSize: 110,
         enableResizing: true,
       },
       {
         accessorKey: "type",
-        header: t("type"),
+        header: t("common.type"),
         cell: ({ row }) => (
           <div className="flex justify-start items-center h-full">
             {row.original.type === 0 ? <IncomeBadge /> : <ExpenseBadge />}
@@ -144,7 +161,7 @@ const TransactionsTable: React.FC = () => {
       },
       {
         accessorKey: "category",
-        header: t("category"),
+        header: t("common.category"),
         cell: ({ row }) => (
           <div className="flex items-center justify-start gap-1 h-full">
             <CategoryIcon
@@ -152,7 +169,7 @@ const TransactionsTable: React.FC = () => {
               type={row.original.type}
               size="xs"
             />
-            <span>{row.original.category_name || t("no_category")}</span>
+            <span>{row.original.category_name || t("transaction.no_category")}</span>
             {row.original.is_fixed ? (
               <span className="text-[10px] native-emoji">📌</span>
             ) : null}
@@ -164,7 +181,7 @@ const TransactionsTable: React.FC = () => {
       },
       {
         accessorKey: "description",
-        header: t("description"),
+        header: t("common.description"),
         cell: ({ row }) => (
           <div className="flex items-center justify-start h-full">
             <span className="text-sm font-medium">
@@ -178,7 +195,7 @@ const TransactionsTable: React.FC = () => {
       },
       {
         accessorKey: "amount",
-        header: t("amount"),
+        header: t("common.amount"),
         cell: ({ row }) => (
           <div className="flex justify-start items-center h-full gap-1">
             <span className="font-extrabold">
@@ -192,7 +209,7 @@ const TransactionsTable: React.FC = () => {
       },
       {
         accessorKey: "remarks",
-        header: t("remarks"),
+        header: t("common.remarks"),
         cell: ({ row }) => (
           <div className="flex items-center justify-start h-full">
             {row.original.remarks}

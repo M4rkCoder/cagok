@@ -64,7 +64,7 @@ export const DayOfWeekCard: React.FC = () => {
 
   const data = useMemo(
     () => (viewMode === "expense" ? dayOfWeekExpense : dayOfWeekIncome),
-    [viewMode, dayOfWeekExpense, dayOfWeekIncome]
+    [viewMode, dayOfWeekExpense, dayOfWeekIncome],
   );
 
   const {
@@ -120,13 +120,13 @@ export const DayOfWeekCard: React.FC = () => {
           txAvg: info.txCount > 0 ? info.total / info.txCount : 0,
           fill: "",
         };
-      }
+      },
     );
 
     processedCategories.sort((a, b) => b.value - a.value);
     const grandTotal = processedCategories.reduce(
       (sum, item) => sum + item.value,
-      0
+      0,
     );
 
     const donutDataWithColor = processedCategories.map((cat, index) => ({
@@ -140,7 +140,10 @@ export const DayOfWeekCard: React.FC = () => {
       config[`cat_${cat.id}`] = { label: cat.name, color: cat.fill };
     });
     config["total"] = {
-      label: metricType === "total" ? t("dashboard.cards.total_sum") : t("dashboard.cards.daily_avg"),
+      label:
+        metricType === "total"
+          ? t("dashboard.cards.total_sum")
+          : t("dashboard.cards.daily_avg"),
       color: getThemeColor(viewMode),
     };
 
@@ -208,7 +211,10 @@ export const DayOfWeekCard: React.FC = () => {
           <div className="flex items-center justify-between">
             <DashboardTitle
               title={t("dashboard.cards.dayofweek_status_title", {
-                type: viewMode === "expense" ? t("common.expense") : t("common.income"),
+                type:
+                  viewMode === "expense"
+                    ? t("common.expense")
+                    : t("common.income"),
               })}
             />
             {/* 바 차트 우측 상단: 지출/수입 및 총액/평균 탭 */}
@@ -347,8 +353,8 @@ export const DayOfWeekCard: React.FC = () => {
         <div className="flex flex-col items-center justify-between space-y-4">
           {/* 도넛 차트 상단 중앙: 카테고리 셀렉트 */}
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="h-8 bg-white border-slate-200 w-[150px] text-sm">
-              <SelectValue placeholder={t("category")} />
+            <SelectTrigger className="h-8 bg-white border-slate-200 w-[160px] text-sm">
+              <SelectValue placeholder={t("common.category")} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">
@@ -401,7 +407,7 @@ export const DayOfWeekCard: React.FC = () => {
                       }}
                       onClick={() =>
                         setSelectedCategory(
-                          entry.id === selectedCategory ? "all" : entry.id
+                          entry.id === selectedCategory ? "all" : entry.id,
                         )
                       }
                     />
@@ -438,7 +444,7 @@ export const DayOfWeekCard: React.FC = () => {
                                 ? metricType === "total"
                                   ? selectedDonutItem.value
                                   : selectedDonutItem.txAvg
-                                : totalMetricValue
+                                : totalMetricValue,
                             )}
                           </tspan>
                           <tspan

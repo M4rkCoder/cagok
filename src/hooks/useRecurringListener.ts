@@ -25,7 +25,7 @@ export const useRecurringListener = () => {
           "recurring-summary",
           (event) => {
             const { count } = event.payload;
-            const message = t("recurring_notification", { count });
+            const message = t("notification.recurring_created", { count });
 
             const notifData = {
               count,

@@ -77,7 +77,7 @@ const DailyTransactionsDialog = () => {
                     </div>
                     <div className="flex flex-col items-start leading-none">
                       <DialogTitle className="text-base font-bold">
-                        {txType === 0 ? t("common.income") : t("common.expense")} {t("description")}
+                        {txType === 0 ? t("common.income") : t("common.expense")} {t("common.description")}
                         {detailData?.is_fixed_view !== undefined && (
                           <span className="ml-1.5 text-xs font-medium text-slate-400">
                             ({detailData.is_fixed_view ? t("common.fixed") : t("common.variable")})
@@ -161,7 +161,7 @@ const DailyTransactionsDialog = () => {
                     ) : (
                       <div className="py-20 text-center">
                         <p className="text-xs text-slate-400">
-                          {t("no_transactions_found")}
+                          {t("transaction.no_found")}
                         </p>
                       </div>
                     )}

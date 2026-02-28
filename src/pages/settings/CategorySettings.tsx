@@ -96,7 +96,7 @@ const CategorySettings = () => {
           await deleteCategory(cat.id);
           fetchCategories();
         } catch (err) {
-          toast.error(t("failed_to_delete_transaction")); // or generic fail
+          toast.error(t("toast.delete_transaction_failed")); // or generic fail
         }
       },
     });

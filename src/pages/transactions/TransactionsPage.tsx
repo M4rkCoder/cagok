@@ -51,7 +51,7 @@ const TransactionsPage = () => {
     if (!isInitialized) return;
 
     setHeader(
-      t("transactions"),
+      t("transaction.title"),
       <div className="flex items-center gap-3">
         {/* 보기 방식 전환 토글 유닛 */}
         <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">

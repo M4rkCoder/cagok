@@ -246,6 +246,19 @@
   outline: none !important;
 }
 
+/* Emoji Picker 카테고리 버튼의 파란색 원 테두리 제거 */
+.EmojiPickerReact .epr-cat-btn:focus::after,
+.EmojiPickerReact .epr-cat-btn:focus-visible::after {
+  display: none !important;
+  outline: none !important;
+  border: none !important;
+}
+
+.EmojiPickerReact .epr-cat-btn:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 /* Recharts 내부의 특정 요소 선택 시 생기는 테두리 방지 */
 .recharts-active-dot,
 .recharts-rectangle:focus,

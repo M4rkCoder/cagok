@@ -33,21 +33,21 @@ export const CategoryMonthlyTrendSection = memo(
     const { formatMonth } = useDateFormatter();
 
     const [activeType, setActiveType] = useState<"income" | "expense">(
-      "expense"
+      "expense",
     );
     const [internalCategoryId, setInternalCategoryId] = useState<number | null>(
-      null
+      null,
     );
     const { categoryList: categories } = useAppStore();
 
     // 1. 카테고리 분리
     const expenseCategories = useMemo(
       () => categories.filter((c) => c.type === 1),
-      [categories]
+      [categories],
     );
     const incomeCategories = useMemo(
       () => categories.filter((c) => c.type === 0),
-      [categories]
+      [categories],
     );
     const currentCategories =
       activeType === "income" ? incomeCategories : expenseCategories;
@@ -90,7 +90,7 @@ export const CategoryMonthlyTrendSection = memo(
               item.year_month === monthObj.key &&
               (activeType === "income" ? item.type === 0 : item.type === 1) &&
               (internalCategoryId === null ||
-                item.category_id === internalCategoryId)
+                item.category_id === internalCategoryId),
           )
           .forEach((item) => {
             row[item.category_name] = item.total_amount;
@@ -110,7 +110,7 @@ export const CategoryMonthlyTrendSection = memo(
       expenseCategories,
       incomeCategories,
       internalCategoryId,
-      formatMonth
+      formatMonth,
     ]);
 
     return (
@@ -149,7 +149,7 @@ export const CategoryMonthlyTrendSection = memo(
               }
             >
               <SelectTrigger className="w-[140px] h-8 text-xs">
-                <SelectValue placeholder={t("category")} />
+                <SelectValue placeholder={t("common.category")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">
@@ -197,7 +197,7 @@ export const CategoryMonthlyTrendSection = memo(
                 axisLine={false}
                 tickMargin={8}
                 tickFormatter={(v) =>
-                  new Intl.NumberFormat("ko-KR", {
+                  new Intl.NumberFormat(t("lang"), {
                     notation: "compact",
                     compactDisplay: "short",
                   }).format(v)
@@ -279,7 +279,9 @@ export const CategoryMonthlyTrendSection = memo(
                       ))}
                       {hasMore && (
                         <div className="text-xs font-bold text-muted-foreground/60 italic">
-                          {t("common.more_items_simple", { count: displayCategoryNames.length - 10 })}
+                          {t("common.more_items_simple", {
+                            count: displayCategoryNames.length - 10,
+                          })}
                         </div>
                       )}
                     </div>
@@ -304,5 +306,5 @@ export const CategoryMonthlyTrendSection = memo(
         </CardContent>
       </Card>
     );
-  }
+  },
 );

@@ -61,7 +61,7 @@ export const DayOfWeekChart: React.FC = () => {
     try {
       const response = await invoke<DayOfWeekResponse>(
         "get_day_of_week_stats_command",
-        { baseMonth, txType: txType === "expense" ? 1 : 0 }
+        { baseMonth, txType: txType === "expense" ? 1 : 0 },
       );
       setData(response);
     } catch (error) {
@@ -129,13 +129,13 @@ export const DayOfWeekChart: React.FC = () => {
           txAvg: info.txCount > 0 ? info.total / info.txCount : 0,
           fill: "",
         };
-      }
+      },
     );
 
     processedCategories.sort((a, b) => b.value - a.value);
     const grandTotal = processedCategories.reduce(
       (sum, item) => sum + item.value,
-      0
+      0,
     );
 
     const donutDataWithColor = processedCategories.map((cat, index) => ({
@@ -149,13 +149,20 @@ export const DayOfWeekChart: React.FC = () => {
       config[`cat_${cat.id}`] = { label: cat.name, color: cat.fill };
     });
     config["total"] = {
-      label: metricType === "total" ? t("dashboard.cards.total_sum") : t("dashboard.cards.daily_avg"),
+      label:
+        metricType === "total"
+          ? t("dashboard.cards.total_sum")
+          : t("dashboard.cards.daily_avg"),
       color: getThemeColor(txType),
     };
 
     const groupedByDay: { [key: number]: ProcessedData } = {};
     for (let i = 0; i < 7; i++) {
-      groupedByDay[i] = { dayName: formatDayIndex(i, "short"), total: 0, count: 0 };
+      groupedByDay[i] = {
+        dayName: formatDayIndex(i, "short"),
+        total: 0,
+        count: 0,
+      };
     }
 
     if (selectedCategory === "all") {
@@ -208,38 +215,56 @@ export const DayOfWeekChart: React.FC = () => {
     <Card
       className={cn(
         "overflow-hidden border-slate-200 shadow-none",
-        loading && "animate-pulse"
+        loading && "animate-pulse",
       )}
     >
-      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
-        <div className="flex flex-col">
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 sm:flex-nowrap overflow-hidden">
+        <div className="flex flex-col shrink-0 min-w-[150px]">
           <TitleText
-            title={`${t("statistics.tabs.dayofweek")} ${txType === "expense" ? t("common.expense") : t("common.income")} ${t("statistics.tabs.yearly")}: ${metricType === "total" ? t("statistics.summary.yearly_total", { label: "" }).replace(t("statistics.summary.yearly_total", { label: "" }).split(" ")[0], "").trim() : t("statistics.summary.monthly_avg")}`}
+            title={`${t("statistics.tabs.dayofweek")} ${txType === "expense" ? t("common.expense") : t("common.income")} ${t("statistics.tabs.yearly")}: ${
+              metricType === "total"
+                ? t("statistics.summary.yearly_total", { label: "" })
+                    .replace(
+                      t("statistics.summary.yearly_total", { label: "" }).split(
+                        " ",
+                      )[0],
+                      "",
+                    )
+                    .trim()
+                : t("statistics.summary.monthly_avg")
+            }`}
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide justify-start sm:justify-end w-full sm:w-auto pb-1 sm:pb-0">
+          <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 shrink-0">
             <button
               key="total"
               onClick={() => setMetricType("total")}
               className={cn(
-                "px-4 py-1 text-xs font-bold transition-all rounded-md",
+                "px-3 py-1 text-xs font-bold transition-all rounded-md whitespace-nowrap",
                 metricType === "total"
                   ? "bg-white text-blue-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  : "text-slate-500 hover:text-slate-700",
               )}
             >
-              {t("statistics.summary.yearly_total", { label: "" }).replace(t("statistics.summary.yearly_total", { label: "" }).split(" ")[0], "").trim()}
+              {t("statistics.summary.yearly_total", { label: "" })
+                .replace(
+                  t("statistics.summary.yearly_total", { label: "" }).split(
+                    " ",
+                  )[0],
+                  "",
+                )
+                .trim()}
             </button>
             <button
               key="average"
               onClick={() => setMetricType("average")}
               className={cn(
-                "px-4 text-xs font-bold transition-all rounded-md",
+                "px-3 text-xs font-bold transition-all rounded-md whitespace-nowrap",
                 metricType === "average"
                   ? "bg-white text-blue-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                  : "text-slate-500 hover:text-slate-700",
               )}
             >
               {t("statistics.summary.monthly_avg")}
@@ -251,9 +276,9 @@ export const DayOfWeekChart: React.FC = () => {
               setTxType(v as "expense" | "income");
               setSelectedCategory("all");
             }}
-            className="h-8 w-[140px]"
+            className="h-8 w-[140px] shrink-0"
           >
-            <TabsList className="grid w-full grid-cols-2 h-10 bg-slate-100/50">
+            <TabsList className="grid w-full grid-cols-2 h-8 bg-slate-100/50">
               <TabsTrigger
                 value="expense"
                 className="text-xs transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white font-bold"
@@ -270,8 +295,8 @@ export const DayOfWeekChart: React.FC = () => {
           </Tabs>
 
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[140px] h-8 text-[11px] bg-white border-slate-200">
-              <SelectValue placeholder={t("category")} />
+            <SelectTrigger className="w-[140px] h-8 text-xs bg-white border-slate-200 shrink-0">
+              <SelectValue placeholder={t("common.category")} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">
@@ -325,7 +350,7 @@ export const DayOfWeekChart: React.FC = () => {
                   />
                   <YAxis
                     tickFormatter={(v) =>
-                      new Intl.NumberFormat("ko-KR", {
+                      new Intl.NumberFormat(t("lang"), {
                         notation: "compact",
                         compactDisplay: "short",
                       }).format(v)
@@ -434,7 +459,7 @@ export const DayOfWeekChart: React.FC = () => {
                         }}
                         onClick={() =>
                           setSelectedCategory(
-                            entry.id === selectedCategory ? "all" : entry.id
+                            entry.id === selectedCategory ? "all" : entry.id,
                           )
                         }
                       />
@@ -470,7 +495,7 @@ export const DayOfWeekChart: React.FC = () => {
                                     ? metricType === "total"
                                       ? selectedDonutItem.value
                                       : selectedDonutItem.txAvg
-                                    : totalMetricValue
+                                    : totalMetricValue,
                                 )}
                               </tspan>
                               <tspan

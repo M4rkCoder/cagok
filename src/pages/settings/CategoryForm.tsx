@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import EmojiPicker, { Theme, EmojiStyle } from "emoji-picker-react";
+import ko from "emoji-picker-react/dist/data/emojis-ko";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowUpCircle, ArrowDownCircle, X } from "lucide-react";
@@ -27,7 +28,7 @@ interface CategoryFormProps {
 }
 
 const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { categoryList: categories } = useAppStore();
   const {
     newCategoryName,
@@ -227,6 +228,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
                     form.setValue("icon", emojiData.emoji);
                     setIsPickerOpen(false);
                   }}
+                  searchPlaceHolder={t("transaction_filter.search_button")}
+                  emojiData={i18n.language.startsWith("ko") ? ko : undefined}
                   width="100%"
                   height="100%"
                   previewConfig={{ showPreview: false }}

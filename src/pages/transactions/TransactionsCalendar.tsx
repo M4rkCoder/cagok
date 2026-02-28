@@ -154,8 +154,8 @@ export default function TransactionsCalendar() {
 
   const handleDelete = (id: number) => {
     confirm({
-      title: t("confirm_delete"),
-      description: t("confirm_delete_transaction_message"),
+      title: t("dialog.confirm_delete"),
+      description: t("dialog.delete_transaction_message"),
       onConfirm: async () => {
         await deleteTransaction(id);
         if (selectedDate) {
@@ -524,7 +524,7 @@ function TransactionDetailDialog({
                     <div className="flex flex-col items-center justify-center py-16 text-slate-300">
                       <ReceiptText className="w-10 h-10 mb-3 opacity-20" />
                       <p className="text-sm font-medium">
-                        {t("no_transactions_found")}
+                        {t("transaction.no_found")}
                       </p>
                     </div>
                   )}

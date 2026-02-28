@@ -129,7 +129,7 @@ export function MainExpenseCard() {
                     ))
                   ) : (
                     <div className="py-6 text-center text-slate-300 text-[10px] font-medium italic">
-                      {t("no_transactions_found")}
+                      {t("transaction.no_found")}
                     </div>
                   )}
                 </div>

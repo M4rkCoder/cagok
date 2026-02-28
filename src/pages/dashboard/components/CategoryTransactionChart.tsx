@@ -17,6 +17,7 @@ import {
 import { getThemeColor } from "@/lib/utils"; // 유틸 함수 임포트
 import { AllIcon } from "@/components/CategoryIcon";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { useTranslation } from "react-i18next";
 
 interface CategoryChartProps {
   mode: "expense" | "income"; // 모드 추가
@@ -25,21 +26,22 @@ interface CategoryChartProps {
   setSelectedCategoryId: (id: string) => void;
 }
 
-const chartConfig = {
-  value: {
-    label: "금액",
-  },
-} satisfies ChartConfig;
-
 export default function CategoryTransactionChart({
   mode,
   activeId,
   selectedCategoryId,
   setSelectedCategoryId,
 }: CategoryChartProps) {
+  const { t } = useTranslation();
   const { overview, categoriesExpense, categoriesIncome } = useDashboardStore();
   const [isMounted, setIsMounted] = React.useState(false);
   const { formatAmount } = useCurrencyFormatter();
+
+  const chartConfig = {
+    value: {
+      label: t("common.amount"),
+    },
+  } satisfies ChartConfig;
 
   React.useEffect(() => {
     setIsMounted(true);
@@ -70,19 +72,19 @@ export default function CategoryTransactionChart({
   // 중앙 텍스트용 선택된 아이템 정보
   const selectedItem = React.useMemo(
     () => chartData.find((item) => item.id === activeId),
-    [chartData, activeId]
+    [chartData, activeId],
   );
 
   return (
     <div className="flex flex-col h-full w-full items-center justify-between">
       <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-        <SelectTrigger className="w-[150px] h-8 text-sm">
-          <SelectValue placeholder="카테고리 선택" />
+        <SelectTrigger className="w-[160px] h-8 text-sm">
+          <SelectValue placeholder={t("transaction.select_category")} />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">
             <AllIcon />
-            전체 카테고리
+            {t("dashboard.cards.all_categories")}
           </SelectItem>
           {categories.map((cat) => {
             const id = (cat.category_id || cat.income_category_id).toString();
@@ -172,7 +174,7 @@ export default function CategoryTransactionChart({
                         >
                           {selectedItem
                             ? `${selectedItem.name} (${selectedItem.percentage.toFixed(1)}%)`
-                            : `총 ${mode === "expense" ? "지출" : "수입"}(100%)`}
+                            : `${t("dashboard.cards.total_sum")} ${mode === "expense" ? t("common.expense") : t("common.income")} (100%)`}
                         </tspan>
                       </text>
                     );
@@ -185,7 +187,7 @@ export default function CategoryTransactionChart({
         </ChartContainer>
       ) : (
         <div className="h-[250px] flex items-center justify-center text-slate-300 text-xs italic">
-          데이터 없음
+          {t("dashboard.comparison.no_data")}
         </div>
       )}
     </div>

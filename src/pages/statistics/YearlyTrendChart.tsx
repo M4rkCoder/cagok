@@ -178,7 +178,7 @@ export function YearlyTrendChart() {
                     : undefined
                 }
                 tickFormatter={(v) =>
-                  new Intl.NumberFormat("ko-KR", {
+                  new Intl.NumberFormat(t("lang"), {
                     notation: "compact",
                     compactDisplay: "short",
                   }).format(v)

@@ -55,7 +55,7 @@ const TransactionSheet = ({
         ) : (
           <Button variant="default" className="shadow-lg cursor-pointer">
             <Plus className="h-6 w-6" />
-            {t("new_transaction")}
+            {t("transaction.new")}
           </Button>
         )}
       </SheetTrigger>
@@ -76,8 +76,8 @@ const TransactionSheet = ({
         <SheetHeader>
           <SheetTitle>
             {editingTransaction
-              ? t("edit_transaction")
-              : t("create_new_transaction")}
+              ? t("transaction.edit")
+              : t("transaction.create_new")}
           </SheetTitle>
         </SheetHeader>
         <TransactionForm />

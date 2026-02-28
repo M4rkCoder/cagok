@@ -20,10 +20,13 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { AnimatedTabs, TabItem, TabContent } from "@/components/AnimatedTabs";
 import { useTranslation } from "react-i18next";
+import { useSettingStore } from "@/stores/useSettingStore";
+import { ko, enUS } from "date-fns/locale";
 
 export default function StatisticsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { setHeader, resetHeader } = useHeaderStore();
+  const { dateFormat } = useSettingStore();
 
   const {
     loading,
@@ -60,7 +63,10 @@ export default function StatisticsPage() {
               {t("statistics.period")}
             </span>
             <span className="text-sm font-medium text-slate-700 tabular-nums">
-              {getFormattedPeriod()}
+              {getFormattedPeriod({
+                dateFormat,
+                locale: i18n.language === "ko" ? ko : enUS,
+              })}
             </span>
           </div>
         )}
@@ -112,7 +118,9 @@ export default function StatisticsPage() {
     resetHeader,
     setSelectedYear,
     setViewMode,
-    t
+    t,
+    dateFormat,
+    i18n.language,
   ]);
 
   useEffect(() => {
