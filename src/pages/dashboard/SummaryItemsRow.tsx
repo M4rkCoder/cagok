@@ -1,6 +1,4 @@
 import { DiffBadge } from "./components/DiffBadge";
-import { CurrencyIcon } from "@/components/ui/CurrencyIcon";
-import CountUp from "@/components/CountUp";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useDashboardStore } from "@/stores/useDashboardStore";
@@ -28,7 +26,7 @@ export function SummaryItemRow() {
           metric: comparisons.NetIncome,
         },
         {
-          label: t("common.fixed_expense"),
+          label: t("common.fixed"),
           value: overview.fixed_expense,
           metric: comparisons.Fixed,
           ratio: overview.fixed_expense_ratio,
@@ -41,7 +39,7 @@ export function SummaryItemRow() {
         >
           {/* 왼쪽 영역: 제목 + 금액 */}
           <div className="flex items-center gap-3 overflow-hidden">
-            <span className="text-sm font-bold text-slate-400 whitespace-nowrap min-w-[32px] md:min-w-[42px]">
+            <span className="text-sm font-bold text-slate-400 whitespace-nowrap min-w-[32px] md:min-w-[42px] uppercase">
               {item.label}
             </span>
 

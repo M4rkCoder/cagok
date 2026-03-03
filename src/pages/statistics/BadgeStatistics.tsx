@@ -21,7 +21,7 @@ export function BadgeStatistics() {
   const { badgeStats: stats } = useStatisticsStore();
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const { formatAmount } = useCurrencyFormatter();
-  const { formatYearMonth } = useDateFormatter();
+  const { formatYearMonth, formatDayIndex } = useDateFormatter();
 
   if (!stats) return null;
 
@@ -49,7 +49,9 @@ export function BadgeStatistics() {
     {
       label: t("statistics.summary.badge_labels.net_income_ratio"),
       value: stats.netIncomeRatio ? `${stats.netIncomeRatio.toFixed(1)}%` : "-",
-      subValue: stats.netIncomeRatio ? t("statistics.summary.badge_labels.net_income_ratio_desc") : "-",
+      subValue: stats.netIncomeRatio
+        ? t("statistics.summary.badge_labels.net_income_ratio_desc")
+        : "-",
       icon: <Wallet className="h-4 w-4" />,
     },
     {
@@ -72,7 +74,9 @@ export function BadgeStatistics() {
     },
     {
       label: t("statistics.summary.badge_labels.max_expense_day"),
-      value: stats.maxExpenseDayOfWeek ? stats.maxExpenseDayOfWeek.day : "-",
+      value: stats.maxExpenseDayOfWeek
+        ? formatDayIndex(Number(stats.maxExpenseDayOfWeek.day), "long")
+        : "-",
       subValue: stats.maxExpenseDayOfWeek
         ? formatAmount(stats.maxExpenseDayOfWeek.amount)
         : "-",

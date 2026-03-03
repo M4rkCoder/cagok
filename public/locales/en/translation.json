@@ -3,7 +3,7 @@
     "income": "Income",
     "expense": "Expense",
     "all": "All",
-    "in": "IN",
+    "in": "I N",
     "out": "OUT",
     "variable": "VAR",
     "fixed": "FIX",
@@ -38,7 +38,8 @@
     "remarks": "Remarks",
     "category": "Category",
     "no_results": "No results.",
-    "actions": "Actions"
+    "actions": "Actions",
+    "day_short": "DAY"
   },
   "menu": {
     "dashboard": "Dashboard",
@@ -374,12 +375,17 @@
       "analyzing_data": "Analyzing data..."
     },
     "comparison": {
-      "daily_avg_spent": "Spent <1>{{amount}}</1> on average daily",
+      "daily_avg_spent": "Spent <1>{{amount}}</1> on avg daily",
       "same_as_last_month": "Same as last month",
-      "spent_more_than_last_month": "Spent <1>{{amount}}</1> more than last month.",
-      "spent_less_than_last_month": "Spent <1>{{amount}}</1> less than last month.",
+      "spent_more_than_last_month": "<1>{{amount}}</1> more than last month.",
+      "spent_less_than_last_month": "<1>{{amount}}</1> less than last month.",
       "expense_ratio_spent": "Spent <1>{{ratio}}%</1> of income.",
       "no_data": "No data available."
+    },
+    "compare": {
+      "same_as_last_month": "Same as last month",
+      "increased_by": "<1>{{amount}}</1> more than last month",
+      "decreased_by": "<1>{{amount}}</1> less than last month"
     }
   },
   "transactions_view": {

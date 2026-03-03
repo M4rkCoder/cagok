@@ -1055,29 +1055,21 @@ category_icon: row.get::<_, Option<String>>(9).unwrap_or(Some("❓".to_string())
              LIMIT 1",
             start_date_sql, end_date_sql
         );
-
+        
         let max_expense_day_of_week: Option<DayOfWeekStat> = conn.query_row(
             &max_dow_query,
             params![base_month],
             |row| {
+                // DB에서 가져온 요일 숫자 (0: 일요일 ~ 6: 토요일)
                 let dow_int: i32 = row.get(0)?;
-                let dow_str = match dow_int {
-                    0 => "일요일",
-                    1 => "월요일",
-                    2 => "화요일",
-                    3 => "수요일",
-                    4 => "목요일",
-                    5 => "금요일",
-                    6 => "토요일",
-                    _ => "알 수 없음",
-                };
+                
                 Ok(DayOfWeekStat {
-                    day: dow_str.to_string(),
+                    day: dow_int.to_string(), 
                     amount: row.get(1)?,
                 })
             }
         ).optional()?;
-
+        
         Ok(BadgeStats {
             max_expense_month,
             max_income_month,

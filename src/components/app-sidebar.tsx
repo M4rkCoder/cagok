@@ -16,6 +16,7 @@ import {
   Zap,
   RefreshCw,
   Info,
+  Keyboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FinanceModeRounded from "./FinanceModeRounded";
@@ -36,9 +37,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ProIcon } from "./ui/PlusBadge";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import { ShortcutGuide } from "@/pages/ShrtcutGuide";
 
 interface AppSidebarProps {
   collapsed: boolean;
@@ -122,6 +123,22 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
           <span className="text-xs font-medium">{t("menu.about")}</span>
         )}
       </Link>
+    </SidebarMenuButton>
+  );
+
+  const ShortcutBtnNode = (
+    <SidebarMenuButton
+      className={cn(
+        "transition-all cursor-pointer",
+        collapsed ? "justify-center p-0 h-10" : "px-2"
+      )}
+    >
+      <div className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
+        <Keyboard
+          className={cn("shrink-0", collapsed ? "h-6 w-6" : "h-4 w-4")}
+        />
+        {!collapsed && <span className="text-xs font-medium">단축키 안내</span>}
+      </div>
     </SidebarMenuButton>
   );
 
@@ -333,11 +350,30 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
       {/* Footer */}
       <SidebarFooter className="p-2">
         <SidebarMenu>
+          {/* 🔹 단축키 안내 버튼 (ShortcutGuide로 감싸기) */}
+          <SidebarMenuItem>
+            {collapsed ? (
+              <Tooltip delayDuration={0}>
+                <TooltipTrigger asChild>
+                  {/* TooltipTrigger와 DialogTrigger 충돌 방지를 위해 div로 한 번 감싸줍니다 */}
+                  <div className="w-full">
+                    <ShortcutGuide>{ShortcutBtnNode}</ShortcutGuide>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="ml-1 z-[100]">
+                  단축키 안내
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <ShortcutGuide>{ShortcutBtnNode}</ShortcutGuide>
+            )}
+          </SidebarMenuItem>
+
           <SidebarMenuItem>
             {collapsed ? (
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>{AboutBtnNode}</TooltipTrigger>
-                <TooltipContent side="right" className="ml-1">
+                <TooltipContent side="right" className="ml-1 z-[100]">
                   About C'agok
                 </TooltipContent>
               </Tooltip>
@@ -352,7 +388,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
         {collapsed ? (
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>{FooterBtnNode}</TooltipTrigger>
-            <TooltipContent side="right" className="ml-1">
+            <TooltipContent side="right" className="ml-1 z-[100]">
               더미 데이터 생성
             </TooltipContent>
           </Tooltip>

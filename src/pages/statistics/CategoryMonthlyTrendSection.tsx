@@ -17,7 +17,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { cn, formatCurrency } from "@/lib/utils";
 import { useAppStore } from "@/stores/useAppStore";
 import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { TitleText } from "./components/TitleText";
@@ -33,21 +32,21 @@ export const CategoryMonthlyTrendSection = memo(
     const { formatMonth } = useDateFormatter();
 
     const [activeType, setActiveType] = useState<"income" | "expense">(
-      "expense",
+      "expense"
     );
     const [internalCategoryId, setInternalCategoryId] = useState<number | null>(
-      null,
+      null
     );
     const { categoryList: categories } = useAppStore();
 
     // 1. 카테고리 분리
     const expenseCategories = useMemo(
       () => categories.filter((c) => c.type === 1),
-      [categories],
+      [categories]
     );
     const incomeCategories = useMemo(
       () => categories.filter((c) => c.type === 0),
-      [categories],
+      [categories]
     );
     const currentCategories =
       activeType === "income" ? incomeCategories : expenseCategories;
@@ -90,7 +89,7 @@ export const CategoryMonthlyTrendSection = memo(
               item.year_month === monthObj.key &&
               (activeType === "income" ? item.type === 0 : item.type === 1) &&
               (internalCategoryId === null ||
-                item.category_id === internalCategoryId),
+                item.category_id === internalCategoryId)
           )
           .forEach((item) => {
             row[item.category_name] = item.total_amount;
@@ -306,5 +305,5 @@ export const CategoryMonthlyTrendSection = memo(
         </CardContent>
       </Card>
     );
-  },
+  }
 );

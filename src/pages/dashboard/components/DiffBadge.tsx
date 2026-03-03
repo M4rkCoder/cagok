@@ -7,20 +7,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { useTranslation, Trans } from "react-i18next";
 
 interface Props {
   metric: ComparisonMetric | null;
 }
 
 export function DiffBadge({ metric }: Props) {
-  // 금액 포맷터 (내부용)
-  const formatDiffAmount = (amount: number) => {
-    return new Intl.NumberFormat("ko-KR", {
-      style: "currency",
-      currency: "KRW",
-      maximumFractionDigits: 0,
-    }).format(Math.abs(amount));
-  };
+  const { t } = useTranslation();
+  const { formatAmount } = useCurrencyFormatter();
 
   // 데이터가 없거나 전월 데이터가 없는 경우
   if (!metric || metric.previous === 0) {
@@ -54,10 +50,7 @@ export function DiffBadge({ metric }: Props) {
               ) : (
                 <TrendingDown className="w-3 h-3 text-blue-500" />
               )}
-              <span>
-                {isIncrease ? "+" : "-"}
-                {Math.abs(metric.diff_rate).toFixed(1)}%
-              </span>
+              <span>{Math.abs(metric.diff_rate).toFixed(1)}%</span>
             </>
           )}
         </Badge>
@@ -70,13 +63,17 @@ export function DiffBadge({ metric }: Props) {
       >
         <p>
           {isSame ? (
-            "지난 달과 동일함"
+            t("dashboard.compare.same_as_last_month")
           ) : (
-            <>
-              지난 달보다{" "}
-              <span className="font-bold">{formatDiffAmount(metric.diff)}</span>{" "}
-              {isIncrease ? "증가" : "감소"}
-            </>
+            <Trans
+              i18nKey={
+                isIncrease
+                  ? "dashboard.compare.increased_by"
+                  : "dashboard.compare.decreased_by"
+              }
+              values={{ amount: formatAmount(Math.abs(metric.diff)) }}
+              components={[<span key="amount" className="font-bold" />]}
+            />
           )}
         </p>
       </TooltipContent>

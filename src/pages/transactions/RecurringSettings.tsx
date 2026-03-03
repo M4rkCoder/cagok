@@ -14,7 +14,7 @@ import { useHeaderStore } from "@/stores/useHeaderStore";
 import { useConfirmStore } from "@/stores/useConfirmStore";
 import RecurringFormSheet from "./RecurringFormSheet";
 import { cn, getFrequencyText, getDayText } from "@/lib/utils";
-import { CategoryIcon } from "@/components/CategoryIcon";
+import { CategoryIcon, FixIcon } from "@/components/CategoryIcon";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 import { RecurringTransaction, RecurringHistoryItem } from "@/types";
@@ -62,9 +62,7 @@ export default function RecurringSettings() {
 
   useEffect(() => {
     setHeader(
-      <div className="flex items-center gap-2">
-        {t("recurring.title")} <ProIcon />
-      </div>,
+      t("recurring.title"),
       <div className="flex items-center gap-2">
         <Button
           onClick={handleProcessAll}
@@ -93,7 +91,7 @@ export default function RecurringSettings() {
           <Plus className="w-4 h-4 mr-1.5" />
           {t("recurring.input")}
         </Button>
-      </div>,
+      </div>
     );
     return () => resetHeader();
   }, [isProcessing, t, setHeader, resetHeader]);
@@ -104,20 +102,20 @@ export default function RecurringSettings() {
 
   const categoryMap = useMemo(
     () => new Map(categories.map((c) => [c.id, c])),
-    [categories],
+    [categories]
   );
 
   const counts = useMemo(
     () => ({
       all: recurringList.length,
       income: recurringList.filter(
-        (item) => categoryMap.get(item.category_id!)?.type === 0,
+        (item) => categoryMap.get(item.category_id!)?.type === 0
       ).length,
       expense: recurringList.filter(
-        (item) => categoryMap.get(item.category_id!)?.type === 1,
+        (item) => categoryMap.get(item.category_id!)?.type === 1
       ).length,
     }),
-    [recurringList, categoryMap],
+    [recurringList, categoryMap]
   );
 
   const filteredList = useMemo(() => {
@@ -169,7 +167,7 @@ export default function RecurringSettings() {
               "relative px-6 py-3 text-sm font-bold transition-all flex items-center gap-2 outline-none",
               filterType === tab.id
                 ? "text-slate-900"
-                : "text-slate-400 hover:text-slate-600",
+                : "text-slate-400 hover:text-slate-600"
             )}
           >
             {tab.label}
@@ -179,7 +177,7 @@ export default function RecurringSettings() {
                 "ml-1 h-5 px-1.5 text-[10px] font-black border-none shadow-none",
                 filterType === tab.id
                   ? "bg-slate-100 text-slate-900"
-                  : "bg-transparent text-slate-300",
+                  : "bg-transparent text-slate-300"
               )}
             >
               {tab.count}
@@ -247,6 +245,7 @@ function RecurringCard({
   const { t, i18n } = useTranslation();
   const { dateFormat } = useSettingStore();
   const { formatAmount } = useCurrencyFormatter();
+
   // 오늘 날짜 확인 (YYYY-MM-DD 형식)
   const isToday = useMemo(() => {
     if (!recurring.last_created_date) return false;
@@ -273,7 +272,7 @@ function RecurringCard({
         "relative group border-slate-200 overflow-hidden transition-all duration-300 shadow-sm hover:shadow-md",
         recurring.is_active
           ? "hover:border-blue-300/50"
-          : "bg-slate-50/50 border-dashed opacity-80",
+          : "bg-slate-50/50 border-dashed opacity-80"
       )}
     >
       {/* 1. 상단 상태 바 (활성/비활성 배지) */}
@@ -284,20 +283,21 @@ function RecurringCard({
             ? category?.type === 0
               ? "bg-emerald-500"
               : "bg-blue-500"
-            : "bg-slate-300",
+            : "bg-slate-300"
         )}
       />
 
-      <CardContent className="p-5 pt-6">
+      {/* 🔹 패딩 축소 (p-5 pt-6 -> p-4) */}
+      <CardContent className="p-4">
         {/* 우측 상단 활성화 배지 */}
-        <div className="absolute top-3 right-3">
+        <div className="absolute top-2.5 right-2.5">
           <Badge
             variant="secondary"
             className={cn(
-              "text-[9px] font-black border-none px-2 py-0 transition-colors",
+              "text-xs font-black border-none px-2 py-0 transition-colors",
               recurring.is_active
                 ? "bg-emerald-100 text-emerald-700"
-                : "bg-slate-200 text-slate-500",
+                : "bg-slate-200 text-slate-500"
             )}
           >
             {recurring.is_active
@@ -306,59 +306,60 @@ function RecurringCard({
           </Badge>
         </div>
 
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex items-center gap-3">
+        {/* 🔹 마진 축소 mb-5 -> mb-3 */}
+        <div className="flex items-start justify-between mb-3 mt-1">
+          <div className="flex items-center gap-2.5">
             <div className="relative shrink-0">
+              {/* 🔹 아이콘 컨테이너 축소 w-12 h-12 -> w-10 h-10 */}
               <div
                 className={cn(
-                  "w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-inner transition-transform group-hover:scale-105",
-                  category?.type === 0 ? "bg-emerald-50" : "bg-blue-50",
+                  "w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-inner transition-transform group-hover:scale-105",
+                  category?.type === 0 ? "bg-emerald-50" : "bg-blue-50"
                 )}
               >
                 <CategoryIcon
                   icon={category?.icon || "❓"}
                   type={category?.type}
+                  size="sm"
                 />
               </div>
-              {recurring.is_fixed === 1 && (
-                <div className="absolute -bottom-1 -right-1 bg-black text-white rounded-full p-1 shadow-md ring-2 ring-white">
-                  <Pin className="w-2.5 h-2.5 fill-white rotate-45" />
-                </div>
-              )}
+              {recurring.is_fixed === 1 && <FixIcon />}
             </div>
 
             <div className="flex flex-col min-w-0">
-              <h3 className="font-black text-slate-800 truncate leading-tight text-base">
+              <h3 className="font-black text-slate-800 truncate leading-tight text-sm">
                 {recurring.description}
               </h3>
-              <span className="text-[11px] text-slate-400 font-bold uppercase tracking-tighter">
+              <span className="text-xs text-slate-400 font-bold uppercase tracking-tighter mt-0.5">
                 {category?.name || t("recurring.uncategorized")}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-end justify-between mb-5">
+        {/* 🔹 마진 축소 mb-5 -> mb-3 */}
+        <div className="flex items-end justify-between mb-3">
           <div className="flex flex-col">
-            <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1.5">
+            <span className="text-xs font-bold text-slate-400 uppercase leading-none mb-1">
               {t("recurring.card_labels.amount")}
             </span>
+            {/* 🔹 폰트 축소 text-xl -> text-lg */}
             <div
               className={cn(
-                "font-black text-xl leading-none",
-                category?.type === 0 ? "text-emerald-600" : "text-blue-600",
+                "font-black text-lg leading-none",
+                category?.type === 0 ? "text-emerald-600" : "text-blue-600"
               )}
             >
               {formatAmount(recurring.amount)}
             </div>
           </div>
           <div className="flex flex-col items-end">
-            <span className="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1.5">
+            <span className="text-xs font-bold text-slate-400 uppercase leading-none mb-1">
               {t("recurring.card_labels.frequency")}
             </span>
             <Badge
               variant="outline"
-              className="text-[10px] font-black py-0.5 px-2 bg-slate-50 border-slate-200 text-slate-600"
+              className="text-xs font-black py-0.5 px-1.5 bg-slate-50 border-slate-200 text-slate-600"
             >
               {getFrequencyText(recurring.frequency, t)}{" "}
               {getDayText(recurring, t)}
@@ -367,8 +368,9 @@ function RecurringCard({
         </div>
 
         {/* 2. 하단 인포 영역 (기록 강조) */}
-        <div className="grid grid-cols-1 gap-2 pt-4 border-t border-slate-100">
-          <div className="flex justify-between items-center text-[10px]">
+        {/* 🔹 여백 축소 pt-4 -> pt-3, gap-2 -> gap-1.5 */}
+        <div className="grid grid-cols-1 gap-1.5 pt-3 border-t border-slate-100">
+          <div className="flex justify-between items-center text-xs">
             <span className="text-slate-400 font-bold uppercase tracking-tighter">
               {t("recurring.card_labels.cycle")}
             </span>
@@ -382,14 +384,14 @@ function RecurringCard({
 
           <div
             className={cn(
-              "flex justify-between items-center text-[10px] p-1.5 rounded-lg transition-colors",
-              isToday ? "bg-blue-50/50 ring-1 ring-blue-100" : "bg-transparent",
+              "flex justify-between items-center text-xs p-1 rounded-md transition-colors",
+              isToday ? "bg-blue-50/50 ring-1 ring-blue-100" : "bg-transparent"
             )}
           >
             <span
               className={cn(
                 "font-bold uppercase tracking-tighter",
-                isToday ? "text-blue-600" : "text-slate-400",
+                isToday ? "text-blue-600" : "text-slate-400"
               )}
             >
               {t("recurring.card_labels.last_run")}
@@ -399,7 +401,7 @@ function RecurringCard({
                 <span
                   className={cn(
                     "font-black tabular-nums",
-                    isToday ? "text-blue-600 animate-pulse" : "text-slate-600",
+                    isToday ? "text-blue-600 animate-pulse" : "text-slate-600"
                   )}
                 >
                   {isToday
@@ -416,7 +418,8 @@ function RecurringCard({
         </div>
 
         {/* 3. Hover Actions Overlay */}
-        <div className="absolute inset-0 bg-white/95 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center gap-2.5 z-10">
+        {/* 🔹 액션 버튼 레이아웃 튜닝 (간격 좁히고 아이콘 버튼 크기 축소) */}
+        <div className="absolute inset-0 bg-white/95 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center gap-2 z-10">
           {[
             {
               icon: Edit,
@@ -452,13 +455,13 @@ function RecurringCard({
               variant="outline"
               size="icon"
               className={cn(
-                "h-10 w-10 rounded-xl shadow-sm bg-white transition-all hover:scale-110 active:scale-95",
-                action.color,
+                "h-8 w-8 rounded-lg shadow-sm bg-white transition-all hover:scale-110 active:scale-95", // h-10 w-10 -> h-8 w-8 축소
+                action.color
               )}
               onClick={action.onClick}
               title={action.title}
             >
-              <action.icon className="w-4 h-4" />
+              <action.icon className="w-3.5 h-3.5" />
             </Button>
           ))}
         </div>

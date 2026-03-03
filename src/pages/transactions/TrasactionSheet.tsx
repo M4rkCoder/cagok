@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useEffect } from "react"; // 🔹 useEffect 추가
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +32,55 @@ const TransactionSheet = ({
   } = useTransactionStore();
 
   const { isOpen: isConfirmOpen } = useConfirmStore();
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // 1. 현재 사용자가 입력창(input, textarea)에 타이핑 중인지 확인
+      const activeElement = document.activeElement;
+      const isTyping =
+        activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        (activeElement instanceof HTMLElement &&
+          activeElement.isContentEditable);
+      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+
+      // 2. 단축키 조건: (타이핑 중이 아닐 때 'n' 단일 키) OR (Ctrl + N)
+      const isSingleKeyN =
+        !isTyping &&
+        e.key.toLowerCase() === "n" &&
+        !isCtrlOrCmd &&
+        !e.altKey &&
+        !e.shiftKey;
+      const isComboKeyN = isCtrlOrCmd && e.key.toLowerCase() === "n";
+
+      if (isSingleKeyN || isComboKeyN) {
+        e.preventDefault();
+
+        if (isConfirmOpen) return;
+
+        // 🔹 3. 토글(Toggle) 로직: 열려있으면 닫고, 닫혀있으면 엽니다.
+        if (sheetOpen) {
+          handleSheetClose();
+          setDefaultCategoryId(null);
+        } else {
+          setDefaultCategoryId(null);
+          handleSheetClose(); // 혹시 남아있을 수 있는 수정 모드(editingTransaction) 초기화
+          setSheetOpen(true);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [
+    isConfirmOpen,
+    sheetOpen,
+    setSheetOpen,
+    setDefaultCategoryId,
+    handleSheetClose,
+  ]);
 
   const handleOpenChange = (open: boolean) => {
     if (isConfirmOpen) return;

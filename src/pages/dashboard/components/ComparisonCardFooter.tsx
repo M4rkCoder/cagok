@@ -45,21 +45,18 @@ export function ComparisonCardFooter({
 
   if (hasDailyAverage) {
     sentences.push(
-      <div
-        key="daily-avg"
-        className="flex items-center gap-1.5 whitespace-nowrap"
-      >
-        <Wallet className="w-3.5 h-3.5 text-slate-400" />
+      <div key="daily-avg" className="flex items-center whitespace-nowrap">
+        <Wallet className="w-3.5 h-3.5 gap-1 text-slate-400" />
         <Trans
           i18nKey="dashboard.comparison.daily_avg_spent"
           values={{ amount: formatAmount(dailyAverage!) }}
           components={{
             1: (
-              <span className="text-slate-900 font-extrabold bg-slate-100 px-1.5 py-0.5 rounded tracking-tighter mx-1" />
+              <span className="text-slate-900 font-extrabold bg-slate-100 px-1 py-0.5 rounded tracking-tighter mx-1" />
             ),
           }}
         />
-      </div>,
+      </div>
     );
   }
 
@@ -68,7 +65,7 @@ export function ComparisonCardFooter({
       isSame ? (
         <div
           key="same-month"
-          className="flex items-center gap-1.5 whitespace-nowrap"
+          className="flex items-center whitespace-nowrap gap-1"
         >
           <Info className="w-3.5 h-3.5 text-slate-400" />
           <span>{t("dashboard.comparison.same_as_last_month")}</span>
@@ -76,7 +73,7 @@ export function ComparisonCardFooter({
       ) : (
         <div
           key="month-comparison"
-          className="flex items-center gap-1.5 whitespace-nowrap"
+          className="flex items-center whitespace-nowrap gap-1"
         >
           {isIncrease ? (
             <TrendingUp className="w-3.5 h-3.5 text-red-400" />
@@ -95,14 +92,14 @@ export function ComparisonCardFooter({
                 <span
                   className={cn(
                     "bg-slate-50 px-1 py-0.5 rounded mx-1",
-                    isIncrease ? "text-green-500" : "text-red-500",
+                    isIncrease ? "text-green-500" : "text-red-500"
                   )}
                 />
               ),
             }}
           />
         </div>
-      ),
+      )
     );
   }
 
@@ -110,7 +107,7 @@ export function ComparisonCardFooter({
     sentences.push(
       <div
         key="expense-rate"
-        className="flex items-center gap-1.5 whitespace-nowrap"
+        className="flex items-center whitespace-nowrap gap-1"
       >
         <PieChart className="w-3.5 h-3.5 text-slate-400" />
         <Trans
@@ -120,7 +117,7 @@ export function ComparisonCardFooter({
             1: <span className={expenseRateColor()} />,
           }}
         />
-      </div>,
+      </div>
     );
   }
 
@@ -131,7 +128,7 @@ export function ComparisonCardFooter({
 
     const interval = setInterval(() => {
       setCurrentSentenceIndex(
-        (prevIndex) => (prevIndex + 1) % sentences.length,
+        (prevIndex) => (prevIndex + 1) % sentences.length
       );
     }, 3500); // Roll every 3.5 seconds
 
@@ -149,7 +146,7 @@ export function ComparisonCardFooter({
 
   return (
     <CardFooter
-      className="pt-0 pb-0 text-sm min-h-[40px] text-muted-foreground cursor-pointer relative overflow-hidden"
+      className="pt-0 pb-0 text-[12px] md:text-sm min-h-[40px] text-muted-foreground cursor-pointer relative overflow-hidden px-1"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -158,7 +155,7 @@ export function ComparisonCardFooter({
           {t("dashboard.comparison.no_data")}
         </div>
       ) : (
-        <div className="relative w-full h-full flex items-center justify-start">
+        <div className="relative w-full h-10 flex items-center justify-start">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={currentSentenceIndex}
@@ -167,9 +164,11 @@ export function ComparisonCardFooter({
               animate="center"
               exit="exit"
               transition={{ duration: 0.5 }}
-              className="absolute w-full flex items-center"
+              className="absolute inset-0 flex items-center w-full"
             >
-              {sentences[currentSentenceIndex]}
+              <div className="flex items-center w-full overflow-visible">
+                {sentences[currentSentenceIndex]}
+              </div>
             </motion.div>
           </AnimatePresence>
         </div>

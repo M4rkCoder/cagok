@@ -5,8 +5,8 @@
     "all": "전체",
     "in": "수입",
     "out": "지출",
-    "variable": "변동",
-    "fixed": "고정",
+    "variable": "변동비",
+    "fixed": "고정비",
     "fixed_expense": "고정비",
     "net_income": "순수입",
     "save": "저장",
@@ -39,7 +39,8 @@
     "category": "항목",
     "no_results": "결과가 없습니다.",
     "no_results_found": "검색 결과 없음",
-    "actions": "액션"
+    "actions": "액션",
+    "day_short": "일"
   },
   "menu": {
     "dashboard": "한 눈에 보기",
@@ -174,7 +175,7 @@
     }
   },
   "statistics": {
-    "title": "통계 및 분석",
+    "title": "통계",
     "period": "기간",
     "view_modes": {
       "this_month": "이번 달 기준",
@@ -375,6 +376,11 @@
       "spent_less_than_last_month": "전월 대비 <1>{{amount}}</1> 줄었어요.",
       "expense_ratio_spent": "수입의 <1>{{ratio}}%</1>를 썼어요.",
       "no_data": "데이터가 없습니다."
+    },
+    "compare": {
+      "same_as_last_month": "지난 달과 동일함",
+      "increased_by": "지난 달보다 <1>{{amount}}</1> 증가",
+      "decreased_by": "지난 달보다 <1>{{amount}}</1> 감소"
     }
   },
   "transactions_view": {
@@ -426,9 +432,9 @@
     "select_category": "항목 선택",
     "no_category": "항목 없음",
     "title": "가계부",
-    "new": "가계부 입력",
+    "new": "입력",
     "edit": "가계부 수정",
-    "create_new": "새 가계부 생성",
+    "create_new": "가계부 입력",
     "no_found": "가계부 내역이 없습니다."
   },
   "category": {

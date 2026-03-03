@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TitleBar from "@/TitleBar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -8,11 +8,50 @@ import { useHeaderStore } from "@/stores/useHeaderStore";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { useConfirmStore } from "@/stores/useConfirmStore";
 import { Separator } from "@/components/ui/separator";
+import TransactionSheet from "./transactions/TrasactionSheet";
+import { useNavigate } from "react-router-dom";
 
 function Home({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const { title, actions } = useHeaderStore();
   const { isOpen, options, closeConfirm } = useConfirmStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+      const isTyping =
+        activeElement instanceof HTMLInputElement ||
+        activeElement instanceof HTMLTextAreaElement ||
+        (activeElement instanceof HTMLElement &&
+          activeElement.isContentEditable);
+
+      const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+
+      // 2. 단축키 조건: (타이핑 중이 아닐 때 'e' 단일 키) OR (Ctrl + E)
+      const isSingleKeyE =
+        !isTyping &&
+        e.key.toLowerCase() === "e" &&
+        !isCtrlOrCmd &&
+        !e.altKey &&
+        !e.shiftKey;
+      const isComboKeyE = isCtrlOrCmd && e.key.toLowerCase() === "e";
+
+      if (isSingleKeyE || isComboKeyE) {
+        e.preventDefault(); // 브라우저 기본 동작(검색창 포커스 등) 방지
+
+        // 다이얼로그가 열려있을 때는 이동하지 않게 하려면 아래 주석 해제
+        // if (isOpen) return;
+
+        navigate("/transactions/quickentry");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [navigate]); // isOpen을 의존성 배열에 추가할 수 있습니다.
 
   return (
     <SidebarProvider>
@@ -68,6 +107,9 @@ function Home({ children }: { children: React.ReactNode }) {
               onConfirm={options.onConfirm}
             />
           )}
+          <TransactionSheet>
+            <button className="hidden"></button>
+          </TransactionSheet>
         </div>
       </div>
     </SidebarProvider>

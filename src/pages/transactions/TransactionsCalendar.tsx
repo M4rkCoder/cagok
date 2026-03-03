@@ -46,13 +46,20 @@ export default function TransactionsCalendar() {
 
   const { confirm } = useConfirmStore();
   const { formatAmount } = useCurrencyFormatter();
-  const { formatYear, formatMonth, formatFullDate, getDateParts } = useDateFormatter();
+  const { formatYear, formatMonth, formatFullDate, getDateParts } =
+    useDateFormatter();
   const filterRef = useRef<HTMLDivElement>(null);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [isFilterVisible, setIsFilterVisible] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsMounted(true), 200);
+    return () => clearTimeout(timer);
+  }, []);
 
   // 1. 필터 활성화 여부 계산
   const isFilterActive = useMemo(() => {
@@ -192,30 +199,43 @@ export default function TransactionsCalendar() {
 
       {/* 2. 플로팅 실행 버튼 */}
       <div className="fixed bottom-8 right-8 z-[50]">
-        <Button
-          onClick={() => setIsFilterVisible(!isFilterVisible)}
-          className={cn(
-            "filter-toggle-button w-14 h-14 rounded-full shadow-2xl transition-all duration-300 relative",
-            isFilterVisible ? "bg-slate-800" : "bg-blue-600 hover:bg-blue-700"
-          )}
-        >
-          {isFilterVisible ? (
-            <X className="w-6 h-6 text-white" />
-          ) : (
-            <Filter className="w-6 h-6 text-white" />
-          )}
-
-          {/* 필터 활성화 시 배지 표시 */}
-          {isFilterActive && !isFilterVisible && (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 border-2 border-white dark:border-slate-950 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
+        <AnimatePresence>
+          {isMounted && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="fixed bottom-8 right-8 z-[50]"
             >
-              !
-            </motion.span>
+              <Button
+                onClick={() => setIsFilterVisible(!isFilterVisible)}
+                className={cn(
+                  "filter-toggle-button w-14 h-14 rounded-full shadow-2xl transition-all duration-300 relative",
+                  isFilterVisible
+                    ? "bg-slate-800"
+                    : "bg-blue-600 hover:bg-blue-700"
+                )}
+              >
+                {isFilterVisible ? (
+                  <X className="w-6 h-6 text-white" />
+                ) : (
+                  <Filter className="w-6 h-6 text-white" />
+                )}
+
+                {/* 필터 활성화 시 배지 표시 */}
+                {isFilterActive && !isFilterVisible && (
+                  <motion.span
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 border-2 border-white dark:border-slate-950 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
+                  >
+                    !
+                  </motion.span>
+                )}
+              </Button>
+            </motion.div>
           )}
-        </Button>
+        </AnimatePresence>
       </div>
 
       <div className="flex-1 w-full max-w-full mx-auto flex flex-col gap-2 pb-4 h-full mt-3">
@@ -234,20 +254,26 @@ export default function TransactionsCalendar() {
               <div className="flex gap-4 text-sm">
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-blue-500" />
-                  <span className="text-slate-500 font-medium">{t("common.expense")}</span>
+                  <span className="text-slate-500 font-medium">
+                    {t("common.expense")}
+                  </span>
                   <span className="font-bold text-blue-600">
                     {formatAmount(monthlySummary.expense)}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-slate-500 font-medium">{t("common.income")}</span>
+                  <span className="text-slate-500 font-medium">
+                    {t("common.income")}
+                  </span>
                   <span className="font-bold text-emerald-600">
                     {formatAmount(monthlySummary.income)}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-slate-500 font-medium">{t("common.net_income")}</span>
+                  <span className="text-slate-500 font-medium">
+                    {t("common.net_income")}
+                  </span>
                   <span
                     className={cn(
                       "font-bold",
@@ -361,7 +387,12 @@ export default function TransactionsCalendar() {
 
       <TransactionDetailDialog
         isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) {
+            setSelectedDate(undefined);
+          }
+        }}
         selectedDate={selectedDate}
         transactions={dateTransactions}
         summary={
@@ -398,7 +429,9 @@ function TransactionDetailDialog({
   const { t } = useTranslation();
   const { formatAmount } = useCurrencyFormatter();
   const { formatFullDate, getDateParts } = useDateFormatter();
-  const dateParts = selectedDate ? getDateParts(selectedDate.toISOString()) : null;
+  const dateParts = selectedDate
+    ? getDateParts(selectedDate.toISOString())
+    : null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -420,11 +453,14 @@ function TransactionDetailDialog({
                     <div>
                       <DialogTitle className="text-xl font-black text-slate-800 dark:text-slate-100">
                         {selectedDate && (
-                          <span>{dateParts?.month} {dateParts?.day}</span>
+                          <span>
+                            {dateParts?.month} {dateParts?.day}
+                          </span>
                         )}
                       </DialogTitle>
                       <p className="text-xs text-slate-400 font-medium mt-0.5">
-                        {dateParts?.weekday} • {t("common.count", { count: transactions.length })}
+                        {dateParts?.weekday} •{" "}
+                        {t("common.count", { count: transactions.length })}
                       </p>
                     </div>
                   </div>
