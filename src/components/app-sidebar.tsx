@@ -104,7 +104,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
         runSeed();
       }}
     >
-      {!collapsed ? "더미 데이터 생성" : <Pencil className="h-4 w-4" />}
+      {!collapsed ? t("menu.generate_dummy") : <Pencil className="h-4 w-4" />}
     </Button>
   );
 
@@ -113,11 +113,14 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
       asChild
       isActive={isActive("/about")}
       className={cn(
-        "transition-all",
+        "transition-all cursor-pointer",
         collapsed ? "justify-center p-0 h-10" : "px-2"
       )}
     >
-      <Link to="/about" className="flex items-center gap-2">
+      <Link
+        to="/about"
+        className="flex items-center gap-2 text-slate-600 hover:text-slate-900"
+      >
         <Info className={cn("shrink-0", collapsed ? "h-6 w-6" : "h-4 w-4")} />
         {!collapsed && (
           <span className="text-xs font-medium">{t("menu.about")}</span>
@@ -137,7 +140,9 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
         <Keyboard
           className={cn("shrink-0", collapsed ? "h-6 w-6" : "h-4 w-4")}
         />
-        {!collapsed && <span className="text-xs font-medium">단축키 안내</span>}
+        {!collapsed && (
+          <span className="text-xs font-medium">{t("menu.shortcut_guide")}</span>
+        )}
       </div>
     </SidebarMenuButton>
   );
@@ -361,7 +366,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="right" className="ml-1 z-[100]">
-                  단축키 안내
+                  {t("menu.shortcut_guide")}
                 </TooltipContent>
               </Tooltip>
             ) : (
@@ -374,7 +379,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>{AboutBtnNode}</TooltipTrigger>
                 <TooltipContent side="right" className="ml-1 z-[100]">
-                  About C'agok
+                  {t("menu.about")}
                 </TooltipContent>
               </Tooltip>
             ) : (
@@ -389,7 +394,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>{FooterBtnNode}</TooltipTrigger>
             <TooltipContent side="right" className="ml-1 z-[100]">
-              더미 데이터 생성
+              {t("menu.generate_dummy")}
             </TooltipContent>
           </Tooltip>
         ) : (

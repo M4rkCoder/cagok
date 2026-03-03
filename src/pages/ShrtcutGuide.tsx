@@ -44,11 +44,11 @@ export function ShortcutGuide({ children }: ShortcutGuideProps) {
       title: t("shortcut.global_group"),
       shortcuts: [
         {
-          keys: ["N", t("shortcut.or"), "Ctrl", "+", "N"],
+          keys: ["E", t("shortcut.or"), "Ctrl", "+", "E"],
           description: t("shortcut.new_transaction"),
         },
         {
-          keys: ["E", t("shortcut.or"), "Ctrl", "+", "E"],
+          keys: ["Q", t("shortcut.or"), "Ctrl", "+", "Q"],
           description: t("shortcut.quick_bulk_entry"),
         },
         { keys: ["?"], description: t("shortcut.view_guide") },
