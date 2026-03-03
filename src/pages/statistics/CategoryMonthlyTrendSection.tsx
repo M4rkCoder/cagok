@@ -15,7 +15,6 @@ import {
   ChartContainer,
   ChartLegend,
   ChartTooltip,
-  ChartTooltipContent,
 } from "@/components/ui/chart";
 import { useAppStore } from "@/stores/useAppStore";
 import { useStatisticsStore } from "@/stores/useStatisticsStore";
@@ -23,6 +22,7 @@ import { TitleText } from "./components/TitleText";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 import { useTranslation } from "react-i18next";
 import { useDateFormatter } from "@/hooks/useDateFormatter";
+import { NoDataOverlay } from "./components/NoDataOverlay";
 
 export const CategoryMonthlyTrendSection = memo(
   function CategoryMonthlyTrendSection() {
@@ -112,6 +112,11 @@ export const CategoryMonthlyTrendSection = memo(
       formatMonth,
     ]);
 
+    const isEmpty = chartData.every(d => {
+      const keys = Object.keys(d).filter(k => k !== 'month');
+      return keys.length === 0 || keys.every(k => d[k] === 0);
+    });
+
     return (
       <Card className="flex flex-col border-slate-200 shadow-none">
         <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -171,137 +176,188 @@ export const CategoryMonthlyTrendSection = memo(
           </div>
         </CardHeader>
         <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-          <ChartContainer
-            config={chartConfig}
-            className="aspect-auto h-[350px] w-full"
-          >
-            <AreaChart data={chartData} margin={{ left: 12, right: 12 }}>
-              <CartesianGrid
-                vertical={false}
-                horizontal
-                strokeDasharray="3 3"
-                stroke="#000"
-                opacity={0.1}
-              />
-              <XAxis
-                dataKey="month"
-                tickLine={false}
-                axisLine={true}
-                tickMargin={8}
-                fontSize={12}
-                tick={{ fill: "#94a3b8", fontWeight: 600 }}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                tickFormatter={(v) =>
-                  new Intl.NumberFormat(t("lang"), {
-                    notation: "compact",
-                    compactDisplay: "short",
-                  }).format(v)
-                }
-                tick={{ fill: "#94a3b8", fontWeight: 600 }}
-                width={60}
-                fontSize={12}
-              />
-              <ChartTooltip
-                cursor={false}
-                content={({ active, payload, label }) => {
-                  if (!active || !payload) return null;
+          <NoDataOverlay isVisible={isEmpty}>
+            <ChartContainer
+              config={chartConfig}
+              className="aspect-auto h-[350px] w-full"
+            >
+              <AreaChart data={chartData} margin={{ left: 12, right: 12 }}>
+                <CartesianGrid
+                  vertical={false}
+                  horizontal
+                  strokeDasharray="3 3"
+                  stroke="#000"
+                  opacity={0.1}
+                />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  axisLine={true}
+                  tickMargin={8}
+                  fontSize={12}
+                  tick={{ fill: "#94a3b8", fontWeight: 600 }}
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  tickFormatter={(v) =>
+                    new Intl.NumberFormat(t("lang"), {
+                      notation: "compact",
+                      compactDisplay: "short",
+                    }).format(v)
+                  }
+                  tick={{ fill: "#94a3b8", fontWeight: 600 }}
+                  width={60}
+                  fontSize={12}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload) return null;
 
-                  // 값이 있는 데이터만 필터링 및 금액 큰 순서로 정렬
-                  const validPayload = [...payload]
-                    .filter((item) => Number(item.value) > 0)
-                    .sort((a, b) => Number(b.value) - Number(a.value));
+                    // 값이 있는 데이터만 필터링 및 금액 큰 순서로 정렬
+                    const validPayload = [...payload]
+                      .filter((item) => Number(item.value) > 0)
+                      .sort((a, b) => Number(b.value) - Number(a.value));
 
-                  const visibleItems = validPayload.slice(0, 10);
-                  const extraCount = validPayload.length - 10;
+                    const visibleItems = validPayload.slice(0, 10);
+                    const extraCount = validPayload.length - 10;
 
-                  return (
-                    <div className="rounded-lg border bg-white p-2 shadow-md w-[220px]">
-                      <div className="mb-2 border-b pb-1 text-xs font-bold text-slate-500">
-                        {label} {t("statistics.summary.details")}
-                      </div>
-                      <div className="flex flex-col gap-1.5">
-                        {visibleItems.map((item, index) => (
-                          <div
-                            key={`tooltip-${index}`}
-                            className="flex items-center justify-between gap-2 text-[11px]"
-                          >
-                            <div className="flex items-center gap-1.5 overflow-hidden">
-                              <div
-                                className="h-2 w-2 shrink-0 rounded-full"
-                                style={{ backgroundColor: item.color }}
-                              />
-                              <span className="truncate text-slate-600">
-                                {chartConfig[item.name as string]?.label ||
-                                  item.name}
+                    return (
+                      <div className="rounded-lg border bg-white p-2 shadow-md w-[220px]">
+                        <div className="mb-2 border-b pb-1 text-xs font-bold text-slate-500">
+                          {label} {t("statistics.summary.details")}
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          {visibleItems.map((item, index) => (
+                            <div
+                              key={`tooltip-${index}`}
+                              className="flex items-center justify-between gap-2 text-[11px]"
+                            >
+                              <div className="flex items-center gap-1.5 overflow-hidden">
+                                <div
+                                  className="h-2 w-2 shrink-0 rounded-full"
+                                  style={{ backgroundColor: item.color }}
+                                />
+                                <span className="truncate text-slate-600">
+                                  {chartConfig[item.name as string]?.label ||
+                                    item.name}
+                                </span>
+                              </div>
+                              <span className="font-bold tabular-nums text-slate-900">
+                                {formatAmount(Number(item.value))}
                               </span>
                             </div>
-                            <span className="font-bold tabular-nums text-slate-900">
-                              {formatAmount(Number(item.value))}
+                          ))}
+                          {extraCount > 0 && (
+                            <div className="mt-1 border-t pt-1 text-center text-[10px] italic text-slate-400">
+                              {t("common.more_items", { count: extraCount })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload) return null;
+
+                    // 값이 있는 데이터만 필터링 및 금액 큰 순서로 정렬
+                    const validPayload = [...payload]
+                      .filter((item) => Number(item.value) > 0)
+                      .sort((a, b) => Number(b.value) - Number(a.value));
+
+                    const visibleItems = validPayload.slice(0, 10);
+                    const extraCount = validPayload.length - 10;
+
+                    return (
+                      <div className="rounded-lg border bg-white p-2 shadow-md w-[220px]">
+                        <div className="mb-2 border-b pb-1 text-xs font-bold text-slate-500">
+                          {label} {t("statistics.summary.details")}
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          {visibleItems.map((item, index) => (
+                            <div
+                              key={`tooltip-${index}`}
+                              className="flex items-center justify-between gap-2 text-[11px]"
+                            >
+                              <div className="flex items-center gap-1.5 overflow-hidden">
+                                <div
+                                  className="h-2 w-2 shrink-0 rounded-full"
+                                  style={{ backgroundColor: item.color }}
+                                />
+                                <span className="truncate text-slate-600">
+                                  {chartConfig[item.name as string]?.label ||
+                                    item.name}
+                                </span>
+                              </div>
+                              <span className="font-bold tabular-nums text-slate-900">
+                                {formatAmount(Number(item.value))}
+                              </span>
+                            </div>
+                          ))}
+                          {extraCount > 0 && (
+                            <div className="mt-1 border-t pt-1 text-center text-[10px] italic text-slate-400">
+                              {t("common.more_items", { count: extraCount })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
+                <ChartLegend
+                  content={() => {
+                    const visibleNames = displayCategoryNames.slice(0, 10);
+                    const hasMore = displayCategoryNames.length > 10;
+                    return (
+                      <div className="flex flex-wrap justify-center gap-4 pt-4">
+                        {visibleNames.map((name) => (
+                          <div
+                            key={name}
+                            className="flex items-center gap-1.5 text-xs font-medium"
+                          >
+                            <div
+                              className="h-3 w-3 rounded-full"
+                              style={{
+                                backgroundColor: chartConfig[name]?.color,
+                              }}
+                            />
+                            <span className="text-xs font-bold text-slate-500">
+                              {chartConfig[name]?.label || name}
                             </span>
                           </div>
                         ))}
-                        {extraCount > 0 && (
-                          <div className="mt-1 border-t pt-1 text-center text-[10px] italic text-slate-400">
-                            {t("common.more_items", { count: extraCount })}
+                        {hasMore && (
+                          <div className="text-xs font-bold text-muted-foreground/60 italic">
+                            {t("common.more_items_simple", {
+                              count: displayCategoryNames.length - 10,
+                            })}
                           </div>
                         )}
                       </div>
-                    </div>
-                  );
-                }}
-              />
-              <ChartLegend
-                content={() => {
-                  const visibleNames = displayCategoryNames.slice(0, 10);
-                  const hasMore = displayCategoryNames.length > 10;
-                  return (
-                    <div className="flex flex-wrap justify-center gap-4 pt-4">
-                      {visibleNames.map((name) => (
-                        <div
-                          key={name}
-                          className="flex items-center gap-1.5 text-xs font-medium"
-                        >
-                          <div
-                            className="h-3 w-3 rounded-full"
-                            style={{
-                              backgroundColor: chartConfig[name]?.color,
-                            }}
-                          />
-                          <span className="text-xs font-bold text-slate-500">
-                            {chartConfig[name]?.label || name}
-                          </span>
-                        </div>
-                      ))}
-                      {hasMore && (
-                        <div className="text-xs font-bold text-muted-foreground/60 italic">
-                          {t("common.more_items_simple", {
-                            count: displayCategoryNames.length - 10,
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                }}
-              />
-              {displayCategoryNames.map((name) => (
-                <Area
-                  key={name}
-                  type="monotone"
-                  dataKey={name}
-                  stackId="1"
-                  stroke={chartConfig[name]?.color}
-                  strokeWidth={1}
-                  fill={chartConfig[name]?.color}
-                  fillOpacity={0.4}
-                  connectNulls
+                    );
+                  }}
                 />
-              ))}
-            </AreaChart>
-          </ChartContainer>
+                {displayCategoryNames.map((name) => (
+                  <Area
+                    key={name}
+                    type="monotone"
+                    dataKey={name}
+                    stackId="1"
+                    stroke={chartConfig[name]?.color}
+                    strokeWidth={1}
+                    fill={chartConfig[name]?.color}
+                    fillOpacity={0.4}
+                    connectNulls
+                  />
+                ))}
+              </AreaChart>
+            </ChartContainer>
+          </NoDataOverlay>
         </CardContent>
       </Card>
     );

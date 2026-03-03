@@ -36,6 +36,7 @@ import { TitleText } from "./components/TitleText";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
 import { useDateFormatter } from "@/hooks/useDateFormatter";
+import { NoDataOverlay } from "./components/NoDataOverlay";
 
 interface ProcessedData {
   dayName: string;
@@ -208,8 +209,7 @@ export const DayOfWeekChart: React.FC = () => {
     return donutData.find((d) => d.id === selectedCategory);
   }, [donutData, selectedCategory]);
 
-  const activeTabClass =
-    "data-[state=active]:bg-slate-900 data-[state=active]:text-white shadow-sm";
+  const isEmpty = !data || (data.totals.length === 0 && data.categories.length === 0) || totalMetricValue === 0;
 
   return (
     <Card
@@ -323,11 +323,7 @@ export const DayOfWeekChart: React.FC = () => {
       </CardHeader>
 
       <CardContent className="py-4">
-        {loading ? (
-          <div className="h-[300px] flex items-center justify-center">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-slate-800" />
-          </div>
-        ) : data ? (
+        <NoDataOverlay isVisible={isEmpty}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 h-[300px]">
               <ChartContainer config={chartConfig} className="h-full w-full">
@@ -368,6 +364,7 @@ export const DayOfWeekChart: React.FC = () => {
                       <ChartTooltipContent
                         className="w-[200px]"
                         formatter={(value, name, item) => {
+                          if (Number(value) === 0) return null;
                           if (selectedCategory === "all" && name !== "total")
                             return null;
                           const config =
@@ -415,7 +412,7 @@ export const DayOfWeekChart: React.FC = () => {
                     }
                     fill={
                       selectedCategory === "all"
-                        ? chartConfig["total"].color
+                        ? chartConfig["total"]?.color
                         : chartConfig[`cat_${selectedCategory}`]?.color
                     }
                     radius={[4, 4, 0, 0]}
@@ -467,6 +464,12 @@ export const DayOfWeekChart: React.FC = () => {
                     <Label
                       content={({ viewBox }) => {
                         if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                          const displayValue = selectedDonutItem
+                            ? metricType === "total"
+                              ? selectedDonutItem.value
+                              : selectedDonutItem.txAvg
+                            : totalMetricValue;
+
                           return (
                             <text
                               x={viewBox.cx}
@@ -490,13 +493,7 @@ export const DayOfWeekChart: React.FC = () => {
                                 y={(viewBox.cy || 0) + 12}
                                 className="fill-foreground text-sm font-bold"
                               >
-                                {formatAmount(
-                                  selectedDonutItem
-                                    ? metricType === "total"
-                                      ? selectedDonutItem.value
-                                      : selectedDonutItem.txAvg
-                                    : totalMetricValue,
-                                )}
+                                {displayValue !== 0 ? formatAmount(displayValue) : ""}
                               </tspan>
                               <tspan
                                 x={viewBox.cx}
@@ -520,11 +517,7 @@ export const DayOfWeekChart: React.FC = () => {
               </ChartContainer>
             </div>
           </div>
-        ) : (
-          <div className="h-[300px] flex items-center justify-center text-muted-foreground text-sm">
-            {t("statistics.summary.no_data")}
-          </div>
-        )}
+        </NoDataOverlay>
       </CardContent>
     </Card>
   );

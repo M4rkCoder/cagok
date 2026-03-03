@@ -20,6 +20,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { NoDataOverlay } from "./components/NoDataOverlay";
 
 // 색상 체계 업데이트
 const getChartConfig = (t: any) => ({
@@ -120,6 +121,8 @@ export function YearlyTrendChart() {
   const allNetIncomes = data.map((item) => item.netIncome);
   const symmetricMax = Math.max(...allNetIncomes.map(Math.abs), 10000);
 
+  const isEmpty = data.length === 0 || data.every(d => d.totalIncome === 0 && d.totalExpense === 0);
+
   return (
     <Card className="border-slate-200 shadow-none">
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -143,7 +146,7 @@ export function YearlyTrendChart() {
       </CardHeader>
 
       <CardContent>
-        {data.length > 0 ? (
+        <NoDataOverlay isVisible={isEmpty}>
           <ChartContainer config={chartConfig} className="h-[400px] w-full">
             <ComposedChart
               data={data}
@@ -270,6 +273,8 @@ export function YearlyTrendChart() {
                             (viewMode === "expense" &&
                               (item.id === "variableExpense" ||
                                 item.id === "fixedExpense"));
+
+                          if (item.value === 0) return null;
 
                           return (
                             <div
@@ -417,11 +422,7 @@ export function YearlyTrendChart() {
               )}
             </ComposedChart>
           </ChartContainer>
-        ) : (
-          <div className="flex items-center justify-center h-[400px] text-muted-foreground font-medium">
-            {t("statistics.summary.no_data")}
-          </div>
-        )}
+        </NoDataOverlay>
       </CardContent>
     </Card>
   );

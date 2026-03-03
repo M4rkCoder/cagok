@@ -8,6 +8,7 @@ import { useStatisticsStore } from "@/stores/useStatisticsStore";
 import { TitleText } from "./components/TitleText";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { NoDataOverlay } from "./components/NoDataOverlay";
 
 interface TreemapData {
   name: string;
@@ -197,7 +198,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
                     <span className="font-normal opacity-80">({count}건)</span>
                   </div>
                   <div className="text-[11px] font-extrabold mt-0.5">
-                    {formatAmount(value)}
+                    {value !== 0 ? formatAmount(value) : ""}
                   </div>
                   {average > 0 && (
                     <div className="text-[9px] opacity-70 italic font-medium">
@@ -240,7 +241,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
             <div className="flex justify-between items-center">
               <span className="text-slate-400 font-semibold">{t("statistics.summary.yearly_total", { label: "" })}</span>
               <span className="font-black text-slate-900">
-                {formatAmount(data.value)}
+                {data.value !== 0 ? formatAmount(data.value) : ""}
               </span>
             </div>
             <div className="flex justify-between items-center">
@@ -267,6 +268,8 @@ export const CategoryYearlyTreemap: React.FC = () => {
     }
     return null;
   };
+
+  const isEmpty = treemapData.length === 0 || treemapData.every(d => d.value === 0);
 
   return (
     <Card
@@ -302,7 +305,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
       </CardHeader>
 
       <CardContent className="h-[470px] pt-2">
-        {treemapData.length > 0 ? (
+        <NoDataOverlay isVisible={isEmpty} className="h-full">
           <ResponsiveContainer width="100%" height="100%">
             <Treemap
               data={treemapData}
@@ -315,13 +318,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
               <Tooltip content={<CustomTooltip />} />
             </Treemap>
           </ResponsiveContainer>
-        ) : (
-          <div className="flex h-full items-center justify-center bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-            <span className="text-slate-400 font-medium">
-              {t("statistics.summary.no_data")}
-            </span>
-          </div>
-        )}
+        </NoDataOverlay>
       </CardContent>
     </Card>
   );

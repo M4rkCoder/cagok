@@ -131,7 +131,6 @@ export const useStatisticsStore = create<StatisticsState>((set, get) => ({
   loadYearlyStatistics: async () => {
     const { baseMonth } = get();
     try {
-      set({ loading: true });
       const yearlyData = await invoke<{
         financialSummaryStats: FinancialSummaryStats;
         monthlyFinancialSummary: MonthlyFinancialSummaryItem[];
@@ -144,15 +143,12 @@ export const useStatisticsStore = create<StatisticsState>((set, get) => ({
       });
     } catch (error) {
       console.error("Failed to load yearly statistics:", error);
-    } finally {
-      set({ loading: false });
     }
   },
 
   loadCategoryTrend: async () => {
     const { baseMonth } = get();
     try {
-      set({ loading: true });
       const amounts = await invoke<CategoryMonthlyAmount[]>(
         "get_monthly_category_amounts_command",
         {
@@ -163,34 +159,34 @@ export const useStatisticsStore = create<StatisticsState>((set, get) => ({
       set({ categoryMonthlyAmounts: amounts ?? [] });
     } catch (error) {
       console.error("Failed to load category trend amounts:", error);
-    } finally {
-      set({ loading: false });
     }
   },
 
   loadBadgeStatistics: async () => {
     const { baseMonth } = get();
     try {
-      set({ loading: true });
       const stats = await invoke<BadgeStats>("get_badge_statistics_command", {
         baseMonth,
       });
       set({ badgeStats: stats });
     } catch (error) {
       console.error("Failed to load badge statistics:", error);
-    } finally {
-      set({ loading: false });
     }
   },
 
   loadAllStatistics: async () => {
     const { loadYearlyStatistics, loadCategoryTrend, loadBadgeStatistics } =
       get();
-    await Promise.all([
-      loadYearlyStatistics(),
-      loadCategoryTrend(),
-      loadBadgeStatistics(),
-    ]);
+    try {
+      set({ loading: true });
+      await Promise.all([
+        loadYearlyStatistics(),
+        loadCategoryTrend(),
+        loadBadgeStatistics(),
+      ]);
+    } finally {
+      set({ loading: false });
+    }
   },
 
   resetStatistics: () =>
