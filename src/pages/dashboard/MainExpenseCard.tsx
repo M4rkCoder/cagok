@@ -13,7 +13,7 @@ import AnimatedAmount from "@/components/AnimatedAmount";
 import { useDateFormatter } from "@/hooks/useDateFormatter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Kbd } from "@/components/ui/kbd";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { useNavigate } from "react-router-dom"; // 🔹 라우팅을 위해 추가
 import {
   Tooltip,
@@ -77,18 +77,20 @@ export function MainExpenseCard() {
               <DiffBadge metric={comparison} />
             </div>
             <div className="text-5xl font-extrabold tracking-tighter text-slate-900">
-              <AnimatedAmount
-                value={overview.total_expense}
-                formatter={formatAmount}
-                duration={1.2}
-              />
+              {overview && overview.total_expense !== 0 && (
+                <AnimatedAmount
+                  value={overview.total_expense}
+                  formatter={formatAmount}
+                  duration={1.2}
+                />
+              )}
             </div>
           </div>
           <div className="mt-3 pb-5">
             <ComparisonCardFooter
               metric={comparison}
               expenseRate={expenseRate}
-              dailyAverage={overview.daily_average}
+              dailyAverage={overview?.daily_average}
             />
           </div>
         </div>
@@ -108,7 +110,7 @@ export function MainExpenseCard() {
                         className={cn(
                           "flex items-center justify-between py-1 px-2 transition-all duration-200 ease-out",
                           "hover:bg-white hover:scale-[1.03] hover:shadow-sm hover:z-10 hover:rounded-md",
-                          "group cursor-default"
+                          "group cursor-default",
                         )}
                       >
                         <div className="flex items-center gap-3 min-w-0">
@@ -130,8 +132,8 @@ export function MainExpenseCard() {
                       </div>
                     ))
                   ) : (
-                    <div className="py-6 text-center text-slate-300 text-[10px] font-medium italic">
-                      {t("transaction.no_found")}
+                    <div className="flex h-32 items-center justify-center text-slate-400 text-sm font-medium italic">
+                      {t("dashboard.comparison.no_data")}
                     </div>
                   )}
                 </div>
@@ -154,7 +156,7 @@ export function MainExpenseCard() {
                           <TransactionSheet>
                             <Button
                               variant="default"
-                              className="w-full flex items-center justify-center gap-2 shadow-sm bg-blue-600 hover:bg-blue-700 h-10 px-2"
+                              className="w-full flex items-center justify-center gap-2 shadow-sm bg-slate-600 hover:bg-slate-700 h-10 px-2 cursor-pointer"
                             >
                               <Plus className="h-4 w-4 shrink-0" />
                               <span className="font-semibold truncate">
@@ -165,10 +167,16 @@ export function MainExpenseCard() {
                         </div>
                       </TooltipTrigger>
                       <TooltipContent className="flex items-center gap-2 text-xs bg-slate-800 text-white border-none z-[100]">
-                        단건 추가{" "}
-                        <Kbd className="bg-slate-700 text-white border-slate-600">
-                          N
-                        </Kbd>
+                        {t("dashboard.quick_entry_tooltips.single")}{" "}
+                        <KbdGroup>
+                          <Kbd className="bg-slate-700 text-white border-slate-600">
+                            E
+                          </Kbd>{" "}
+                          /
+                          <Kbd className="bg-slate-700 text-white border-slate-600">
+                            Ctrl E
+                          </Kbd>
+                        </KbdGroup>
                       </TooltipContent>
                     </Tooltip>
 
@@ -177,19 +185,19 @@ export function MainExpenseCard() {
                       <TooltipTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full flex items-center justify-center gap-2 shadow-sm border-slate-200 h-10 px-2 bg-white hover:bg-slate-50 text-slate-700"
+                          className="cursor-pointer w-full flex items-center justify-center gap-2 shadow-sm border-slate-200 h-10 px-2 bg-white hover:bg-slate-50 text-slate-700"
                           onClick={() => navigate("/transactions/quickentry")}
                         >
                           <ListPlus className="h-4 w-4 text-slate-500 shrink-0" />
                           <span className="font-semibold truncate">
-                            빠른 입력
+                            {t("quick_entry.title")}
                           </span>
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent className="flex items-center gap-2 text-xs bg-slate-800 text-white border-none">
-                        대량/빠른 모드{" "}
+                        {t("dashboard.quick_entry_tooltips.bulk")}{" "}
                         <Kbd className="bg-slate-700 text-white border-slate-600">
-                          Ctrl E
+                          Ctrl Q
                         </Kbd>
                       </TooltipContent>
                     </Tooltip>
@@ -222,8 +230,8 @@ export function MainExpenseCard() {
                         </TransactionSheet>
                       ))
                     ) : (
-                      <span className="text-xs text-slate-400 italic">
-                        {t("dashboard.no_recent_data")}
+                      <span className="text-slate-400 text-sm font-medium italic">
+                        {t("dashboard.comparison.no_data")}
                       </span>
                     )}
                   </div>

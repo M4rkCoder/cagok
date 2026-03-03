@@ -355,6 +355,10 @@
       "variable": "Variable Expense"
     },
     "fixed_expense_ratio": "Fixed expense ratio of total spending",
+    "quick_entry_tooltips": {
+      "single": "Single Entry",
+      "bulk": "Bulk Entry"
+    },
     "cards": {
       "daily": "Daily Status",
       "dayofweek": "Day of Week",
@@ -472,6 +476,14 @@
     "search_transactions": "Search transactions...",
     "pick_start_date": "Pick a start date",
     "pick_end_date": "Pick an end date"
+  },
+  "shortcut": {
+    "title": "Keyboard Shortcuts",
+    "global_group": "Global Shortcuts (Anywhere)",
+    "or": "or",
+    "new_transaction": "New Transaction Entry",
+    "quick_bulk_entry": "Quick / Bulk Entry",
+    "view_guide": "View Shortcut Guide"
   },
   "notification": {
     "recurring_created": "{{count}} recurring transactions created."

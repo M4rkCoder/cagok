@@ -253,7 +253,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 };
 
 const EmptyState = ({ loading, t }: { loading: boolean; t: any }) => (
-  <div className="flex h-full items-center justify-center text-slate-400 font-bold">
-    {loading ? t("dashboard.cards.analyzing_data") : t("dashboard.cards.no_expense_this_month")}
+  <div className="flex h-full items-center justify-center text-slate-400 text-sm font-medium italic">
+    {loading ? t("dashboard.cards.analyzing_data") : t("dashboard.comparison.no_data")}
   </div>
 );

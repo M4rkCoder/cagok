@@ -1,6 +1,9 @@
 import { DiffBadge } from "./components/DiffBadge";
-import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
-import { TooltipTrigger } from "@radix-ui/react-tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useDashboardStore } from "@/stores/useDashboardStore";
 import AnimatedAmount from "@/components/AnimatedAmount";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
@@ -17,19 +20,19 @@ export function SummaryItemRow() {
       {[
         {
           label: t("common.income"),
-          value: overview.total_income,
+          value: overview?.total_income ?? 0,
           metric: comparisons.Income,
         },
         {
           label: t("common.net_income"),
-          value: overview.net_income,
+          value: overview?.net_income ?? 0,
           metric: comparisons.NetIncome,
         },
         {
           label: t("common.fixed"),
-          value: overview.fixed_expense,
+          value: overview?.fixed_expense ?? 0,
           metric: comparisons.Fixed,
-          ratio: overview.fixed_expense_ratio,
+          ratio: overview?.fixed_expense_ratio,
         },
       ].map((item, idx) => (
         <div
@@ -45,11 +48,13 @@ export function SummaryItemRow() {
 
             <div className="flex items-center gap-1 font-bold">
               <div className="text-lg tracking-tight text-slate-800">
-                <AnimatedAmount
-                  value={item.value}
-                  formatter={formatAmount}
-                  duration={1.2}
-                />
+                {item.value !== 0 && (
+                  <AnimatedAmount
+                    value={item.value}
+                    formatter={formatAmount}
+                    duration={1.2}
+                  />
+                )}
               </div>
 
               {/* 고정비 비중 (Badge와 겹치지 않게 작게 배치) */}

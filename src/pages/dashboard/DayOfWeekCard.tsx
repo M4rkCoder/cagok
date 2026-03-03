@@ -262,7 +262,12 @@ export const DayOfWeekCard: React.FC = () => {
             </div>
           </div>
 
-          <div className="h-[230px] w-full flex items-center justify-center">
+          <div className="h-[230px] w-full flex items-center justify-center relative">
+            {totalMetricValue === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10 text-slate-400 text-sm font-medium italic">
+                {t("dashboard.comparison.no_data")}
+              </div>
+            )}
             <div className="h-full w-full max-w-[600px] mx-auto">
               <ChartContainer config={chartConfig} className="h-full w-full">
                 <BarChart

@@ -45,15 +45,15 @@ const TransactionSheet = ({
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
 
       // 2. 단축키 조건: (타이핑 중이 아닐 때 'n' 단일 키) OR (Ctrl + N)
-      const isSingleKeyN =
+      const isSingleKeyE =
         !isTyping &&
-        e.key.toLowerCase() === "n" &&
+        e.key.toLowerCase() === "e" &&
         !isCtrlOrCmd &&
         !e.altKey &&
         !e.shiftKey;
-      const isComboKeyN = isCtrlOrCmd && e.key.toLowerCase() === "n";
+      const isComboKeyE = isCtrlOrCmd && e.key.toLowerCase() === "e";
 
-      if (isSingleKeyN || isComboKeyN) {
+      if (isSingleKeyE || isComboKeyE) {
         e.preventDefault();
 
         if (isConfirmOpen) return;

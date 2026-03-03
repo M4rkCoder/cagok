@@ -29,19 +29,19 @@ function Home({ children }: { children: React.ReactNode }) {
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
 
       // 2. 단축키 조건: (타이핑 중이 아닐 때 'e' 단일 키) OR (Ctrl + E)
-      const isSingleKeyE =
+      const isSingleKeyQ =
         !isTyping &&
-        e.key.toLowerCase() === "e" &&
+        e.key.toLowerCase() === "q" &&
         !isCtrlOrCmd &&
         !e.altKey &&
         !e.shiftKey;
-      const isComboKeyE = isCtrlOrCmd && e.key.toLowerCase() === "e";
+      const isComboKeyQ = isCtrlOrCmd && e.key.toLowerCase() === "q";
 
-      if (isSingleKeyE || isComboKeyE) {
+      if (isSingleKeyQ || isComboKeyQ) {
         e.preventDefault(); // 브라우저 기본 동작(검색창 포커스 등) 방지
 
         // 다이얼로그가 열려있을 때는 이동하지 않게 하려면 아래 주석 해제
-        // if (isOpen) return;
+        if (isOpen) return;
 
         navigate("/transactions/quickentry");
       }
@@ -77,7 +77,7 @@ function Home({ children }: { children: React.ReactNode }) {
                     <PanelLeftClose
                       className={cn(
                         "h-6 w-6 transition-transform",
-                        collapsed && "rotate-180"
+                        collapsed && "rotate-180",
                       )}
                     />
                   </button>

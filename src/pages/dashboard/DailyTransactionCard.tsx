@@ -106,6 +106,11 @@ export default function DailyTransactionCard() {
     return data;
   }, [selectedMonth, currentDailyData, formatDay]);
 
+  const hasData = useMemo(
+    () => chartData.some((d) => d.total > 0),
+    [chartData],
+  );
+
   // 탭 변경 시 선택된 카테고리 초기화
   const handleTabChange = (value: string) => {
     setViewMode(value as ViewMode);
@@ -146,7 +151,12 @@ export default function DailyTransactionCard() {
             </Tabs>
           </div>
 
-          <div className="h-[230px] w-full">
+          <div className="h-[230px] w-full relative">
+            {!hasData && (
+              <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10 text-slate-400 text-sm font-medium italic">
+                {t("dashboard.comparison.no_data")}
+              </div>
+            )}
             <ChartContainer config={categoryConfig} className="h-full w-full">
               <ResponsiveContainer>
                 <BarChart data={chartData}>

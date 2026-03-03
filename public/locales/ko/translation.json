@@ -350,6 +350,10 @@
       "variable": "변동 지출"
     },
     "fixed_expense_ratio": "지출액 대비 고정 지출 비중",
+    "quick_entry_tooltips": {
+      "single": "단건 입력",
+      "bulk": "대량 입력"
+    },
     "cards": {
       "daily": "일일 현황",
       "dayofweek": "요일 현황",
@@ -475,6 +479,14 @@
       "1_year": "1년",
       "all_time": "전체 기간(해제)"
     }
+  },
+  "shortcut": {
+    "title": "키보드 단축키",
+    "global_group": "전역 단축키 (어디서나)",
+    "or": "또는",
+    "new_transaction": "새 거래 입력",
+    "quick_bulk_entry": "빠른 / 대량 입력",
+    "view_guide": "단축키 안내 보기"
   },
   "notification": {
     "recurring_created": "{{count}}건의 반복 내역이 생성되었습니다."

@@ -186,7 +186,7 @@ export default function CategoryTransactionChart({
           </PieChart>
         </ChartContainer>
       ) : (
-        <div className="h-[250px] flex items-center justify-center text-slate-300 text-xs italic">
+        <div className="h-[250px] flex items-center justify-center text-slate-400 text-sm font-medium italic">
           {t("dashboard.comparison.no_data")}
         </div>
       )}

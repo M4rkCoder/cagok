@@ -70,8 +70,8 @@ export const CategoryTopList: React.FC = () => {
             </div>
           ))
         ) : (
-          <div className="h-24 flex items-center justify-center text-xs text-slate-300 italic bg-slate-50/50 rounded-2xl border border-dashed">
-            {t("transaction.no_found")}
+          <div className="h-24 flex items-center justify-center text-slate-400 text-sm font-medium italic bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+            {t("dashboard.comparison.no_data")}
           </div>
         )}
       </div>

@@ -151,7 +151,7 @@ export function ComparisonCardFooter({
       onMouseLeave={handleMouseLeave}
     >
       {sentences.length === 0 ? (
-        <div className="w-full text-center">
+        <div className="w-full text-center text-slate-400 font-medium italic">
           {t("dashboard.comparison.no_data")}
         </div>
       ) : (

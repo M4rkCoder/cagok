@@ -8,12 +8,14 @@ import {
 } from "@/components/ui/dialog";
 import { Command } from "lucide-react";
 import { Kbd } from "@/components/ui/kbd";
+import { useTranslation } from "react-i18next";
 
 interface ShortcutGuideProps {
   children?: ReactNode; // 🔹 외부에서 버튼을 주입받을 수 있도록 추가
 }
 
 export function ShortcutGuide({ children }: ShortcutGuideProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -39,21 +41,17 @@ export function ShortcutGuide({ children }: ShortcutGuideProps) {
 
   const shortcutGroups = [
     {
-      title: "전역 단축키 (어디서나)",
+      title: t("shortcut.global_group"),
       shortcuts: [
-        { keys: ["N", "또는", "Ctrl", "+", "N"], description: "새 거래 입력" },
         {
-          keys: ["E", "또는", "Ctrl", "+", "E"],
-          description: "빠른 / 대량 입력",
+          keys: ["N", t("shortcut.or"), "Ctrl", "+", "N"],
+          description: t("shortcut.new_transaction"),
         },
-        { keys: ["?"], description: "단축키 안내 보기" },
-      ],
-    },
-    {
-      title: "창 및 폼 제어",
-      shortcuts: [
-        { keys: ["Ctrl", "+", "Enter"], description: "내역 저장" },
-        { keys: ["Esc"], description: "열린 창 닫기" },
+        {
+          keys: ["E", t("shortcut.or"), "Ctrl", "+", "E"],
+          description: t("shortcut.quick_bulk_entry"),
+        },
+        { keys: ["?"], description: t("shortcut.view_guide") },
       ],
     },
   ];
@@ -69,7 +67,7 @@ export function ShortcutGuide({ children }: ShortcutGuideProps) {
             <div className="p-2 bg-slate-900 text-white rounded-xl shadow-md">
               <Command className="w-5 h-5" />
             </div>
-            키보드 단축키
+            {t("shortcut.title")}
           </DialogTitle>
         </DialogHeader>
 
@@ -90,7 +88,7 @@ export function ShortcutGuide({ children }: ShortcutGuideProps) {
                     </span>
                     <div className="flex items-center gap-1.5">
                       {item.keys.map((key, ki) =>
-                        key === "또는" || key === "+" ? (
+                        key === t("shortcut.or") || key === "+" ? (
                           <span
                             key={ki}
                             className="text-[11px] font-bold text-slate-400 px-0.5"
@@ -104,7 +102,7 @@ export function ShortcutGuide({ children }: ShortcutGuideProps) {
                           >
                             {key}
                           </Kbd>
-                        )
+                        ),
                       )}
                     </div>
                   </div>
