@@ -107,6 +107,25 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
       {!collapsed ? t("menu.generate_dummy") : <Pencil className="h-4 w-4" />}
     </Button>
   );
+  const ShortcutBtnNode = (
+    <SidebarMenuButton
+      className={cn(
+        "transition-all cursor-pointer",
+        collapsed ? "justify-center p-0 h-10" : "px-2"
+      )}
+    >
+      <div className="flex items-center gap-2 text-slate-600 hover:text-slate-900 overflow-hidden w-full">
+        <Keyboard
+          className={cn("shrink-0", collapsed ? "ml-3 h-6 w-6" : "h-4 w-4")}
+        />
+        {!collapsed && (
+          <span className="text-xs font-medium whitespace-nowrap truncate">
+            {t("menu.shortcut_guide")}
+          </span>
+        )}
+      </div>
+    </SidebarMenuButton>
+  );
 
   const AboutBtnNode = (
     <SidebarMenuButton
@@ -117,39 +136,24 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
         collapsed ? "justify-center p-0 h-10" : "px-2"
       )}
     >
-      <Link
-        to="/about"
-        className="flex items-center gap-2 text-slate-600 hover:text-slate-900"
-      >
-        <Info className={cn("shrink-0", collapsed ? "h-6 w-6" : "h-4 w-4")} />
-        {!collapsed && (
-          <span className="text-xs font-medium">{t("menu.about")}</span>
-        )}
+      <Link to="/about">
+        <div className="flex items-center gap-2 text-slate-600 hover:text-slate-900 overflow-hidden w-full">
+          <Info
+            className={cn("shrink-0", collapsed ? "ml-3 h-6 w-6" : "h-4 w-4")}
+          />
+          {!collapsed && (
+            <span className="text-xs font-medium whitespace-nowrap truncate">
+              {t("menu.about")}
+            </span>
+          )}
+        </div>
       </Link>
-    </SidebarMenuButton>
-  );
-
-  const ShortcutBtnNode = (
-    <SidebarMenuButton
-      className={cn(
-        "transition-all cursor-pointer",
-        collapsed ? "justify-center p-0 h-10" : "px-2"
-      )}
-    >
-      <div className="flex items-center gap-2 text-slate-600 hover:text-slate-900">
-        <Keyboard
-          className={cn("shrink-0", collapsed ? "h-6 w-6" : "h-4 w-4")}
-        />
-        {!collapsed && (
-          <span className="text-xs font-medium">{t("menu.shortcut_guide")}</span>
-        )}
-      </div>
     </SidebarMenuButton>
   );
 
   return (
     <aside
-      className="h-full shrink-0 bg-sidebar transition-[width] duration-300 ease-in-out flex flex-col overflow-hidden border-r"
+      className="h-full shrink-0 bg-sidebar transition-[width] duration-300 ease-in-out flex flex-col overflow-hidden"
       style={{
         width: collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_WIDTH,
       }}
@@ -341,7 +345,6 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
                         </TooltipContent>
                       </Tooltip>
                     ) : (
-                      /* 서브메뉴가 없는 일반 메뉴 펼친 상태 */
                       MenuButtonNode
                     )}
                   </SidebarMenuItem>
@@ -353,14 +356,12 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
       </SidebarContent>
 
       {/* Footer */}
-      <SidebarFooter className="p-2">
+      <SidebarFooter className="p-2 mb-5">
         <SidebarMenu>
-          {/* 🔹 단축키 안내 버튼 (ShortcutGuide로 감싸기) */}
           <SidebarMenuItem>
             {collapsed ? (
               <Tooltip delayDuration={0}>
                 <TooltipTrigger asChild>
-                  {/* TooltipTrigger와 DialogTrigger 충돌 방지를 위해 div로 한 번 감싸줍니다 */}
                   <div className="w-full">
                     <ShortcutGuide>{ShortcutBtnNode}</ShortcutGuide>
                   </div>
@@ -388,8 +389,8 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
           </SidebarMenuItem>
         </SidebarMenu>
 
-        {/* 구분선 (펼쳐졌을 때만) */}
-        {!collapsed && <div className="h-[1px] bg-sidebar-border mx-2 my-1" />}
+        {/* 더미 생성(디버깅용) */}
+        {/* {!collapsed && <div className="h-[1px] bg-sidebar-border mx-2 my-1" />}
         {collapsed ? (
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>{FooterBtnNode}</TooltipTrigger>
@@ -399,7 +400,7 @@ export function AppSidebar({ collapsed }: AppSidebarProps) {
           </Tooltip>
         ) : (
           FooterBtnNode
-        )}
+        )} */}
       </SidebarFooter>
     </aside>
   );

@@ -7,13 +7,18 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useDashboardStore } from "@/stores/useDashboardStore";
-import { ReceiptText } from "lucide-react";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
+import { useDateFormatter } from "@/hooks/useDateFormatter"; // 🔹 훅 임포트
+import { useTranslation } from "react-i18next";
 
 const TreemapDetailDialog = () => {
+  const { t } = useTranslation();
   const { treemapDialogOpen, setTreemapDialogOpen, detailData } =
     useDashboardStore();
+  const { formatAmount } = useCurrencyFormatter();
+  const { formatMonth } = useDateFormatter(); // 🔹 포맷터 훅 사용
 
   const isFixed = detailData?.is_fixed_view === true;
   const categoryName = detailData?.items?.[0]?.category_name || "카테고리";
@@ -47,7 +52,9 @@ const TreemapDetailDialog = () => {
                     <span
                       className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${badgeBg}`}
                     >
-                      {isFixed ? "고정" : "변동"} 지출
+                      {isFixed
+                        ? t("transaction_filter.modes.fixed_expense")
+                        : t("transaction_filter.modes.variable_expense")}
                     </span>
                   </div>
 
@@ -62,10 +69,7 @@ const TreemapDetailDialog = () => {
                       <span
                         className={`text-xl font-black tracking-tighter ${themeColor}`}
                       >
-                        {detailData?.total_amount?.toLocaleString()}
-                        <small className="text-[11px] ml-0.5 font-bold text-slate-400">
-                          원
-                        </small>
+                        {formatAmount(detailData?.total_amount)}
                       </span>
                     </div>
                   </div>
@@ -77,38 +81,56 @@ const TreemapDetailDialog = () => {
                 <ScrollArea className="h-full w-full">
                   <div className="divide-y divide-slate-100 dark:divide-slate-900">
                     {detailData?.items && detailData.items.length > 0 ? (
-                      detailData.items.map((tx, idx) => (
-                        <motion.div
-                          key={`${tx.id}-${idx}`}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: idx * 0.02 }}
-                          className="flex items-center justify-between px-5 py-3 hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors"
-                        >
-                          <div className="flex flex-col gap-0.5">
-                            <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200 line-clamp-1">
-                              {tx.description || tx.category_name}
-                            </span>
-                            <span className="text-[10px] text-slate-400 font-medium tracking-tight">
-                              {tx.date || "내역 확인"}
-                            </span>
-                          </div>
-                          <div className="text-right ml-4">
-                            <span
-                              className={`text-[13px] font-bold tabular-nums ${themeColor}`}
-                            >
-                              {tx.amount.toLocaleString()}
-                              <small className="text-[10px] ml-0.5 font-medium text-slate-400">
-                                원
-                              </small>
-                            </span>
-                          </div>
-                        </motion.div>
-                      ))
+                      detailData.items.map((tx, idx) => {
+                        // 🔹 커스텀 훅을 통해 월 문자열 변환 ("3월" 또는 "Mar")
+                        const monthStr = formatMonth(tx.date, "short");
+
+                        // 🔹 일(Day)은 배지에 깔끔하게 숫자만 들어가도록 Date 내장 객체 사용
+                        const dateObj = new Date(tx.date);
+                        const dayNum = !isNaN(dateObj.getTime())
+                          ? dateObj.getDate()
+                          : "";
+
+                        return (
+                          <motion.div
+                            key={`${tx.id}-${idx}`}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: idx * 0.02 }}
+                            className="flex items-center gap-3 px-5 py-3 hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors"
+                          >
+                            {/* 원형 날짜 배지 */}
+                            <div className="flex flex-col items-center justify-center w-[38px] h-[38px] rounded-full bg-slate-100 dark:bg-slate-800 flex-shrink-0">
+                              <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase leading-none mt-0.5">
+                                {monthStr}
+                              </span>
+                              <span className="text-[14px] font-black text-slate-700 dark:text-slate-200 leading-none mt-0.5">
+                                {dayNum}
+                              </span>
+                            </div>
+
+                            {/* 내역 설명 */}
+                            <div className="flex-1 min-w-0">
+                              <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200 line-clamp-1">
+                                {tx.description || tx.category_name}
+                              </span>
+                            </div>
+
+                            {/* 금액 */}
+                            <div className="text-right ml-2 flex-shrink-0">
+                              <span
+                                className={`text-[13px] font-bold tabular-nums ${themeColor}`}
+                              >
+                                {formatAmount(tx.amount)}
+                              </span>
+                            </div>
+                          </motion.div>
+                        );
+                      })
                     ) : (
                       <div className="py-24 text-center">
                         <p className="text-xs text-slate-400 font-medium">
-                          조회된 내역이 없습니다.
+                          {t("common.no_results")}
                         </p>
                       </div>
                     )}
@@ -123,7 +145,7 @@ const TreemapDetailDialog = () => {
                   onClick={() => setTreemapDialogOpen(false)}
                   className="w-full py-2.5 text-[13px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-900 rounded-xl transition-all outline-none"
                 >
-                  확인
+                  {t("transaction_filter.confirm")}
                 </button>
               </div>
             </motion.div>

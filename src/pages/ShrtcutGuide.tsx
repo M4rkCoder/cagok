@@ -51,7 +51,10 @@ export function ShortcutGuide({ children }: ShortcutGuideProps) {
           keys: ["Q", t("shortcut.or"), "Ctrl", "+", "Q"],
           description: t("shortcut.quick_bulk_entry"),
         },
-        { keys: ["?"], description: t("shortcut.view_guide") },
+        {
+          keys: ["Shift", "+", "/"],
+          description: t("shortcut.view_guide"),
+        },
       ],
     },
   ];
@@ -102,7 +105,7 @@ export function ShortcutGuide({ children }: ShortcutGuideProps) {
                           >
                             {key}
                           </Kbd>
-                        ),
+                        )
                       )}
                     </div>
                   </div>

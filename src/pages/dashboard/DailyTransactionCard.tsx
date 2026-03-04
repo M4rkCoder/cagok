@@ -108,7 +108,7 @@ export default function DailyTransactionCard() {
 
   const hasData = useMemo(
     () => chartData.some((d) => d.total > 0),
-    [chartData],
+    [chartData]
   );
 
   // 탭 변경 시 선택된 카테고리 초기화
@@ -124,7 +124,10 @@ export default function DailyTransactionCard() {
           <div className="flex items-center justify-between mb-4">
             <DashboardTitle
               title={t("dashboard.cards.daily_status_title", {
-                type: viewMode === "expense" ? t("common.expense") : t("common.income"),
+                type:
+                  viewMode === "expense"
+                    ? t("common.expense")
+                    : t("common.income"),
               })}
             />
 
@@ -197,7 +200,11 @@ export default function DailyTransactionCard() {
                   {selectedCategoryId === "all" ? (
                     <Bar
                       dataKey="total"
-                      name={viewMode === "expense" ? t("dashboard.treemap.total") : t("common.income")} // total_income?
+                      name={
+                        viewMode === "expense"
+                          ? t("dashboard.treemap.total")
+                          : t("common.income")
+                      } // total_income?
                       fill={categoryConfig["total"].color}
                       radius={[4, 4, 0, 0]}
                       onClick={(data) => handleDateClick(data.payload.date)}

@@ -40,7 +40,8 @@
     "no_results": "결과가 없습니다.",
     "no_results_found": "검색 결과 없음",
     "actions": "액션",
-    "day_short": "일"
+    "day_short": "일",
+    "other": "그 외 항목"
   },
   "menu": {
     "dashboard": "한 눈에 보기",

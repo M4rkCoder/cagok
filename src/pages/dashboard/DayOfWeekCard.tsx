@@ -64,7 +64,7 @@ export const DayOfWeekCard: React.FC = () => {
 
   const data = useMemo(
     () => (viewMode === "expense" ? dayOfWeekExpense : dayOfWeekIncome),
-    [viewMode, dayOfWeekExpense, dayOfWeekIncome],
+    [viewMode, dayOfWeekExpense, dayOfWeekIncome]
   );
 
   const {
@@ -120,13 +120,13 @@ export const DayOfWeekCard: React.FC = () => {
           txAvg: info.txCount > 0 ? info.total / info.txCount : 0,
           fill: "",
         };
-      },
+      }
     );
 
     processedCategories.sort((a, b) => b.value - a.value);
     const grandTotal = processedCategories.reduce(
       (sum, item) => sum + item.value,
-      0,
+      0
     );
 
     const donutDataWithColor = processedCategories.map((cat, index) => ({
@@ -203,6 +203,22 @@ export const DayOfWeekCard: React.FC = () => {
   const activeTabClass =
     "data-[state=active]:bg-slate-900 data-[state=active]:text-white shadow-sm";
 
+  const tooltipFormatter = (value: number, name: string, item: any) => {
+    const categoryIcon =
+      item.payload.icon || (viewMode === "expense" ? "💸" : "💰");
+
+    return (
+      <div className="flex items-center gap-2">
+        <span className="font-emoji text-base">{categoryIcon}</span>
+
+        <span className="text-muted-foreground">{name}</span>
+
+        <span className="font-bold text-foreground ml-auto">
+          {formatAmount(value)}
+        </span>
+      </div>
+    );
+  };
   return (
     <Card className="pt-4 pb-0 px-5 border-none shadow-md bg-white">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -326,7 +342,15 @@ export const DayOfWeekCard: React.FC = () => {
                                     ? t("dashboard.cards.cumulative_count")
                                     : t("dashboard.cards.average_count")}
                                 </span>
-                                <span className="text-[10px] font-medium">{`${Number(item.payload.count).toFixed(metricType === "average" ? 1 : 0)}${t("common.unit", { defaultValue: "건" })}`}</span>
+                                <span className="text-[10px] font-medium">
+                                  {t("common.count", {
+                                    count: parseFloat(
+                                      Number(item.payload.count).toFixed(
+                                        metricType === "average" ? 1 : 0
+                                      )
+                                    ),
+                                  })}
+                                </span>
                               </div>
                             </div>
                           );
@@ -384,7 +408,9 @@ export const DayOfWeekCard: React.FC = () => {
             <PieChart>
               <ChartTooltip
                 cursor={false}
-                content={<ChartTooltipContent hideLabel />}
+                content={
+                  <ChartTooltipContent hideLabel formatter={tooltipFormatter} />
+                }
               />
               <Pie
                 data={donutData}
@@ -412,7 +438,7 @@ export const DayOfWeekCard: React.FC = () => {
                       }}
                       onClick={() =>
                         setSelectedCategory(
-                          entry.id === selectedCategory ? "all" : entry.id,
+                          entry.id === selectedCategory ? "all" : entry.id
                         )
                       }
                     />
@@ -449,7 +475,7 @@ export const DayOfWeekCard: React.FC = () => {
                                 ? metricType === "total"
                                   ? selectedDonutItem.value
                                   : selectedDonutItem.txAvg
-                                : totalMetricValue,
+                                : totalMetricValue
                             )}
                           </tspan>
                           <tspan

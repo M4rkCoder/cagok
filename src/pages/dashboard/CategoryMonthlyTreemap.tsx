@@ -23,36 +23,41 @@ export const CategoryMonthlyTreemap: React.FC = () => {
     return expenseTreemap.children
       .map((group) => {
         const isFixed = group.name === "fixed";
-        const groupDisplayName = isFixed ? t("dashboard.cards.fixed_expense") : t("dashboard.cards.variable_expense");
+        const groupDisplayName = isFixed
+          ? t("dashboard.cards.fixed_expense")
+          : t("dashboard.cards.variable_expense");
         const safeChildren = group.children || [];
         const groupTotal = group.value || 0;
 
-        // 1% 미만 "기타" 묶기 로직
         const mainChildren: any[] = [];
         let etcValue = 0;
 
+        // 1. 1% 미만 항목 "기타"로 묶기
         safeChildren.forEach((child) => {
           const ratio = (child.value || 0) / groupTotal;
+          // API_TYPES의 TreemapNode 구조를 참고하여 value 기반 계산
           if (ratio < 0.01) {
             etcValue += child.value || 0;
           } else {
-            mainChildren.push(child);
+            mainChildren.push({
+              ...child,
+              percentage: ratio * 100, // 퍼센트 미리 계산
+            });
           }
         });
 
-        // 기타 항목 추가 (합계가 있을 경우만)
         if (etcValue > 0) {
           mainChildren.push({
-            name: t("dashboard.cards.etc"),
+            name: t("common.other"),
             value: etcValue,
             category_icon: "📦",
-            isEtc: true, // 기타 항목 식별자
+            isEtc: true,
+            percentage: (etcValue / groupTotal) * 100,
           });
         }
 
-        // 금액순 정렬
         const sortedChildren = [...mainChildren].sort(
-          (a, b) => (b.value || 0) - (a.value || 0)
+          (a, b) => b.value - a.value
         );
         const totalItems = sortedChildren.length;
 
@@ -70,7 +75,7 @@ export const CategoryMonthlyTreemap: React.FC = () => {
           })),
         };
       })
-      .filter((group) => (group.value || 0) > 0);
+      .filter((group) => group.value > 0);
   }, [expenseTreemap, t]);
 
   const handleNodeClick = (nodeData: any) => {
@@ -114,10 +119,28 @@ export const CategoryMonthlyTreemap: React.FC = () => {
       category_icon,
       percentage,
     } = props;
-    if (!width || !height || width < 15 || height < 15) return null;
 
-    // 2% 미만은 아이콘만, 그 이상은 텍스트 포함
-    const showText = percentage >= 2;
+    // 너무 작은 박스는 아예 렌더링 제외
+    if (!width || !height || width < 10 || height < 10) return null;
+
+    // 💡 물리적 크기(width, height)를 기준으로 판단하도록 변경
+    const area = width * height;
+
+    // 텍스트(이름, 퍼센트)를 보여주기 위한 최소 크기 조건 (가로 45px 이상, 세로 45px 이상)
+    const showText = width > 50 && height > 50 && area > 2100;
+
+    // 텍스트와 퍼센트를 모두 보여주기 위한 넉넉한 세로 공간 조건
+    const showPercentage = showText && height > 70;
+
+    // 아이콘 크기 결정 로직 (박스 면적 또는 짧은 변 기준)
+    let iconSize = "24px";
+    if (area < 500 || Math.min(width, height) < 30) {
+      iconSize = "10px"; // 아주 작은 영역
+    } else if (area < 1000 || Math.min(width, height) < 40) {
+      iconSize = "14px"; // 중간보다 작은 영역
+    } else if (showText) {
+      iconSize = "18px"; // 텍스트와 함께 표시될 때의 아이콘 크기
+    }
 
     return (
       <g
@@ -138,7 +161,7 @@ export const CategoryMonthlyTreemap: React.FC = () => {
           fillOpacity={depth === 1 ? 0.05 : 1}
           rx={6}
         />
-        {depth === 2 && width > 30 && height > 30 && (
+        {depth === 2 && (
           <text
             x={x + width / 2}
             y={y + height / 2}
@@ -147,40 +170,39 @@ export const CategoryMonthlyTreemap: React.FC = () => {
             fill={fill.includes("90%") ? "#554400" : "#fff"}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
-            {/* 1. 아이콘: 위치를 좀 더 위로(-0.8em) 이동 */}
+            {/* 아이콘: showText 여부에 따라 위치 조정 */}
             <tspan
               x={x + width / 2}
-              dy={showText ? "-0.8em" : "0.3em"}
-              fontSize={showText ? "18px" : "24px"}
+              dy={showText ? "-0.6em" : "0.3em"}
+              fontSize={iconSize}
               fontWeight="bold"
               className="native-emoji"
             >
               {category_icon}
             </tspan>
 
-            {/* 2. 카테고리 이름: 아이콘과의 간격을 1.5em으로 벌림 */}
             {showText && (
-              <tspan
-                x={x + width / 2}
-                dy="1.5em"
-                fontSize="14px"
-                fontWeight="900"
-              >
-                {name}
-              </tspan>
-            )}
-
-            {/* 3. 퍼센트: 이름과의 간격을 1.4em으로 벌림 */}
-            {showText && height > 70 && (
-              <tspan
-                x={x + width / 2}
-                dy="1.4em"
-                fontSize="13px"
-                fillOpacity={0.6}
-                fontWeight="800"
-              >
-                {percentage?.toFixed(1)}%
-              </tspan>
+              <>
+                <tspan
+                  x={x + width / 2}
+                  dy="1.4em"
+                  fontSize="12px"
+                  fontWeight="900"
+                >
+                  {name}
+                </tspan>
+                {showPercentage && (
+                  <tspan
+                    x={x + width / 2}
+                    dy="1.3em"
+                    fontSize="10px"
+                    fillOpacity={0.7}
+                    fontWeight="800"
+                  >
+                    {percentage?.toFixed(1)}%
+                  </tspan>
+                )}
+              </>
             )}
           </text>
         )}
@@ -194,8 +216,14 @@ export const CategoryMonthlyTreemap: React.FC = () => {
         <div className="flex justify-between items-end mb-1">
           <DashboardTitle title={t("dashboard.cards.treemap")} />
           <div className="flex gap-4 mr-4">
-            <LegendItem color="bg-slate-400" label={t("dashboard.cards.fixed_expense")} />
-            <LegendItem color="bg-orange-300" label={t("dashboard.cards.variable_expense")} />
+            <LegendItem
+              color="bg-slate-400"
+              label={t("dashboard.cards.fixed_expense")}
+            />
+            <LegendItem
+              color="bg-orange-300"
+              label={t("dashboard.cards.variable_expense")}
+            />
           </div>
         </div>
 
@@ -254,6 +282,8 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 const EmptyState = ({ loading, t }: { loading: boolean; t: any }) => (
   <div className="flex h-full items-center justify-center text-slate-400 text-sm font-medium italic">
-    {loading ? t("dashboard.cards.analyzing_data") : t("dashboard.comparison.no_data")}
+    {loading
+      ? t("dashboard.cards.analyzing_data")
+      : t("dashboard.comparison.no_data")}
   </div>
 );

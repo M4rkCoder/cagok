@@ -10,6 +10,7 @@ import { useConfirmStore } from "@/stores/useConfirmStore";
 import { Separator } from "@/components/ui/separator";
 import TransactionSheet from "./transactions/TrasactionSheet";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 function Home({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -51,7 +52,7 @@ function Home({ children }: { children: React.ReactNode }) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [navigate]); // isOpen을 의존성 배열에 추가할 수 있습니다.
+  }, [navigate, isOpen]);
 
   return (
     <SidebarProvider>
@@ -67,19 +68,22 @@ function Home({ children }: { children: React.ReactNode }) {
 
           <main className="flex-1 flex flex-col overflow-y-auto bg-sidebar p-2 relative custom-scroll">
             <div className="flex-none rounded-xl bg-background border shadow-sm p-4">
-              {/* ✨ Zustand 기반 유동 헤더 */}
               <div className="shrink-0 flex items-center justify-between pb-2 border-b">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setCollapsed(!collapsed)}
                     className="p-2 rounded hover:bg-muted"
                   >
-                    <PanelLeftClose
-                      className={cn(
-                        "h-6 w-6 transition-transform",
-                        collapsed && "rotate-180",
-                      )}
-                    />
+                    <motion.div
+                      animate={{ rotate: collapsed ? 180 : 0 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 200,
+                        damping: 20,
+                      }}
+                    >
+                      <PanelLeftClose className="h-6 w-6" />
+                    </motion.div>
                   </button>
                   <Separator orientation="vertical" className="h-7 mx-1" />
                   <div className="flex flex-col">
@@ -95,7 +99,7 @@ function Home({ children }: { children: React.ReactNode }) {
               <div className="flex-1">{children}</div>
             </div>
           </main>
-          {/* 전역 컨펌 다이얼로그 */}
+
           {options && (
             <ConfirmDialog
               open={isOpen}

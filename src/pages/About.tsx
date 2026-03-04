@@ -39,7 +39,7 @@ const About = () => {
           </div>
         </div>
 
-        <CardContent className="p-8 space-y-8">
+        <CardContent className="p-8 space-y-4">
           {/* Introduction */}
           <div className="space-y-4">
             <h2 className="text-xl font-bold flex items-center gap-2 text-slate-800">

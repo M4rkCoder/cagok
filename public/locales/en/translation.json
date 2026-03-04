@@ -39,7 +39,8 @@
     "category": "Category",
     "no_results": "No results.",
     "actions": "Actions",
-    "day_short": "DAY"
+    "day_short": "DAY",
+    "other": "Others"
   },
   "menu": {
     "dashboard": "Dashboard",
@@ -367,7 +368,7 @@
       "toplist": "Expense TOP5",
       "daily_status_title": "Daily {{type}} Status",
       "dayofweek_status_title": "{{type}} Status by Day",
-      "total_sum": "Total Sum",
+      "total_sum": "Total",
       "daily_avg": "Daily Avg",
       "weekly_avg": "Weekly Avg",
       "cumulative_count": "Cumulative Count",
@@ -442,7 +443,7 @@
     "select_category": "Select Category",
     "no_category": "No Category",
     "title": "Transactions",
-    "new": "New Transaction",
+    "new": "New Entry",
     "edit": "Edit Transaction",
     "create_new": "Create New Transaction",
     "no_found": "No transactions found."

@@ -107,7 +107,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
 
     if (otherTotal > 0) {
       finalTreemapData.push({
-        name: t("common:other") || "기타",
+        name: t("common.other") || "기타",
         value: otherTotal,
         fill: "#94a3b8",
         percentage: (otherTotal / totalYearlyAmount) * 100,
@@ -195,14 +195,17 @@ export const CategoryYearlyTreemap: React.FC = () => {
                 <div className="flex flex-col items-center mt-1 space-y-0.5">
                   <div className="bg-black/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
                     {percentage.toFixed(1)}%{" "}
-                    <span className="font-normal opacity-80">({count}건)</span>
+                    <span className="font-normal opacity-80">
+                      ({t("common.count", { count })})
+                    </span>
                   </div>
                   <div className="text-[11px] font-extrabold mt-0.5">
                     {value !== 0 ? formatAmount(value) : ""}
                   </div>
                   {average > 0 && (
                     <div className="text-[9px] opacity-70 italic font-medium">
-                      {t("statistics.summary.monthly_avg")}: {formatAmount(average)}
+                      {t("statistics.summary.monthly_avg")}:{" "}
+                      {formatAmount(average)}
                     </div>
                   )}
                 </div>
@@ -239,24 +242,37 @@ export const CategoryYearlyTreemap: React.FC = () => {
 
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 font-semibold">{t("statistics.summary.yearly_total", { label: "" })}</span>
+              <span className="text-slate-400 font-semibold">
+                {t("statistics.summary.yearly_total", { label: "" })}
+              </span>
               <span className="font-black text-slate-900">
                 {data.value !== 0 ? formatAmount(data.value) : ""}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 font-semibold">{t("common.count", { count: 0 }).replace(/[0-9]/g, "").trim()}</span>
-              <span className="font-bold text-slate-700">{t("common.count", { count: data.count })}</span>
+              <span className="text-slate-400 font-semibold">
+                {t("common.count", { count: 0 }).replace(/[0-9]/g, "").trim()}
+              </span>
+              <span className="font-bold text-slate-700">
+                {t("common.count", { count: data.count })}
+              </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-slate-400 font-semibold">{t("statistics.summary.badge_labels.net_income_ratio").replace("수입", t("common.all"))}</span>
+              <span className="text-slate-400 font-semibold">
+                {t("statistics.summary.badge_labels.net_income_ratio").replace(
+                  "수입",
+                  t("common.all")
+                )}
+              </span>
               <span className="text-blue-600 font-black bg-blue-50 px-2 py-0.5 rounded-md">
                 {data.percentage.toFixed(1)}%
               </span>
             </div>
             {data.average > 0 && (
               <div className="flex justify-between items-center pt-2 border-t border-slate-50">
-                <span className="text-slate-400 font-semibold">{t("statistics.summary.monthly_avg")}</span>
+                <span className="text-slate-400 font-semibold">
+                  {t("statistics.summary.monthly_avg")}
+                </span>
                 <span className="font-bold text-slate-600">
                   {formatAmount(data.average)}
                 </span>
@@ -269,7 +285,8 @@ export const CategoryYearlyTreemap: React.FC = () => {
     return null;
   };
 
-  const isEmpty = treemapData.length === 0 || treemapData.every(d => d.value === 0);
+  const isEmpty =
+    treemapData.length === 0 || treemapData.every((d) => d.value === 0);
 
   return (
     <Card

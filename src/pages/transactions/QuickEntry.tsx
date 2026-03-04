@@ -32,6 +32,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 
 const QuickEntry: React.FC = () => {
   const { categoryList: categories } = useAppStore();
@@ -63,7 +64,7 @@ const QuickEntry: React.FC = () => {
       t("quick_entry.title"),
       <Button
         size="lg"
-        className="bg-blue-600 hover:bg-blue-700 cursor-pointer flex justify-start"
+        className="bg-slate-600 hover:bg-slate-700 cursor-pointer flex justify-start"
         onClick={() => {
           // 포커스 해제하여 마지막 입력값 반영 유도
           (document.activeElement as HTMLElement)?.blur();
@@ -73,7 +74,7 @@ const QuickEntry: React.FC = () => {
       >
         <Save className="mr-1 w-20 h-20" />
         {t("quick_entry.save_data")}
-      </Button>,
+      </Button>
     );
     return () => resetHeader();
   }, [handleSaveAll, t, setHeader, resetHeader]);
@@ -216,20 +217,22 @@ const QuickEntry: React.FC = () => {
         header: "",
         size: 40,
         cell: ({ row }) => (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() =>
-              setData((prev) => prev.filter((_, i) => i !== row.index))
-            }
-            className="h-8 w-8 text-slate-400 hover:text-red-500 flex items-center justify-center"
-          >
-            <Minus size={14} />
-          </Button>
+          <div className="flex items-center justify-center w-full h-full">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() =>
+                setData((prev) => prev.filter((_, i) => i !== row.index))
+              }
+              className="h-8 w-8 text-slate-400 hover:text-red-500 flex items-center justify-center"
+            >
+              <Minus size={14} />
+            </Button>
+          </div>
         ),
       },
     ],
-    [updateData, data.length, rowErrors],
+    [updateData, data.length, rowErrors]
   );
 
   const table = useReactTable({
@@ -250,7 +253,12 @@ const QuickEntry: React.FC = () => {
 
   return (
     <div className="p-6 h-full relative">
-      <div className="max-w-[1250px] mx-auto space-y-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="max-w-[1250px] mx-auto space-y-4"
+      >
         <div className="flex gap-2 justify-end">
           <Button
             variant="outline"
@@ -264,7 +272,7 @@ const QuickEntry: React.FC = () => {
           <Button
             variant="secondary"
             size="sm"
-            className="bg-slate-700 hover:bg-slate-600 text-white border-none"
+            className="cursor-pointer bg-slate-700 hover:bg-slate-600 text-white border-none"
             onClick={handleImportFile}
             disabled={isLoading}
           >
@@ -311,7 +319,7 @@ const QuickEntry: React.FC = () => {
                   className={cn(
                     "border-b border-slate-100 last:border-0 hover:bg-slate-50/50",
                     row.original.is_valid === false &&
-                      "bg-red-50 hover:bg-red-100/50",
+                      "bg-red-50 hover:bg-red-100/50"
                   )}
                 >
                   {row.getVisibleCells().map((cell, idx) => {
@@ -330,7 +338,7 @@ const QuickEntry: React.FC = () => {
                           isSelectedByDrag && "bg-blue-100/40",
                           activeCell?.rowIndex === row.index &&
                             activeCell?.colIdx === idx &&
-                            "bg-slate-50 z-20 ",
+                            "bg-slate-50 z-20 "
                         )}
                         onClick={() =>
                           setActiveCell({ rowIndex: row.index, colIdx: idx })
@@ -338,7 +346,7 @@ const QuickEntry: React.FC = () => {
                       >
                         {React.createElement(
                           cell.column.columnDef.cell as any,
-                          cell.getContext(),
+                          cell.getContext()
                         )}
                         {isSelectedByDrag && (
                           <div className="absolute inset-0 bg-blue-500/10 pointer-events-none" />
@@ -355,7 +363,7 @@ const QuickEntry: React.FC = () => {
               setData((p) => [...p, createEmptyRow()]);
               setTimeout(
                 () => setActiveCell({ rowIndex: data.length, colIdx: 1 }),
-                50,
+                50
               );
             }}
             disabled={isLoading}
@@ -365,7 +373,7 @@ const QuickEntry: React.FC = () => {
             {t("quick_entry.add_row")}
           </button>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };

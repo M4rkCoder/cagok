@@ -153,83 +153,96 @@ export default function RecurringSettings() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      {/* 탭 버튼 */}
-      <div className="flex border-b border-slate-200 w-full relative mb-6">
-        {[
-          { id: "all", label: t("common.all"), count: counts.all },
-          { id: "income", label: t("common.income"), count: counts.income },
-          { id: "expense", label: t("common.expense"), count: counts.expense },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setFilterType(tab.id as any)}
-            className={cn(
-              "relative px-6 py-3 text-sm font-bold transition-all flex items-center gap-2 outline-none",
-              filterType === tab.id
-                ? "text-slate-900"
-                : "text-slate-400 hover:text-slate-600"
-            )}
-          >
-            {tab.label}
-            <Badge
-              variant="secondary"
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="max-w-[1250px] mx-auto space-y-4"
+      >
+        {/* 탭 버튼 */}
+        <div className="flex border-b border-slate-200 w-full relative mb-6">
+          {[
+            { id: "all", label: t("common.all"), count: counts.all },
+            { id: "income", label: t("common.income"), count: counts.income },
+            {
+              id: "expense",
+              label: t("common.expense"),
+              count: counts.expense,
+            },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setFilterType(tab.id as any)}
               className={cn(
-                "ml-1 h-5 px-1.5 text-[10px] font-black border-none shadow-none",
+                "relative px-6 py-3 text-sm font-bold transition-all flex items-center gap-2 outline-none",
                 filterType === tab.id
-                  ? "bg-slate-100 text-slate-900"
-                  : "bg-transparent text-slate-300"
+                  ? "text-slate-900"
+                  : "text-slate-400 hover:text-slate-600"
               )}
             >
-              {tab.count}
-            </Badge>
-            {filterType === tab.id && (
-              <motion.div
-                layoutId="recurringTabUnderline"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"
-                transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              />
-            )}
-          </button>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredList.map((recurring) => (
-          <RecurringCard
-            key={recurring.id}
-            recurring={recurring}
-            category={categoryMap.get(recurring.category_id!)}
-            onEdit={() => openEdit(recurring)}
-            onToggle={() => toggleRecurring(recurring.id!)}
-            onDelete={() => onDeleteConfirm(recurring.id!)}
-            onProcess={() => processSingle(recurring.id!)}
-          />
-        ))}
-        {filteredList.length === 0 && (
-          <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-300 border-2 border-dashed border-slate-100 rounded-3xl bg-slate-50/50">
-            <RefreshCw className="w-12 h-12 mb-3 opacity-20" />
-            <p className="text-sm font-medium">{t("recurring.no_recurring")}</p>
-          </div>
-        )}
-      </div>
-      <RecurringFormSheet
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        transaction={
-          editingTransaction || {
-            description: "",
-            amount: 0,
-            frequency: "monthly",
-            start_date: new Date().toISOString().slice(0, 10),
-            is_active: true,
+              {tab.label}
+              <Badge
+                variant="secondary"
+                className={cn(
+                  "ml-1 h-5 px-1.5 text-[10px] font-black border-none shadow-none",
+                  filterType === tab.id
+                    ? "bg-slate-100 text-slate-900"
+                    : "bg-transparent text-slate-300"
+                )}
+              >
+                {tab.count}
+              </Badge>
+              {filterType === tab.id && (
+                <motion.div
+                  layoutId="recurringTabUnderline"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-900"
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredList.map((recurring) => (
+            <RecurringCard
+              key={recurring.id}
+              recurring={recurring}
+              category={categoryMap.get(recurring.category_id!)}
+              onEdit={() => openEdit(recurring)}
+              onToggle={() => toggleRecurring(recurring.id!)}
+              onDelete={() => onDeleteConfirm(recurring.id!)}
+              onProcess={() => processSingle(recurring.id!)}
+            />
+          ))}
+          {filteredList.length === 0 && (
+            <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-300 border-2 border-dashed border-slate-100 rounded-3xl bg-slate-50/50">
+              <RefreshCw className="w-12 h-12 mb-3 opacity-20" />
+              <p className="text-sm font-medium">
+                {t("recurring.no_recurring")}
+              </p>
+            </div>
+          )}
+        </div>
+        <RecurringFormSheet
+          open={isFormOpen}
+          onOpenChange={setIsFormOpen}
+          transaction={
+            editingTransaction || {
+              description: "",
+              amount: 0,
+              frequency: "monthly",
+              start_date: new Date().toISOString().slice(0, 10),
+              is_active: true,
+            }
           }
-        }
-        categories={categories}
-        onSave={(data) =>
-          editingTransaction
-            ? updateRecurring(data.id!, data)
-            : createRecurring(data)
-        }
-      />
+          categories={categories}
+          onSave={(data) =>
+            editingTransaction
+              ? updateRecurring(data.id!, data)
+              : createRecurring(data)
+          }
+        />
+      </motion.div>
     </div>
   );
 }

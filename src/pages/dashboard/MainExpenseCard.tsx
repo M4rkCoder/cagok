@@ -68,30 +68,42 @@ export function MainExpenseCard() {
     <Card className="overflow-hidden border-none shadow-md bg-white mb-2">
       <div className="grid grid-cols-1 lg:grid-cols-12">
         {/* 1. 지출 요약부 (좌측) 생략 - 기존과 동일 */}
-        <div className="lg:col-span-4 p-4 flex flex-col justify-between">
+        <div className="lg:col-span-4 p-4 flex flex-col justify-between h-full">
           <div>
             <div className="flex items-center justify-between pb-8">
               <div className="flex items-center gap-2">
                 <DashboardTitle title={t("dashboard.monthly_expense")} />
               </div>
-              <DiffBadge metric={comparison} />
-            </div>
-            <div className="text-5xl font-extrabold tracking-tighter text-slate-900">
               {overview && overview.total_expense !== 0 && (
+                <DiffBadge metric={comparison} />
+              )}
+            </div>
+
+            {/* 🔹 조건문을 text-5xl 태그 밖으로 분리하여 스타일 간섭(찌그러짐) 방지 */}
+            {overview && overview.total_expense !== 0 ? (
+              <div className="text-5xl font-extrabold tracking-tighter text-slate-900">
                 <AnimatedAmount
                   value={overview.total_expense}
                   formatter={formatAmount}
                   duration={1.2}
                 />
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="text-slate-400 text-sm font-medium italic tracking-normal p-7 ">
+                {t("dashboard.comparison.no_data")}
+              </div>
+            )}
           </div>
+
+          {/* 🔹 중복된 div 태그 정리 */}
           <div className="mt-3 pb-5">
-            <ComparisonCardFooter
-              metric={comparison}
-              expenseRate={expenseRate}
-              dailyAverage={overview?.daily_average}
-            />
+            {overview && overview.total_expense > 0 && (
+              <ComparisonCardFooter
+                metric={comparison}
+                expenseRate={expenseRate}
+                dailyAverage={overview?.daily_average}
+              />
+            )}
           </div>
         </div>
 
@@ -110,7 +122,7 @@ export function MainExpenseCard() {
                         className={cn(
                           "flex items-center justify-between py-1 px-2 transition-all duration-200 ease-out",
                           "hover:bg-white hover:scale-[1.03] hover:shadow-sm hover:z-10 hover:rounded-md",
-                          "group cursor-default",
+                          "group cursor-default"
                         )}
                       >
                         <div className="flex items-center gap-3 min-w-0">
@@ -197,6 +209,10 @@ export function MainExpenseCard() {
                       <TooltipContent className="flex items-center gap-2 text-xs bg-slate-800 text-white border-none">
                         {t("dashboard.quick_entry_tooltips.bulk")}{" "}
                         <Kbd className="bg-slate-700 text-white border-slate-600">
+                          Q
+                        </Kbd>{" "}
+                        /
+                        <Kbd className="bg-slate-700 text-white border-slate-600">
                           Ctrl Q
                         </Kbd>
                       </TooltipContent>
@@ -208,7 +224,7 @@ export function MainExpenseCard() {
                 <div className="w-full mt-1">
                   <div className="flex flex-wrap justify-center gap-1.5">
                     {/* 🔹 간격 축소 gap-2 -> gap-1.5 */}
-                    {quickCategories.length > 0 ? (
+                    {quickCategories.length > 0 &&
                       quickCategories.map((cat) => (
                         <TransactionSheet
                           key={cat.id}
@@ -228,12 +244,7 @@ export function MainExpenseCard() {
                             <Plus size={10} className="opacity-70 shrink-0" />
                           </Badge>
                         </TransactionSheet>
-                      ))
-                    ) : (
-                      <span className="text-slate-400 text-sm font-medium italic">
-                        {t("dashboard.comparison.no_data")}
-                      </span>
-                    )}
+                      ))}
                   </div>
                 </div>
               </div>

@@ -15,21 +15,42 @@ impl DashboardService {
         conn: &Connection,
         year_month: &str,
     ) -> Result<MonthlyOverview, String> {
-        // 1. 레포지토리에서 기초 데이터(소계) 가져오기
         let mut overview = DashboardRepository::get_monthly_overview(conn, year_month)
             .map_err(|e| format!("Failed to get monthly overview: {}", e))?;
-    
-        // 2. 해당 월의 총 일수(days in month) 계산
-        let days_in_month = Self::get_days_in_month(year_month)
-            .ok_or_else(|| format!("Invalid year_month format: {}", year_month))?;
-    
-        // 3. 일평균 지출 계산 (0으로 나누기 방지)
-        overview.daily_average = if days_in_month > 0 {
-            overview.total_expense / (days_in_month as f64)
+
+        // 1. 조회하려는 연/월 파싱
+        let parts: Vec<&str> = year_month.split('-').collect();
+        if parts.len() != 2 {
+            return Err(format!("Invalid year_month format: {}", year_month));
+        }
+        let target_year: i32 = parts[0].parse().map_err(|_| "Invalid year")?;
+        let target_month: u32 = parts[1].parse().map_err(|_| "Invalid month")?;
+
+        // 2. 현재 로컬 시스템의 날짜 가져오기
+        let today = Local::now().date_naive();
+        let current_year = today.year();
+        let current_month = today.month();
+
+        // 3. 일평균을 계산할 기준 일수(divisor) 결정
+        let divisor_days = if target_year == current_year && target_month == current_month {
+            // 이번 달인 경우: 오늘 날짜까지만 나눔 (예: 3월 4일이면 4)
+            today.day()
+        } else if target_year > current_year || (target_year == current_year && target_month > current_month) {
+            // 미래 달인 경우: 전체 일수로 나누거나 1로 처리 (안전하게 기존 get_days_in_month 사용)
+            Self::get_days_in_month(year_month).unwrap_or(1)
+        } else {
+            // 과거 달인 경우: 그 달의 전체 일수로 나눔 (기존 로직)
+            Self::get_days_in_month(year_month)
+                .ok_or_else(|| format!("Invalid year_month format: {}", year_month))?
+        };
+
+        // 4. 일평균 지출 계산 (0으로 나누기 방지)
+        overview.daily_average = if divisor_days > 0 {
+            overview.total_expense / (divisor_days as f64)
         } else {
             0.0
         };
-    
+
         Ok(overview)
     }
     

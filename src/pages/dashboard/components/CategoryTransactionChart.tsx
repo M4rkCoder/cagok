@@ -54,26 +54,40 @@ export default function CategoryTransactionChart({
       ? (overview?.total_expense ?? 0)
       : (overview?.total_income ?? 0);
 
-  // 2. 데이터 가공 (유틸 함수 사용)
   const chartData = React.useMemo(() => {
     return categories.map((cat, index) => {
-      // 수입/지출 각각의 ID 필드 대응
       const id = (cat.category_id || cat.income_category_id).toString();
       return {
         ...cat,
         id,
         name: cat.category_name,
         value: cat.total_amount,
-        fill: getThemeColor(mode, index, categories.length), // 유틸 함수 적용
+        fill: getThemeColor(mode, index, categories.length),
       };
     });
   }, [categories, mode]);
 
-  // 중앙 텍스트용 선택된 아이템 정보
   const selectedItem = React.useMemo(
     () => chartData.find((item) => item.id === activeId),
-    [chartData, activeId],
+    [chartData, activeId]
   );
+
+  const tooltipFormatter = (value: number, name: string, item: any) => {
+    const categoryIcon =
+      item.payload.category_icon || (mode === "expense" ? "💸" : "💰");
+
+    return (
+      <div className="flex items-center gap-2">
+        <span className="font-emoji text-base">{categoryIcon}</span>
+
+        <span className="text-muted-foreground">{name}</span>
+
+        <span className="font-bold text-foreground ml-auto">
+          {formatAmount(value)}
+        </span>
+      </div>
+    );
+  };
 
   return (
     <div className="flex flex-col h-full w-full items-center justify-between">
@@ -106,7 +120,9 @@ export default function CategoryTransactionChart({
           <PieChart>
             <ChartTooltip
               cursor={false}
-              content={<ChartTooltipContent hideLabel />}
+              content={
+                <ChartTooltipContent hideLabel formatter={tooltipFormatter} />
+              }
             />
             <Pie
               data={chartData}

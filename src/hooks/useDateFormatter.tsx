@@ -1,4 +1,8 @@
 import { useAppStore } from "@/stores/useAppStore";
+import { useSettingStore } from "@/stores/useSettingStore";
+import { format, parseISO } from "date-fns";
+import { ko, enUS } from "date-fns/locale";
+import { useCallback, useMemo } from "react";
 
 const getEnglishOrdinal = (day: number) => {
   const pr = new Intl.PluralRules("en-US", { type: "ordinal" });
@@ -16,160 +20,158 @@ const getEnglishOrdinal = (day: number) => {
 
 export const useDateFormatter = () => {
   const { language } = useAppStore();
-  const locale = language === "ko" ? "ko-KR" : "en-US";
+  const { dateFormat } = useSettingStore();
 
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
+  // 의존성 변수들을 memoize 하여 불필요한 재계산 방지
+  const { dateLocale, intlLocale } = useMemo(
+    () => ({
+      dateLocale: language === "ko" ? ko : enUS,
+      intlLocale: language === "ko" ? "ko-KR" : "en-US",
+    }),
+    [language]
+  );
 
-    if (language === "ko") {
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      return `${year}.${month}.${day}`;
-    } else {
-      return new Intl.DateTimeFormat(locale, {
+  const formatDate = useCallback(
+    (dateString: string) => {
+      if (!dateString) return "";
+      try {
+        const parsedDate = parseISO(dateString);
+        if (isNaN(parsedDate.getTime())) return dateString;
+        return format(parsedDate, dateFormat || "yyyy.MM.dd", {
+          locale: dateLocale,
+        });
+      } catch (e) {
+        return dateString.replace(/-/g, ".");
+      }
+    },
+    [dateFormat, dateLocale]
+  );
+
+  const formatFullDate = useCallback(
+    (dateString: string) => {
+      if (!dateString) return "";
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString;
+
+      if (language === "en") {
+        const monthStr = new Intl.DateTimeFormat("en-US", {
+          month: "short",
+        }).format(date);
+        const dayStr = getEnglishOrdinal(date.getDate());
+        const year = date.getFullYear();
+        return `${monthStr} ${dayStr}, ${year}`;
+      }
+
+      return new Intl.DateTimeFormat(intlLocale, {
         year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
+        month: "long",
+        day: "numeric",
+        weekday: "short",
       }).format(date);
-    }
-  };
+    },
+    [language, intlLocale]
+  );
 
-  const formatFullDate = (dateString: string) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return dateString;
-
-    if (language === "en") {
-      // 영어일 경우: Feb 25th, 2026 형식으로 조합
-      const month = new Intl.DateTimeFormat("en-US", { month: "short" }).format(
+  const formatMonth = useCallback(
+    (dateString: string, formatType: "short" | "long" = "short") => {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "";
+      return new Intl.DateTimeFormat(intlLocale, { month: formatType }).format(
         date
       );
-      const day = getEnglishOrdinal(date.getDate());
-      const year = date.getFullYear();
-      return `${month} ${day}, ${year}`;
-    }
+    },
+    [intlLocale]
+  );
 
-    return new Intl.DateTimeFormat(locale, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      weekday: "short",
-    }).format(date);
-  };
+  const formatDay = useCallback(
+    (dateString: string) => {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "";
+      const day = date.getDate();
+      return language === "en" ? getEnglishOrdinal(day) : `${day}일`;
+    },
+    [language]
+  );
 
-  const formatMonth = (
-    dateString: string,
-    format: "short" | "long" = "short"
-  ) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "";
-    return new Intl.DateTimeFormat(locale, { month: format }).format(date);
-  };
-
-  /**
-   * '일' 포매팅 (ko: "25일", en: "25th")
-   */
-  const formatDay = (dateString: string) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "";
-
-    const day = date.getDate();
-
-    if (language === "en") {
-      return getEnglishOrdinal(day); // 1st, 2nd, 3rd...
-    }
-
-    return new Intl.DateTimeFormat(locale, { day: "numeric" }).format(date);
-  };
-
-  const formatWeekday = (
-    dateString: string,
-    format: "short" | "long" | "narrow" = "short"
-  ) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "";
-    return new Intl.DateTimeFormat(locale, { weekday: format }).format(date);
-  };
-
-  /**
-   * 월, 일, 요일을 한 번에 객체로 반환
-   */
-  const getDateParts = (dateString: string) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return { month: "", day: "", weekday: "" };
-
-    const dayNumber = date.getDate();
-
-    return {
-      month: new Intl.DateTimeFormat(locale, { month: "short" }).format(date),
-      day:
-        language === "en"
-          ? getEnglishOrdinal(dayNumber)
-          : new Intl.DateTimeFormat(locale, { day: "numeric" }).format(date),
-      weekday: new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
-        date
-      ),
-    };
-  };
-
-  /**
-   * '연도' 포매팅 (ko: "2024년", en: "2024")
-   */
-  const formatYear = (dateOrYear: string | number) => {
-    let year: number;
-    if (typeof dateOrYear === "string") {
-      const date = new Date(dateOrYear);
-      year = date.getFullYear();
-    } else {
-      year = dateOrYear;
-    }
-
-    if (language === "ko") {
-      return `${year}년`;
-    }
-    return `${year}`;
-  };
-
-  /**
-   * '연월' 포매팅 (ko: "2024년 5월", en: "May 2024")
-   */
-  const formatYearMonth = (dateString: string) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "";
-
-    if (language === "ko") {
-      return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
-    } else {
-      return new Intl.DateTimeFormat(locale, {
+  const formatYearMonth = useCallback(
+    (dateString: string) => {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "";
+      if (language === "ko") {
+        return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
+      }
+      return new Intl.DateTimeFormat(intlLocale, {
         year: "numeric",
         month: "long",
       }).format(date);
-    }
-  };
+    },
+    [language, intlLocale]
+  );
 
-  /**
-   * 백엔드에서 오는 요일 인덱스(0: 일요일 ~ 6: 토요일)를 다국어 요일 문자열로 변환
-   */
-  const formatDayIndex = (
-    dayIndex: number,
-    format: "short" | "long" | "narrow" = "short"
-  ) => {
-    // 1970년 1월 4일은 '일요일'입니다. 여기에 dayIndex를 더해 요일을 맞춥니다.
-    const date = new Date(1970, 0, 4 + dayIndex);
-    return new Intl.DateTimeFormat(locale, { weekday: format }).format(date);
-  };
+  const formatYear = useCallback(
+    (dateOrYear: string | number) => {
+      let year: number;
+      if (typeof dateOrYear === "string") {
+        const date = new Date(dateOrYear);
+        year = date.getFullYear();
+      } else {
+        year = dateOrYear;
+      }
+      return language === "ko" ? `${year}년` : `${year}`;
+    },
+    [language]
+  );
 
-  return {
-    formatDate,
-    formatFullDate,
-    formatMonth,
-    formatDay,
-    formatYear,
-    formatYearMonth,
-    formatWeekday,
-    getDateParts,
-    formatDayIndex,
-  };
+  const formatDayIndex = useCallback(
+    (dayIndex: number, formatType: "short" | "long" | "narrow" = "short") => {
+      const date = new Date(1970, 0, 4 + dayIndex);
+      return new Intl.DateTimeFormat(intlLocale, {
+        weekday: formatType,
+      }).format(date);
+    },
+    [intlLocale]
+  );
+
+  const getDateParts = useCallback(
+    (dateString: string) => {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return { month: "", day: "", weekday: "" };
+      const dayNumber = date.getDate();
+      return {
+        month: new Intl.DateTimeFormat(intlLocale, { month: "short" }).format(
+          date
+        ),
+        day:
+          language === "en" ? getEnglishOrdinal(dayNumber) : `${dayNumber}일`,
+        weekday: new Intl.DateTimeFormat(intlLocale, {
+          weekday: "short",
+        }).format(date),
+      };
+    },
+    [language, intlLocale]
+  );
+
+  // 모든 함수를 안정적인 객체 형태로 반환
+  return useMemo(
+    () => ({
+      formatDate,
+      formatFullDate,
+      formatYearMonth,
+      formatMonth,
+      formatDay,
+      formatYear,
+      formatDayIndex,
+      getDateParts,
+    }),
+    [
+      formatDate,
+      formatFullDate,
+      formatYearMonth,
+      formatMonth,
+      formatDay,
+      formatYear,
+      formatDayIndex,
+      getDateParts,
+    ]
+  );
 };
