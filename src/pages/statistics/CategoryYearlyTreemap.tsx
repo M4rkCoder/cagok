@@ -9,6 +9,7 @@ import { TitleText } from "./components/TitleText";
 import { CategoryIcon } from "@/components/CategoryIcon";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 import { NoDataOverlay } from "./components/NoDataOverlay";
+import { motion, AnimatePresence } from "framer-motion"; // AnimatePresence 추가
 
 interface TreemapData {
   name: string;
@@ -164,7 +165,6 @@ export const CategoryYearlyTreemap: React.FC = () => {
         {depth === 1 && (
           <foreignObject x={x} y={y} width={width} height={height}>
             <div className="flex h-full w-full flex-col items-center justify-center p-1 text-center text-white leading-tight overflow-hidden">
-              {/* 아이콘 크게 표시 */}
               <div
                 className={cn(
                   "native-emoji drop-shadow-md",
@@ -178,7 +178,6 @@ export const CategoryYearlyTreemap: React.FC = () => {
                 {icon}
               </div>
 
-              {/* 카테고리 이름 (중간 크기 이상일 때 줄바꿈하여 표시) */}
               {isMedium && (
                 <div
                   className={cn(
@@ -190,7 +189,6 @@ export const CategoryYearlyTreemap: React.FC = () => {
                 </div>
               )}
 
-              {/* 비중 및 세부 내역 (큰 크기일 때만 노출) */}
               {isLarge && (
                 <div className="flex flex-col items-center mt-1 space-y-0.5">
                   <div className="bg-black/20 px-2 py-0.5 rounded-full text-[10px] font-bold">
@@ -211,7 +209,6 @@ export const CategoryYearlyTreemap: React.FC = () => {
                 </div>
               )}
 
-              {/* 아주 작은 영역은 비중 수치만 아이콘 밑에 살짝 표시 */}
               {!isLarge && isMedium && (
                 <div className="text-[9px] font-bold opacity-90">
                   {percentage.toFixed(1)}%
@@ -289,54 +286,75 @@ export const CategoryYearlyTreemap: React.FC = () => {
     treemapData.length === 0 || treemapData.every((d) => d.value === 0);
 
   return (
-    <Card
-      className={cn(
-        "overflow-hidden border-slate-200 shadow-none bg-white",
-        storeLoading && "animate-pulse"
-      )}
+    // 전체 컴포넌트 등장 애니메이션
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
     >
-      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
-        <TitleText
-          title={`${viewType === "expense" ? t("common.expense") : t("common.income")} ${t("statistics.tabs.treemap")}`}
-        />
-        <Tabs
-          value={viewType}
-          onValueChange={(v) => setViewType(v as "expense" | "income")}
-          className="h-8 w-[140px]"
-        >
-          <TabsList className="grid w-full grid-cols-2 h-8 bg-slate-100/50">
-            <TabsTrigger
-              value="expense"
-              className="text-xs transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white font-bold"
-            >
-              {t("common.expense")}
-            </TabsTrigger>
-            <TabsTrigger
-              value="income"
-              className="text-xs transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-bold"
-            >
-              {t("common.income")}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </CardHeader>
+      <Card
+        className={cn(
+          "overflow-hidden border-slate-200 shadow-none bg-white",
+          storeLoading && "animate-pulse"
+        )}
+      >
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2">
+          <TitleText
+            title={`${viewType === "expense" ? t("common.expense") : t("common.income")} ${t("statistics.tabs.treemap")}`}
+          />
+          <Tabs
+            value={viewType}
+            onValueChange={(v) => setViewType(v as "expense" | "income")}
+            className="h-8 w-[140px]"
+          >
+            <TabsList className="grid w-full grid-cols-2 h-8 bg-slate-100/50">
+              <TabsTrigger
+                value="expense"
+                className="text-xs transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white font-bold"
+              >
+                {t("common.expense")}
+              </TabsTrigger>
+              <TabsTrigger
+                value="income"
+                className="text-xs transition-all data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-bold"
+              >
+                {t("common.income")}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </CardHeader>
 
-      <CardContent className="h-[470px] pt-2">
-        <NoDataOverlay isVisible={isEmpty} className="h-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <Treemap
-              data={treemapData}
-              dataKey="value"
-              aspectRatio={4 / 3}
-              stroke="#fff"
-              content={<CustomizedTreemapContent />}
-              isAnimationActive={false} // 애니메이션 제거
-            >
-              <Tooltip content={<CustomTooltip />} />
-            </Treemap>
-          </ResponsiveContainer>
-        </NoDataOverlay>
-      </CardContent>
-    </Card>
+        <CardContent className="h-[470px] pt-2 overflow-hidden">
+          <NoDataOverlay isVisible={isEmpty} className="h-full">
+            {/* 탭 전환 시 차트가 스르륵 바뀌는 애니메이션 영역 */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={viewType} // key가 변경될 때마다 애니메이션 트리거
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="w-full h-full"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <Treemap
+                    data={treemapData}
+                    dataKey="value"
+                    aspectRatio={4 / 3}
+                    stroke="#fff"
+                    content={<CustomizedTreemapContent />}
+                    isAnimationActive={false} // 기존 차트 애니메이션 비활성화
+                  >
+                    <Tooltip content={<CustomTooltip />} />
+                  </Treemap>
+                </ResponsiveContainer>
+              </motion.div>
+            </AnimatePresence>
+          </NoDataOverlay>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 };
+
+export default CategoryYearlyTreemap;

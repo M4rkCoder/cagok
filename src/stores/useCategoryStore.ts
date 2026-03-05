@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 import { Category } from "@/types";
 import { toast } from "sonner";
+import i18n from "@/i18n"; // i18n 임포트 추가
 import { useAppStore } from "./useAppStore";
 
 interface CategoryPayload {
@@ -11,7 +12,6 @@ interface CategoryPayload {
 }
 
 interface CategoryState {
-  // 상태 (UI 관련)
   isAddingNewCategoryMode: boolean;
   editingCategoryId: number | null;
   newCategoryName: string;
@@ -19,7 +19,6 @@ interface CategoryState {
   newCategoryType: number;
   isEmojiPickerOpen: boolean;
 
-  // 액션
   setCategoryState: (key: string, value: any) => void;
   resetCategoryForm: () => void;
   startEditCategory: (cat: Category) => void;
@@ -34,7 +33,6 @@ interface CategoryState {
 }
 
 export const useCategoryStore = create<CategoryState>((set, get) => ({
-  // 초기 상태
   isAddingNewCategoryMode: false,
   editingCategoryId: null,
   newCategoryName: "",
@@ -42,11 +40,9 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
   newCategoryType: 1,
   isEmojiPickerOpen: false,
 
-  // 단순 상태 변경
   setCategoryState: (key, value) =>
     set((state) => ({ ...state, [key]: value })),
 
-  // 폼 초기화
   resetCategoryForm: () =>
     set({
       isAddingNewCategoryMode: false,
@@ -57,7 +53,6 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
       isEmojiPickerOpen: false,
     }),
 
-  // 수정 모드 진입
   startEditCategory: (cat) =>
     set({
       editingCategoryId: cat.id,
@@ -67,50 +62,43 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
       isAddingNewCategoryMode: true,
     }),
 
-  // 백엔드 통신: 추가
   addCategory: async (payload) => {
     try {
-      await invoke("create_category", {
-        category: payload,
-      });
-      toast.success("카테고리가 추가되었습니다.");
+      await invoke("create_category", { category: payload });
+      toast.success(i18n.t("toast.transaction_created"));
       await useAppStore.getState().fetchCategories();
     } catch (error) {
-      toast.error("카테고리 추가 실패");
-      console.log(error);
+      toast.error(i18n.t("toast.save_transaction_failed"));
+      console.error(error);
     }
   },
 
-  // 백엔드 통신: 수정
   updateCategory: async (id, payload) => {
     try {
       await invoke("update_category", { id, category: payload });
       get().resetCategoryForm();
-      toast.success(`${payload.icon} ${payload.name}카테고리를 수정했습니다.`);
+      toast.success(i18n.t("toast.transaction_updated"));
       await useAppStore.getState().fetchCategories();
     } catch (error) {
-      toast.error("카테고리 수정 오류");
-      console.log(error);
+      toast.error(i18n.t("toast.save_transaction_failed"));
+      console.error(error);
     }
   },
 
-  // 백엔드 통신: 삭제
   deleteCategory: async (id) => {
     try {
       await invoke("delete_category", { id });
-      toast.success("카테고리를 삭제했습니다.");
-      // 삭제 후 만약 수정 중이던 아이템이라면 폼 초기화
+      toast.success(i18n.t("toast.transaction_deleted"));
       if (get().editingCategoryId === id) get().resetCategoryForm();
       await useAppStore.getState().fetchCategories();
     } catch (error) {
-      toast.error("카테고리 삭제 오류");
-      console.log(error);
+      toast.error(i18n.t("toast.delete_transaction_failed"));
+      console.error(error);
     }
   },
 
   submitCategoryForm: async (values) => {
     const { editingCategoryId } = get();
-
     const payload = {
       name: values.name,
       icon: values.icon,
@@ -119,20 +107,14 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
 
     try {
       if (editingCategoryId) {
-        // 수정
         await invoke("update_category", {
           id: editingCategoryId,
           category: payload,
         });
-        toast.success(
-          `${payload.icon} ${payload.name} 카테고리를 수정했습니다.`,
-        );
+        toast.success(i18n.t("toast.transaction_updated"));
       } else {
-        // 생성
-        await invoke("create_category", {
-          category: payload,
-        });
-        toast.success("카테고리가 추가되었습니다.");
+        await invoke("create_category", { category: payload });
+        toast.success(i18n.t("toast.transaction_created"));
       }
 
       get().resetCategoryForm();
@@ -140,15 +122,14 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
     } catch (error: any) {
       const errorMsg = error?.toString?.() || String(error || "");
 
+      // UNIQUE 제약 조건 위반 (이름 중복) 처리
       if (
         errorMsg.includes("UNIQUE constraint failed") &&
         errorMsg.includes("categories.name")
       ) {
-        toast.error(
-          `"${payload.name}"은(는) 이미 사용 중인 카테고리 이름입니다.`,
-        );
+        toast.error(i18n.t("settings.category.name_duplicate")); // "이미 존재하는 카테고리 이름입니다."
       } else {
-        toast.error("카테고리 저장 중 오류가 발생했습니다.");
+        toast.error(i18n.t("toast.save_transaction_failed"));
       }
       console.error("Category save error:", error);
     }

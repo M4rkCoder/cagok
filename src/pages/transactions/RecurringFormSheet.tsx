@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Sheet,
   SheetContent,
@@ -37,8 +37,9 @@ import {
 } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSettingStore } from "@/stores/useSettingStore";
+import { recurringSchema } from "@/schemas/recurring";
+import { useTranslation } from "react-i18next";
 
-// 1. 내부 입력 상태를 위한 별도 타입 정의 (amount를 string으로 허용)
 interface RecurringFormState extends Omit<RecurringTransaction, "amount"> {
   amount: string | number;
 }
@@ -51,8 +52,6 @@ interface RecurringFormSheetProps {
   onSave: (transaction: RecurringTransaction) => void;
 }
 
-import { useTranslation } from "react-i18next";
-
 const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
   open,
   onOpenChange,
@@ -62,11 +61,15 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const { dateFormat } = useSettingStore();
-  // 2. 초기 상태 설정 시 RecurringFormState 타입을 사용
+
   const [form, setForm] = useState<RecurringFormState>(
     transaction as RecurringFormState
   );
   const [transactionType, setTransactionType] = useState<0 | 1>(1);
+
+  // 에러 상태 및 타이머 관리를 위한 Ref
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const errorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [isStartDateFocused, setIsStartDateFocused] = useState(false);
   const [isEndDateFocused, setIsEndDateFocused] = useState(false);
@@ -85,9 +88,12 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
   };
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setErrors({});
+      if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
+      return;
+    }
 
-    // 숫자를 천 단위 콤마 문자열로 변환
     const initialAmount = transaction.amount
       ? new Intl.NumberFormat().format(Number(transaction.amount))
       : "0";
@@ -140,28 +146,42 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
   };
 
   const handleSubmit = () => {
-    if (!form.description.trim()) {
-      toast.error(t("recurring.form.validation.description_required"));
+    const schema = recurringSchema(t);
+    const result = schema.safeParse(form);
+
+    if (!result.success) {
+      const fieldErrors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        const fieldName = issue.path[0] as string;
+        if (!fieldErrors[fieldName]) {
+          fieldErrors[fieldName] = issue.message;
+        }
+      });
+      setErrors(fieldErrors);
+
+      // 기존 타이머가 있다면 클리어
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
+      }
+
+      // 3초 후 에러 상태를 초기화하여 툴팁과 붉은 테두리를 일시적으로만 보여줌
+      errorTimeoutRef.current = setTimeout(() => {
+        setErrors({});
+      }, 3000);
+
+      toast.error(
+        t("recurring.form.validation.check_inputs", "입력 항목을 확인해주세요.")
+      );
       return;
     }
 
-    // 3. 콤마 제거 후 숫자로 변환 (타입 정제)
-    const finalAmount = Number(form.amount.toString().replace(/,/g, ""));
+    setErrors({});
+    if (errorTimeoutRef.current) clearTimeout(errorTimeoutRef.current);
 
-    if (isNaN(finalAmount) || finalAmount <= 0) {
-      toast.error(t("recurring.form.validation.amount_required"));
-      return;
-    }
-
-    if (!form.category_id) {
-      toast.error(t("recurring.form.validation.category_required"));
-      return;
-    }
-
-    // 4. 부모에게 전달할 때는 원본 RecurringTransaction 타입에 맞춰서 전달
     onSave({
       ...form,
-      amount: finalAmount,
+      amount: result.data.amount,
+      category_id: result.data.category_id,
     } as RecurringTransaction);
 
     onOpenChange(false);
@@ -181,10 +201,11 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
         className="top-12 h-[calc(100vh-theme(spacing.12))] sm:max-w-[450px]"
       >
         <SheetHeader className="mb-2 space-y-1 px-1">
-          <SheetTitle>{form.id ? t("recurring.form.title_edit") : t("recurring.form.title_add")}</SheetTitle>
-          <SheetDescription className="text-xs">
-            {t("recurring.form.description")}
-          </SheetDescription>
+          <SheetTitle>
+            {form.id
+              ? t("recurring.form.title_edit")
+              : t("recurring.form.title_add")}
+          </SheetTitle>
         </SheetHeader>
 
         <div className="flex flex-col h-full pb-15">
@@ -192,7 +213,6 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
             <div className="space-y-4 pb-4">
               {/* 1. 타입 및 고정핀 */}
               <div className="flex items-center gap-2 mt-1 min-h-[52px]">
-                {/* min-h 추가로 높이 변화 방지 */}
                 <div className="flex-1 p-1 bg-slate-100/60 rounded-2xl flex gap-1 h-12 items-center">
                   {[
                     {
@@ -238,7 +258,6 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                     </button>
                   ))}
                 </div>
-                {/* AnimatePresence와 motion을 사용하여 튕김 현상 방지 및 부드러운 등장 */}
                 <AnimatePresence mode="popLayout">
                   {transactionType === 1 && (
                     <motion.div
@@ -291,86 +310,143 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                 </AnimatePresence>
               </div>
 
-              {/* 2. 카테고리 (가로 스크롤) */}
+              {/* 2. 카테고리 (가로 스크롤 + 임시 툴팁) */}
               <div className="space-y-2 w-full overflow-hidden">
                 <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-0.5">
                   {t("common.category")}
                 </Label>
-                <div className="w-full max-w-[calc(450px-48px)] overflow-hidden">
-                  <ScrollArea
-                    className="w-full whitespace-nowrap rounded-xl border border-slate-100 bg-slate-50/50"
-                    onWheel={handleWheel}
-                  >
-                    <div className="flex gap-2 p-2 w-max">
-                      {filteredCategories.map((cat) => (
-                        <button
-                          key={cat.id}
-                          type="button"
-                          onClick={() =>
-                            setForm((prev) => ({
-                              ...prev,
-                              category_id: cat.id,
-                            }))
-                          }
+
+                <TooltipProvider delayDuration={0}>
+                  {/* open 속성을 강제로 제어하여 에러가 있을 때만 툴팁이 열리게 함 */}
+                  <Tooltip open={!!errors.category_id}>
+                    <TooltipTrigger asChild>
+                      <div
+                        className={cn(
+                          "w-full max-w-[calc(450px-48px)] overflow-hidden rounded-xl transition-all duration-300"
+                        )}
+                      >
+                        <ScrollArea
                           className={cn(
-                            "flex flex-col items-center justify-center min-w-[60px] h-[60px] rounded-xl border transition-all relative shrink-0",
-                            form.category_id === cat.id
-                              ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500 shadow-sm"
-                              : "border-transparent bg-white hover:border-slate-200"
+                            "w-full whitespace-nowrap rounded-xl border border-slate-100 bg-slate-50/50 transition-colors duration-300",
+                            errors.category_id && "border-red-500 border-2"
                           )}
+                          onWheel={handleWheel}
                         >
-                          <CategoryIcon
-                            icon={cat.icon}
-                            type={cat.type}
-                            size="sm"
+                          <div className="flex gap-2 p-2 w-max">
+                            {filteredCategories.map((cat) => (
+                              <button
+                                key={cat.id}
+                                type="button"
+                                onClick={() => {
+                                  setForm((prev) => ({
+                                    ...prev,
+                                    category_id: cat.id,
+                                  }));
+                                }}
+                                className={cn(
+                                  "flex flex-col items-center justify-center min-w-[60px] h-[60px] rounded-xl border transition-all relative shrink-0",
+                                  form.category_id === cat.id
+                                    ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500 shadow-sm"
+                                    : "border-transparent bg-white hover:border-slate-200"
+                                )}
+                              >
+                                <CategoryIcon
+                                  icon={cat.icon}
+                                  type={cat.type}
+                                  size="sm"
+                                />
+                                <span className="text-[9px] mt-1 font-bold text-slate-600 truncate w-full text-center px-1">
+                                  {cat.name}
+                                </span>
+                                {form.category_id === cat.id && (
+                                  <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full p-0.5 shadow-sm">
+                                    <Check className="w-2 h-2" />
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                          <ScrollBar
+                            orientation="horizontal"
+                            className="h-1.5"
                           />
-                          <span className="text-[9px] mt-1 font-bold text-slate-600 truncate w-full text-center px-1">
-                            {cat.name}
-                          </span>
-                          {form.category_id === cat.id && (
-                            <div className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full p-0.5 shadow-sm">
-                              <Check className="w-2 h-2" />
-                            </div>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                    <ScrollBar orientation="horizontal" className="h-1.5" />
-                  </ScrollArea>
-                </div>
+                        </ScrollArea>
+                      </div>
+                    </TooltipTrigger>
+                    {errors.category_id && (
+                      <TooltipContent className="bg-red-500 text-white border-none font-bold text-xs">
+                        {errors.category_id}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
-              {/* 3. 상세 내역 */}
+              {/* 3. 상세 내역 (임시 툴팁) */}
               <div className="space-y-1 px-0.5">
                 <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   {t("quick_entry.headers.description")}
                 </Label>
-                <Input
-                  name="description"
-                  value={form.description}
-                  onChange={handleChange}
-                  placeholder={t("transaction_form.description_placeholder")}
-                  className="h-10 bg-slate-50 border-none rounded-xl text-sm font-bold"
-                />
+                <TooltipProvider delayDuration={0}>
+                  <Tooltip open={!!errors.description}>
+                    <TooltipTrigger asChild>
+                      <Input
+                        name="description"
+                        value={form.description}
+                        onChange={handleChange}
+                        placeholder={t(
+                          "transaction_form.description_placeholder"
+                        )}
+                        className={cn(
+                          "h-10 border-none rounded-xl text-sm font-bold transition-all duration-300",
+                          errors.description
+                            ? "bg-red-50 ring-2 ring-red-500 text-red-900"
+                            : "bg-slate-50"
+                        )}
+                      />
+                    </TooltipTrigger>
+                    {errors.description && (
+                      <TooltipContent className="bg-red-500 text-white border-none font-bold text-xs">
+                        {errors.description}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
-              {/* 4. 금액 */}
+              {/* 4. 금액 (임시 툴팁) */}
               <div className="space-y-1 px-0.5">
                 <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                   {t("common.amount")}
                 </Label>
                 <div className="relative">
-                  <Input
-                    name="amount"
-                    value={form.amount}
-                    onChange={handleAmountChange}
-                    onBlur={handleAmountBlur}
-                    onFocus={(e) => e.target.select()}
-                    className="text-lg font-black text-right h-10 bg-slate-50 border-none rounded-xl px-6"
-                  />
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 text-sm font-bold">
-                    ₩
-                  </span>
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip open={!!errors.amount}>
+                      <TooltipTrigger asChild>
+                        <Input
+                          name="amount"
+                          value={form.amount}
+                          onChange={handleAmountChange}
+                          onBlur={handleAmountBlur}
+                          onFocus={(e) => e.target.select()}
+                          className={cn(
+                            "text-lg font-black text-right h-10 border-none rounded-xl px-6 transition-all duration-300",
+                            errors.amount
+                              ? "bg-red-50 ring-2 ring-red-500 text-red-900"
+                              : "bg-slate-50"
+                          )}
+                        />
+                      </TooltipTrigger>
+                      {errors.amount && (
+                        <TooltipContent
+                          side="top"
+                          className="bg-red-500 text-white border-none font-bold text-xs"
+                        >
+                          {errors.amount}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
               </div>
 
@@ -416,58 +492,79 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
 
               {/* 7. 기간 설정 */}
               <div className="grid grid-cols-2 gap-3 px-0.5">
-                {/* 시작일 섹션 */}
+                {/* 시작일 섹션 (임시 툴팁) */}
                 <div className="space-y-1">
-                  {/* 고정 높이를 주어 정렬을 맞춥니다 */}
                   <div className="h-5 flex items-end">
                     <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-0.5">
                       {t("recurring.form.start_date")}
                     </Label>
                   </div>
-                  <div className="relative group">
-                    <Input
-                      name="start_date"
-                      value={getDisplayDate(form.start_date, isStartDateFocused)}
-                      onChange={handleChange}
-                      onFocus={() => setIsStartDateFocused(true)}
-                      onBlur={() => {
-                        setIsStartDateFocused(false);
-                        handleDateBlur("start_date");
-                      }}
-                      className="h-10 bg-slate-50 border-none rounded-xl focus-visible:ring-2 focus-visible:ring-blue-500/20 pr-8 text-xs font-bold w-full"
-                      placeholder="YYYY-MM-DD"
-                    />
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors">
-                          <CalendarIcon className="w-3.5 h-3.5" />
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="end">
-                        <Calendar
-                          mode="single"
-                          locale={i18n.language === "ko" ? ko : enUS}
-                          selected={
-                            form.start_date
-                              ? parseISO(form.start_date)
-                              : undefined
-                          }
-                          onSelect={(d) =>
-                            d &&
-                            setForm((p) => ({
-                              ...p,
-                              start_date: format(d, "yyyy-MM-dd"),
-                            }))
-                          }
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip open={!!errors.start_date}>
+                      <TooltipTrigger asChild>
+                        <div className="relative group w-full">
+                          <Input
+                            name="start_date"
+                            value={getDisplayDate(
+                              form.start_date,
+                              isStartDateFocused
+                            )}
+                            onChange={handleChange}
+                            onFocus={() => setIsStartDateFocused(true)}
+                            onBlur={() => {
+                              setIsStartDateFocused(false);
+                              handleDateBlur("start_date");
+                            }}
+                            className={cn(
+                              "h-10 border-none rounded-xl focus-visible:ring-2 pr-8 text-xs font-bold w-full transition-all duration-300",
+                              errors.start_date
+                                ? "bg-red-50 ring-2 ring-red-500 text-red-900 focus-visible:ring-red-500"
+                                : "bg-slate-50 focus-visible:ring-blue-500/20"
+                            )}
+                            placeholder="YYYY-MM-DD"
+                          />
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors">
+                                <CalendarIcon className="w-3.5 h-3.5" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="end">
+                              <Calendar
+                                mode="single"
+                                locale={i18n.language === "ko" ? ko : enUS}
+                                selected={
+                                  form.start_date
+                                    ? parseISO(form.start_date)
+                                    : undefined
+                                }
+                                onSelect={(d) => {
+                                  if (d) {
+                                    setForm((p) => ({
+                                      ...p,
+                                      start_date: format(d, "yyyy-MM-dd"),
+                                    }));
+                                  }
+                                }}
+                              />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </TooltipTrigger>
+                      {errors.start_date && (
+                        <TooltipContent
+                          side="top"
+                          className="bg-red-500 text-white border-none font-bold text-xs"
+                        >
+                          {errors.start_date}
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
 
                 {/* 종료일 섹션 */}
                 <div className="space-y-1">
-                  {/* 초기화 버튼이 있어도 전체 높이를 h-5로 고정하여 시작일 라벨과 수평을 맞춥니다 */}
                   <div className="h-5 flex items-end justify-between">
                     <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-0.5">
                       {t("recurring.form.end_date")}

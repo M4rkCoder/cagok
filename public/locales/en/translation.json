@@ -74,7 +74,7 @@
     "remarks_placeholder": "Enter remarks"
   },
   "transaction_filter": {
-    "search_placeholder": "Search description/remarks...",
+    "search_placeholder": "Description/Remarks...",
     "search_button": "Search",
     "reset_filter": "Reset Filters",
     "all": "All",
@@ -446,7 +446,9 @@
     "new": "New Entry",
     "edit": "Edit Transaction",
     "create_new": "Create New Transaction",
-    "no_found": "No transactions found."
+    "no_found": "No transactions found.",
+    "bulk_delete_success": "{{count}} transactions have been deleted.",
+    "bulk_delete_failed": "Failed to delete multiple transactions."
   },
   "category": {
     "select_icon": "Select Icon",

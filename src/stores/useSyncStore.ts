@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
+import i18n from "@/i18n"; // i18n 임포트 추가
 import { OneDriveStatus } from "@/types";
 
 interface SyncState {
@@ -37,22 +38,21 @@ export const useSyncStore = create<SyncState>((set, get) => ({
 
   loadSettings: async () => {
     try {
-      // 두 가지 설정값을 병렬로 가져옵니다.
       const [backupVal, syncVal] = await Promise.all([
         invoke<string | null>("get_setting_command", {
           key: "auto_onedrive_backup",
         }),
         invoke<string | null>("get_setting_command", {
-          key: "onedrive_auto_sync", // 우리가 추가한 키
+          key: "onedrive_auto_sync",
         }),
       ]);
 
       set({
         autoBackup: backupVal === "true",
-        autoSyncEnabled: syncVal === "true", // 이제 인터페이스 에러가 사라집니다.
+        autoSyncEnabled: syncVal === "true",
       });
     } catch (e) {
-      console.error("설정을 불러오는 중 오류 발생:", e);
+      console.error("Failed to load settings:", e);
     }
   },
 
@@ -64,10 +64,10 @@ export const useSyncStore = create<SyncState>((set, get) => ({
         key: "auto_onedrive_backup",
         value: checked ? "true" : "false",
       });
-      toast.success("설정이 저장되었습니다.");
+      toast.success(i18n.t("settings.general.save_button")); // "설정 저장하기" 완료 피드백
     } catch (e) {
       console.error(e);
-      toast.error("설정 저장 실패");
+      toast.error(i18n.t("toast.save_transaction_failed")); // "가계부 저장에 실패했습니다."
       set({ autoBackup: previous });
     }
   },
@@ -80,10 +80,10 @@ export const useSyncStore = create<SyncState>((set, get) => ({
         key: "onedrive_auto_sync",
         value: checked ? "true" : "false",
       });
-      toast.success("설정이 저장되었습니다.");
+      toast.success(i18n.t("settings.general.save_button"));
     } catch (e) {
       console.error(e);
-      toast.error("설정 저장 실패");
+      toast.error(i18n.t("toast.save_transaction_failed"));
       set({ autoSyncEnabled: previous });
     }
   },
@@ -92,10 +92,12 @@ export const useSyncStore = create<SyncState>((set, get) => ({
     set({ isLoading: true });
     try {
       await invoke("onedrive_login");
-      toast.success("OneDrive에 연결되었습니다.");
+      toast.success(i18n.t("settings.sync.connected")); // "연결됨"
       await get().checkStatus();
     } catch (error) {
-      toast.error(`로그인 실패: ${error}`);
+      toast.error(
+        `${i18n.t("settings.sync.login_button")} ${i18n.t("common.cancel")}: ${error}`
+      );
     } finally {
       set({ isLoading: false });
     }
@@ -105,10 +107,10 @@ export const useSyncStore = create<SyncState>((set, get) => ({
     set({ isLoading: true });
     try {
       await invoke("onedrive_logout");
-      toast.success("연결이 해제되었습니다.");
+      toast.success(i18n.t("settings.sync.disconnected")); // "미연결" (연결 해제됨)
       await get().checkStatus();
     } catch (error) {
-      toast.error("로그아웃 실패");
+      toast.error(i18n.t("common.cancel"));
     } finally {
       set({ isLoading: false });
     }
@@ -118,10 +120,10 @@ export const useSyncStore = create<SyncState>((set, get) => ({
     set({ isLoading: true });
     try {
       await invoke("onedrive_backup");
-      toast.success("백업이 완료되었습니다.");
+      toast.success(i18n.t("settings.sync.backup_now")); // "지금 백업하기" 완료 피드백
       await get().checkStatus();
     } catch (error) {
-      toast.error(`백업 실패: ${error}`);
+      toast.error(`${i18n.t("toast.save_transaction_failed")}: ${error}`);
     } finally {
       set({ isLoading: false });
     }
@@ -131,10 +133,12 @@ export const useSyncStore = create<SyncState>((set, get) => ({
     set({ isLoading: true });
     try {
       await invoke("onedrive_restore");
-      toast.success("복구가 완료되었습니다.");
+      toast.success(i18n.t("settings.database.restore_complete_title")); // "복원 완료"
       window.location.reload();
     } catch (error) {
-      toast.error(`복구 실패: ${error}`);
+      toast.error(
+        `${i18n.t("settings.database.restore")} ${i18n.t("common.cancel")}: ${error}`
+      );
       set({ isLoading: false });
     }
   },

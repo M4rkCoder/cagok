@@ -46,7 +46,7 @@ export function AnimatedTabs({
             key={tab.id}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "relative px-6 py-2 text-sm font-bold transition-all flex items-center gap-2 outline-none whitespace-nowrap",
+              "relative px-6 py-2 text-sm font-bold transition-all flex items-center gap-2 outline-none whitespace-nowrap cursor-pointer",
               isActive
                 ? "text-blue-600"
                 : "text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"

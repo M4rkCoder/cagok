@@ -93,6 +93,18 @@ export const useDateFormatter = () => {
     [language]
   );
 
+  // 🔹 새롭게 추가된 formatWeekday 훅
+  const formatWeekday = useCallback(
+    (dateString: string, formatType: "short" | "long" | "narrow" = "short") => {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "";
+      return new Intl.DateTimeFormat(intlLocale, {
+        weekday: formatType,
+      }).format(date);
+    },
+    [intlLocale]
+  );
+
   const formatYearMonth = useCallback(
     (dateString: string) => {
       const date = new Date(dateString);
@@ -159,6 +171,7 @@ export const useDateFormatter = () => {
       formatYearMonth,
       formatMonth,
       formatDay,
+      formatWeekday, // 🔹 반환 객체에 추가
       formatYear,
       formatDayIndex,
       getDateParts,
@@ -169,6 +182,7 @@ export const useDateFormatter = () => {
       formatYearMonth,
       formatMonth,
       formatDay,
+      formatWeekday, // 🔹 의존성 배열에 추가
       formatYear,
       formatDayIndex,
       getDateParts,

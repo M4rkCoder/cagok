@@ -1,23 +1,20 @@
 import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
+import i18n from "@/i18n"; // i18n 임포트 추가
 import { useAppStore } from "./useAppStore";
 
 interface SettingState {
-  // DB Settings
   dbPath: string;
   exportPath: string;
   backups: string[];
   autoBackupEnabled: boolean;
   lastAutoBackupDate: string | null;
-
-  // General Settings
   appName: string;
   currency: string;
   defaultView: string;
   dateFormat: string;
 
-  // Actions - DB
   fetchDbPaths: () => Promise<void>;
   fetchBackups: () => Promise<void>;
   fetchAutoBackupSettings: () => Promise<void>;
@@ -28,8 +25,6 @@ interface SettingState {
   openFolder: (type: "db" | "export" | "backup") => Promise<void>;
   exportCsv: () => Promise<void>;
   restartApp: () => Promise<void>;
-
-  // Actions - General
   fetchGeneralSettings: () => Promise<void>;
   saveGeneralSettings: (settings: {
     appName: string;
@@ -41,7 +36,6 @@ interface SettingState {
 }
 
 export const useSettingStore = create<SettingState>((set, get) => ({
-  // Initial State
   dbPath: "",
   exportPath: "",
   backups: [],
@@ -71,7 +65,7 @@ export const useSettingStore = create<SettingState>((set, get) => ({
       const backups = await invoke<string[]>("list_backups");
       set({ backups });
     } catch (error) {
-      toast.error("백업 목록을 불러오지 못했습니다.");
+      toast.error(i18n.t("settings.database.no_backups")); //
     }
   },
 
@@ -102,24 +96,25 @@ export const useSettingStore = create<SettingState>((set, get) => ({
         key: "auto_backup_enabled",
         value: enabled ? "true" : "false",
       });
+      // 활성화/비활성화 상태 알림
       if (enabled) {
-        toast.success("자동 백업이 활성화되었습니다.");
+        toast.success(i18n.t("settings.database.auto_backup_label"));
       } else {
-        toast.info("자동 백업이 비활성화되었습니다.");
+        toast.info(i18n.t("recurring.status.paused"));
       }
     } catch (error) {
-      toast.error("설정 저장 실패");
-      set({ autoBackupEnabled: originalState }); // Revert on failure
+      toast.error(i18n.t("toast.save_transaction_failed")); //
+      set({ autoBackupEnabled: originalState });
     }
   },
 
   createBackup: async () => {
     try {
       await invoke("backup_db");
-      toast.success("백업이 성공적으로 생성되었습니다.");
+      toast.success(i18n.t("notifications.types.backup")); // "자동 백업 완료" (또는 적절한 백업 성공 키)
       await get().fetchBackups();
     } catch (error) {
-      toast.error(`백업 실패: ${error}`);
+      toast.error(i18n.t("toast.save_transaction_failed")); //
     }
   },
 
@@ -128,7 +123,11 @@ export const useSettingStore = create<SettingState>((set, get) => ({
       await invoke("restore_backup", { filename });
       return Promise.resolve();
     } catch (error) {
-      toast.error("복원 실패");
+      toast.error(
+        i18n.t("settings.database.restore_dialog_title") +
+          " " +
+          i18n.t("common.cancel")
+      );
       return Promise.reject(error);
     }
   },
@@ -136,10 +135,10 @@ export const useSettingStore = create<SettingState>((set, get) => ({
   deleteBackup: async (filename: string) => {
     try {
       await invoke("delete_backup", { filename });
-      toast.success("백업 삭제 완료");
+      toast.success(i18n.t("settings.database.delete_backup_title")); //
       await get().fetchBackups();
     } catch (error) {
-      toast.error("삭제 실패");
+      toast.error(i18n.t("common.delete") + " " + i18n.t("common.cancel"));
     }
   },
 
@@ -166,15 +165,15 @@ export const useSettingStore = create<SettingState>((set, get) => ({
   exportCsv: async () => {
     try {
       await invoke("export_transactions_csv");
-      toast.success("CSV 추출 완료");
+      toast.success(i18n.t("settings.database.download_title")); //
       await get().openFolder("export");
     } catch (error) {
-      toast.error("CSV 추출 실패");
+      toast.error(i18n.t("quick_entry.toasts.template_error")); //
     }
   },
 
   restartApp: async () => {
-    await invoke("restart_app");
+    await invoke("restart_app"); //
   },
 
   // --- General Actions ---
@@ -198,7 +197,13 @@ export const useSettingStore = create<SettingState>((set, get) => ({
     }
   },
 
-  saveGeneralSettings: async ({ appName, currency, defaultView, language, dateFormat }) => {
+  saveGeneralSettings: async ({
+    appName,
+    currency,
+    defaultView,
+    language,
+    dateFormat,
+  }) => {
     try {
       await Promise.all([
         invoke("set_setting_command", { key: "app_name", value: appName }),
@@ -208,26 +213,26 @@ export const useSettingStore = create<SettingState>((set, get) => ({
           value: defaultView,
         }),
         invoke("set_setting_command", { key: "language", value: language }),
-        invoke("set_setting_command", { key: "date_format", value: dateFormat }),
+        invoke("set_setting_command", {
+          key: "date_format",
+          value: dateFormat,
+        }),
       ]);
 
-      // 1. SettingStore 로컬 상태 업데이트
       set({ appName, currency, defaultView, dateFormat });
 
-      // 2. AppStore 글로벌 상태 업데이트 (중요!)
       const appStore = useAppStore.getState();
       appStore.setAppName(appName);
-      appStore.setCurrency(currency); // 새로 추가한 액션 호출
+      appStore.setCurrency(currency);
 
-      // 언어 변경 처리
       if (appStore.language !== language) {
-        appStore.updateSetting("language", language);
+        appStore.updateSetting("language", language); // 여기서 i18n.changeLanguage 처리됨
       }
 
-      toast.success("설정이 저장되었습니다.");
+      toast.success(i18n.t("settings.general.save_button")); // "설정 저장하기" 완료 피드백
     } catch (error) {
       console.error("Settings save failed", error);
-      toast.error("설정 저장에 실패했습니다.");
+      toast.error(i18n.t("toast.save_transaction_failed")); //
     }
   },
 }));

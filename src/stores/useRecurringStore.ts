@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
+import i18n from "@/i18n"; // i18n 임포트 추가
 import { RecurringTransaction, RecurringHistoryItem } from "@/types";
 
 interface RecurringState {
@@ -35,55 +36,82 @@ export const useRecurringStore = create<RecurringState>((set, get) => ({
       ]);
       set({ recurringList: recurring, history: hist });
     } catch (e) {
-      toast.error("데이터 로딩 실패");
+      toast.error(i18n.t("toast.fetch_transactions_failed"));
     }
   },
 
   createRecurring: async (recurring) => {
-    await invoke("create_recurring_transaction", { recurring });
-    get().loadData();
+    try {
+      await invoke("create_recurring_transaction", { recurring });
+      toast.success(i18n.t("toast.transaction_created"));
+      get().loadData();
+    } catch (e) {
+      toast.error(i18n.t("toast.save_transaction_failed"));
+    }
   },
 
   updateRecurring: async (id, recurring) => {
-    await invoke("update_recurring_transaction", { id, recurring });
-    get().loadData();
+    try {
+      await invoke("update_recurring_transaction", { id, recurring });
+      toast.success(i18n.t("toast.transaction_updated"));
+      get().loadData();
+    } catch (e) {
+      toast.error(i18n.t("toast.save_transaction_failed"));
+    }
   },
 
   toggleRecurring: async (id) => {
-    await invoke("toggle_recurring_transaction", { id });
-    get().loadData();
+    try {
+      await invoke("toggle_recurring_transaction", { id });
+      get().loadData();
+    } catch (e) {
+      toast.error(i18n.t("toast.save_transaction_failed"));
+    }
   },
 
   deleteRecurring: async (id) => {
-    await invoke("delete_recurring_transaction", { id });
-    get().loadData();
+    try {
+      await invoke("delete_recurring_transaction", { id });
+      toast.success(i18n.t("toast.transaction_deleted"));
+      get().loadData();
+    } catch (e) {
+      toast.error(i18n.t("toast.delete_transaction_failed"));
+    }
   },
 
   processSingle: async (id) => {
-    const count = await invoke<number>("process_single_recurring_transaction", {
-      recurringId: id,
-    });
-    if (count > 0) toast.success("기록이 생성되었습니다.");
-    else toast.info("조건을 충족하는 미생성 내역이 없습니다.");
-    get().loadData();
+    try {
+      const count = await invoke<number>(
+        "process_single_recurring_transaction",
+        {
+          recurringId: id,
+        }
+      );
+      if (count > 0) {
+        toast.success(i18n.t("notification.recurring_created", { count }));
+      } else {
+        toast.info(i18n.t("recurring.last_run_today"));
+      }
+      get().loadData();
+    } catch (e) {
+      toast.error(i18n.t("toast.save_transaction_failed"));
+    }
   },
 
   processAll: async () => {
     try {
-      // Rust의 process_recurring_transactions 실행
       const count = await invoke<number>("process_recurring_transactions");
 
       if (count > 0) {
-        toast.success(`${count}건의 반복 내역이 처리되었습니다.`);
+        toast.success(i18n.t("notification.recurring_created", { count }));
       } else {
-        toast.info("오늘 처리할 반복 내역이 없습니다.");
+        toast.info(i18n.t("recurring.last_run_today"));
       }
 
-      // 데이터 새로고침
       get().loadData();
     } catch (e) {
       console.error(e);
-      toast.error("반복 내역 처리 중 오류가 발생했습니다.");
+      toast.error(i18n.t("toast.save_transaction_failed"));
     }
   },
 }));

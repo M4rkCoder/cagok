@@ -136,8 +136,8 @@ export const CategoryMonthlyTreemap: React.FC = () => {
     let iconSize = "24px";
     if (area < 500 || Math.min(width, height) < 30) {
       iconSize = "10px"; // 아주 작은 영역
-    } else if (area < 1000 || Math.min(width, height) < 40) {
-      iconSize = "14px"; // 중간보다 작은 영역
+    } else if (area < 1200 || Math.min(width, height) < 45) {
+      iconSize = "13px"; // 중간보다 작은 영역
     } else if (showText) {
       iconSize = "18px"; // 텍스트와 함께 표시될 때의 아이콘 크기
     }

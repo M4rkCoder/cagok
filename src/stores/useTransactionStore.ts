@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 import {
   Transaction,
-  Category,
   TransactionWithCategory,
   TransactionFormValues,
   DailySummary,
@@ -10,10 +9,8 @@ import {
   TransactionFilters,
 } from "@/types";
 import { toast } from "sonner";
+import i18n from "@/i18n"; // i18n 임포트 추가
 import { useAppStore } from "./useAppStore";
-import { useCategoryStore } from "./useCategoryStore";
-
-type ConfirmType = "transaction" | "category" | null;
 
 interface TransactionState {
   transactions: TransactionWithCategory[];
@@ -28,7 +25,6 @@ interface TransactionState {
   filters: TransactionFilters;
   selectedDate: string | null;
 
-  // Actions
   fetchTransactions: () => Promise<void>;
   fetchAllDailySummaries: () => Promise<void>;
   fetchMonthlyTotalTrends: () => Promise<void>;
@@ -43,7 +39,9 @@ interface TransactionState {
   setFilters: (filters: TransactionFilters) => void;
   fetchFilteredAll: (filters?: TransactionFilters) => Promise<void>;
   setSelectedDate: (date: string | null) => void;
+  resetFilters: () => void;
 }
+
 const initialFilters: TransactionFilters = {};
 
 export const useTransactionStore = create<TransactionState>((set, get) => ({
@@ -54,8 +52,6 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
   loading: false,
   sheetOpen: false,
   editingTransaction: null,
-  isConfirmOpen: false,
-  confirmType: null,
   targetId: null,
   defaultCategoryId: null,
   filters: initialFilters,
@@ -70,7 +66,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
       set({ monthlySummaries: summaries });
     } catch (error) {
       console.error(error);
-      toast.error("월별 통계를 불러오는데 실패했습니다.");
+      toast.error(i18n.t("toast.fetch_transactions_failed")); // "가계부 내역을 불러오는 데 실패했습니다."
     } finally {
       set({ loading: false });
     }
@@ -86,7 +82,7 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
       const summaries = await invoke<DailySummary[]>("get_all_daily_summaries");
       set({ dailySummaries: summaries });
     } catch (error) {
-      toast.error("일별 요약을 불러오는데 실패했습니다.");
+      toast.error(i18n.t("toast.fetch_transactions_failed"));
     } finally {
       set({ loading: false });
     }
@@ -101,11 +97,13 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
       );
       set({ dateTransactions: details });
     } catch (error) {
-      toast.error(`${date}의 내역을 불러오는데 실패했습니다.`);
+      // 날짜 포함 에러 메시지 처리 (필요 시 JSON에 별도 키 생성 가능)
+      toast.error(i18n.t("toast.fetch_transactions_failed"));
     } finally {
       set({ loading: false });
     }
   },
+
   setSheetOpen: (open) => set({ sheetOpen: open }),
 
   setEditingTransaction: (transaction) =>
@@ -121,48 +119,57 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
           id: editingTransaction.id,
           transaction: { ...values, remarks: values.remarks ?? null },
         });
-        toast.success("수정되었습니다.");
+        toast.success(i18n.t("toast.transaction_updated")); // "가계부가 성공적으로 업데이트되었습니다."
       } else {
         await invoke("create_transaction", {
           transaction: { ...values, remarks: values.remarks ?? null },
         });
-        toast.success("추가되었습니다.");
+        toast.success(i18n.t("toast.transaction_created")); // "가계부가 성공적으로 생성되었습니다."
       }
       handleSheetClose();
       await fetchTransactions();
     } catch (error) {
-      toast.error("저장에 실패했습니다.");
+      toast.error(i18n.t("toast.save_transaction_failed")); // "가계부 저장에 실패했습니다."
     }
   },
 
   deleteTransaction: async (id) => {
     try {
       await invoke("delete_transaction", { id });
-      toast.success("삭제되었습니다.");
+      toast.success(i18n.t("toast.transaction_deleted")); // "가계부가 성공적으로 삭제되었습니다."
       get().fetchTransactions();
     } catch (error) {
-      toast.error("삭제에 실패했습니다.");
+      toast.error(i18n.t("toast.delete_transaction_failed")); // "가계부 삭제에 실패했습니다."
     }
   },
+
   deleteBulkTransactions: async (ids: number[]) => {
     if (ids.length === 0) return;
-
     set({ loading: true });
 
     try {
-      const message = await invoke<string>("delete_bulk_transactions", { ids });
-      toast.success(message);
+      // 🔹 백엔드에서 삭제된 항목의 개수(숫자)를 반환받음
+      const deletedCount = await invoke<number>("delete_bulk_transactions", {
+        ids,
+      });
+
+      // 🔹 i18n을 통해 다국어 메시지에 count 값을 전달하여 렌더링
+      toast.success(
+        i18n.t("transaction.bulk_delete_success", { count: deletedCount })
+      );
 
       await get().fetchTransactions();
     } catch (error) {
       console.error(error);
-      toast.error("삭제 오류");
+      toast.error(i18n.t("toast.delete_transaction_failed"));
     } finally {
       set({ loading: false });
     }
   },
+
   setDefaultCategoryId: (id) => set({ defaultCategoryId: id }),
   setFilters: (newFilters) => set({ filters: newFilters }),
+
   fetchFilteredAll: async (filters) => {
     const currentFilters = filters ?? get().filters;
     set({ loading: true });
@@ -184,30 +191,31 @@ export const useTransactionStore = create<TransactionState>((set, get) => ({
       });
     } catch (error) {
       console.error(error);
-      toast.error("필터링된 데이터를 불러오는데 실패했습니다.");
+      toast.error(i18n.t("toast.fetch_transactions_failed"));
     } finally {
       set({ loading: false });
     }
   },
+
   resetFilters: () => set({ filters: initialFilters }),
   setSelectedDate: (date) => set({ selectedDate: date }),
 }));
 
+// 데이터 가공 헬퍼 함수
 function processSummaries(data: TransactionWithCategory[]) {
   const dailyMap = new Map<string, DailySummary>();
   const monthlyMap = new Map<string, MonthlyTotalSummary>();
 
   data.forEach((t) => {
-    const date = t.date; // YYYY-MM-DD
-    const month = date.substring(0, 7); // YYYY-MM
+    const date = t.date;
+    const month = date.substring(0, 7);
 
-    // --- 1. Daily 요약 데이터 가공 ---
     const d = dailyMap.get(date) || {
       date,
       income_total: 0,
       expense_total: 0,
-      income_count: 0, // 추가
-      expense_count: 0, // 추가
+      income_count: 0,
+      expense_count: 0,
       total_count: 0,
     };
 
@@ -219,15 +227,14 @@ function processSummaries(data: TransactionWithCategory[]) {
       d.expense_total += t.amount;
       d.expense_count += 1;
     }
-    dailyMap.set(date, d as DailySummary); // 타입을 확실히 명시
+    dailyMap.set(date, d as DailySummary);
 
-    // --- 2. Monthly 요약 데이터 가공 ---
     const m = monthlyMap.get(month) || {
       year_month: month,
       income_total: 0,
       expense_total: 0,
-      income_count: 0, // Monthly에도 필요한 경우 추가
-      expense_count: 0, // Monthly에도 필요한 경우 추가
+      income_count: 0,
+      expense_count: 0,
       total_count: 0,
     };
 

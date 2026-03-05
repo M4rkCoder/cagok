@@ -22,7 +22,6 @@ interface DashboardState {
   categoriesExpense: CategoryExpense[];
   categoriesIncome: CategoryExpense[];
   dailyExpenses: DailyExpense[];
-  daily7Expenses: DailyExpense[];
   dailyCategoryExpenses: DailyCategoryTransaction[];
   dailyCategoryIncomes: DailyCategoryTransaction[];
   recentTransactions: TransactionWithCategory[];
@@ -88,7 +87,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   categoriesExpense: [],
   categoriesIncome: [],
   dailyExpenses: [],
-  daily7Expenses: [],
   dailyCategoryExpenses: [],
   dailyCategoryIncomes: [],
   recentTransactions: [],
@@ -164,7 +162,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         categoriesExpense,
         categoriesIncome,
         dailyData,
-        daily7Data,
         dailyCategoryExpense,
         dailyCategoryIncome,
         recentData,
@@ -189,9 +186,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
           txType: 0,
         }),
         invoke<DailyExpense[]>("get_daily_expenses", {
-          yearMonth: selectedMonth,
-        }),
-        invoke<DailyExpense[]>("get_recent_7days_expenses", {
           yearMonth: selectedMonth,
         }),
         invoke<DailyCategoryTransaction[]>("get_daily_category_transactions", {
@@ -259,7 +253,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
         categoriesExpense,
         categoriesIncome,
         dailyExpenses: dailyData,
-        daily7Expenses: daily7Data,
         dailyCategoryExpenses: dailyCategoryExpense,
         dailyCategoryIncomes: dailyCategoryIncome,
         recentTransactions: recentData,

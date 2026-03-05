@@ -43,7 +43,7 @@ export default function CardSelection() {
       <div
         className={cn(
           "flex border-b border-slate-200 dark:border-slate-800 w-full relative",
-          "min-2xl:hidden", // 1440px 이상에선 숨김
+          "min-2xl:hidden" // 1440px 이상에선 숨김
         )}
       >
         {tabs.map((tab) => (
@@ -51,16 +51,16 @@ export default function CardSelection() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id as "daily" | "dayofweek")}
             className={cn(
-              "relative px-6 py-2 text-sm font-bold transition-all flex items-center gap-2 outline-none",
+              "relative px-6 py-2 text-sm font-bold transition-all flex items-center gap-2 outline-none cursor-pointer",
               activeTab === tab.id
                 ? "text-blue-600"
-                : "text-slate-400 hover:text-slate-600",
+                : "text-slate-400 hover:text-slate-600"
             )}
           >
             <tab.icon
               className={cn(
                 "w-4 h-4",
-                activeTab === tab.id ? "text-blue-600" : "text-slate-300",
+                activeTab === tab.id ? "text-blue-600" : "text-slate-300"
               )}
             />
             {tab.label}

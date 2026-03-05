@@ -16,24 +16,13 @@ import RecurringFormSheet from "./RecurringFormSheet";
 import { cn, getFrequencyText, getDayText } from "@/lib/utils";
 import { CategoryIcon, FixIcon } from "@/components/CategoryIcon";
 import { Badge } from "@/components/ui/badge";
-import { motion, AnimatePresence } from "framer-motion";
-import { RecurringTransaction, RecurringHistoryItem } from "@/types";
+import { motion } from "framer-motion";
+import { RecurringTransaction } from "@/types";
 import { useRecurringStore } from "@/stores/useRecurringStore";
 import { useAppStore } from "@/stores/useAppStore";
-import { PlusBadge, ProIcon } from "@/components/ui/PlusBadge";
 import { useSettingStore } from "@/stores/useSettingStore";
 import { format, parseISO } from "date-fns";
 import { enUS, ko } from "date-fns/locale";
-
-const emptyForm: RecurringTransaction = {
-  description: "",
-  amount: 0,
-  category_id: undefined,
-  frequency: "monthly",
-  start_date: new Date().toISOString().slice(0, 10),
-  is_active: true,
-};
-
 import { useTranslation } from "react-i18next";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 
@@ -67,8 +56,9 @@ export default function RecurringSettings() {
         <Button
           onClick={handleProcessAll}
           disabled={isProcessing}
-          variant="ghost" // 헤더에서는 ghost나 outline이 잘 어울립니다
-          className="rounded-full px-3 h-9 text-blue-600 hover:bg-blue-50"
+          variant="outline" // 헤더에서는 ghost나 outline이 잘 어울립니다
+          size="lg"
+          className="cursor-pointer text-slate-600 hover:bg-slate-200"
         >
           <RefreshCw
             className={cn("w-4 h-4 mr-2", isProcessing && "animate-spin")}
@@ -85,8 +75,8 @@ export default function RecurringSettings() {
             setEditingTransaction(null);
             setIsFormOpen(true);
           }}
-          size="sm"
-          className="rounded-full px-4 h-9 shadow-sm bg-blue-600 hover:bg-blue-700"
+          size="lg"
+          className="cursor-pointer shadow-sm bg-slate-600 hover:bg-slate-700"
         >
           <Plus className="w-4 h-4 mr-1.5" />
           {t("recurring.input")}

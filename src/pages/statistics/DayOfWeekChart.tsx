@@ -62,7 +62,7 @@ export const DayOfWeekChart: React.FC = () => {
     try {
       const response = await invoke<DayOfWeekResponse>(
         "get_day_of_week_stats_command",
-        { baseMonth, txType: txType === "expense" ? 1 : 0 },
+        { baseMonth, txType: txType === "expense" ? 1 : 0 }
       );
       setData(response);
     } catch (error) {
@@ -130,13 +130,13 @@ export const DayOfWeekChart: React.FC = () => {
           txAvg: info.txCount > 0 ? info.total / info.txCount : 0,
           fill: "",
         };
-      },
+      }
     );
 
     processedCategories.sort((a, b) => b.value - a.value);
     const grandTotal = processedCategories.reduce(
       (sum, item) => sum + item.value,
-      0,
+      0
     );
 
     const donutDataWithColor = processedCategories.map((cat, index) => ({
@@ -209,13 +209,16 @@ export const DayOfWeekChart: React.FC = () => {
     return donutData.find((d) => d.id === selectedCategory);
   }, [donutData, selectedCategory]);
 
-  const isEmpty = !data || (data.totals.length === 0 && data.categories.length === 0) || totalMetricValue === 0;
+  const isEmpty =
+    !data ||
+    (data.totals.length === 0 && data.categories.length === 0) ||
+    totalMetricValue === 0;
 
   return (
     <Card
       className={cn(
         "overflow-hidden border-slate-200 shadow-none",
-        loading && "animate-pulse",
+        loading && "animate-pulse"
       )}
     >
       <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 sm:flex-nowrap overflow-hidden">
@@ -226,9 +229,9 @@ export const DayOfWeekChart: React.FC = () => {
                 ? t("statistics.summary.yearly_total", { label: "" })
                     .replace(
                       t("statistics.summary.yearly_total", { label: "" }).split(
-                        " ",
+                        " "
                       )[0],
-                      "",
+                      ""
                     )
                     .trim()
                 : t("statistics.summary.monthly_avg")
@@ -245,15 +248,15 @@ export const DayOfWeekChart: React.FC = () => {
                 "px-3 py-1 text-xs font-bold transition-all rounded-md whitespace-nowrap",
                 metricType === "total"
                   ? "bg-white text-blue-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700",
+                  : "text-slate-500 hover:text-slate-700"
               )}
             >
               {t("statistics.summary.yearly_total", { label: "" })
                 .replace(
                   t("statistics.summary.yearly_total", { label: "" }).split(
-                    " ",
+                    " "
                   )[0],
-                  "",
+                  ""
                 )
                 .trim()}
             </button>
@@ -264,7 +267,7 @@ export const DayOfWeekChart: React.FC = () => {
                 "px-3 text-xs font-bold transition-all rounded-md whitespace-nowrap",
                 metricType === "average"
                   ? "bg-white text-blue-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-700",
+                  : "text-slate-500 hover:text-slate-700"
               )}
             >
               {t("statistics.summary.monthly_avg")}
@@ -396,7 +399,13 @@ export const DayOfWeekChart: React.FC = () => {
                                 <span className="text-slate-400 text-[10px]">
                                   {countLabel}
                                 </span>
-                                <span className="text-[10px] font-medium text-slate-500">{`${Number(item.payload.count).toFixed(metricType === "average" ? 1 : 0)}${t("common.unit", { defaultValue: "건" })}`}</span>
+                                <span className="text-[10px] font-medium text-slate-500">
+                                  {t("common.count", {
+                                    count: item.payload.count.toFixed(
+                                      metricType === "average" ? 1 : 0
+                                    ),
+                                  })}
+                                </span>
                               </div>
                             </div>
                           );
@@ -456,7 +465,7 @@ export const DayOfWeekChart: React.FC = () => {
                         }}
                         onClick={() =>
                           setSelectedCategory(
-                            entry.id === selectedCategory ? "all" : entry.id,
+                            entry.id === selectedCategory ? "all" : entry.id
                           )
                         }
                       />
@@ -493,7 +502,9 @@ export const DayOfWeekChart: React.FC = () => {
                                 y={(viewBox.cy || 0) + 12}
                                 className="fill-foreground text-sm font-bold"
                               >
-                                {displayValue !== 0 ? formatAmount(displayValue) : ""}
+                                {displayValue !== 0
+                                  ? formatAmount(displayValue)
+                                  : ""}
                               </tspan>
                               <tspan
                                 x={viewBox.cx}

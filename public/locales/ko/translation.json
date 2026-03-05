@@ -269,7 +269,7 @@
       "date_format": "날짜 형식",
       "currency": "통화 단위",
       "default_view": "가계부 기본 화면",
-      "save_button": "설정 저장하기"
+      "save_button": "설정 저장"
     },
     "tabs": {
       "general": "일반 설정",
@@ -441,7 +441,9 @@
     "new": "입력",
     "edit": "가계부 수정",
     "create_new": "가계부 입력",
-    "no_found": "가계부 내역이 없습니다."
+    "no_found": "가계부 내역이 없습니다.",
+    "bulk_delete_success": "{{count}}건의 내역이 삭제되었습니다.",
+    "bulk_delete_failed": "다중 삭제에 실패했습니다."
   },
   "category": {
     "select_icon": "아이콘 선택",
@@ -452,7 +454,7 @@
   },
   "toast": {
     "fetch_transactions_failed": "가계부 내역을 불러오는 데 실패했습니다.",
-    "fetch_categories_failed": "항목를 불러오는 데 실패했습니다.",
+    "fetch_categories_failed": "항목을 불러오는 데 실패했습니다.",
     "transaction_deleted": "가계부가 성공적으로 삭제되었습니다.",
     "delete_transaction_failed": "가계부 삭제에 실패했습니다.",
     "transaction_updated": "가계부가 성공적으로 업데이트되었습니다.",

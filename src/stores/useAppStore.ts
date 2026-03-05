@@ -15,7 +15,7 @@ interface AppState {
 
   // Actions
   setAppName: (name: string) => void;
-  setCurrency: (currency: string) => void; // 다른 스토어에서 연동하기 위해 추가
+  setCurrency: (currency: string) => void;
   initApp: () => Promise<void>;
   updateSetting: (key: string, value: string) => Promise<void>;
   fetchCategories: () => Promise<void>;
@@ -23,18 +23,17 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set, get) => ({
   appName: "C'agok",
-  language: "ko", // 기본값 통일
-  currency: "KRW", // 기본값 통일
+  language: "ko-KR", // JSON의 lang 설정에 맞춤
+  currency: "KRW",
   categoryList: [],
   isLoading: true,
 
   setAppName: (name: string) => set({ appName: name }),
-  setCurrency: (currency: string) => set({ currency }), // 추가된 액션
+  setCurrency: (currency: string) => set({ currency }),
 
   initApp: async () => {
     set({ isLoading: true });
     try {
-      // 1. 설정값들을 병렬로 깔끔하게 가져옵니다. (IIFE 제거)
       const [name, lang, currency] = await Promise.all([
         invoke<string | null>("get_setting_command", { key: "app_name" }),
         invoke<string | null>("get_setting_command", { key: "language" }),
@@ -45,16 +44,15 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       if (lang) i18n.changeLanguage(lang);
 
-      // 가져온 값들을 상태에 반영 (null일 경우 기본값 사용)
       set({
         appName: name || "C'agok",
-        language: lang || "ko",
+        language: lang || "ko-KR",
         currency: currency || "KRW",
       });
 
       await get().fetchCategories();
 
-      // 2. OneDrive 동기화 확인
+      // OneDrive 동기화 확인 로직
       const syncStore = useSyncStore.getState();
       const { confirm, closeConfirm } = useConfirmStore.getState();
 
@@ -65,29 +63,23 @@ export const useAppStore = create<AppState>((set, get) => ({
 
         if (syncStatus.needs_update) {
           confirm({
-            title: i18n.t("sync.title", "데이터 동기화 알림"),
-            description: i18n.t(
-              "sync.confirm_description",
-              "클라우드에 더 최신 데이터가 있습니다. 지금 동기화하여 데이터를 업데이트하시겠습니까?"
-            ),
-            confirmText: i18n.t("common.sync_now", "지금 동기화"),
-            cancelText: i18n.t("common.later", "나중에"),
+            title: i18n.t("settings.sync.title"), // "클라우드 동기화"
+            description: i18n.t("settings.sync.restore_confirm_desc"), // "OneDrive에서 데이터를 가져와..."
+            confirmText: i18n.t("settings.sync.restore_from_cloud"), // "클라우드에서 복구"
+            cancelText: i18n.t("common.cancel"), // "취소"
             onConfirm: async () => {
               try {
                 set({ isLoading: true });
                 await invoke("onedrive_restore");
                 toast.success(
-                  i18n.t("sync.success", "동기화가 완료되었습니다.")
-                );
+                  i18n.t("settings.database.restore_complete_title")
+                ); // "복원 완료"
 
-                // DB 파일 교체 후 재시작
                 setTimeout(() => {
                   window.location.reload();
                 }, 800);
               } catch (err) {
-                toast.error(
-                  i18n.t("sync.fail", "동기화 중 오류가 발생했습니다.")
-                );
+                toast.error(i18n.t("settings.sync.syncing_desc")); // 오류 시 적절한 메시지 매핑
                 console.error(err);
               } finally {
                 closeConfirm();
@@ -97,7 +89,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         }
       }
     } catch (error) {
-      console.error("앱 초기화 실패:", error);
+      console.error("App Initialization Failed:", error);
     } finally {
       set({ isLoading: false });
     }
@@ -118,8 +110,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         useSyncStore.setState({ autoSyncEnabled: value === "true" });
       }
     } catch (error) {
-      toast.error(`${key} 저장 실패`);
-      console.error(`${key} 저장 실패:`, error);
+      toast.error(i18n.t("toast.save_transaction_failed"));
+      console.error(`${key} save failed:`, error);
     }
   },
 
@@ -128,7 +120,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const fetched = await invoke<Category[]>("get_categories");
       set({ categoryList: fetched });
     } catch (error) {
-      toast.error("카테고리를 불러오는데 실패했습니다.");
+      toast.error(i18n.t("toast.fetch_categories_failed"));
     }
   },
 }));

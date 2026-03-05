@@ -156,8 +156,6 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
     const transactionsToSubmit: TransactionFormValues[] = [];
     console.log(data);
 
-    // [중요] 최신 데이터를 가져오기 위해 필터링 로직 확인
-    // 날짜, 내용, 금액 중 하나라도 '실제 값'이 있는 경우만 추출
     const filledData = data.filter((row) => {
       const hasDate = row.date && row.date.trim() !== "";
       const hasDesc = row.description && row.description.trim() !== "";
@@ -171,7 +169,6 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
     }
 
     for (const row of filledData) {
-      // 금액 처리: 문자열 콤마 제거 및 숫자 변환
       let parsedAmount = 0;
       if (typeof row.amount === "string") {
         parsedAmount = parseFloat(row.amount.replace(/,/g, "")) || 0;
@@ -221,7 +218,9 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
     // 벡엔드 전송
     if (transactionsToSubmit.length > 0) {
       const loadingId = toast.loading(
-        t("quick_entry.toasts.saving_count", { count: transactionsToSubmit.length })
+        t("quick_entry.toasts.saving_count", {
+          count: transactionsToSubmit.length,
+        })
       );
       try {
         await invoke("bulk_create_transactions", {
@@ -386,7 +385,9 @@ export const useQuickEntry = (initialRows = 10, submitForm: any) => {
           t("quick_entry.toasts.import_check_required", { count: invalidCount })
         );
       } else {
-        toast.success(t("quick_entry.toasts.import_success", { count: previewData.length }));
+        toast.success(
+          t("quick_entry.toasts.import_success", { count: previewData.length })
+        );
       }
     } catch (err) {
       console.error(err);

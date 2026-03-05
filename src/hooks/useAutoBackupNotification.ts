@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useNotificationStore } from "@/stores/useNotificationStore";
+import { useTranslation } from "react-i18next";
 
 export function useAutoBackupNotification() {
+  const { t } = useTranslation();
   const addNotification = useNotificationStore(
     (state) => state.addNotification
   );
@@ -17,7 +19,7 @@ export function useAutoBackupNotification() {
         if (pending === "true") {
           addNotification({
             count: 1,
-            message: "자동 백업이 성공적으로 완료되었습니다.",
+            message: t("notifications.types.backup"),
             timestamp: new Date().toISOString(),
             type: "backup",
             link: "/settings/db",
@@ -35,5 +37,5 @@ export function useAutoBackupNotification() {
     };
 
     checkNotification();
-  }, [addNotification]);
+  }, [addNotification, t]);
 }
