@@ -121,8 +121,8 @@ export function MainExpenseCard() {
                         key={tx.id}
                         className={cn(
                           "flex items-center justify-between py-0.5 px-2 transition-all duration-200 ease-out",
-                          "hover:bg-white hover:scale-[1.03] hover:shadow-sm hover:z-10 hover:rounded-md",
-                          "group cursor-default"
+                          "hover:bg-white hover:scale-[1.01] hover:shadow-sm hover:z-10 hover:rounded-md",
+                          "group cursor-default",
                         )}
                       >
                         <div className="flex items-center gap-3 min-w-0">
