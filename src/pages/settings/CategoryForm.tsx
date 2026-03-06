@@ -104,9 +104,9 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="relative flex flex-col h-[630px]"
+        className="relative flex flex-col h-[calc(100vh-140px)] max-h-[700px] pb-2 mt-2"
       >
-        <div className="flex-1 overflow-hidden pt-2">
+        <div className="flex-1 overflow-y-auto scrollbar-hide pt-2 pb-4 px-1">
           {!isPickerOpen && (
             <div className="space-y-10 animate-in fade-in zoom-in-95 duration-200">
               {/* 수입/지출 선택 탭 */}
@@ -139,7 +139,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
                                 "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all font-bold text-sm",
                                 isActive
                                   ? "bg-white shadow-sm"
-                                  : "text-slate-400",
+                                  : "text-slate-400"
                               )}
                             >
                               <item.icon
@@ -149,7 +149,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
                                     ? item.id === "0"
                                       ? "text-emerald-500"
                                       : "text-rose-500"
-                                    : "text-slate-300",
+                                    : "text-slate-300"
                                 )}
                               />
                               {item.name}
@@ -244,7 +244,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
         <div
           className={cn(
             "shrink-0 pt-6 bg-white flex gap-3",
-            isPickerOpen && "hidden",
+            isPickerOpen && "hidden"
           )}
         >
           <Button
@@ -263,7 +263,7 @@ const CategoryForm: React.FC<CategoryFormProps> = ({ onSubmit, onCancel }) => {
               currentType === "0"
                 ? "bg-emerald-500 hover:bg-emerald-600"
                 : "bg-black hover:bg-slate-800",
-              "disabled:bg-slate-100 disabled:text-slate-300",
+              "disabled:bg-slate-100 disabled:text-slate-300"
             )}
           >
             {t("common.save")}

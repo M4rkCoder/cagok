@@ -208,9 +208,9 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
           </SheetTitle>
         </SheetHeader>
 
-        <div className="flex flex-col h-full pb-15">
-          <ScrollArea className="flex-1 -mr-2 pr-2">
-            <div className="space-y-4 pb-4">
+        <div className="flex flex-col h-[calc(100vh-140px)] max-h-[700px] pb-2 mt-2">
+          <ScrollArea className="flex-1 overflow-y-auto scrollbar-hide space-y-4 pb-6">
+            <div className="space-y-2 pb-4">
               {/* 1. 타입 및 고정핀 */}
               <div className="flex items-center gap-2 mt-1 min-h-[52px]">
                 <div className="flex-1 p-1 bg-slate-100/60 rounded-2xl flex gap-1 h-12 items-center">
@@ -430,7 +430,7 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                           onBlur={handleAmountBlur}
                           onFocus={(e) => e.target.select()}
                           className={cn(
-                            "text-lg font-black text-right h-10 border-none rounded-xl px-6 transition-all duration-300",
+                            "text-lg font-black text-right h-9 border-none rounded-xl px-8 transition-all duration-300",
                             errors.amount
                               ? "bg-red-50 ring-2 ring-red-500 text-red-900"
                               : "bg-slate-50"
@@ -448,20 +448,6 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
                     </Tooltip>
                   </TooltipProvider>
                 </div>
-              </div>
-
-              {/* 5. 메모 */}
-              <div className="space-y-1 px-0.5">
-                <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                  {t("common.remarks")}
-                </Label>
-                <Input
-                  name="remarks"
-                  value={form.remarks || ""}
-                  onChange={handleChange}
-                  placeholder="..."
-                  className="h-10 bg-slate-50 border-none rounded-xl text-xs font-bold"
-                />
               </div>
 
               {/* 6. 반복 주기 */}
@@ -622,9 +608,9 @@ const RecurringFormSheet: React.FC<RecurringFormSheetProps> = ({
             </div>
           </ScrollArea>
 
-          <div className="pt-2 mt-auto">
+          <div className="pt-1 mt-auto shrink-0 bg-white">
             <Button
-              className="w-full h-12 text-sm font-black rounded-2xl bg-blue-600 hover:bg-blue-700 shadow-xl"
+              className="w-full h-10 text-sm font-black rounded-xl bg-slate-600 hover:bg-slate-700 shadow-xl cursor-pointer"
               onClick={handleSubmit}
             >
               {t("recurring.form.save")}

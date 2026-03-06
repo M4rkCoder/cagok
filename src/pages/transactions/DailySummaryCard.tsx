@@ -36,7 +36,7 @@ export function DailySummaryCard({ summary, isSelected, onClick }: Props) {
       <div
         className={`flex-1 flex items-center justify-between py-3 px-5 rounded-xl border transition-all duration-300 ${
           isSelected
-            ? "bg-white shadow-md border-slate-900 translate-x-1"
+            ? "bg-white shadow-md border-slate-900"
             : "bg-white/40 border-slate-200 hover:border-slate-300 hover:bg-white/80 shadow-sm"
         }`}
       >

@@ -32,17 +32,17 @@ export default function DashboardSkeleton() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
               {/* Recent Transactions Simplified */}
               <div className="flex flex-col h-full">
-                <Skeleton className="h-5 w-24 mb-4 bg-slate-200/50" />{" "}
+                <Skeleton className="h-5 w-24 mb-4 bg-slate-100" />{" "}
                 {/* Title */}
-                <Skeleton className="flex-1 w-full rounded-md bg-slate-200/50" />{" "}
+                <Skeleton className="flex-1 w-full rounded-md bg-slate-100" />{" "}
                 {/* Big Block */}
               </div>
 
               {/* Quick Entry Simplified */}
               <div className="flex flex-col h-full">
-                <Skeleton className="h-5 w-24 mb-4 bg-slate-200/50" />{" "}
+                <Skeleton className="h-5 w-24 mb-4 bg-slate-100" />{" "}
                 {/* Title */}
-                <Skeleton className="flex-1 w-full rounded-md bg-slate-200/50" />{" "}
+                <Skeleton className="flex-1 w-full rounded-md bg-slate-100" />{" "}
                 {/* Big Block */}
               </div>
             </div>

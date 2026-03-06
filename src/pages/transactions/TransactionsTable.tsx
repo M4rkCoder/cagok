@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   type ColumnDef,
@@ -13,7 +13,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
 import TransactionTableContent from "./components/TransactionTableContent";
 import TransactionPagination from "./components/TransactionPagination";
 import { Pencil, Trash2 } from "lucide-react";
@@ -29,6 +28,7 @@ import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
 import { useSettingStore } from "@/stores/useSettingStore";
 import { format, parseISO } from "date-fns";
 import { enUS, ko } from "date-fns/locale";
+import { motion, AnimatePresence } from "framer-motion";
 
 const TransactionsTable: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -169,7 +169,9 @@ const TransactionsTable: React.FC = () => {
               type={row.original.type}
               size="xs"
             />
-            <span>{row.original.category_name || t("transaction.no_category")}</span>
+            <span>
+              {row.original.category_name || t("transaction.no_category")}
+            </span>
             {row.original.is_fixed ? (
               <span className="text-[10px] native-emoji">📌</span>
             ) : null}
@@ -282,8 +284,20 @@ const TransactionsTable: React.FC = () => {
         </div>
       </div>
 
-      {/* Table Content */}
-      <TransactionTableContent table={table} loading={loading} />
+      <div className="relative w-full overflow-hidden">
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={pagination.pageIndex}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            className="w-full"
+          >
+            <TransactionTableContent table={table} loading={loading} />
+          </motion.div>
+        </AnimatePresence>
+      </div>
 
       <div className="grid grid-cols-10 items-center w-full">
         <div className="col-span-9">
@@ -301,7 +315,10 @@ const TransactionsTable: React.FC = () => {
               >
                 <Trash2 className="size-4" />
                 <span className="text-sm font-medium">
-                  {t("common.count", { count: Object.keys(rowSelection).length })} {t("common.delete")}
+                  {t("common.count", {
+                    count: Object.keys(rowSelection).length,
+                  })}{" "}
+                  {t("common.delete")}
                 </span>
               </Button>
             </div>

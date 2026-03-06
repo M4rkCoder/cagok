@@ -96,7 +96,7 @@ function Home({ children }: { children: React.ReactNode }) {
                 <div className="flex items-center gap-2">{actions}</div>
               </div>
 
-              <div className="flex-1">{children}</div>
+              <div className="flex-1 min-h-[650px]">{children}</div>
             </div>
           </main>
 

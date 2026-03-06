@@ -102,6 +102,9 @@ const TransactionPagination: React.FC<TransactionPaginationProps> = ({
                   e.preventDefault();
                   table.setPageIndex(page);
                 }}
+                className={
+                  currentPage === page && "bg-black text-white font-bold"
+                }
               >
                 {page + 1}
               </PaginationLink>

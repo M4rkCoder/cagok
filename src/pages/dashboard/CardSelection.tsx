@@ -51,7 +51,7 @@ export default function CardSelection() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id as "daily" | "dayofweek")}
             className={cn(
-              "relative px-6 py-2 text-sm font-bold transition-all flex items-center gap-2 outline-none cursor-pointer",
+              "relative px-6 py-1 text-sm font-bold transition-all flex items-center gap-2 outline-none cursor-pointer",
               activeTab === tab.id
                 ? "text-blue-600"
                 : "text-slate-400 hover:text-slate-600"
@@ -75,7 +75,7 @@ export default function CardSelection() {
         ))}
       </div>
 
-      <div className="mt-4">
+      <div className="mt-2">
         {/* 일반 모드 (창이 작을 때) */}
         <div className="min-2xl:hidden">
           <AnimatePresence mode="wait">

@@ -213,7 +213,7 @@ export const CategoryMonthlyTreemap: React.FC = () => {
   return (
     <Card className="pt-4 pb-0 px-5 border-none shadow-md">
       <div className="w-full h-[290px] min-2xl:h-[380px] bg-white border-none flex flex-col">
-        <div className="flex justify-between items-end mb-1">
+        <div className="flex justify-between items-end">
           <DashboardTitle title={t("dashboard.cards.treemap")} />
           <div className="flex gap-4 mr-4">
             <LegendItem

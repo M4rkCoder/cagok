@@ -11,7 +11,6 @@ import {
   FilterX,
   ChevronsDown,
   ChevronsUp,
-  ListTree,
   Trash2,
 } from "lucide-react";
 import { TrendBadge } from "./TransactionBadge";
@@ -19,13 +18,14 @@ import { cn } from "@/lib/utils";
 import { useConfirmStore } from "@/stores/useConfirmStore";
 import { Transaction, TransactionWithCategory } from "@/types";
 import { FeedsSkeleton } from "./components/FeedsSkeleton";
-import { Toggle } from "@/components/ui/toggle";
 import { Tooltip } from "@/components/ui/tooltip";
 import { TooltipContent, TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useCurrencyFormatter } from "@/hooks/useCurrencyFormatter";
-
 import { useTranslation } from "react-i18next";
 import { useDateFormatter } from "@/hooks/useDateFormatter";
+
+// ✨ 추가: 프레이머 모션 임포트
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function TransactionsFeeds() {
   const { t } = useTranslation();
@@ -214,156 +214,191 @@ export default function TransactionsFeeds() {
             }}
             className="gap-2 rounded-full px-5"
           >
-            <FilterX className="h-4 w-4" /> {t("transaction_filter.reset_filter")}
+            <FilterX className="h-4 w-4" />{" "}
+            {t("transaction_filter.reset_filter")}
           </Button>
         </div>
       );
     }
 
-    let lastYearMonth = "";
     const items: React.ReactNode[] = [];
 
+    // ✨ 데이터 재구성: 애니메이션을 위해 날짜 데이터를 "월(YYYY-MM)" 기준으로 그룹화합니다.
+    const groupedByMonth: { [key: string]: typeof dailySummaries } = {};
+    const monthOrder: string[] = [];
+
     dailySummaries.forEach((summary) => {
-      const date = new Date(summary.date);
-      const currentYear = date.getFullYear().toString();
-      const monthNumber = date.getMonth() + 1;
-      const currentMonthDisplay = monthNumber.toString();
-      const currentYearMonth = `${currentYear}-${monthNumber.toString().padStart(2, "0")}`;
+      const yearMonth = summary.date.substring(0, 7); // 예: "2023-10"
+      if (!groupedByMonth[yearMonth]) {
+        groupedByMonth[yearMonth] = [];
+        monthOrder.push(yearMonth);
+      }
+      groupedByMonth[yearMonth].push(summary);
+    });
 
-      const isNewMonth = currentYearMonth !== lastYearMonth;
+    // ✨ 그룹화된 데이터를 기반으로 렌더링
+    monthOrder.forEach((currentYearMonth) => {
+      const datesInMonth = groupedByMonth[currentYearMonth];
       const isExpanded = expandedMonths.includes(currentYearMonth);
+      const currentYear = currentYearMonth.split("-")[0];
+      const monthStats = monthlySummaries.find(
+        (m) => m.year_month === currentYearMonth
+      );
 
-      if (isNewMonth) {
-        lastYearMonth = currentYearMonth;
-        const monthStats = monthlySummaries.find(
-          (m) => m.year_month === currentYearMonth
-        );
+      // 해당 월의 모든 날짜가 펼쳐져 있는지 확인
+      const isAllDetailsExpanded =
+        datesInMonth.length > 0 &&
+        datesInMonth.every((d) => expandedDays.has(d.date));
 
-        // 해당 월의 모든 날짜가 펼쳐져 있는지 확인
-        const datesInMonth = dailySummaries
-          .filter((d) => d.date.startsWith(currentYearMonth))
-          .map((d) => d.date);
-        const isAllDetailsExpanded =
-          datesInMonth.length > 0 &&
-          datesInMonth.every((d) => expandedDays.has(d));
+      // 1. 월별 헤더 (항상 보임)
+      items.push(
+        <div
+          key={`header-${currentYearMonth}`}
+          className="sticky top-16 z-30 pt-0 pb-0 mb-2 group cursor-pointer"
+          onClick={() => toggleMonth(currentYearMonth)}
+        >
+          <div className="relative flex items-center justify-between gap-4 pt-1 p-4 pl-0 bg-white/60 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-white/40 hover:bg-white/80 transition-all duration-300">
+            <div className="absolute left-[19px] top-0 bottom-0 w-[1px] bg-slate-200 group-hover:bg-slate-300 transition-colors" />
+            <div className="absolute left-[19px] top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-7 h-7 rounded-full bg-white border-2 border-slate-200 shadow-sm group-hover:border-slate-800 group-hover:bg-slate-800 transition-all duration-300">
+              {isExpanded ? (
+                <ChevronDown
+                  size={14}
+                  className="text-slate-500 group-hover:text-white"
+                  strokeWidth={3}
+                />
+              ) : (
+                <ChevronRight
+                  size={14}
+                  className="text-slate-500 group-hover:text-white"
+                  strokeWidth={3}
+                />
+              )}
+            </div>
+            <div className="w-[1px] h-full bg-slate-200 group-hover:bg-slate-300 transition-colors" />
 
-        items.push(
-          <div
-            key={`header-${currentYearMonth}`}
-            className="sticky top-16 z-30 pt-0 pb-0 mb-2 group cursor-pointer"
-            onClick={() => toggleMonth(currentYearMonth)}
-          >
-            <div className="relative flex items-center justify-between gap-4 pt-1 p-4 pl-0 bg-white/60 backdrop-blur-md shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-white/40 hover:bg-white/80 transition-all duration-300">
-              <div className="absolute left-[19px] top-0 bottom-0 w-[1px] bg-slate-200 group-hover:bg-slate-300 transition-colors" />
-              <div className="absolute left-[19px] top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-7 h-7 rounded-full bg-white border-2 border-slate-200 shadow-sm group-hover:border-slate-800 group-hover:bg-slate-800 transition-all duration-300">
-                {isExpanded ? (
-                  <ChevronDown
-                    size={14}
-                    className="text-slate-500 group-hover:text-white"
-                    strokeWidth={3}
-                  />
-                ) : (
-                  <ChevronRight
-                    size={14}
-                    className="text-slate-500 group-hover:text-white"
-                    strokeWidth={3}
-                  />
+            <div className="flex items-center justify-between w-full pl-12 pr-1">
+              <div className="flex items-baseline gap-2">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-sm font-semibold text-slate-400 tracking-tighter">
+                    {formatYear(Number(currentYear))}
+                  </span>
+                  <span className="text-2xl font-black text-slate-800 tracking-tight">
+                    {formatMonth(`${currentYearMonth}-01`, "long")}
+                  </span>
+                </div>
+                {monthStats && (
+                  <div className="flex items-center gap-1.2 ml-2 px-2.5 py-0.5 rounded-full bg-slate-100/80 text-[10px] font-bold text-slate-500 border border-slate-200/50 uppercase">
+                    {t("common.count", {
+                      count: monthStats.total_count,
+                      defaultValue: `${monthStats.total_count} 건`,
+                    })}
+                  </div>
                 )}
               </div>
-              <div className="w-[1px] h-full bg-slate-200 group-hover:bg-slate-300 transition-colors" />
 
-              <div className="flex items-center justify-between w-full pl-12 pr-1">
-                <div className="flex items-baseline gap-2">
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-sm font-semibold text-slate-400 tracking-tighter">
-                      {formatYear(Number(currentYear))}
-                    </span>
-                    <span className="text-2xl font-black text-slate-800 tracking-tight">
-                      {formatMonth(`${currentYearMonth}-01`, "long")}
-                    </span>
+              <div className="flex items-center gap-3">
+                {monthStats && (
+                  <div className="flex items-center gap-2">
+                    <TrendBadge
+                      type="income"
+                      amount={formatAmount(monthStats.income_total)}
+                      className="shadow-none bg-transparent border-none min-w-fit gap-1"
+                      isSimple
+                    />
+                    <div className="w-[1px] h-3 bg-slate-200" />
+                    <TrendBadge
+                      type="expense"
+                      amount={formatAmount(monthStats.expense_total)}
+                      className="shadow-none bg-transparent border-none min-w-fit gap-1"
+                      isSimple
+                    />
                   </div>
-                  {monthStats && (
-                    <div className="flex items-center gap-1.2 ml-2 px-2.5 py-0.5 rounded-full bg-slate-100/80 text-[10px] font-bold text-slate-500 border border-slate-200/50 uppercase">
-                      {t("common.count", { count: monthStats.total_count, defaultValue: `${monthStats.total_count} 건` })}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-3">
-                  {monthStats && (
-                    <div className="flex items-center gap-2">
-                      <TrendBadge
-                        type="income"
-                        amount={formatAmount(monthStats.income_total)}
-                        className="shadow-none bg-transparent border-none min-w-fit gap-1"
-                        isSimple
-                      />
-                      <div className="w-[1px] h-3 bg-slate-200" />
-                      <TrendBadge
-                        type="expense"
-                        amount={formatAmount(monthStats.expense_total)}
-                        className="shadow-none bg-transparent border-none min-w-fit gap-1"
-                        isSimple
-                      />
-                    </div>
-                  )}
-                  {/* 월별 상세 펼치기/접기 버튼 */}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 rounded-full hover:bg-slate-200 text-slate-400"
-                        onClick={(e) => toggleMonthDetails(e, currentYearMonth)}
-                      >
-                        {isAllDetailsExpanded ? (
-                          <ChevronsUp size={14} />
-                        ) : (
-                          <ChevronsDown size={14} />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="text-white bg-black rounded text-xs p-1">
+                )}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 rounded-full hover:bg-slate-200 text-slate-400"
+                      onClick={(e) => toggleMonthDetails(e, currentYearMonth)}
+                    >
                       {isAllDetailsExpanded ? (
-                        <span>{t("transaction_filter.collapse_details")}</span>
+                        <ChevronsUp size={14} />
                       ) : (
-                        <span>{t("transaction_filter.expand_details")}</span>
+                        <ChevronsDown size={14} />
                       )}
-                    </TooltipContent>
-                  </Tooltip>
-                </div>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-white bg-black rounded text-xs p-1 z-50">
+                    {isAllDetailsExpanded ? (
+                      <span>{t("transaction_filter.collapse_details")}</span>
+                    ) : (
+                      <span>{t("transaction_filter.expand_details")}</span>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </div>
-        );
-      }
+        </div>
+      );
 
-      if (isExpanded) {
-        const dayTransactions = transactionsByDate.get(summary.date) || [];
-        const showDetails = expandedDays.has(summary.date);
+      // 2. 월별 리스트 내용 (애니메이션 적용)
+      items.push(
+        <AnimatePresence initial={false} key={`content-${currentYearMonth}`}>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="overflow-hidden" // 애니메이션 시 내용이 삐져나오지 않도록
+            >
+              {datesInMonth.map((summary) => {
+                const dayTransactions =
+                  transactionsByDate.get(summary.date) || [];
+                const showDetails = expandedDays.has(summary.date);
 
-        items.push(
-          <div key={summary.date} className="relative z-10 flex flex-col mb-2">
-            <DailySummaryCard
-              summary={summary}
-              isSelected={showDetails}
-              onClick={() => handleDateClick(summary.date)}
-            />
-            {showDetails && (
-              <div className="mt-4 mb-2">
-                <TransactionDetailTable
-                  transactions={dayTransactions}
-                  selectedIds={Array.from(selectedIds)}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onToggleSelect={handleToggleSelect}
-                  onToggleSelectAll={handleToggleSelectAll}
-                />
-              </div>
-            )}
-          </div>
-        );
-      }
+                return (
+                  <div
+                    key={summary.date}
+                    className="relative z-10 flex flex-col mb-2"
+                  >
+                    <DailySummaryCard
+                      summary={summary}
+                      isSelected={showDetails}
+                      onClick={() => handleDateClick(summary.date)}
+                    />
+                    {/* 3. 일별 상세 내역 (애니메이션 적용) */}
+                    <AnimatePresence initial={false}>
+                      {showDetails && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2, ease: "easeInOut" }}
+                          className="overflow-hidden"
+                        >
+                          <div className="mt-4 mb-2">
+                            <TransactionDetailTable
+                              transactions={dayTransactions}
+                              selectedIds={Array.from(selectedIds)}
+                              onEdit={handleEdit}
+                              onDelete={handleDelete}
+                              onToggleSelect={handleToggleSelect}
+                              onToggleSelectAll={handleToggleSelectAll}
+                            />
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      );
     });
 
     return items;
@@ -372,7 +407,7 @@ export default function TransactionsFeeds() {
     monthlySummaries,
     expandedMonths,
     expandedDays,
-    transactionsByDate, // Use grouped data
+    transactionsByDate,
     loading,
     setFilters,
     fetchFilteredAll,
@@ -382,6 +417,10 @@ export default function TransactionsFeeds() {
     setSheetOpen,
     confirm,
     selectedIds,
+    t,
+    formatAmount,
+    formatYear,
+    formatMonth,
   ]);
 
   return (
@@ -405,7 +444,8 @@ export default function TransactionsFeeds() {
               onClick={handleExpandAllMonths}
               className="h-7 px-2 text-[11px] text-slate-400 hover:text-slate-600 gap-1"
             >
-              <ChevronsDown className="w-3 h-3" /> {t("transaction_filter.expand_all")}
+              <ChevronsDown className="w-3 h-3" />{" "}
+              {t("transaction_filter.expand_all")}
             </Button>
             <Button
               variant="ghost"
@@ -413,7 +453,8 @@ export default function TransactionsFeeds() {
               onClick={handleCollapseAllMonths}
               className="h-7 px-2 text-[11px] text-slate-400 hover:text-slate-600 gap-1"
             >
-              <ChevronsUp className="w-3 h-3" /> {t("transaction_filter.collapse_all")}
+              <ChevronsUp className="w-3 h-3" />{" "}
+              {t("transaction_filter.collapse_all")}
             </Button>
           </div>
         )}
@@ -437,13 +478,16 @@ export default function TransactionsFeeds() {
       {selectedIds.size > 0 && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
           <Button
-            variant="destructive"
+            variant="outline"
             size="lg"
             onClick={handleBulkDelete}
-            className="rounded-full shadow-lg gap-2 pl-4 pr-6 h-12"
+            className="rounded-full shadow-lg gap-2 pl-4 pr-6 h-12 text-rose-400 border-rose-400 cursor-pointer hover:text-rose-600 hover:bg-rose-50"
           >
             <Trash2 className="h-5 w-5" />
-            <span className="font-bold">{t("common.count", { count: selectedIds.size })} {t("common.delete")}</span>
+            <span className="font-bold">
+              {t("common.count", { count: selectedIds.size })}{" "}
+              {t("common.delete")}
+            </span>
           </Button>
         </div>
       )}

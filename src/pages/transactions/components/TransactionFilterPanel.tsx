@@ -46,6 +46,7 @@ import {
 import { CategoryIcon } from "@/components/CategoryIcon";
 
 import { useTranslation } from "react-i18next";
+import { useDateFormatter } from "@/hooks/useDateFormatter";
 
 type TransactionMode =
   | "all"
@@ -80,11 +81,26 @@ export function TransactionFilterPanel() {
   const { categoryList } = useAppStore();
 
   const MODE_CONFIG = {
-    all: { label: t("transaction_filter.modes.all"), badge: t("transaction_filter.modes.divider") },
-    income: { label: t("transaction_filter.modes.income"), badge: <IncomeBadge /> },
-    total_expense: { label: t("transaction_filter.modes.total_expense"), badge: <ExpenseBadge /> },
-    fixed_expense: { label: t("transaction_filter.modes.fixed_expense"), badge: <FixedExpenseBadge /> },
-    variable_expense: { label: t("transaction_filter.modes.variable_expense"), badge: <VariableExpenseBadge /> },
+    all: {
+      label: t("transaction_filter.modes.all"),
+      badge: t("transaction_filter.modes.divider"),
+    },
+    income: {
+      label: t("transaction_filter.modes.income"),
+      badge: <IncomeBadge />,
+    },
+    total_expense: {
+      label: t("transaction_filter.modes.total_expense"),
+      badge: <ExpenseBadge />,
+    },
+    fixed_expense: {
+      label: t("transaction_filter.modes.fixed_expense"),
+      badge: <FixedExpenseBadge />,
+    },
+    variable_expense: {
+      label: t("transaction_filter.modes.variable_expense"),
+      badge: <VariableExpenseBadge />,
+    },
   } as const;
   const {
     filters: storeFilters,
@@ -377,7 +393,12 @@ function CategorySelector({
           <div className="flex items-center gap-1.5">
             <Shapes className="h-3 w-3 text-slate-400" />
             <span>
-              {selectedIds.length > 0 ? t("common.count", { count: selectedIds.length, defaultValue: `${selectedIds.length}개` }) : t("transaction_filter.category")}
+              {selectedIds.length > 0
+                ? t("common.count", {
+                    count: selectedIds.length,
+                    defaultValue: `${selectedIds.length}개`,
+                  })
+                : t("transaction_filter.category")}
             </span>
           </div>
           <ChevronDown className="h-3 w-3 text-slate-400 opacity-50" />
@@ -390,7 +411,9 @@ function CategorySelector({
             className="h-8 text-xs"
           />
           <CommandList>
-            <CommandEmpty className="text-[11px] py-2">{t("transaction_form.no_results")}</CommandEmpty>
+            <CommandEmpty className="text-[11px] py-2">
+              {t("transaction_form.no_results")}
+            </CommandEmpty>
             <CommandGroup>
               {categories.map((category) => (
                 <CommandItem
@@ -563,7 +586,9 @@ function PriceSelector({
                 (minAmount || maxAmount) && "text-slate-900 font-bold"
               )}
             >
-              {minAmount || maxAmount ? t("transaction_filter.amount_filter") : t("transaction_filter.amount")}
+              {minAmount || maxAmount
+                ? t("transaction_filter.amount_filter")
+                : t("transaction_filter.amount")}
             </span>
           </div>
           <ChevronDown className="h-3 w-3 text-slate-400 opacity-50" />
@@ -639,6 +664,7 @@ function SelectedFilterBadges({
   MODE_CONFIG: any;
 }) {
   const { t } = useTranslation();
+  const { formatDate } = useDateFormatter();
   const hasActiveFilters =
     filters.keyword ||
     filters.mode !== "all" ||
@@ -705,9 +731,9 @@ function SelectedFilterBadges({
           className="text-sm h-5 gap-1 bg-slate-100 text-slate-700 border-slate-200 px-1.5 font-medium"
         >
           <CalendarIcon className="h-3 w-3" />
-          {format(filters.dateRange.from, "yyyy.M.d")}
+          {formatDate(format(filters.dateRange.from, "yyyy-MM-dd"))}
           {filters.dateRange.to &&
-            ` ~ ${format(filters.dateRange.to, "yyyy.M.d")}`}
+            ` ~ ${formatDate(format(filters.dateRange.to, "yyyy-MM-dd"))}`}
           <X
             className="h-2.5 w-2.5 cursor-pointer hover:text-blue-900"
             onClick={() => updateFilter("dateRange", undefined)} // 삭제 시 즉시 검색 반영
@@ -739,4 +765,3 @@ function SelectedFilterBadges({
     </div>
   );
 }
-

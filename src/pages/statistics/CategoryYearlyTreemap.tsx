@@ -83,7 +83,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
 
     const mainCategories = allCategories.filter((item) => item.percentage >= 1);
     const lowVolumeCategories = allCategories.filter(
-      (item) => item.percentage < 1
+      (item) => item.percentage < 0.5
     );
 
     const otherTotal = lowVolumeCategories.reduce(
@@ -248,7 +248,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-slate-400 font-semibold">
-                {t("common.count", { count: 0 }).replace(/[0-9]/g, "").trim()}
+                {t("common.count_name")}
               </span>
               <span className="font-bold text-slate-700">
                 {t("common.count", { count: data.count })}
@@ -256,10 +256,7 @@ export const CategoryYearlyTreemap: React.FC = () => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-slate-400 font-semibold">
-                {t("statistics.summary.badge_labels.net_income_ratio").replace(
-                  "수입",
-                  t("common.all")
-                )}
+                {t("common.ratio")}
               </span>
               <span className="text-blue-600 font-black bg-blue-50 px-2 py-0.5 rounded-md">
                 {data.percentage.toFixed(1)}%

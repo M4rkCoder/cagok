@@ -16,11 +16,13 @@
     "close": "Close",
     "loading": "Loading...",
     "year": "Year",
+    "count_name": "Count",
     "count": "{{count}} items",
     "count_day": "{{count}}th",
     "rows": "Rows",
     "more_items": "+{{count}} more items",
     "more_items_simple": "+{{count}} more",
+    "ratio": "Ratio",
     "days": {
       "0": "Sunday",
       "1": "Monday",

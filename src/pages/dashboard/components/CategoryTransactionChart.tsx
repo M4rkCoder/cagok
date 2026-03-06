@@ -190,7 +190,7 @@ export default function CategoryTransactionChart({
                         >
                           {selectedItem
                             ? `${selectedItem.name} (${selectedItem.percentage.toFixed(1)}%)`
-                            : `${t("dashboard.cards.total_sum")} ${mode === "expense" ? t("common.expense") : t("common.income")} (100%)`}
+                            : `${t("dashboard.cards.total_sum")} (100%)`}
                         </tspan>
                       </text>
                     );

@@ -74,7 +74,9 @@ const SyncSettings = () => {
           <div className="flex flex-col items-center gap-4 p-6 bg-card border shadow-xl rounded-xl">
             <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
             <div className="space-y-1 text-center">
-              <h3 className="font-semibold text-lg">{t("settings.sync.syncing")}</h3>
+              <h3 className="font-semibold text-lg">
+                {t("settings.sync.syncing")}
+              </h3>
               <p className="text-sm text-muted-foreground">
                 {t("settings.sync.syncing_desc")}
               </p>
@@ -86,7 +88,7 @@ const SyncSettings = () => {
       <Card>
         <CardHeader className="border-b bg-slate-50/50 dark:bg-slate-900/50 rounded-t-xl pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <Cloudy className="w-5 h-5 text-blue-500" />
+            <Cloudy className="w-5 h-5" />
             {t("settings.sync.title")}
           </CardTitle>
         </CardHeader>
@@ -132,11 +134,13 @@ const SyncSettings = () => {
                   >
                     {status?.is_connected ? (
                       <span className="flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> {t("settings.sync.connected")}
+                        <CheckCircle2 className="w-3 h-3" />{" "}
+                        {t("settings.sync.connected")}
                       </span>
                     ) : (
                       <span className="flex items-center gap-1">
-                        <XCircle className="w-3 h-3" /> {t("settings.sync.disconnected")}
+                        <XCircle className="w-3 h-3" />{" "}
+                        {t("settings.sync.disconnected")}
                       </span>
                     )}
                   </Badge>
@@ -187,7 +191,8 @@ const SyncSettings = () => {
                   disabled={isLoading}
                   className="w-full sm:w-auto gap-2 border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:border-rose-900 dark:text-rose-500 dark:hover:bg-rose-950/50 cursor-pointer"
                 >
-                  <CloudOff className="w-4 h-4" /> {t("settings.sync.logout_button")}
+                  <CloudOff className="w-4 h-4" />{" "}
+                  {t("settings.sync.logout_button")}
                 </Button>
               )}
             </div>
@@ -203,7 +208,8 @@ const SyncSettings = () => {
                   disabled={isLoading}
                   className="gap-2 flex-1 sm:flex-none bg-slate-600 hover:bg-slate-700 cursor-pointer"
                 >
-                  <CloudUpload className="w-4 h-4" /> {t("settings.sync.backup_now")}
+                  <CloudUpload className="w-4 h-4" />{" "}
+                  {t("settings.sync.backup_now")}
                 </Button>
 
                 <Button
@@ -212,7 +218,8 @@ const SyncSettings = () => {
                   className="gap-2 flex-1 sm:flex-none cursor-pointer"
                   onClick={handleRestore}
                 >
-                  <CloudDownload className="w-4 h-4" /> {t("settings.sync.restore_from_cloud")}
+                  <CloudDownload className="w-4 h-4" />{" "}
+                  {t("settings.sync.restore_from_cloud")}
                 </Button>
               </div>
 

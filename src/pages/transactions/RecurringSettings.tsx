@@ -16,7 +16,7 @@ import RecurringFormSheet from "./RecurringFormSheet";
 import { cn, getFrequencyText, getDayText } from "@/lib/utils";
 import { CategoryIcon, FixIcon } from "@/components/CategoryIcon";
 import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { RecurringTransaction } from "@/types";
 import { useRecurringStore } from "@/stores/useRecurringStore";
 import { useAppStore } from "@/stores/useAppStore";
@@ -164,7 +164,7 @@ export default function RecurringSettings() {
               key={tab.id}
               onClick={() => setFilterType(tab.id as any)}
               className={cn(
-                "relative px-6 py-3 text-sm font-bold transition-all flex items-center gap-2 outline-none",
+                "cursor-pointer relative px-6 py-3 text-sm font-bold transition-all flex items-center gap-2 outline-none",
                 filterType === tab.id
                   ? "text-slate-900"
                   : "text-slate-400 hover:text-slate-600"
@@ -192,27 +192,38 @@ export default function RecurringSettings() {
             </button>
           ))}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredList.map((recurring) => (
-            <RecurringCard
-              key={recurring.id}
-              recurring={recurring}
-              category={categoryMap.get(recurring.category_id!)}
-              onEdit={() => openEdit(recurring)}
-              onToggle={() => toggleRecurring(recurring.id!)}
-              onDelete={() => onDeleteConfirm(recurring.id!)}
-              onProcess={() => processSingle(recurring.id!)}
-            />
-          ))}
-          {filteredList.length === 0 && (
-            <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-300 border-2 border-dashed border-slate-100 rounded-3xl bg-slate-50/50">
-              <RefreshCw className="w-12 h-12 mb-3 opacity-20" />
-              <p className="text-sm font-medium">
-                {t("recurring.no_recurring")}
-              </p>
-            </div>
-          )}
-        </div>
+        <Card className="shadow-md overflow-hidden p-4 min-h-[250px]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={filterType} // ✨ 핵심: 필터 타입이 바뀔 때마다 이전 리스트를 exit, 새 리스트를 enter 시킵니다.
+              initial={{ opacity: 0, y: 5 }} // 살짝 아래에서 시작
+              animate={{ opacity: 1, y: 0 }} // 제자리
+              exit={{ opacity: 0, y: -5 }} // 위로 살짝 올라가며 퇴장
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            >
+              {filteredList.map((recurring) => (
+                <RecurringCard
+                  key={recurring.id}
+                  recurring={recurring}
+                  category={categoryMap.get(recurring.category_id!)}
+                  onEdit={() => openEdit(recurring)}
+                  onToggle={() => toggleRecurring(recurring.id!)}
+                  onDelete={() => onDeleteConfirm(recurring.id!)}
+                  onProcess={() => processSingle(recurring.id!)}
+                />
+              ))}
+              {filteredList.length === 0 && (
+                <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-300 border-2 border-dashed border-slate-100 rounded-3xl bg-slate-50/50">
+                  <RefreshCw className="w-12 h-12 mb-3 opacity-20" />
+                  <p className="text-sm font-medium">
+                    {t("recurring.no_recurring")}
+                  </p>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </Card>
         <RecurringFormSheet
           open={isFormOpen}
           onOpenChange={setIsFormOpen}
@@ -458,7 +469,7 @@ function RecurringCard({
               variant="outline"
               size="icon"
               className={cn(
-                "h-8 w-8 rounded-lg shadow-sm bg-white transition-all hover:scale-110 active:scale-95", // h-10 w-10 -> h-8 w-8 축소
+                "h-8 w-8 rounded-lg shadow-sm bg-white transition-all hover:scale-110 active:scale-95 cursor-pointer", // h-10 w-10 -> h-8 w-8 축소
                 action.color
               )}
               onClick={action.onClick}

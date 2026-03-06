@@ -54,13 +54,14 @@ export const CategoryMonthlyTrendSection = memo(
     // 2. 데이터 가공 및 차트 설정
     const { chartData, chartConfig, displayCategoryNames } = useMemo(() => {
       const config: ChartConfig = {};
-      const targetCategories =
+      const allTargetCategories =
         activeType === "income" ? incomeCategories : expenseCategories;
 
-      targetCategories.forEach((cat, index) => {
+      // 1. 설정과 색상은 '전체 카테고리' 기준으로 생성 (선택 시 색상이 바뀌지 않도록 고정)
+      allTargetCategories.forEach((cat, index) => {
         const hue = activeType === "expense" ? 221 : 142;
         const lightness =
-          30 + index * (50 / Math.max(targetCategories.length - 1, 1));
+          30 + index * (50 / Math.max(allTargetCategories.length - 1, 1));
 
         config[cat.name] = {
           label: cat.name,
@@ -68,8 +69,15 @@ export const CategoryMonthlyTrendSection = memo(
         };
       });
 
-      const fixedOrderNames = targetCategories.map((cat) => cat.name);
+      // ✨ 2. 레전드와 차트에 실제로 그릴 대상(displayCategoryNames)을 선택된 카테고리로 필터링
+      const displayCategories =
+        internalCategoryId !== null
+          ? allTargetCategories.filter((c) => c.id === internalCategoryId)
+          : allTargetCategories;
 
+      const displayNames = displayCategories.map((cat) => cat.name);
+
+      // 3. 12개월 데이터 구성
       const last12Months = Array.from({ length: 12 }, (_, i) => {
         const [year, month] = baseMonth.split("-").map(Number);
         const date = new Date(year, month - 1 - (11 - i), 1);
@@ -100,7 +108,7 @@ export const CategoryMonthlyTrendSection = memo(
       return {
         chartData: data,
         chartConfig: config,
-        displayCategoryNames: fixedOrderNames,
+        displayCategoryNames: displayNames, // ✨ 필터링된 배열 반환
       };
     }, [
       categoryMonthlyAmounts,
@@ -112,9 +120,9 @@ export const CategoryMonthlyTrendSection = memo(
       formatMonth,
     ]);
 
-    const isEmpty = chartData.every(d => {
-      const keys = Object.keys(d).filter(k => k !== 'month');
-      return keys.length === 0 || keys.every(k => d[k] === 0);
+    const isEmpty = chartData.every((d) => {
+      const keys = Object.keys(d).filter((k) => k !== "month");
+      return keys.length === 0 || keys.every((k) => d[k] === 0);
     });
 
     return (
@@ -349,7 +357,7 @@ export const CategoryMonthlyTrendSection = memo(
                     dataKey={name}
                     stackId="1"
                     stroke={chartConfig[name]?.color}
-                    strokeWidth={1}
+                    strokeWidth={0.3}
                     fill={chartConfig[name]?.color}
                     fillOpacity={0.4}
                     connectNulls

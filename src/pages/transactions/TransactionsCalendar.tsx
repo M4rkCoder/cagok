@@ -15,7 +15,6 @@ import { useConfirmStore } from "@/stores/useConfirmStore";
 import { Transaction, TransactionWithCategory } from "@/types";
 import { CategoryIcon, FixIcon } from "@/components/CategoryIcon";
 import {
-  Pin,
   Pencil,
   Trash2,
   ReceiptText,
@@ -55,6 +54,12 @@ export default function TransactionsCalendar() {
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [direction, setDirection] = useState(0);
+
+  const handleMonthChange = (newMonth: Date) => {
+    setDirection(newMonth > currentMonth ? 1 : -1);
+    setCurrentMonth(newMonth);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setIsMounted(true), 200);
@@ -174,6 +179,7 @@ export default function TransactionsCalendar() {
 
   const handleMonthYearChange = (newYearMonth: string) => {
     const newDate = parse(newYearMonth, "yyyy-MM", new Date());
+    setDirection(newDate > currentMonth ? 1 : -1);
     setCurrentMonth(newDate);
   };
 
@@ -294,93 +300,123 @@ export default function TransactionsCalendar() {
             />
           </div>
 
-          <div className="flex-1 overflow-hidden mt-2">
-            <Calendar
-              mode="single"
-              locale={i18n.language === "ko" ? ko : undefined}
-              month={currentMonth}
-              onMonthChange={setCurrentMonth}
-              selected={selectedDate}
-              onSelect={(date) => date && handleDateClick(date)}
-              className="w-full h-full p-0 flex flex-col"
-              classNames={{
-                root: "flex-1 flex flex-col h-full",
-                months: "flex-1 flex flex-col w-full h-full",
-                month: "flex-1 flex flex-col w-full h-full space-y-0",
-                table: "flex-1 w-full border-collapse table-fixed h-full",
-                head_row:
-                  "flex w-full border-b border-slate-100 dark:border-slate-800 pb-2 shrink-0",
-                head_cell:
-                  "text-slate-400 rounded-md w-full font-bold text-[0.8rem] uppercase tracking-wider text-center",
-                row: "flex w-full flex-1 border-b last:border-0 border-slate-50 dark:border-slate-900 min-h-0",
-                cell: "flex-1 w-full text-center text-sm p-0 relative border-r last:border-r-0 border-slate-100 dark:border-slate-800/50 focus-within:relative focus-within:z-20 h-full",
-                day: "h-full w-full p-0 font-normal transition-colors flex flex-col items-start justify-start hover:bg-slate-50 dark:hover:bg-slate-900/50",
-                month_caption: "hidden", // Hide default caption
-                nav: "hidden", // Hide default navigation buttons
-              }}
-              components={{
-                DayButton: ({ day, modifiers, ...props }) => {
-                  const dateStr = format(day.date, "yyyy-MM-dd");
-                  const data = dailyMap.get(dateStr);
-                  const isSunday = day.date.getDay() === 0;
-                  const isSaturday = day.date.getDay() === 6;
-                  const isOutside = modifiers.outside;
+          <div className="flex-1 overflow-hidden mt-2 relative">
+            <AnimatePresence
+              mode="popLayout"
+              custom={direction}
+              initial={false}
+            >
+              <motion.div
+                key={currentMonth.toISOString()} // 키가 바뀔 때마다 애니메이션 트리거
+                custom={direction}
+                variants={{
+                  enter: (dir: number) => ({
+                    x: dir > 0 ? 30 : -30, // 다음 달이면 오른쪽에서, 이전 달이면 왼쪽에서 등장
+                    opacity: 0,
+                  }),
+                  center: {
+                    x: 0,
+                    opacity: 1,
+                  },
+                  exit: (dir: number) => ({
+                    x: dir < 0 ? 30 : -30, // 반대 방향으로 퇴장
+                    opacity: 0,
+                  }),
+                }}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="w-full h-full flex flex-col"
+              >
+                <Calendar
+                  mode="single"
+                  locale={i18n.language === "ko" ? ko : undefined}
+                  month={currentMonth}
+                  onMonthChange={handleMonthChange}
+                  selected={selectedDate}
+                  onSelect={(date) => date && handleDateClick(date)}
+                  className="w-full h-full p-0 flex flex-col"
+                  classNames={{
+                    root: "flex-1 flex flex-col h-full",
+                    months: "flex-1 flex flex-col w-full h-full",
+                    month: "flex-1 flex flex-col w-full h-full space-y-0",
+                    table: "flex-1 w-full border-collapse table-fixed h-full",
+                    head_row:
+                      "flex w-full border-b border-slate-100 dark:border-slate-800 pb-2 shrink-0",
+                    head_cell:
+                      "text-slate-400 rounded-md w-full font-bold text-[0.8rem] uppercase tracking-wider text-center",
+                    row: "flex w-full flex-1 border-b last:border-0 border-slate-50 dark:border-slate-900 min-h-0",
+                    cell: "flex-1 w-full text-center text-sm p-0 relative border-r last:border-r-0 border-slate-100 dark:border-slate-800/50 focus-within:relative focus-within:z-20 h-full",
+                    day: "h-full w-full p-0 font-normal transition-colors flex flex-col items-start justify-start hover:bg-slate-50 dark:hover:bg-slate-900/50",
+                    month_caption: "hidden", // Hide default caption
+                    nav: "hidden", // Hide default navigation buttons
+                  }}
+                  components={{
+                    DayButton: ({ day, modifiers, ...props }) => {
+                      const dateStr = format(day.date, "yyyy-MM-dd");
+                      const data = dailyMap.get(dateStr);
+                      const isSunday = day.date.getDay() === 0;
+                      const isSaturday = day.date.getDay() === 6;
+                      const isOutside = modifiers.outside;
 
-                  return (
-                    <button
-                      {...props}
-                      className={cn(
-                        "h-full w-full p-1 font-normal transition-all flex flex-col items-start justify-start gap-1 group min-h-[100px] min-2xl:h-[130px]",
-                        modifiers.selected &&
-                          "bg-slate-100/80 dark:bg-slate-800/80 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]",
-                        modifiers.today &&
-                          "bg-slate-50/50 dark:bg-slate-900/30",
-                        isOutside && "opacity-30",
-                        !modifiers.selected &&
-                          !isOutside &&
-                          "hover:bg-slate-50 dark:hover:bg-slate-900"
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "text-sm font-bold w-6 h-6 flex items-center justify-center rounded-full shrink-0",
-                          "transition-all duration-300 ease-in-out group-hover:text-lg",
-                          isSunday && "text-rose-500",
-                          isSaturday && "text-blue-500",
-                          modifiers.today &&
-                            "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm",
-                          !modifiers.today &&
-                            !isSunday &&
-                            !isSaturday &&
-                            "text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100"
-                        )}
-                      >
-                        {day.date.getDate()}
-                      </span>
+                      return (
+                        <button
+                          {...props}
+                          className={cn(
+                            "h-full w-full p-1 font-normal transition-all flex flex-col items-start justify-start gap-1 group min-h-[100px] min-2xl:h-[130px] cursor-pointer ",
+                            modifiers.selected &&
+                              "bg-slate-100/80 dark:bg-slate-800/80 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]",
+                            modifiers.today &&
+                              "bg-slate-50/50 dark:bg-slate-900/30",
+                            isOutside && "opacity-30",
+                            !modifiers.selected &&
+                              !isOutside &&
+                              "hover:bg-slate-50 dark:hover:bg-slate-900"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "text-sm font-bold w-6 h-6 flex items-center justify-center rounded-full shrink-0",
+                              "transition-all duration-100 ease-linear group-hover:text-lg group-hover:font-extrabold",
+                              isSunday && "text-rose-500",
+                              isSaturday && "text-blue-500",
+                              modifiers.today &&
+                                "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 shadow-sm",
+                              !modifiers.today &&
+                                !isSunday &&
+                                !isSaturday &&
+                                "text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-100"
+                            )}
+                          >
+                            {day.date.getDate()}
+                          </span>
 
-                      <div className="flex flex-col w-full gap-0.5 mt-auto pb-1 min-h-[50px] items-center">
-                        {data && (
-                          <>
-                            {data.expense > 0 && (
-                              <div className="flex items-center justify-between w-[80%] px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/30 text-[11px] text-blue-700 dark:text-blue-400 font-bold truncate min-2xl:text-[13px]">
-                                <MinusCircle className="w-3 h-3" />
-                                <span>{formatAmount(data.expense)}</span>
-                              </div>
+                          <div className="flex flex-col w-full gap-0.5 mt-auto pb-1 min-h-[50px] items-center">
+                            {data && (
+                              <>
+                                {data.expense > 0 && (
+                                  <div className="flex items-center justify-between w-[80%] px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/30 text-[11px] text-blue-700 dark:text-blue-400 font-bold truncate min-2xl:text-[13px]">
+                                    <MinusCircle className="w-3 h-3" />
+                                    <span>{formatAmount(data.expense)}</span>
+                                  </div>
+                                )}
+                                {data.income > 0 && (
+                                  <div className="flex items-center justify-between w-[80%] px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-[11px] text-emerald-700 dark:text-emerald-400 font-bold truncate min-2xl:text-[13px]">
+                                    <PlusCircle className="w-3 h-3" />
+                                    <span>{formatAmount(data.income)}</span>
+                                  </div>
+                                )}
+                              </>
                             )}
-                            {data.income > 0 && (
-                              <div className="flex items-center justify-between w-[80%] px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/30 text-[11px] text-emerald-700 dark:text-emerald-400 font-bold truncate min-2xl:text-[13px]">
-                                <PlusCircle className="w-3 h-3" />
-                                <span>{formatAmount(data.income)}</span>
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </button>
-                  );
-                },
-              }}
-            />
+                          </div>
+                        </button>
+                      );
+                    },
+                  }}
+                />
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </div>

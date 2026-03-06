@@ -143,7 +143,7 @@ const CategorySettings = () => {
                   setActiveTab(tab.id as "all" | "income" | "expense")
                 }
                 className={cn(
-                  "relative px-6 py-4 text-sm font-bold transition-all flex items-center gap-2 outline-none",
+                  "relative px-6 py-4 text-sm font-bold transition-all flex items-center gap-2 outline-none cursor-pointer",
                   activeTab === tab.id
                     ? tab.color
                     : "text-slate-400 hover:text-slate-600"
@@ -186,7 +186,7 @@ const CategorySettings = () => {
               <Button
                 size="sm"
                 onClick={handleNew}
-                className="rounded-full shadow-sm px-4"
+                className="rounded-xl shadow-sm px-4 cursor-pointer"
               >
                 <Plus className="h-4 w-4 mr-1" /> {t("settings.category.add")}
               </Button>
@@ -294,9 +294,6 @@ const CategorySettings = () => {
                 ? t("settings.category.form_title_edit")
                 : t("settings.category.form_title_add")}
             </SheetTitle>
-            <SheetDescription>
-              {t("settings.category.form_description")}
-            </SheetDescription>
           </SheetHeader>
           <CategoryForm
             onSubmit={async (values) => {

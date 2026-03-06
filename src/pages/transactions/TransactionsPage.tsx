@@ -58,35 +58,41 @@ const TransactionsPage = () => {
           <Button
             variant={viewMode === "timeline" ? "secondary" : "ghost"}
             size="sm"
-            className={`h-8 px-3 gap-1.5 transition-all ${
+            className={`cursor-pointer h-8 px-3 gap-1.5 transition-all ${
               viewMode === "timeline" ? "bg-white shadow-sm" : "text-slate-500"
             }`}
             onClick={() => setViewMode("timeline")}
           >
             <LayoutList size={14} />
-            <span className="text-xs font-bold">{t("transactions_view.timeline")}</span>
+            <span className="text-xs font-bold">
+              {t("transactions_view.timeline")}
+            </span>
           </Button>
           <Button
             variant={viewMode === "calendar" ? "secondary" : "ghost"}
             size="sm"
-            className={`h-8 px-3 gap-1.5 transition-all ${
+            className={`cursor-pointer h-8 px-3 gap-1.5 transition-all ${
               viewMode === "calendar" ? "bg-white shadow-sm" : "text-slate-500"
             }`}
             onClick={() => setViewMode("calendar")}
           >
             <CalendarDays size={14} />
-            <span className="text-xs font-bold">{t("transactions_view.calendar")}</span>
+            <span className="text-xs font-bold">
+              {t("transactions_view.calendar")}
+            </span>
           </Button>
           <Button
             variant={viewMode === "board" ? "secondary" : "ghost"}
             size="sm"
-            className={`h-8 px-3 gap-1.5 transition-all ${
+            className={`cursor-pointer h-8 px-3 gap-1.5 transition-all ${
               viewMode === "board" ? "bg-white shadow-sm" : "text-slate-500"
             }`}
             onClick={() => setViewMode("board")}
           >
             <Table size={14} />
-            <span className="text-xs font-bold">{t("transactions_view.board")}</span>
+            <span className="text-xs font-bold">
+              {t("transactions_view.board")}
+            </span>
           </Button>
         </div>
 

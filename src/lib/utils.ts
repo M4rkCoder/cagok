@@ -38,7 +38,7 @@ export const getThemeColor = (
   // 2. 인덱스가 있으면 명도(Lightness) 계산 (30% ~ 80%)
   // 너무 밝아지는 것을 방지하기 위해 maxL을 80으로 살짝 낮추는 것을 추천합니다.
   const minL = 30;
-  const maxL = 80;
+  const maxL = type === "income" ? 60 : 80;
   const divisor = Math.max(total - 1, 1);
   const lightness = minL + index * ((maxL - minL) / divisor);
 
@@ -161,8 +161,10 @@ export const getFrequencyText = (frequency: string, t?: any) => {
     return t(`recurring.form.frequencies.${frequency}`);
   }
   return (
-    ({ daily: "매일", weekly: "매주", monthly: "매월", yearly: "매년" }) as any
-  )[frequency] || frequency;
+    ({ daily: "매일", weekly: "매주", monthly: "매월", yearly: "매년" } as any)[
+      frequency
+    ] || frequency
+  );
 };
 
 export const getDayText = (recurring: RecurringTransaction, t?: any) => {
@@ -170,15 +172,21 @@ export const getDayText = (recurring: RecurringTransaction, t?: any) => {
     const days = ["일", "월", "화", "수", "목", "금", "토"];
     if (t) {
       // Use Intl.DateTimeFormat via a trick or just simple keys
-      // Since we already have formatDayIndex in useDateFormatter, 
+      // Since we already have formatDayIndex in useDateFormatter,
       // but this is a util, we'll use a simple approach or let the caller handle it.
       // For now, let's just return the day name if t is provided we could use keys.
-      return t(`common.days.${recurring.day_of_week}`, { defaultValue: days[recurring.day_of_week] + "요일" });
+      return t(`common.days.${recurring.day_of_week}`, {
+        defaultValue: days[recurring.day_of_week] + "요일",
+      });
     }
     return days[recurring.day_of_week] + "요일";
   }
   if (recurring.frequency === "monthly" && recurring.day_of_month) {
-    if (t) return t("common.count_day", { count: recurring.day_of_month, defaultValue: `${recurring.day_of_month}일` });
+    if (t)
+      return t("common.count_day", {
+        count: recurring.day_of_month,
+        defaultValue: `${recurring.day_of_month}일`,
+      });
     return recurring.day_of_month + "일";
   }
   return "";

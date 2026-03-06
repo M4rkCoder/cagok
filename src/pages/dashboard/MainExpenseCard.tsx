@@ -81,7 +81,7 @@ export function MainExpenseCard() {
 
             {/* 🔹 조건문을 text-5xl 태그 밖으로 분리하여 스타일 간섭(찌그러짐) 방지 */}
             {overview && overview.total_expense !== 0 ? (
-              <div className="text-5xl font-extrabold tracking-tighter text-slate-900">
+              <div className="text-4xl font-extrabold tracking-tighter text-slate-900">
                 <AnimatedAmount
                   value={overview.total_expense}
                   formatter={formatAmount}
@@ -114,13 +114,13 @@ export function MainExpenseCard() {
             <div className="flex flex-col h-full">
               <DashboardTitle title={t("dashboard.recent_expense")} />
               <div className="flex-1 min-h-0 mt-2">
-                <div className="divide-y divide-slate-100/50 overflow-y-auto max-h-[160px] custom-scrollbar pr-3">
+                <div className="divide-y divide-slate-100/50 overflow-y-auto max-h-[140px] custom-scrollbar pr-3">
                   {recentTransactions && recentTransactions.length > 0 ? (
                     recentTransactions.map((tx) => (
                       <div
                         key={tx.id}
                         className={cn(
-                          "flex items-center justify-between py-1 px-2 transition-all duration-200 ease-out",
+                          "flex items-center justify-between py-0.5 px-2 transition-all duration-200 ease-out",
                           "hover:bg-white hover:scale-[1.03] hover:shadow-sm hover:z-10 hover:rounded-md",
                           "group cursor-default"
                         )}

@@ -134,9 +134,9 @@ const TransactionForm: React.FC = () => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(submitForm)}
-        className="flex flex-col h-[700px] px-2 pt-2 pb-2"
+        className="flex flex-col h-[calc(100vh-120px)] max-h-[700px] pt-2 pb-2"
       >
-        <div className="flex-1 space-y-7 scrollbar-hide pr-1">
+        <div className="flex-1 overflow-y-auto space-y-2.5 scrollbar-hide pb-2">
           <TransactionTypeSection form={form} />
           <CategorySection form={form} />
           <DescriptionSection form={form} />
@@ -164,13 +164,13 @@ const TransactionTypeSection: React.FC<{
   const isFixed = form.watch("is_fixed");
 
   return (
-    <div className="flex items-center gap-0 overflow-hidden">
+    <div className="flex items-center overflow-hidden">
       <FormField
         control={form.control}
         name="type"
         render={({ field }) => (
           <FormItem className="flex-1 transition-all duration-500">
-            <div className="p-1.5 bg-slate-100/60 rounded-2xl flex gap-1">
+            <div className="p-1 bg-slate-100/60 rounded-2xl flex gap-1">
               {[
                 {
                   id: 0,
@@ -194,16 +194,16 @@ const TransactionTypeSection: React.FC<{
                     if (item.id === 0) form.setValue("is_fixed", 0);
                   }}
                   className={cn(
-                    "flex-1 flex items-center justify-center gap-2 h-11 rounded-xl transition-all font-bold text-sm",
+                    "flex-1 flex items-center justify-center gap-2 h-8 rounded-xl transition-all font-bold text-sm",
                     field.value === item.id
                       ? "bg-white shadow-sm"
-                      : "text-slate-400",
+                      : "text-slate-400"
                   )}
                 >
                   <item.icon
                     className={cn(
                       "w-4 h-4",
-                      field.value === item.id ? item.color : "text-slate-300",
+                      field.value === item.id ? item.color : "text-slate-300"
                     )}
                   />
                   {item.name}
@@ -216,9 +216,7 @@ const TransactionTypeSection: React.FC<{
       <div
         className={cn(
           "transition-all duration-500 flex items-center overflow-hidden",
-          currentType === 1
-            ? "w-[60px] opacity-100 ml-3"
-            : "w-0 opacity-0 ml-0",
+          currentType === 1 ? "w-[60px] opacity-100 ml-3" : "w-0 opacity-0 ml-0"
         )}
       >
         <Tooltip>
@@ -230,13 +228,13 @@ const TransactionTypeSection: React.FC<{
                 "w-12 h-12 flex items-center justify-center rounded-2xl transition-all border shrink-0 active:scale-95",
                 isFixed === 1
                   ? "bg-black border-black text-white shadow-md shadow-slate-200"
-                  : "bg-slate-50 border-slate-100 text-slate-300",
+                  : "bg-slate-50 border-slate-100 text-slate-300"
               )}
             >
               <Pin
                 className={cn(
                   "w-4 h-4 transition-transform",
-                  isFixed === 1 && "fill-white rotate-45",
+                  isFixed === 1 && "fill-white rotate-45"
                 )}
               />
             </button>
@@ -320,9 +318,9 @@ const CategorySection: React.FC<{
   }, [error]);
 
   return (
-    <div className="space-y-1.5">
-      <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
-        <Tag className="w-3 h-3" /> {t("common.category")}
+    <div className="space-y-1">
+      <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-2 tracking-wider uppercase">
+        {t("common.category")}
       </FormLabel>
       <Popover
         open={isCategoryPopoverOpen}
@@ -338,11 +336,9 @@ const CategorySection: React.FC<{
             <button
               type="button"
               className={cn(
-                "w-full h-12 px-4 flex items-center justify-between rounded-2xl bg-slate-50 transition-all",
+                "ml-1 w-[97%] h-12 px-4 flex items-center justify-between rounded-xl bg-slate-50 transition-all",
                 isCategoryPopoverOpen && "ring-1 ring-slate-200 shadow-sm",
-                showVisualError &&
-                  error &&
-                  "ring-2 ring-rose-500/50 bg-rose-50",
+                showVisualError && error && "ring-2 ring-rose-500/50 bg-rose-50"
               )}
             >
               <div className="flex items-center gap-2">
@@ -363,7 +359,7 @@ const CategorySection: React.FC<{
                       "text-sm font-bold",
                       showVisualError && error
                         ? "text-rose-400"
-                        : "text-slate-400",
+                        : "text-slate-400"
                     )}
                   >
                     {t("transaction.select_category")}
@@ -373,7 +369,7 @@ const CategorySection: React.FC<{
               <ChevronDown
                 className={cn(
                   "w-4 h-4 text-slate-300 transition-transform",
-                  isCategoryPopoverOpen && "rotate-180",
+                  isCategoryPopoverOpen && "rotate-180"
                 )}
               />
             </button>
@@ -436,7 +432,7 @@ const CategorySection: React.FC<{
                             "relative flex items-center px-3 py-2.5 rounded-xl cursor-pointer group mb-0.5 transition-colors",
                             selectedCategoryId === cat.id
                               ? "bg-slate-200 text-slate-900 data-[selected='true']:bg-slate-300"
-                              : "text-slate-600",
+                              : "text-slate-600"
                           )}
                           onSelect={() => {
                             form.setValue("category_id", cat.id);
@@ -454,7 +450,7 @@ const CategorySection: React.FC<{
                                 "font-bold text-xs truncate",
                                 selectedCategoryId === cat.id
                                   ? "text-slate-900"
-                                  : "text-slate-600",
+                                  : "text-slate-600"
                               )}
                             >
                               {cat.name}
@@ -474,7 +470,7 @@ const CategorySection: React.FC<{
                                 "p-1.5 rounded-md transition-colors",
                                 selectedCategoryId === cat.id
                                   ? "hover:bg-slate-300 text-slate-500 hover:text-blue-600"
-                                  : "hover:bg-slate-200 text-slate-400 hover:text-blue-500",
+                                  : "hover:bg-slate-200 text-slate-400 hover:text-blue-500"
                               )}
                             >
                               <Pencil className="w-3.5 h-3.5" />
@@ -488,7 +484,7 @@ const CategorySection: React.FC<{
                                 "p-1.5 rounded-md transition-colors",
                                 selectedCategoryId === cat.id
                                   ? "hover:bg-slate-300 text-slate-500 hover:text-rose-600"
-                                  : "hover:bg-slate-200 text-slate-400 hover:text-rose-500",
+                                  : "hover:bg-slate-200 text-slate-400 hover:text-rose-500"
                               )}
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -595,16 +591,16 @@ const DescriptionSection: React.FC<{
 
         return (
           <FormItem>
-            <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
-              <FileText className="w-3 h-3" /> {t("common.description")}
+            <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-2 tracking-wider uppercase">
+              {t("common.description")}
             </FormLabel>
             <TemporaryErrorTooltip error={fieldState.error} show={showError}>
               <Input
                 className={cn(
-                  "h-12 bg-slate-50/80 border-none rounded-2xl text-sm font-bold placeholder:text-slate-300",
+                  "ml-1 w-[97%] h-10 bg-slate-50/80 border-none rounded-xl text-sm font-bold placeholder:text-slate-300",
                   showError &&
                     fieldState.error &&
-                    "ring-2 ring-rose-500/50 bg-rose-50",
+                    "ring-2 ring-rose-500/50 bg-rose-50"
                 )}
                 placeholder={t("transaction_form.description_placeholder")}
                 {...field}
@@ -650,8 +646,8 @@ const DateAmountSection: React.FC<{
 
           return (
             <FormItem className="flex flex-col">
-              <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
-                <Banknote className="w-3 h-3" /> {t("common.amount")}
+              <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-2 tracking-wider uppercase">
+                {t("common.amount")}
               </FormLabel>
 
               <Tooltip
@@ -666,10 +662,10 @@ const DateAmountSection: React.FC<{
                       type="text"
                       placeholder="0"
                       className={cn(
-                        "h-12 bg-slate-50/80 border-none rounded-2xl text-sm font-bold placeholder:text-slate-300 transition-all",
+                        "ml-1 w-[97%] h-10 bg-slate-50/80 border-none rounded-xl text-sm font-bold placeholder:text-slate-300 transition-all",
                         showAmountError && fieldState.error
                           ? "ring-2 ring-rose-500/50 bg-rose-50"
-                          : "focus-visible:ring-2 focus-visible:ring-blue-500/20",
+                          : "focus-visible:ring-2 focus-visible:ring-blue-500/20"
                       )}
                       onFocus={(e) => e.target.select()}
                       onChange={(e) => {
@@ -685,17 +681,17 @@ const DateAmountSection: React.FC<{
                         const result = evaluateExpression(val);
                         if (result !== null) {
                           setPreview(
-                            new Intl.NumberFormat().format(Number(result)),
+                            new Intl.NumberFormat().format(Number(result))
                           );
                         }
                       }}
                       onBlur={() => {
                         const result = evaluateExpression(
-                          field.value?.toString() || "",
+                          field.value?.toString() || ""
                         );
                         if (result !== null) {
                           const formatted = new Intl.NumberFormat().format(
-                            Number(result),
+                            Number(result)
                           );
                           field.onChange(formatted);
                         }
@@ -715,7 +711,7 @@ const DateAmountSection: React.FC<{
                     "border-none text-xs font-bold px-3 py-1.5 rounded-lg shadow-xl mb-1",
                     showAmountError && fieldState.error
                       ? "bg-rose-500 text-white"
-                      : "bg-blue-600 text-white",
+                      : "bg-blue-600 text-white"
                   )}
                 >
                   {showAmountError && fieldState.error
@@ -745,8 +741,8 @@ const DateAmountSection: React.FC<{
 
           return (
             <FormItem className="flex flex-col">
-              <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
-                <Calendar className="w-3 h-3" /> {t("common.date")}
+              <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-2 tracking-wider uppercase">
+                {t("common.date")}
               </FormLabel>
 
               <TemporaryErrorTooltip
@@ -763,7 +759,8 @@ const DateAmountSection: React.FC<{
                               const d = parseISO(field.value);
                               if (!isNaN(d.getTime())) {
                                 return format(d, dateFormat, {
-                                  locale: i18n.language === "ko" ? Korean : enUS,
+                                  locale:
+                                    i18n.language === "ko" ? Korean : enUS,
                                 });
                               }
                             } catch {}
@@ -773,10 +770,10 @@ const DateAmountSection: React.FC<{
                     }
                     placeholder={t("transaction_form.date_placeholder")}
                     className={cn(
-                      "h-12 bg-slate-50/80 border-none rounded-2xl text-xs font-bold pr-10 transition-all",
+                      "ml-1 w-[97%] h-10 bg-slate-50/80 border-none rounded-xl text-xs font-bold pr-10 transition-all",
                       showDateError && fieldState.error
                         ? "ring-2 ring-rose-500/50 bg-rose-50"
-                        : "focus-visible:ring-2 focus-visible:ring-blue-500/20",
+                        : "focus-visible:ring-2 focus-visible:ring-blue-500/20"
                     )}
                     onFocus={() => setIsDateFocused(true)}
                     onBlur={(e) => {
@@ -788,7 +785,7 @@ const DateAmountSection: React.FC<{
                       if (e.key === "Enter") {
                         e.preventDefault();
                         const parsed = smartParseDate(
-                          (e.target as HTMLInputElement).value,
+                          (e.target as HTMLInputElement).value
                         );
                         field.onChange(parsed);
                         (e.target as HTMLInputElement).blur();
@@ -846,11 +843,11 @@ const RemarksSection: React.FC<{
       name="remarks"
       render={({ field }) => (
         <FormItem>
-          <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-1 tracking-wider uppercase">
-            <Scroll className="w-3 h-3" /> {t("common.remarks")}
+          <FormLabel className="flex items-center gap-2 text-sm font-bold text-slate-400 ml-2 tracking-wider uppercase">
+            {t("common.remarks")}
           </FormLabel>
           <Textarea
-            className="resize-none rounded-3xl border-none bg-slate-50/80 p-5 text-sm font-medium placeholder:text-slate-300 min-h-[80px]"
+            className="ml-1 w-[97%] resize-none rounded-xl border-none bg-slate-50/80 p-4 text-sm font-medium placeholder:text-slate-300 min-h-[50px]"
             placeholder={t("transaction_form.remarks_placeholder")}
             {...field}
           />
@@ -870,12 +867,12 @@ const ActionButtons: React.FC<{
   const { t } = useTranslation();
 
   return (
-    <div className="shrink-0 pt-6 bg-white flex gap-3 mt-auto">
+    <div className="shrink-0 pt-2 bg-white flex gap-3 mt-auto">
       <Button
         type="button"
         variant="ghost"
         onClick={onCancel}
-        className="flex-1 h-14 text-slate-400 font-bold hover:bg-slate-50 rounded-2xl transition-colors"
+        className="flex-1 h-10 text-slate-400 font-bold hover:bg-slate-50 rounded-xl transition-colors cursor-pointer"
       >
         {t("common.cancel")}
       </Button>
@@ -883,7 +880,7 @@ const ActionButtons: React.FC<{
         <Button
           type="button"
           variant="outline"
-          className="flex-1 h-14 rounded-2xl border-slate-100 text-rose-500 hover:bg-rose-50"
+          className="flex-1 h-10 rounded-xl border-slate-100 text-rose-500 hover:bg-rose-50 cursor-pointer"
           onClick={onDelete}
         >
           {t("common.delete")}
@@ -891,7 +888,7 @@ const ActionButtons: React.FC<{
       )}
       <Button
         type="submit"
-        className="flex-[2] h-14 bg-black hover:bg-slate-800 text-white rounded-2xl font-black text-base transition-all shadow-xl shadow-slate-100 active:scale-[0.98]"
+        className="cursor-pointer flex-[2] h-10 bg-slate-600 hover:bg-slate-700 text-white rounded-xl font-black text-base transition-all shadow-xl shadow-slate-100 active:scale-[0.98]"
       >
         {t("common.save")}
       </Button>
