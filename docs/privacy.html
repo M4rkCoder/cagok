@@ -11,9 +11,11 @@
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/variable/pretendardvariable.css" />
     <style>
         body { font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif; }
+        [data-lang="en"] .lang-ko { display: none; }
+        [data-lang="ko"] .lang-en { display: none; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="bg-slate-50 text-slate-800" data-lang="ko">
 
     <!-- Header -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
@@ -21,8 +23,17 @@
             <div class="flex items-center space-x-2">
                 <a href="index.html" class="text-2xl font-extrabold text-indigo-600 tracking-tight">C'AGOK</a>
             </div>
-            <nav class="flex space-x-8">
-                <a href="index.html" class="text-slate-600 hover:text-indigo-600 font-medium transition">홈으로 돌아가기</a>
+            <nav class="flex space-x-8 items-center">
+                <a href="index.html" class="text-slate-600 hover:text-indigo-600 font-medium transition">
+                    <span class="lang-ko">홈으로 돌아가기</span>
+                    <span class="lang-en">Back to Home</span>
+                </a>
+                <!-- Language Switcher -->
+                <button onclick="toggleLang()" class="flex items-center space-x-1 px-3 py-1 rounded-full border border-slate-200 hover:bg-slate-50 transition text-sm font-medium text-slate-600">
+                    <i class="fas fa-globe text-xs"></i>
+                    <span class="lang-ko">English</span>
+                    <span class="lang-en">한국어</span>
+                </button>
             </nav>
         </div>
     </header>
@@ -34,7 +45,10 @@
                 <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center text-xl">
                     <i class="fas fa-shield-halved"></i>
                 </div>
-                <h1 class="text-3xl font-bold text-slate-900">개인정보 처리방침</h1>
+                <h1 class="text-3xl font-bold text-slate-900">
+                    <span class="lang-ko">개인정보 처리방침</span>
+                    <span class="lang-en">Privacy Policy</span>
+                </h1>
             </div>
             
             <div class="space-y-10 text-slate-600 leading-relaxed">
@@ -42,14 +56,23 @@
                 <section class="space-y-4">
                     <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                         <i class="fas fa-eye-slash text-slate-400 text-lg"></i>
-                        1. 데이터 수집 금지 원칙
+                        <span class="lang-ko">1. 데이터 수집 금지 원칙</span>
+                        <span class="lang-en">1. Data Collection Prohibition</span>
                     </h2>
-                    <p>
+                    <p class="lang-ko">
                         C'AGOK은 사용자가 입력한 어떠한 금융 정보, 거래 내역, 개인 식별 정보를 
                         <strong class="text-slate-900 font-bold underline decoration-indigo-200 underline-offset-4">외부 서버로 전송하거나 수집하지 않습니다.</strong>
                     </p>
-                    <p>
+                    <p class="lang-en">
+                        C'AGOK does not 
+                        <strong class="text-slate-900 font-bold underline decoration-indigo-200 underline-offset-4">transmit or collect any financial information,</strong> 
+                        transaction history, or personally identifiable information entered by the user to external servers.
+                    </p>
+                    <p class="lang-ko">
                         앱 실행 시 발생하는 모든 트래픽은 오직 앱 업데이트 확인 및 사용자가 직접 설정한 클라우드 백업 시에만 발생합니다.
+                    </p>
+                    <p class="lang-en">
+                        All traffic is only for app updates or user-initiated cloud backups.
                     </p>
                 </section>
 
@@ -57,12 +80,18 @@
                 <section class="space-y-4">
                     <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                         <i class="fas fa-hard-drive text-slate-400 text-lg"></i>
-                        2. 데이터 저장 방식
+                        <span class="lang-ko">2. 데이터 저장 방식</span>
+                        <span class="lang-en">2. Data Storage Method</span>
                     </h2>
-                    <p>
+                    <p class="lang-ko">
                         모든 가계부 데이터는 사용자의 로컬 디스크 내 
                         <strong class="text-slate-900 font-bold underline decoration-indigo-200 underline-offset-4">SQLite 데이터베이스 파일</strong>
                         에 저장됩니다. 해당 데이터에 대한 관리 책임은 전적으로 사용자에게 있으며, 앱 삭제 시 로컬 데이터도 함께 삭제될 수 있으므로 주의가 필요합니다.
+                    </p>
+                    <p class="lang-en">
+                        All data is stored in an 
+                        <strong class="text-slate-900 font-bold underline decoration-indigo-200 underline-offset-4">SQLite database file</strong> 
+                        on the user's local disk. The user is solely responsible for data management, and local data may be deleted upon app removal.
                     </p>
                 </section>
 
@@ -70,10 +99,14 @@
                 <section class="space-y-4">
                     <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
                         <i class="fas fa-cloud-slash text-slate-400 text-lg"></i>
-                        3. 제3자 제공 및 위탁
+                        <span class="lang-ko">3. 제3자 제공 및 위탁</span>
+                        <span class="lang-en">3. Third-party Provision</span>
                     </h2>
-                    <p>
+                    <p class="lang-ko">
                         본 서비스는 별도의 회원 가입 절차가 없으며, 사용자의 데이터를 제3자에게 제공하거나 처리를 위탁하는 과정이 존재하지 않습니다. OneDrive 동기화 기능을 사용할 경우, 해당 데이터는 사용자의 개인 OneDrive 계정에만 저장됩니다.
+                    </p>
+                    <p class="lang-en">
+                        This service has no registration process and does not provide user data to third parties. If using OneDrive sync, data is stored only in the user's personal OneDrive account.
                     </p>
                 </section>
 
@@ -81,17 +114,26 @@
                 <div class="p-6 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-start gap-4">
                     <i class="fas fa-lock text-emerald-600 mt-1 text-xl"></i>
                     <div class="space-y-2">
-                        <p class="font-bold text-emerald-900">안전한 로컬 가계부</p>
+                        <p class="font-bold text-emerald-900">
+                            <span class="lang-ko">안전한 로컬 가계부</span>
+                            <span class="lang-en">Secure Local Account Book</span>
+                        </p>
                         <p class="text-sm text-emerald-800 leading-relaxed">
-                            C'AGOK은 사용자의 프라이버시를 최우선으로 생각합니다.<br>
-                            당신의 자산 정보는 오직 당신의 기기에만 머뭅니다.
+                            <span class="lang-ko">C'AGOK은 사용자의 프라이버시를 최우선으로 생각합니다.<br>당신의 자산 정보는 오직 당신의 기기에만 머뭅니다.</span>
+                            <span class="lang-en">C'AGOK prioritizes your privacy.<br>Your financial data stays only on your device.</span>
                         </p>
                     </div>
                 </div>
 
                 <div class="pt-8 text-slate-400 text-sm border-t border-slate-100 flex justify-between">
-                    <span>시행일자: 2026-02-26</span>
-                    <a href="mailto:YOUR_EMAIL@example.com" class="text-indigo-600 hover:underline">개발자 문의하기</a>
+                    <span>
+                        <span class="lang-ko">시행일자</span>
+                        <span class="lang-en">Effective Date</span>: 2026-02-26
+                    </span>
+                    <a href="mailto:YOUR_EMAIL@example.com" class="text-indigo-600 hover:underline">
+                        <span class="lang-ko">개발자 문의하기</span>
+                        <span class="lang-en">Contact Developer</span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -101,9 +143,24 @@
     <footer class="bg-slate-900 text-slate-300 py-10">
         <div class="max-w-7xl mx-auto px-4 text-center">
             <span class="text-xl font-extrabold tracking-tight text-white mb-2 block">C'AGOK</span>
-            <p class="text-slate-400 text-sm">© 2024 C'AGOK. All rights reserved.</p>
+            <p class="text-slate-400 text-sm">© 2026 C'AGOK. All rights reserved.</p>
         </div>
     </footer>
 
+    <script>
+        function toggleLang() {
+            const body = document.body;
+            const currentLang = body.getAttribute('data-lang');
+            const newLang = currentLang === 'ko' ? 'en' : 'ko';
+            body.setAttribute('data-lang', newLang);
+            localStorage.setItem('cagok-landing-lang', newLang);
+        }
+        
+        // Load preference
+        const savedLang = localStorage.getItem('cagok-landing-lang');
+        if (savedLang) {
+            document.body.setAttribute('data-lang', savedLang);
+        }
+    </script>
 </body>
 </html>
